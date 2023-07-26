@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart.dart';
+import 'package:pronto/product.dart';
 
 void main() {
   runApp(const MyApp());
@@ -304,74 +305,70 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   CarouselSlider(
                     items: [
-                      /*
-                    Container(
-                      margin: const EdgeInsets.all(4.0),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(5.0),
-                        image: const DecorationImage(
-                          image: AssetImage("assets/images/store.png"),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    */
-                      Card(
-                        elevation: 5,
-                        shadowColor: Colors.transparent,
-                        color: Colors.white,
-                        child: SizedBox(
-                          width: 300,
-                          height: 500,
-                          child: Stack(
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.all(20.0),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      'Product',
-                                      style: TextStyle(
-                                        fontSize: 15,
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.w500,
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const Product(), // Replace ProductDetailPage with your desired destination page
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 5,
+                          shadowColor: Colors.transparent,
+                          color: Colors.white,
+                          child: SizedBox(
+                            width: 300,
+                            height: 500,
+                            child: Stack(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Product',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
-                                    ),
-                                    Spacer(),
-                                  ],
-                                ),
-                              ),
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      // Add your button logic here
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            12.0), // Adjust the value for squareness
-                                      ),
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal:
-                                            16.0, // Adjust the horizontal padding
-                                        vertical:
-                                            8.0, // Adjust the vertical padding
-                                      ),
-                                    ),
-                                    child: const Text('Add'),
+                                      Spacer(),
+                                    ],
                                   ),
                                 ),
-                              ),
-                            ],
+                                Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        // Add your button logic here
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                              12.0), // Adjust the value for squareness
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal:
+                                              16.0, // Adjust the horizontal padding
+                                          vertical:
+                                              8.0, // Adjust the vertical padding
+                                        ),
+                                      ),
+                                      child: const Text('Add'),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       )
-
-                      //3rd Image of Slider
-                      // ... Repeat for other images ...
                     ],
 
                     //Slider Container properties
