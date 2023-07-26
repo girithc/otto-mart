@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pronto/cart.dart';
 
 void main() {
   runApp(const MyApp());
@@ -33,15 +34,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
   Future<void> _onRefresh() async {
     // Add your refresh logic here, e.g., fetching new data
     // For demonstration purposes, you can use a delay to simulate async behavior
-    await Future.delayed(Duration(seconds: 2));
+    await Future.delayed(const Duration(seconds: 2));
 
     // After refreshing the data, call setState to update the UI
     setState(() {
@@ -56,12 +55,8 @@ final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter += 2;
-      _counter += 2;
     });
   }
-
-  
 
   @override
   Widget build(BuildContext context) {
@@ -77,142 +72,54 @@ final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
         child: SingleChildScrollView(
-        child: Column(
-          children: [
-            // Your other body content goes here
-            Container(
-              //color: Theme.of(context).colorScheme.primary,
-              padding: const EdgeInsets.all(8),
-              height: 80,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/images/store.png"),
-                  opacity: 0.9,
-                  fit: BoxFit.cover,
+          child: Column(
+            children: [
+              // Your other body content goes here
+              Container(
+                //color: Theme.of(context).colorScheme.primary,
+                padding: const EdgeInsets.all(8),
+                height: 80,
+                decoration: const BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage("assets/images/store.png"),
+                    opacity: 0.9,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    'Delivery in 10 Minutes',
+                    style: GoogleFonts.cantoraOne(
+                        fontSize: 25,
+                        fontStyle: FontStyle.normal,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
+                  ),
                 ),
               ),
-              child: Center(
-                child: Text(
-                  'Delivery in 10 Minutes',
-                  style: GoogleFonts.cantoraOne(
-                      fontSize: 25,
-                      fontStyle: FontStyle.normal,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white),
+              Container(
+                alignment: Alignment.centerLeft, // Align text to the left
+                padding: const EdgeInsets.all(16.0),
+                child: const Text(
+                  'Explore By Categories',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-            Container(
-              alignment: Alignment.centerLeft, // Align text to the left
-              padding: const EdgeInsets.all(16.0),
-              child: const Text(
-                'Explore By Categories',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            SizedBox(
-              // Wrap the GridView in Expanded
-              height: 535,
-              child: GridView.count(
-                primary: false,
-                padding: const EdgeInsets.all(16),
-                crossAxisSpacing: 5,
-                mainAxisSpacing: 5,
-                childAspectRatio: .8,
-                crossAxisCount: 4,
-                children: <Widget>[
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Fruits & Vegetables",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Atta Rice Oil & Dals",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Dairy Bread & Eggs",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Breakfast & Sauces",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Frozen Food & Ice Creams",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Cold Drinks & Juices",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Sweet Cravings",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    color: const Color.fromARGB(255, 248, 219, 253),
-                    child: Text(
-                      "Munchies",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 13,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                    ),
-                  ),
-                  Container(
+              SizedBox(
+                // Wrap the GridView in Expanded
+                height: 535,
+                child: GridView.count(
+                  primary: false,
+                  padding: const EdgeInsets.all(16),
+                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 5,
+                  childAspectRatio: .8,
+                  crossAxisCount: 4,
+                  children: <Widget>[
+                    Container(
                       padding: const EdgeInsets.all(8),
                       color: const Color.fromARGB(255, 248, 219, 253),
                       child: Text(
@@ -300,16 +207,104 @@ final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
                             color: Colors.black),
                       ),
                     ),
-                ],
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Fruits & Vegetables",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Atta Rice Oil & Dals",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Dairy Bread & Eggs",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Breakfast & Sauces",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Frozen Food & Ice Creams",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Cold Drinks & Juices",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Sweet Cravings",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      color: const Color.fromARGB(255, 248, 219, 253),
+                      child: Text(
+                        "Munchies",
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 13,
+                            fontStyle: FontStyle.normal,
+                            color: Colors.black),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            ListView(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              children: [
-                CarouselSlider(
-                  items: [
-                    /*
+              ListView(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  CarouselSlider(
+                    items: [
+                      /*
                     Container(
                       margin: const EdgeInsets.all(4.0),
                       decoration: BoxDecoration(
@@ -321,84 +316,83 @@ final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
                       ),
                     ),
                     */
-                    Card(
-                      elevation: 5,
-                      shadowColor: Colors.transparent,
-                      color: Colors.white,
-                      child: SizedBox(
-                        width: 300,
-                        height: 500,
-                        child: Stack(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(20.0),
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Product',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.w500,
+                      Card(
+                        elevation: 5,
+                        shadowColor: Colors.transparent,
+                        color: Colors.white,
+                        child: SizedBox(
+                          width: 300,
+                          height: 500,
+                          child: Stack(
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: Column(
+                                  children: [
+                                    Text(
+                                      'Product',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                  Spacer(),
-                                ],
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    // Add your button logic here
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          12.0), // Adjust the value for squareness
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal:
-                                          16.0, // Adjust the horizontal padding
-                                      vertical:
-                                          8.0, // Adjust the vertical padding
-                                    ),
-                                  ),
-                                  child: const Text('Add'),
+                                    Spacer(),
+                                  ],
                                 ),
                               ),
-                            ),
-                          ],
+                              Align(
+                                alignment: Alignment.bottomRight,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      // Add your button logic here
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                            12.0), // Adjust the value for squareness
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal:
+                                            16.0, // Adjust the horizontal padding
+                                        vertical:
+                                            8.0, // Adjust the vertical padding
+                                      ),
+                                    ),
+                                    child: const Text('Add'),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    )
+                      )
 
-                    //3rd Image of Slider
-                    // ... Repeat for other images ...
-                  ],
+                      //3rd Image of Slider
+                      // ... Repeat for other images ...
+                    ],
 
-                  //Slider Container properties
-                  options: CarouselOptions(
-                    height: 150.0,
-                    enlargeCenterPage: false,
-                    autoPlay: false,
-                    aspectRatio: 4 / 9,
-                    autoPlayCurve: Curves.fastOutSlowIn,
-                    enableInfiniteScroll: true,
-                    autoPlayAnimationDuration:
-                        const Duration(milliseconds: 800),
-                    viewportFraction: 0.33,
+                    //Slider Container properties
+                    options: CarouselOptions(
+                      height: 150.0,
+                      enlargeCenterPage: false,
+                      autoPlay: false,
+                      aspectRatio: 4 / 9,
+                      autoPlayCurve: Curves.fastOutSlowIn,
+                      enableInfiniteScroll: true,
+                      autoPlayAnimationDuration:
+                          const Duration(milliseconds: 800),
+                      viewportFraction: 0.33,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
-      ),),
-      
-      
+      ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: _incrementCounter,
@@ -451,6 +445,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   icon: const Icon(Icons.shopping_bag_outlined),
                   onPressed: () {
                     // Your notifications icon logic here
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CartPage()));
                   },
                 ),
                 IconButton(
