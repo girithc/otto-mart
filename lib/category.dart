@@ -2,76 +2,88 @@ import 'package:flutter/material.dart';
 
 import 'cart.dart';
 
-class Product extends StatelessWidget {
-  final String productName; // Add this variable to store the product name
+class CategoryPage extends StatefulWidget {
+  final String categoryName;
+  const CategoryPage({required this.categoryName, Key? key}) : super(key: key);
 
-  const Product({Key? key, required this.productName}) : super(key: key);
+  @override
+  State<CategoryPage> createState() => _CategoryPageState();
+}
 
+class _CategoryPageState extends State<CategoryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(),
-      body: Center(
-        child: Align(
-          alignment: Alignment
-              .topCenter, // Align the card and button to the top and center
-          child: Column(
-            children: [
-              const SizedBox(
-                height: 10,
-              ),
-              Card(
-                elevation: 5,
-                shadowColor: Colors.transparent,
-                color: Colors.white,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.75,
-                  height: MediaQuery.of(context).size.height * 0.5,
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.only(left: 15.0, right: 15.0, top: 0),
-                    child: Column(
-                      children: [
-                        Text(
-                          productName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w500,
+      body: Container(
+        padding: const EdgeInsets.only(left: 0, top: 8),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            Text(
+              widget.categoryName,
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const Divider(),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // First section consuming 3 columns
+                  Expanded(
+                    flex: 3,
+                    child: Container(
+                      padding: const EdgeInsets.only(left: 0),
+                      child: ListView(
+                        children: [
+                          ListTile(
+                            title: const Text(
+                              'Fresh Fruits',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            onTap: () {
+                              // Handle tile tap
+                            },
                           ),
-                        ),
-                        const Spacer(),
-                      ],
+                          ListTile(
+                            title: const Text('Vegetables',
+                                style: TextStyle(fontSize: 12)),
+                            onTap: () {
+                              // Handle tile tap
+                            },
+                          ),
+                          ListTile(
+                            title: const Text('Packaged Foods',
+                                style: TextStyle(fontSize: 12)),
+                            onTap: () {
+                              // Handle tile tap
+                            },
+                          ),
+                          ListTile(
+                            title: const Text('Frozen Foods',
+                                style: TextStyle(fontSize: 12)),
+                            onTap: () {
+                              // Handle tile tap
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(
-                height: 10,
-              ), // Add spacing between the card and the button
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.75,
-                height: MediaQuery.of(context).size.height *
-                    0.06, // Set the width of the button to 300
-                child: ElevatedButton(
-                  onPressed: () {
-                    // Add your button logic here
-                  },
-                  style: ElevatedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                          12.0), // Adjust the value for squareness
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, // Adjust the horizontal padding
-                      vertical: 8.0, // Adjust the vertical padding
+                  // Second section consuming 7 columns
+                  Expanded(
+                    flex: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      color: Colors
+                          .green, // Replace with your content for the second section
+                      child: const Text("Section 2"),
                     ),
                   ),
-                  child: const Text('Add To Cart'),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

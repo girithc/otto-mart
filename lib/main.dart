@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart.dart';
 import 'package:pronto/product.dart';
 
+import 'category.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -110,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               SizedBox(
-                // Wrap the GridView in Expanded
                 height: 535,
                 child: GridView.count(
                   primary: false,
@@ -120,182 +121,25 @@ class _MyHomePageState extends State<MyHomePage> {
                   childAspectRatio: .8,
                   crossAxisCount: 4,
                   children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Fruits & Vegetables",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Atta Rice Oil & Dals",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Dairy Bread & Eggs",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Breakfast & Sauces",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Frozen Food & Ice Creams",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Cold Drinks & Juices",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Sweet Cravings",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Munchies",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Fruits & Vegetables",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Atta Rice Oil & Dals",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Dairy Bread & Eggs",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Breakfast & Sauces",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Frozen Food & Ice Creams",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Cold Drinks & Juices",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Sweet Cravings",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      color: const Color.fromARGB(255, 248, 219, 253),
-                      child: Text(
-                        "Munchies",
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 13,
-                            fontStyle: FontStyle.normal,
-                            color: Colors.black),
-                      ),
-                    ),
+                    _buildCategoryContainer(context, "Fruits & Vegetables"),
+                    _buildCategoryContainer(context, "Atta Rice Oil & Dals"),
+                    _buildCategoryContainer(context, "Dairy Bread & Eggs"),
+                    _buildCategoryContainer(context, "Breakfast & Sauces"),
+                    _buildCategoryContainer(
+                        context, "Frozen Food & Ice Creams"),
+                    _buildCategoryContainer(context, "Cold Drinks & Juices"),
+                    _buildCategoryContainer(context, "Sweet Cravings"),
+                    _buildCategoryContainer(context, "Munchies"),
+                    _buildCategoryContainer(context, "Fruits & Vegetables"),
+                    _buildCategoryContainer(context, "Atta Rice Oil & Dals"),
+                    _buildCategoryContainer(context, "Dairy Bread & Eggs"),
+                    _buildCategoryContainer(context, "Breakfast & Sauces"),
+                    _buildCategoryContainer(
+                        context, "Frozen Food & Ice Creams"),
+                    _buildCategoryContainer(context, "Cold Drinks & Juices"),
+                    _buildCategoryContainer(context, "Sweet Cravings"),
+                    _buildCategoryContainer(context, "Munchies"),
+                    // Add more categories here...
                   ],
                 ),
               ),
@@ -310,8 +154,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  const Product(), // Replace ProductDetailPage with your desired destination page
+                              builder: (context) => const Product(
+                                productName: 'Product-1',
+                              ), // Replace ProductDetailPage with your desired destination page
                             ),
                           );
                         },
@@ -329,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   child: Column(
                                     children: [
                                       Text(
-                                        'Product',
+                                        'Product-1',
                                         style: TextStyle(
                                           fontSize: 15,
                                           color: Colors.black,
@@ -351,7 +196,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                       style: ElevatedButton.styleFrom(
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
-                                              12.0), // Adjust the value for squareness
+                                            12.0, // Adjust the value for squareness
+                                          ),
                                         ),
                                         padding: const EdgeInsets.symmetric(
                                           horizontal:
@@ -368,7 +214,140 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                         ),
-                      )
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const Product(
+                                productName: 'Product-2',
+                              ), // Replace ProductDetailPage with your desired destination page
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 5,
+                          shadowColor: Colors.transparent,
+                          color: Colors.white,
+                          child: SizedBox(
+                            width: 300,
+                            height: 500,
+                            child: Stack(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Product-2',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Spacer(),
+                                    ],
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        // Add your button logic here
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12.0, // Adjust the value for squareness
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal:
+                                              16.0, // Adjust the horizontal padding
+                                          vertical:
+                                              8.0, // Adjust the vertical padding
+                                        ),
+                                      ),
+                                      child: const Text('Add'),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const Product(
+                                productName: 'Product-3',
+                              ), // Replace ProductDetailPage with your desired destination page
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 5,
+                          shadowColor: Colors.transparent,
+                          color: Colors.white,
+                          child: SizedBox(
+                            width: 300,
+                            height: 500,
+                            child: Stack(
+                              children: [
+                                const Padding(
+                                  padding: EdgeInsets.all(20.0),
+                                  child: Column(
+                                    children: [
+                                      Text(
+                                        'Product-3',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Spacer(),
+                                    ],
+                                  ),
+                                ),
+                                Align(
+                                  alignment: Alignment.bottomRight,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        // Add your button logic here
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            12.0, // Adjust the value for squareness
+                                          ),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal:
+                                              16.0, // Adjust the horizontal padding
+                                          vertical:
+                                              8.0, // Adjust the vertical padding
+                                        ),
+                                      ),
+                                      child: const Text('Add'),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Add more cards with different texts here...
                     ],
 
                     //Slider Container properties
@@ -396,6 +375,31 @@ class _MyHomePageState extends State<MyHomePage> {
         tooltip: 'Increment',
         child: const Icon(Icons.shopping_bag_outlined),
       ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buildCategoryContainer(BuildContext context, String categoryName) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CategoryPage(categoryName: categoryName),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        color: const Color.fromARGB(255, 248, 219, 253),
+        child: Text(
+          categoryName,
+          style: GoogleFonts.cantoraOne(
+            fontSize: 13,
+            fontStyle: FontStyle.normal,
+            color: Colors.black,
+          ),
+        ),
+      ),
     );
   }
 }
