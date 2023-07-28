@@ -136,7 +136,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         Expanded(
                           child: TextField(
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 15,
                               color:
                                   Theme.of(context).colorScheme.inversePrimary,
                             ),

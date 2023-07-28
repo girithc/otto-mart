@@ -112,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               SizedBox(
-                height: 535,
+                height: 520,
                 child: GridView.count(
                   primary: false,
                   padding: const EdgeInsets.all(16),

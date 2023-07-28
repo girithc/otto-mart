@@ -24,44 +24,68 @@ class _CategoryPageState extends State<CategoryPage> {
               widget.categoryName,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const Divider(),
             Expanded(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // First section consuming 3 columns
                   Expanded(
-                    flex: 3,
-                    child: Container(
-                      padding: const EdgeInsets.only(left: 0),
+                    flex: 2,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black, width: 1.0),
+                        borderRadius: BorderRadius.circular(
+                            4.0), // Optional: Add rounded corners
+                      ),
                       child: ListView(
+                        shrinkWrap: true, // Add this line to remove the padding
                         children: [
                           ListTile(
-                            title: const Text(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Center(
+                                child: Text(
                               'Fresh Fruits',
+                              textAlign: TextAlign.center,
                               style: TextStyle(fontSize: 12),
+                            )),
+                            onTap: () {
+                              // Handle tile tap
+                            },
+                          ),
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Center(
+                              child: Text(
+                                'Vegetables',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
                             onTap: () {
                               // Handle tile tap
                             },
                           ),
                           ListTile(
-                            title: const Text('Vegetables',
-                                style: TextStyle(fontSize: 12)),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Center(
+                              child: Text(
+                                "Packaged Foods",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 12),
+                              ),
+                            ),
                             onTap: () {
                               // Handle tile tap
                             },
                           ),
                           ListTile(
-                            title: const Text('Packaged Foods',
-                                style: TextStyle(fontSize: 12)),
-                            onTap: () {
-                              // Handle tile tap
-                            },
-                          ),
-                          ListTile(
-                            title: const Text('Frozen Foods',
-                                style: TextStyle(fontSize: 12)),
+                            contentPadding: EdgeInsets.zero,
+                            title: const Center(
+                                child: Text(
+                              'Frozen Foods',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(fontSize: 12),
+                            )),
                             onTap: () {
                               // Handle tile tap
                             },
@@ -70,14 +94,96 @@ class _CategoryPageState extends State<CategoryPage> {
                       ),
                     ),
                   ),
+
                   // Second section consuming 7 columns
                   Expanded(
                     flex: 8,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
-                      color: Colors
-                          .green, // Replace with your content for the second section
-                      child: const Text("Section 2"),
+                      padding: EdgeInsets.zero,
+                      color: Colors.deepPurpleAccent.shade100,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              children: [
+                                // Add your content for the left column here
+                                // For example, you can use a ListView.builder to display a list of card-like tiles.
+                                Expanded(
+                                  child: ListView.builder(
+                                    padding: EdgeInsets.zero,
+                                    itemCount:
+                                        20, // Replace with the actual number of items in the left column
+                                    itemBuilder: (context, index) {
+                                      return Card(
+                                        color: Colors.white,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(0.0),
+                                        ),
+                                        margin: const EdgeInsets.only(
+                                            top: 1.0, left: 1.0),
+                                        child: SizedBox(
+                                          width:
+                                              100, // Adjust the width to make it square
+                                          height:
+                                              100, // Adjust the height to make it square
+                                          child: ListTile(
+                                            title: Text('Left Tile $index'),
+                                            onTap: () {
+                                              // Handle tile tap
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            flex: 4,
+                            child: Column(
+                              children: [
+                                // Add your content for the right column here
+                                // For example, you can use another ListView.builder to display a list of card-like tiles.
+                                Expanded(
+                                  child: ListView.builder(
+                                    itemCount:
+                                        20, // Replace with the actual number of items in the right column
+                                    itemBuilder: (context, index) {
+                                      return Card(
+                                        color: Colors.white,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(0.0),
+                                        ),
+                                        margin: const EdgeInsets.only(
+                                            top: 1, left: 1, right: 1),
+                                        child: SizedBox(
+                                          width:
+                                              100, // Adjust the width to make it square
+                                          height:
+                                              100, // Adjust the height to make it square
+                                          child: ListTile(
+                                            title: Text('Right Tile $index'),
+                                            onTap: () {
+                                              // Handle tile tap
+                                            },
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -148,7 +254,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         Expanded(
                           child: TextField(
                             style: TextStyle(
-                              fontSize: 18,
+                              fontSize: 15,
                               color:
                                   Theme.of(context).colorScheme.inversePrimary,
                             ),
