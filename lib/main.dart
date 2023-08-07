@@ -435,7 +435,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildCategoryContainer(BuildContext context, String categoryName) {
     return GestureDetector(
-      onTap: () => context.go('/catalog', extra: categoryName),
+      onTap: () => {
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => MyCatalog(
+                      categoryName: categoryName,
+                    )))
+      },
       child: Container(
         padding: const EdgeInsets.all(8),
         color: const Color.fromARGB(255, 248, 219, 253),
@@ -497,7 +504,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const CartPage()));
+                            builder: (context) => const MyCart()));
                   },
                 ),
                 IconButton(

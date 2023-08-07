@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pronto/cart/cart.dart';
+import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog.dart';
 import 'package:provider/provider.dart';
 
@@ -200,11 +201,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 SizedBox(
                   width: MediaQuery.of(context).size.width * 0.1,
                   child: IconButton(
-                    padding: const EdgeInsets.only(right: 15.0),
-                    icon: const Icon(Icons.shopping_bag_outlined),
-                    onPressed: () =>
-                        context.go('/catalog/cart', extra: categoryName),
-                  ),
+                      padding: const EdgeInsets.only(right: 15.0),
+                      icon: const Icon(Icons.shopping_bag_outlined),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyCart()));
+                      }),
                 )
               ],
             ),
