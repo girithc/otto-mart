@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart.dart';
 import 'package:pronto/product.dart';
+import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'cart/cart.dart';
 import 'category.dart';
-import 'home/catalog.dart';
+import 'catalog/catalog.dart';
 
 void main() {
   runApp(const MyApp());
@@ -49,42 +51,29 @@ class MyApp extends StatelessWidget {
   }
 }
 
-/*
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
-  }
-}
-*/
-
 GoRouter router() {
   return GoRouter(
-    initialLocation: '/home',
+    initialLocation: '/catalog',
     routes: [
       GoRoute(
         path: '/home',
         builder: (context, state) => const MyHomePage(
-          title: 'Page Title',
+          title: "Pronto",
         ),
-      ),
-      GoRoute(
-        path: '/catalog',
-        builder: (context, state) => const CartItems(),
         routes: [
           GoRoute(
             path: 'cart',
             builder: (context, state) => const CartItems(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/catalog',
+        builder: (context, state) => const MyCatalog(),
+        routes: [
+          GoRoute(
+            path: 'cart',
+            builder: (context, state) => const MyCart(),
           ),
         ],
       ),
