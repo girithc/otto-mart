@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart.dart';
 import 'package:pronto/product.dart';
-
-import '../category.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -359,14 +358,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildCategoryContainer(BuildContext context, String categoryName) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CategoryPage(categoryName: categoryName),
-          ),
-        );
-      },
+      onTap: () => context.go('/catalog', extra: categoryName),
       child: Container(
         padding: const EdgeInsets.all(8),
         color: const Color.fromARGB(255, 248, 219, 253),

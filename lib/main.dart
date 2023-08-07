@@ -9,7 +9,6 @@ import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:provider/provider.dart';
 
 import 'cart/cart.dart';
-import 'category.dart';
 import 'catalog/catalog.dart';
 
 void main() {
@@ -53,7 +52,7 @@ class MyApp extends StatelessWidget {
 
 GoRouter router() {
   return GoRouter(
-    initialLocation: '/catalog',
+    initialLocation: '/home',
     routes: [
       GoRoute(
         path: '/home',
@@ -69,7 +68,9 @@ GoRouter router() {
       ),
       GoRoute(
         path: '/catalog',
-        builder: (context, state) => const MyCatalog(),
+        builder: (context, state) => MyCatalog(
+          categoryName: state.extra as String,
+        ),
         routes: [
           GoRoute(
             path: 'cart',
@@ -434,14 +435,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildCategoryContainer(BuildContext context, String categoryName) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CategoryPage(categoryName: categoryName),
-          ),
-        );
-      },
+      onTap: () => context.go('/catalog', extra: categoryName),
       child: Container(
         padding: const EdgeInsets.all(8),
         color: const Color.fromARGB(255, 248, 219, 253),

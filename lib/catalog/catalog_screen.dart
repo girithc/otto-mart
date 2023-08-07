@@ -9,12 +9,16 @@ import 'package:pronto/catalog/catalog.dart';
 import 'package:provider/provider.dart';
 
 class MyCatalog extends StatelessWidget {
-  const MyCatalog({super.key});
+  final String categoryName;
+  const MyCatalog({required this.categoryName, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-        appBar: CustomAppBar(), body: ListItems(myString: "Frozen Items"));
+    return Scaffold(
+        appBar: CustomAppBar(
+          categoryName: categoryName,
+        ),
+        body: ListItems(myString: categoryName));
   }
 }
 
@@ -116,11 +120,12 @@ class _MyAppBar extends StatelessWidget {
 }
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({super.key});
+  final String categoryName;
+  const CustomAppBar({required this.categoryName, Key? key}) : super(key: key);
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(130); // Increased height to accommodate content
+      const Size.fromHeight(80); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {
@@ -139,86 +144,69 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.only(left: 5.0),
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: const Text(
-                    'Pronto',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.black,
+                GestureDetector(
+                  // GestureDetector captures taps on the input field
+                  onTap: () {
+                    // Prevent the focus from being triggered when tapping on the input field
+                    // The empty onTap handler ensures that the tap event is captured here
+                  },
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8.0),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.3),
+                          spreadRadius: 2,
+                          blurRadius: 5,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    margin: const EdgeInsets.symmetric(horizontal: 10.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                    height: 50, // Increased height to contain the input field
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            // Your search logic here
+                          },
+                        ),
+                        Expanded(
+                          child: TextField(
+                            style: TextStyle(
+                              fontSize: 15,
+                              color:
+                                  Theme.of(context).colorScheme.inversePrimary,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Search Groceries',
+                              border: InputBorder.none,
+                            ),
+                            // Add your custom logic for handling text input, if needed.
+                            // For example, you can use the onChanged callback to get the typed text.
+                            onChanged: (text) {
+                              // Your custom logic here
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const Spacer(),
-                IconButton(
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.shopping_bag_outlined),
-                  onPressed: () => context.go('/catalog/cart'),
-                ),
-                IconButton(
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.person),
-                  onPressed: () {
-                    // Your notifications icon logic here
-                  },
-                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.1,
+                  child: IconButton(
+                    padding: const EdgeInsets.only(right: 15.0),
+                    icon: const Icon(Icons.shopping_bag_outlined),
+                    onPressed: () =>
+                        context.go('/catalog/cart', extra: categoryName),
+                  ),
+                )
               ],
-            ),
-            const SizedBox(
-              height: 8,
-            ), // Space between the brand name and the input field
-            GestureDetector(
-              // GestureDetector captures taps on the input field
-              onTap: () {
-                // Prevent the focus from being triggered when tapping on the input field
-                // The empty onTap handler ensures that the tap event is captured here
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                height: 50, // Increased height to contain the input field
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () {
-                        // Your search logic here
-                      },
-                    ),
-                    Expanded(
-                      child: TextField(
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Theme.of(context).colorScheme.inversePrimary,
-                        ),
-                        decoration: const InputDecoration(
-                          hintText: 'Search For Groceries',
-                          border: InputBorder.none,
-                        ),
-                        // Add your custom logic for handling text input, if needed.
-                        // For example, you can use the onChanged callback to get the typed text.
-                        onChanged: (text) {
-                          // Your custom logic here
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
           ],
         ),
