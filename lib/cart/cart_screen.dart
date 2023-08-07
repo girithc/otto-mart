@@ -77,7 +77,8 @@ class _CartTotal extends StatelessWidget {
     var hugeStyle =
         Theme.of(context).textTheme.displayLarge!.copyWith(fontSize: 48);
 
-    return SizedBox(
+    return Container(
+      color: Colors.white,
       height: 200,
       child: Center(
         child: Row(
