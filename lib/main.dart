@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart.dart';
-import 'package:pronto/product.dart';
-import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/product.dart';
 import 'package:provider/provider.dart';
 
 import 'cart/cart.dart';
@@ -33,53 +31,20 @@ class MyApp extends StatelessWidget {
           create: (context) => CartModel(),
           update: (context, catalog, cart) {
             if (cart == null) throw ArgumentError.notNull('cart');
-            cart.catalog = catalog;
+            //cart.catalog = catalog;
             return cart;
           },
         ),
       ],
-      child: MaterialApp.router(
-        title: 'Provider Demo',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        routerConfig: router(),
-      ),
+      child: MaterialApp(
+          title: 'Provider Demo',
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+            useMaterial3: true,
+          ),
+          home: const MyHomePage(title: 'Pronto')),
     );
   }
-}
-
-GoRouter router() {
-  return GoRouter(
-    initialLocation: '/home',
-    routes: [
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => const MyHomePage(
-          title: "Pronto",
-        ),
-        routes: [
-          GoRoute(
-            path: 'cart',
-            builder: (context, state) => const CartItems(),
-          ),
-        ],
-      ),
-      GoRoute(
-        path: '/catalog',
-        builder: (context, state) => MyCatalog(
-          categoryName: state.extra as String,
-        ),
-        routes: [
-          GoRoute(
-            path: 'cart',
-            builder: (context, state) => const MyCart(),
-          ),
-        ],
-      ),
-    ],
-  );
 }
 
 class MyHomePage extends StatefulWidget {
@@ -437,11 +402,13 @@ class _MyHomePageState extends State<MyHomePage> {
     return GestureDetector(
       onTap: () => {
         Navigator.push(
-            context,
-            MaterialPageRoute(
-                builder: (context) => MyCatalog(
-                      categoryName: categoryName,
-                    )))
+          context,
+          MaterialPageRoute(
+            builder: (context) => MyCatalog(
+              categoryName: categoryName,
+            ), // Replace ProductDetailPage with your desired destination page
+          ),
+        )
       },
       child: Container(
         padding: const EdgeInsets.all(8),
@@ -504,7 +471,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const MyCart()));
+                            builder: (context) => const CartPage()));
                   },
                 ),
                 IconButton(

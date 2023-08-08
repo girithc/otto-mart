@@ -1,47 +1,74 @@
-// Copyright 2019 The Flutter team. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
 import 'package:flutter/foundation.dart';
-import 'package:pronto/catalog/catalog.dart';
+
+class CartItem {
+  final String productId;
+  final String productName;
+  final int price;
+  int quantity;
+
+  CartItem({
+    required this.productId,
+    required this.productName,
+    required this.price,
+    this.quantity = 1,
+  });
+}
 
 class CartModel extends ChangeNotifier {
-  /// The private field backing [catalog].
-  late CatalogModel _catalog;
+  final List<CartItem> _items = [];
 
-  /// Internal, private state of the cart. Stores the ids of each item.
-  final List<int> _itemIds = [];
+  List<CartItem> get items => _items;
 
-  /// The current catalog. Used to construct items from numeric ids.
-  CatalogModel get catalog => _catalog;
+  int get totalPrice => items.fold(
+      0, (total, current) => total + current.price * current.quantity);
 
-  set catalog(CatalogModel newCatalog) {
-    _catalog = newCatalog;
-    // Notify listeners, in case the new catalog provides information
-    // different from the previous one. For example, availability of an item
-    // might have changed.
+  void addItemToCart(CartItem item) {
+    final existingItemIndex =
+        _items.indexWhere((cartItem) => cartItem.productId == item.productId);
+
+    printItems(_items);
+
+    if (existingItemIndex != -1) {
+      // If the item is already in the cart, update its quantity
+      print("item already exists in cart, ${item.productName}");
+      _items[existingItemIndex].quantity += 1;
+    } else {
+      // Otherwise, add the item to the cart
+      print("adding item to cart, ${item.productName}");
+      _items.add(item);
+    }
+
+    notifyListeners(); // Notify listeners about the change
+  }
+
+  void removeItem({required String itemId}) {
+    final existingItemIndex =
+        _items.indexWhere((cartItem) => cartItem.productId == itemId);
+
+    if (existingItemIndex != -1) {
+      CartItem foundItem =
+          _items.firstWhere((item) => item.productId == itemId);
+
+      if (foundItem.quantity > 1) {
+        _items[existingItemIndex].quantity -= 1;
+      } else {
+        _items.remove(foundItem);
+      }
+    } else {
+      print("Item does not exist in cart");
+    }
+
     notifyListeners();
   }
 
-  /// List of items in the cart.
-  List<Item> get items => _itemIds.map((id) => _catalog.getById(id)).toList();
-
-  /// The current total price of all items.
-  int get totalPrice =>
-      items.fold(0, (total, current) => total + current.price);
-
-  /// Adds [item] to cart. This is the only way to modify the cart from outside.
-  void add(Item item) {
-    _itemIds.add(item.id);
-    // This line tells [Model] that it should rebuild the widgets that
-    // depend on it.
-    notifyListeners();
+  bool isEmpty() {
+    return _items.isEmpty;
   }
 
-  void remove(Item item) {
-    _itemIds.remove(item.id);
-    // Don't forget to tell dependent widgets to rebuild _every time_
-    // you change the model.
-    notifyListeners();
+  void printItems(List<CartItem> items) {
+    for (var item in _items) {
+      print("Item Id {${item.productId}}");
+      print("Item Name ${item.productName}");
+    }
   }
 }

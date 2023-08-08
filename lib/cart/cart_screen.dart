@@ -46,28 +46,50 @@ class MyCart extends StatelessWidget {
 class _CartList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    var itemNameStyle = Theme.of(context).textTheme.titleLarge;
-    // This gets the current state of CartModel and also tells Flutter
-    // to rebuild this widget when CartModel notifies listeners (in other words,
-    // when it changes).
     var cart = context.watch<CartModel>();
+    var itemNameStyle = Theme.of(context).textTheme.titleLarge;
 
-    return ListView.builder(
-      itemCount: cart.items.length,
-      itemBuilder: (context, index) => ListTile(
-        leading: const Icon(Icons.done),
-        trailing: IconButton(
-          icon: const Icon(Icons.remove_circle_outline),
-          onPressed: () {
-            cart.remove(cart.items[index]);
-          },
+    if (cart.isEmpty()) {
+      return const Center(
+          child: Text(
+        'Your Cart is Empty',
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+      ));
+    } else {
+      return ListView.builder(
+        itemCount: cart.items.length,
+        itemBuilder: (context, index) => ListTile(
+          leading: const Icon(Icons.done),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.remove_circle_outline),
+                onPressed: () {
+                  final itemId = cart.items[index].productId;
+                  context.read<CartModel>().removeItem(itemId: itemId);
+                },
+              ),
+              Text(
+                cart.items[index].quantity.toString(),
+                style: const TextStyle(fontSize: 18),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline),
+                onPressed: () {
+                  final itemId = cart.items[index].productId;
+                  cart.addItemToCart(cart.items[index]);
+                },
+              ),
+            ],
+          ),
+          title: Text(
+            cart.items[index].productName,
+            style: itemNameStyle,
+          ),
         ),
-        title: Text(
-          cart.items[index].name,
-          style: itemNameStyle,
-        ),
-      ),
-    );
+      );
+    }
   }
 }
 
@@ -76,6 +98,8 @@ class _CartTotal extends StatelessWidget {
   Widget build(BuildContext context) {
     var hugeStyle =
         Theme.of(context).textTheme.displayLarge!.copyWith(fontSize: 48);
+
+    var cart = context.watch<CartModel>();
 
     return Container(
       color: Colors.white,
@@ -90,9 +114,8 @@ class _CartTotal extends StatelessWidget {
             //
             // The important thing is that it will not rebuild
             // the rest of the widgets in this build method.
-            Consumer<CartModel>(
-                builder: (context, cart, child) =>
-                    Text('\$${cart.totalPrice}', style: hugeStyle)),
+
+            Text('\$${cart.totalPrice}', style: hugeStyle),
             const SizedBox(width: 24),
             FilledButton(
               onPressed: () {

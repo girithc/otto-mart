@@ -3,10 +3,8 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
-import 'package:pronto/catalog/catalog.dart';
 import 'package:provider/provider.dart';
 
 class MyCatalog extends StatelessWidget {
@@ -19,104 +17,7 @@ class MyCatalog extends StatelessWidget {
         appBar: CustomAppBar(
           categoryName: categoryName,
         ),
-        body: ListItems(myString: categoryName));
-  }
-}
-
-class _AddButton extends StatelessWidget {
-  final Item item;
-
-  const _AddButton({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    // The context.select() method will let you listen to changes to
-    // a *part* of a model. You define a function that "selects" (i.e. returns)
-    // the part you're interested in, and the provider package will not rebuild
-    // this widget unless that particular part of the model changes.
-    //
-    // This can lead to significant performance improvements.
-    var isInCart = context.select<CartModel, bool>(
-      // Here, we are only interested whether [item] is inside the cart.
-      (cart) => cart.items.contains(item),
-    );
-
-    return TextButton(
-      onPressed: isInCart
-          ? null
-          : () {
-              // If the item is not in cart, we let the user add it.
-              // We are using context.read() here because the callback
-              // is executed whenever the user taps the button. In other
-              // words, it is executed outside the build method.
-              var cart = context.read<CartModel>();
-              cart.add(item);
-            },
-      style: ButtonStyle(
-        overlayColor: MaterialStateProperty.resolveWith<Color?>((states) {
-          if (states.contains(MaterialState.pressed)) {
-            return Theme.of(context).primaryColor;
-          }
-          return null; // Defer to the widget's default.
-        }),
-      ),
-      child: isInCart
-          ? const Icon(Icons.check, semanticLabel: 'ADDED')
-          : const Text('ADD'),
-    );
-  }
-}
-
-class _MyAppBar extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return SliverAppBar(
-      titleSpacing: 0.0,
-      floating: true,
-      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.shopping_cart),
-          onPressed: () => context.go('/catalog/cart'),
-        ),
-      ],
-      bottom: PreferredSize(
-        preferredSize: const Size.fromHeight(66.0),
-        child: Container(
-          color: Colors.white,
-          margin: const EdgeInsets.symmetric(horizontal: 15.0),
-          padding: const EdgeInsets.symmetric(horizontal: 18.0),
-          height: 50, // Increased height to contain the input field
-          child: Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.search),
-                onPressed: () {
-                  // Your search logic here
-                },
-              ),
-              Expanded(
-                child: TextField(
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: 'Search Groceries',
-                    border: InputBorder.none,
-                  ),
-                  // Add your custom logic for handling text input, if needed.
-                  // For example, you can use the onChanged callback to get the typed text.
-                  onChanged: (text) {
-                    // Your custom logic here
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        body: ListOfItems(myString: categoryName));
   }
 }
 
@@ -222,54 +123,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class _MyListItem extends StatelessWidget {
-  final int index;
-
-  const _MyListItem(this.index);
-
-  @override
-  Widget build(BuildContext context) {
-    var item = context.select<CatalogModel, Item>(
-      // Here, we are only interested in the item at [index]. We don't care
-      // about any other change.
-      (catalog) => catalog.getByPosition(index),
-    );
-    var textTheme = Theme.of(context).textTheme.titleLarge;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: LimitedBox(
-        maxHeight: 48,
-        child: Row(
-          children: [
-            Flexible(
-              flex: 1,
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: Container(
-                  color: item.color,
-                ),
-              ),
-            ),
-            const SizedBox(width: 24),
-            Flexible(
-              flex: 3,
-              child: Text(item.name, style: textTheme),
-            ),
-            const SizedBox(width: 24),
-            _AddButton(item: item),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ListItems extends StatelessWidget {
-  final String myString; // Declare a final variable to store the string
+class ListOfItems extends StatelessWidget {
+  final String myString;
 
   // Constructor for the widget that takes the string as a parameter
-  const ListItems({required this.myString, Key? key}) : super(key: key);
+  const ListOfItems({required this.myString, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -375,55 +233,7 @@ class ListItems extends StatelessWidget {
                                     0.0, // Remove horizontal spacing between items
 
                                 children: List.generate(100, (index) {
-                                  return Card(
-                                    color: Colors.white,
-                                    shadowColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(0.0),
-                                    ),
-                                    margin: const EdgeInsets.only(
-                                      top: 1.0,
-                                      left: 1.0,
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        ListTile(
-                                          title: Text('Tile $index'),
-                                        ),
-                                        const Spacer(), // Space filler to push the Price and Button to the bottom
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: [
-                                            const Padding(
-                                              padding: EdgeInsets.only(
-                                                  left: 8.0, bottom: 8.0),
-                                              child: Text(
-                                                'Price',
-                                                style: TextStyle(fontSize: 16),
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.all(8.0),
-                                              child: TextButton(
-                                                style: TextButton.styleFrom(
-                                                  padding:
-                                                      const EdgeInsets.all(1),
-                                                  textStyle: const TextStyle(
-                                                      fontSize: 16),
-                                                ),
-                                                onPressed: () {},
-                                                child: const Text('Add'),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  );
+                                  return ListItem(index: index);
                                 }),
                               )),
                             ],
@@ -435,6 +245,68 @@ class ListItems extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ListItem extends StatelessWidget {
+  final int index;
+  const ListItem({required this.index, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>(); // Access the CartModel instance
+
+    return Card(
+      color: Colors.white,
+      shadowColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(0.0),
+      ),
+      margin: const EdgeInsets.only(
+        top: 1.0,
+        left: 1.0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            title: Text('Tile $index'),
+          ),
+          const Spacer(), // Space filler to push the Price and Button to the bottom
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Padding(
+                padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
+                child: Text(
+                  'Price',
+                  style: TextStyle(fontSize: 16),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(1),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                  onPressed: () {
+                    final cartItem = CartItem(
+                      productId: '$index',
+                      productName: 'List Tile $index',
+                      price: index,
+                      quantity: 1,
+                    );
+                    cart.addItemToCart(cartItem);
+                  },
+                  child: const Text('Add'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
