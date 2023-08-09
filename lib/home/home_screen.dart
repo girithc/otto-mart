@@ -72,9 +72,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
                 child: Center(
                   child: Text(
-                    categories.isNotEmpty
-                        ? categories[0].name
-                        : 'No categories available',
+                    'Delivery in 10 minutes',
                     style: GoogleFonts.cantoraOne(
                         fontSize: 25,
                         fontStyle: FontStyle.normal,
@@ -95,37 +93,24 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               SizedBox(
-                height: 520,
-                child: GridView.count(
-                  primary: false,
-                  padding: const EdgeInsets.all(16),
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 5,
-                  childAspectRatio: .8,
-                  crossAxisCount: 4,
-                  children: <Widget>[
-                    _buildCategoryContainer(context, "Fruits & Vegetables"),
-                    _buildCategoryContainer(context, "Atta Rice Oil & Dals"),
-                    _buildCategoryContainer(context, "Dairy Bread & Eggs"),
-                    _buildCategoryContainer(context, "Breakfast & Sauces"),
-                    _buildCategoryContainer(
-                        context, "Frozen Food & Ice Creams"),
-                    _buildCategoryContainer(context, "Cold Drinks & Juices"),
-                    _buildCategoryContainer(context, "Sweet Cravings"),
-                    _buildCategoryContainer(context, "Munchies"),
-                    _buildCategoryContainer(context, "Fruits & Vegetables"),
-                    _buildCategoryContainer(context, "Atta Rice Oil & Dals"),
-                    _buildCategoryContainer(context, "Dairy Bread & Eggs"),
-                    _buildCategoryContainer(context, "Breakfast & Sauces"),
-                    _buildCategoryContainer(
-                        context, "Frozen Food & Ice Creams"),
-                    _buildCategoryContainer(context, "Cold Drinks & Juices"),
-                    _buildCategoryContainer(context, "Sweet Cravings"),
-                    _buildCategoryContainer(context, "Munchies"),
-                    // Add more categories here...
-                  ],
-                ),
-              ),
+                  height: 400,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: GridView.builder(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 5,
+                        mainAxisSpacing: 5,
+                        childAspectRatio: 0.8,
+                      ),
+                      itemCount: categories.length, // Number of grid items
+                      itemBuilder: (context, index) {
+                        return _buildCategoryContainer(
+                            context, categories[index].name);
+                      },
+                    ),
+                  )),
               ListView(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
