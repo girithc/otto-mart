@@ -77,7 +77,6 @@ class _CartList extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
                 onPressed: () {
-                  final itemId = cart.items[index].productId;
                   cart.addItemToCart(cart.items[index]);
                 },
               ),
