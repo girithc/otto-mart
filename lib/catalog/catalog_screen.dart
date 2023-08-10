@@ -5,19 +5,51 @@
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/catalog/api_client_catalog.dart';
 import 'package:provider/provider.dart';
 
-class MyCatalog extends StatelessWidget {
+class MyCatalog extends StatefulWidget {
+  final int categoryID;
   final String categoryName;
-  const MyCatalog({required this.categoryName, Key? key}) : super(key: key);
+  const MyCatalog(
+      {required this.categoryID, required this.categoryName, Key? key})
+      : super(key: key);
+
+  @override
+  State<MyCatalog> createState() => _MyCatalogState();
+}
+
+class _MyCatalogState extends State<MyCatalog> {
+  final CatalogApiClient apiClient = CatalogApiClient('https://localhost:3000');
+  List<Category> categories = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCategories();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final fetchedCategories =
+          await apiClient.fetchCategories(widget.categoryID);
+      setState(() {
+        categories = fetchedCategories;
+        print(categories[1].name);
+      });
+    } catch (err) {
+      print('(catalog)fetchCategories error $err');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: CustomAppBar(
-          categoryName: categoryName,
+          categoryName: widget.categoryName,
         ),
-        body: ListOfItems(myString: categoryName));
+        body:
+            ListOfItems(myString: widget.categoryName, categories: categories));
   }
 }
 
@@ -125,9 +157,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
 class ListOfItems extends StatelessWidget {
   final String myString;
+  final List<Category> categories;
 
   // Constructor for the widget that takes the string as a parameter
-  const ListOfItems({required this.myString, Key? key}) : super(key: key);
+  const ListOfItems(
+      {required this.myString, required this.categories, Key? key})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +179,7 @@ class ListOfItems extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // First section consuming 3 columns
+                // First section consuming 2 columns
                 Expanded(
                   flex: 2,
                   child: DecoratedBox(
@@ -153,8 +188,15 @@ class ListOfItems extends StatelessWidget {
                       borderRadius: BorderRadius.circular(
                           4.0), // Optional: Add rounded corners
                     ),
-                    child: ListView(
-                      shrinkWrap: true, // Add this line to remove the padding
+                    child: ListView.builder(
+                        shrinkWrap: true, // Add this line to remove the padding
+                        itemCount: categories.length,
+                        itemBuilder: (context, index) {
+                          return CategoryItem(
+                              categoryID: categories[index].id,
+                              categoryName: categories[index].name);
+                        }
+                        /*
                       children: [
                         ListTile(
                           contentPadding: EdgeInsets.zero,
@@ -207,11 +249,12 @@ class ListOfItems extends StatelessWidget {
                           },
                         ),
                       ],
-                    ),
+                      */
+                        ),
                   ),
                 ),
 
-                // Second section consuming 7 columns
+                // Second section consuming 8 columns
                 Expanded(
                   flex: 8,
                   child: Container(
@@ -248,6 +291,30 @@ class ListOfItems extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class CategoryItem extends StatelessWidget {
+  final int categoryID;
+  final String categoryName;
+
+  const CategoryItem(
+      {required this.categoryID, required this.categoryName, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      title: Center(
+          child: Text(
+        categoryName,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 12),
+      )),
+      onTap: () {
+        // Handle tile tap
+      },
     );
   }
 }

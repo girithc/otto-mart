@@ -6,15 +6,15 @@ class CatalogApiClient {
 
   CatalogApiClient(this.baseUrl);
 
-  Future<List<Category>> fetchCategories() async {
-    var request =
-        http.Request('GET', Uri.parse('http://localhost:3000/category'));
+  Future<List<Category>> fetchCategories(int id) async {
+    var url = Uri.parse('http://localhost:3000/category');
+    var queryParams = {'id': id.toString()};
+    url = url.replace(queryParameters: queryParams);
 
-    http.StreamedResponse response = await request.send();
+    http.Response response = await http.get(url);
 
     if (response.statusCode == 200) {
-      final String responseBody = await response.stream.bytesToString();
-      final List<dynamic> jsonData = json.decode(responseBody);
+      final List<dynamic> jsonData = json.decode(response.body);
       final List<Category> categories =
           jsonData.map((item) => Category.fromJson(item)).toList();
       return categories;

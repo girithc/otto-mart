@@ -106,8 +106,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                       itemCount: categories.length, // Number of grid items
                       itemBuilder: (context, index) {
-                        return _buildCategoryContainer(
-                            context, categories[index].name);
+                        return _buildCategoryContainer(context,
+                            categories[index].id, categories[index].name);
                       },
                     ),
                   )),
@@ -349,15 +349,17 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildCategoryContainer(BuildContext context, String categoryName) {
+  Widget _buildCategoryContainer(
+      BuildContext context, int categoryID, String categoryName) {
     return GestureDetector(
       onTap: () => {
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => MyCatalog(
-              categoryName: categoryName,
-            ), // Replace ProductDetailPage with your desired destination page
+                categoryID: categoryID,
+                categoryName:
+                    categoryName), // Replace ProductDetailPage with your desired destination page
           ),
         )
       },
