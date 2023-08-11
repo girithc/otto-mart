@@ -1,0 +1,41 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+class ItemApiClient {
+  final String baseUrl;
+
+  ItemApiClient(this.baseUrl);
+
+  Future<List<Item>> fetchItems(int categoryId, int storeId) async {
+    var url = Uri.parse('http://localhost:3000/item');
+    var queryParams = {
+      'category_id': categoryId.toString(),
+      'store_id': storeId.toString()
+    };
+    url = url.replace(queryParameters: queryParams);
+
+    http.Response response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = json.decode(response.body);
+      final List<Item> items =
+          jsonData.map((item) => Item.fromJson(item)).toList();
+      return items;
+    } else {
+      throw Exception('Failed to load items');
+    }
+  }
+}
+
+class Item {
+  final int id;
+  final String name;
+  final int price;
+
+  Item({required this.id, required this.name, required this.price});
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(id: json['id'], name: json['name'], price: json['price']);
+  }
+}

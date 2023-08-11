@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/api_client_catalog.dart';
+import 'package:pronto/catalog/catalog.dart';
 import 'package:provider/provider.dart';
 
 class MyCatalog extends StatefulWidget {
@@ -45,11 +46,15 @@ class _MyCatalogState extends State<MyCatalog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: CustomAppBar(
-          categoryName: widget.categoryName,
-        ),
-        body:
-            ListOfItems(myString: widget.categoryName, categories: categories));
+      appBar: CustomAppBar(
+        categoryName: widget.categoryName,
+      ),
+      body: ChangeNotifierProvider(
+        create: (context) => SelectedCategoryProvider(),
+        child:
+            ListOfItems(myString: widget.categoryName, categories: categories),
+      ),
+    );
   }
 }
 
@@ -155,7 +160,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 }
 
-class ListOfItems extends StatelessWidget {
+class ListOfItems extends StatefulWidget {
   final String myString;
   final List<Category> categories;
 
@@ -165,14 +170,22 @@ class ListOfItems extends StatelessWidget {
       : super(key: key);
 
   @override
+  State<ListOfItems> createState() => _ListOfItemsState();
+}
+
+class _ListOfItemsState extends State<ListOfItems> {
+  @override
   Widget build(BuildContext context) {
+    final selectedCategoryProvider = context.watch<SelectedCategoryProvider>();
+    final selectedCategoryID = selectedCategoryProvider.selectedCategoryID;
+
     return Container(
       padding: const EdgeInsets.only(left: 0, top: 8),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
-            myString,
+            widget.myString,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           Expanded(
@@ -189,68 +202,14 @@ class ListOfItems extends StatelessWidget {
                           4.0), // Optional: Add rounded corners
                     ),
                     child: ListView.builder(
-                        shrinkWrap: true, // Add this line to remove the padding
-                        itemCount: categories.length,
-                        itemBuilder: (context, index) {
-                          return CategoryItem(
-                              categoryID: categories[index].id,
-                              categoryName: categories[index].name);
-                        }
-                        /*
-                      children: [
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Center(
-                              child: Text(
-                            'Fresh Fruits',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12),
-                          )),
-                          onTap: () {
-                            // Handle tile tap
-                          },
-                        ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Center(
-                            child: Text(
-                              'Vegetables',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          onTap: () {
-                            // Handle tile tap
-                          },
-                        ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Center(
-                            child: Text(
-                              "Packaged Foods",
-                              textAlign: TextAlign.center,
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ),
-                          onTap: () {
-                            // Handle tile tap
-                          },
-                        ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: const Center(
-                              child: Text(
-                            'Frozen Foods',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 12),
-                          )),
-                          onTap: () {
-                            // Handle tile tap
-                          },
-                        ),
-                      ],
-                      */
-                        ),
+                      shrinkWrap: true, // Add this line to remove the padding
+                      itemCount: widget.categories.length,
+                      itemBuilder: (context, index) {
+                        return CategoryItem(
+                            categoryID: widget.categories[index].id,
+                            categoryName: widget.categories[index].name);
+                      },
+                    ),
                   ),
                 ),
 
@@ -258,33 +217,20 @@ class ListOfItems extends StatelessWidget {
                 Expanded(
                   flex: 8,
                   child: Container(
-                    padding: EdgeInsets.zero,
-                    color: const Color.fromARGB(255, 212, 187, 255),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            children: [
-                              // Add your content for the left column here
-                              // For example, you can use a ListView.builder to display a list of card-like tiles.
-                              Expanded(
-                                  child: GridView.count(
-                                crossAxisCount: 2,
-                                mainAxisSpacing:
-                                    0.0, // Remove vertical spacing between items
-                                crossAxisSpacing:
-                                    0.0, // Remove horizontal spacing between items
-
-                                children: List.generate(100, (index) {
-                                  return ListItem(index: index);
-                                }),
-                              )),
-                            ],
-                          ),
+                      padding: EdgeInsets.zero,
+                      color: const Color.fromARGB(255, 212, 187, 255),
+                      child: GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 0.0,
+                          crossAxisSpacing: 0.0,
                         ),
-                      ],
-                    ),
-                  ),
+                        itemCount: selectedCategoryID * 2,
+                        itemBuilder: (context, index) {
+                          return ListItem(index: index);
+                        },
+                      )),
                 ),
               ],
             ),
@@ -313,7 +259,9 @@ class CategoryItem extends StatelessWidget {
         style: const TextStyle(fontSize: 12),
       )),
       onTap: () {
-        // Handle tile tap
+        final selectedCategoryProvider =
+            context.read<SelectedCategoryProvider>();
+        selectedCategoryProvider.setSelectedCategory(categoryID);
       },
     );
   }

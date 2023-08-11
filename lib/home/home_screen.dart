@@ -395,8 +395,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         FocusScope.of(context).unfocus();
       },
       child: AppBar(
-        backgroundColor: //Colors.deepPurpleAccent.shade100,
-            Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -420,7 +419,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.shopping_bag_outlined),
                   onPressed: () {
-                    // Your notifications icon logic here
                     Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -430,21 +428,15 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 IconButton(
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.person),
-                  onPressed: () {
-                    // Your notifications icon logic here
-                  },
+                  onPressed: () {},
                 ),
               ],
             ),
             const SizedBox(
               height: 8,
-            ), // Space between the brand name and the input field
+            ),
             GestureDetector(
-              // GestureDetector captures taps on the input field
-              onTap: () {
-                // Prevent the focus from being triggered when tapping on the input field
-                // The empty onTap handler ensures that the tap event is captured here
-              },
+              onTap: () {},
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
@@ -479,11 +471,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           hintText: 'Search For Groceries',
                           border: InputBorder.none,
                         ),
-                        // Add your custom logic for handling text input, if needed.
-                        // For example, you can use the onChanged callback to get the typed text.
-                        onChanged: (text) {
-                          // Your custom logic here
-                        },
+                        onChanged: (text) {},
                       ),
                     ),
                   ],
@@ -493,8 +481,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
         toolbarHeight: 130,
-        // Add any other actions or widgets to the AppBar if needed.
-        // For example, you can use actions to add buttons or icons.
       ),
     );
   }
