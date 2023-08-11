@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/api_client_catalog.dart';
+import 'package:pronto/catalog/api_client_item.dart';
 import 'package:pronto/catalog/catalog.dart';
 import 'package:provider/provider.dart';
 
@@ -50,7 +51,7 @@ class _MyCatalogState extends State<MyCatalog> {
         categoryName: widget.categoryName,
       ),
       body: ChangeNotifierProvider(
-        create: (context) => SelectedCategoryProvider(),
+        create: (context) => CatalogProvider(),
         child:
             ListOfItems(myString: widget.categoryName, categories: categories),
       ),
@@ -176,8 +177,9 @@ class ListOfItems extends StatefulWidget {
 class _ListOfItemsState extends State<ListOfItems> {
   @override
   Widget build(BuildContext context) {
-    final selectedCategoryProvider = context.watch<SelectedCategoryProvider>();
-    final selectedCategoryID = selectedCategoryProvider.selectedCategoryID;
+    final catalogProvider = context.watch<CatalogProvider>();
+    final categoryId = catalogProvider.catalog.categoryID;
+    final storeId = catalogProvider.catalog.storeID;
 
     return Container(
       padding: const EdgeInsets.only(left: 0, top: 8),
@@ -185,7 +187,8 @@ class _ListOfItemsState extends State<ListOfItems> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
-            widget.myString,
+            categoryId.toString(),
+            //myString,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           Expanded(
@@ -214,28 +217,71 @@ class _ListOfItemsState extends State<ListOfItems> {
                 ),
 
                 // Second section consuming 8 columns
-                Expanded(
-                  flex: 8,
-                  child: Container(
-                      padding: EdgeInsets.zero,
-                      color: const Color.fromARGB(255, 212, 187, 255),
-                      child: GridView.builder(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          mainAxisSpacing: 0.0,
-                          crossAxisSpacing: 0.0,
-                        ),
-                        itemCount: selectedCategoryID * 2,
-                        itemBuilder: (context, index) {
-                          return ListItem(index: index);
-                        },
-                      )),
-                ),
+                ItemCatalog(
+                  categoryId: categoryId,
+                  storeId: storeId,
+                )
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class ItemCatalog extends StatefulWidget {
+  final int categoryId;
+  final int storeId;
+
+  const ItemCatalog(
+      {required this.categoryId, required this.storeId, super.key});
+
+  @override
+  State<ItemCatalog> createState() => _ItemCatalogState();
+}
+
+class _ItemCatalogState extends State<ItemCatalog> {
+  final ItemApiClient apiClient = ItemApiClient('https://localhost:3000');
+  List<Item> items = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchItems();
+  }
+
+  Future<void> fetchItems() async {
+    try {
+      final fetchedItems =
+          await apiClient.fetchItems(widget.categoryId, widget.storeId);
+      setState(() {
+        items = fetchedItems;
+      });
+    } catch (err) {
+      //Handle Error
+      print('(catalog)fetchItems error $err');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      flex: 8,
+      child: Container(
+        padding: EdgeInsets.zero,
+        color: const Color.fromARGB(255, 212, 187, 255),
+        child: GridView.builder(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 0.0,
+            crossAxisSpacing: 0.0,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            return ListItem(index: index);
+          },
+        ),
       ),
     );
   }
@@ -259,9 +305,9 @@ class CategoryItem extends StatelessWidget {
         style: const TextStyle(fontSize: 12),
       )),
       onTap: () {
-        final selectedCategoryProvider =
-            context.read<SelectedCategoryProvider>();
-        selectedCategoryProvider.setSelectedCategory(categoryID);
+        final catalogProvider = context.read<CatalogProvider>();
+        catalogProvider
+            .setCatalog(Catalog(categoryID: categoryID, storeID: 1, items: []));
       },
     );
   }

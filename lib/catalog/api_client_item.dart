@@ -15,12 +15,14 @@ class ItemApiClient {
     };
     url = url.replace(queryParameters: queryParams);
 
+    print("Query Params $queryParams");
     http.Response response = await http.get(url);
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Item> items =
           jsonData.map((item) => Item.fromJson(item)).toList();
+      print("Items Length ${items.length} First Item: ${items[0].name}");
       return items;
     } else {
       throw Exception('Failed to load items');
