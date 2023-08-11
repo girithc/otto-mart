@@ -5,8 +5,8 @@
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
-import 'package:pronto/catalog/api_client_catalog.dart';
-import 'package:pronto/catalog/api_client_item.dart';
+import 'package:pronto/catalog/category/api_client_catalog.dart';
+import 'package:pronto/catalog/item/api_client_item.dart';
 import 'package:pronto/catalog/catalog.dart';
 import 'package:provider/provider.dart';
 
