@@ -52,8 +52,7 @@ class _MyCatalogState extends State<MyCatalog> {
       ),
       body: ChangeNotifierProvider(
         create: (context) => CatalogProvider(),
-        child:
-            ListOfItems(myString: widget.categoryName, categories: categories),
+        child: ListOfItems(categories: categories),
       ),
     );
   }
@@ -162,13 +161,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 }
 
 class ListOfItems extends StatefulWidget {
-  final String myString;
   final List<Category> categories;
 
   // Constructor for the widget that takes the string as a parameter
-  const ListOfItems(
-      {required this.myString, required this.categories, Key? key})
-      : super(key: key);
+  const ListOfItems({required this.categories, Key? key}) : super(key: key);
 
   @override
   State<ListOfItems> createState() => _ListOfItemsState();
@@ -180,6 +176,7 @@ class _ListOfItemsState extends State<ListOfItems> {
     final catalogProvider = context.watch<CatalogProvider>();
     final categoryId = catalogProvider.catalog.categoryID;
     final storeId = catalogProvider.catalog.storeID;
+    final categoryName = catalogProvider.catalog.categoryName;
 
     return Container(
       padding: const EdgeInsets.only(left: 0, top: 8),
@@ -187,8 +184,11 @@ class _ListOfItemsState extends State<ListOfItems> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           Text(
-            categoryId.toString(),
-            //myString,
+            widget.categories.isNotEmpty
+                ? (categoryName.isEmpty
+                    ? widget.categories[0].name
+                    : categoryName)
+                : "",
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           Expanded(
@@ -218,8 +218,10 @@ class _ListOfItemsState extends State<ListOfItems> {
 
                 // Second section consuming 8 columns
                 ItemCatalog(
-                  categoryId: categoryId,
-                  storeId: storeId,
+                  categoryId: widget.categories.isNotEmpty
+                      ? (categoryId == 0 ? widget.categories[0].id : categoryId)
+                      : 0,
+                  storeId: storeId == 0 ? 1 : storeId,
                 )
               ],
             ),
@@ -251,6 +253,15 @@ class _ItemCatalogState extends State<ItemCatalog> {
     fetchItems();
   }
 
+  @override
+  void didUpdateWidget(covariant ItemCatalog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.categoryId != oldWidget.categoryId ||
+        widget.storeId != oldWidget.storeId) {
+      fetchItems();
+    }
+  }
+
   Future<void> fetchItems() async {
     try {
       final fetchedItems =
@@ -260,6 +271,9 @@ class _ItemCatalogState extends State<ItemCatalog> {
       });
     } catch (err) {
       //Handle Error
+      setState(() {
+        items = [];
+      });
       print('(catalog)fetchItems error $err');
     }
   }
@@ -279,7 +293,10 @@ class _ItemCatalogState extends State<ItemCatalog> {
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
-            return ListItem(index: index);
+            return ListItem(
+                name: items[index].name,
+                id: items[index].id,
+                price: items[index].price);
           },
         ),
       ),
@@ -306,16 +323,19 @@ class CategoryItem extends StatelessWidget {
       )),
       onTap: () {
         final catalogProvider = context.read<CatalogProvider>();
-        catalogProvider
-            .setCatalog(Catalog(categoryID: categoryID, storeID: 1, items: []));
+        catalogProvider.setCatalog(Catalog(
+            categoryID: categoryID, storeID: 1, categoryName: categoryName));
       },
     );
   }
 }
 
 class ListItem extends StatelessWidget {
-  final int index;
-  const ListItem({required this.index, super.key});
+  final String name;
+  final int id;
+  final int price;
+  const ListItem(
+      {required this.name, required this.id, required this.price, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -335,17 +355,17 @@ class ListItem extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           ListTile(
-            title: Text('Tile $index'),
+            title: Text(name),
           ),
           const Spacer(), // Space filler to push the Price and Button to the bottom
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(left: 8.0, bottom: 8.0),
+              Padding(
+                padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
                 child: Text(
-                  'Price',
-                  style: TextStyle(fontSize: 16),
+                  price.toString(),
+                  style: const TextStyle(fontSize: 16),
                 ),
               ),
               Padding(
@@ -357,9 +377,9 @@ class ListItem extends StatelessWidget {
                   ),
                   onPressed: () {
                     final cartItem = CartItem(
-                      productId: '$index',
-                      productName: 'List Tile $index',
-                      price: index,
+                      productId: id.toString(),
+                      productName: name,
+                      price: price,
                       quantity: 1,
                     );
                     cart.addItemToCart(cartItem);

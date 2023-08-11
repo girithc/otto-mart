@@ -1,7 +1,6 @@
 // ignore_for_file: camel_case_types
 
 import 'package:flutter/material.dart';
-import 'package:pronto/catalog/api_client_item.dart';
 
 @immutable
 class HigherLevelCategory {
@@ -30,7 +29,7 @@ class SelectedCategoryProvider extends ChangeNotifier {
 }
 
 class CatalogProvider extends ChangeNotifier {
-  final Catalog _catalog = Catalog(categoryID: 0, storeID: 0, items: []);
+  final Catalog _catalog = Catalog(categoryID: 0, storeID: 0, categoryName: '');
 
   Catalog get catalog => _catalog;
 
@@ -40,11 +39,8 @@ class CatalogProvider extends ChangeNotifier {
     }
     if (catalog.categoryID > 0) {
       _catalog.categoryID = catalog.categoryID;
+      _catalog.categoryName = catalog.categoryName;
     }
-    if (catalog.items.isNotEmpty) {
-      _catalog.items = catalog.items;
-    }
-
     notifyListeners();
   }
 }
@@ -52,8 +48,10 @@ class CatalogProvider extends ChangeNotifier {
 class Catalog {
   int categoryID;
   int storeID;
-  List<Item> items;
+  String categoryName;
 
   Catalog(
-      {required this.categoryID, required this.storeID, required this.items});
+      {required this.categoryID,
+      required this.storeID,
+      required this.categoryName});
 }

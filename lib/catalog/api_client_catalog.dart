@@ -8,6 +8,11 @@ class CatalogApiClient {
 
   Future<List<Category>> fetchCategories(int id) async {
     var url = Uri.parse('http://localhost:3000/category');
+
+    if (id == 0) {
+      throw Exception('(CatalogApiClient) Parameters are not valid');
+    }
+
     var queryParams = {'id': id.toString()};
     url = url.replace(queryParameters: queryParams);
 

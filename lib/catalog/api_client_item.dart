@@ -9,6 +9,11 @@ class ItemApiClient {
 
   Future<List<Item>> fetchItems(int categoryId, int storeId) async {
     var url = Uri.parse('http://localhost:3000/item');
+
+    if (categoryId == 0 || storeId == 0) {
+      throw Exception('(ItemApiClient) Parameters are not valid');
+    }
+
     var queryParams = {
       'category_id': categoryId.toString(),
       'store_id': storeId.toString()
