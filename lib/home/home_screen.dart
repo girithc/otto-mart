@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/home/api_client_home.dart';
-import 'package:pronto/product.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -32,7 +32,6 @@ class _MyHomePageState extends State<MyHomePage> {
         categories = fetchedCategories;
       });
     } catch (err) {
-      //Handle Error
       print('(home)fetchCategories error $err');
     }
   }
@@ -93,246 +92,26 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               SizedBox(
-                  height: 400,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: GridView.builder(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 5,
-                        mainAxisSpacing: 5,
-                        childAspectRatio: 0.8,
-                      ),
-                      itemCount: categories.length, // Number of grid items
-                      itemBuilder: (context, index) {
-                        return _buildCategoryContainer(context,
-                            categories[index].id, categories[index].name);
-                      },
+                height: 400,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: GridView.builder(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      crossAxisSpacing: 5,
+                      mainAxisSpacing: 5,
+                      childAspectRatio: 0.8,
                     ),
-                  )),
-              ListView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  CarouselSlider(
-                    items: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Product(
-                                productName: 'Product-1',
-                              ), // Replace ProductDetailPage with your desired destination page
-                            ),
-                          );
-                        },
-                        child: Card(
-                          elevation: 5,
-                          shadowColor: Colors.transparent,
-                          color: Colors.white,
-                          child: SizedBox(
-                            width: 300,
-                            height: 500,
-                            child: Stack(
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.all(20.0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Product-1',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      Spacer(),
-                                    ],
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        // Add your button logic here
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.0, // Adjust the value for squareness
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal:
-                                              16.0, // Adjust the horizontal padding
-                                          vertical:
-                                              8.0, // Adjust the vertical padding
-                                        ),
-                                      ),
-                                      child: const Text('Add'),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Product(
-                                productName: 'Product-2',
-                              ),
-                            ),
-                          );
-                        },
-                        child: Card(
-                          elevation: 5,
-                          shadowColor: Colors.transparent,
-                          color: Colors.white,
-                          child: SizedBox(
-                            width: 300,
-                            height: 500,
-                            child: Stack(
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.all(20.0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Product-2',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      Spacer(),
-                                    ],
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        // Add your button logic here
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.0,
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal:
-                                              16.0, // Adjust the horizontal padding
-                                          vertical:
-                                              8.0, // Adjust the vertical padding
-                                        ),
-                                      ),
-                                      child: const Text('Add'),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const Product(
-                                productName: 'Product-3',
-                              ), // Replace ProductDetailPage with your desired destination page
-                            ),
-                          );
-                        },
-                        child: Card(
-                          elevation: 5,
-                          shadowColor: Colors.transparent,
-                          color: Colors.white,
-                          child: SizedBox(
-                            width: 300,
-                            height: 500,
-                            child: Stack(
-                              children: [
-                                const Padding(
-                                  padding: EdgeInsets.all(20.0),
-                                  child: Column(
-                                    children: [
-                                      Text(
-                                        'Product-3',
-                                        style: TextStyle(
-                                          fontSize: 15,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                      Spacer(),
-                                    ],
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.bottomRight,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        // Add your button logic here
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(
-                                            12.0, // Adjust the value for squareness
-                                          ),
-                                        ),
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal:
-                                              16.0, // Adjust the horizontal padding
-                                          vertical:
-                                              8.0, // Adjust the vertical padding
-                                        ),
-                                      ),
-                                      child: const Text('Add'),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Add more cards with different texts here...
-                    ],
-
-                    //Slider Container properties
-                    options: CarouselOptions(
-                      height: 150.0,
-                      enlargeCenterPage: false,
-                      autoPlay: false,
-                      aspectRatio: 4 / 9,
-                      autoPlayCurve: Curves.fastOutSlowIn,
-                      enableInfiniteScroll: true,
-                      autoPlayAnimationDuration:
-                          const Duration(milliseconds: 800),
-                      viewportFraction: 0.33,
-                    ),
+                    itemCount: categories.length, // Number of grid items
+                    itemBuilder: (context, index) {
+                      return _buildCategoryContainer(context,
+                          categories[index].id, categories[index].name);
+                    },
                   ),
-                ],
+                ),
               ),
+              const HorizontalScrollItems(),
             ],
           ),
         ),
@@ -356,10 +135,8 @@ class _MyHomePageState extends State<MyHomePage> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => MyCatalog(
-                categoryID: categoryID,
-                categoryName:
-                    categoryName), // Replace ProductDetailPage with your desired destination page
+            builder: (context) =>
+                MyCatalog(categoryID: categoryID, categoryName: categoryName),
           ),
         )
       },
@@ -379,8 +156,242 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
+class HorizontalScrollItems extends StatelessWidget {
+  const HorizontalScrollItems({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        CarouselSlider(
+          items: [
+            GestureDetector(
+              onTap: () {
+                /*
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Product(
+                      productName: 'Product-1',
+                    ), // Replace ProductDetailPage with your desired destination page
+                  ),
+                );
+                */
+              },
+              child: Card(
+                elevation: 5,
+                shadowColor: Colors.transparent,
+                color: Colors.white,
+                child: SizedBox(
+                  width: 300,
+                  height: 500,
+                  child: Stack(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Product-1',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Spacer(),
+                          ],
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Add your button logic here
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  12.0, // Adjust the value for squareness
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal:
+                                    16.0, // Adjust the horizontal padding
+                                vertical: 8.0, // Adjust the vertical padding
+                              ),
+                            ),
+                            child: const Text('Add'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                /*
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Product(
+                      productName: 'Product-2',
+                    ),
+                  ),
+                );
+                */
+              },
+              child: Card(
+                elevation: 5,
+                shadowColor: Colors.transparent,
+                color: Colors.white,
+                child: SizedBox(
+                  width: 300,
+                  height: 500,
+                  child: Stack(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Product-2',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Spacer(),
+                          ],
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Add your button logic here
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  12.0,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal:
+                                    16.0, // Adjust the horizontal padding
+                                vertical: 8.0, // Adjust the vertical padding
+                              ),
+                            ),
+                            child: const Text('Add'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            GestureDetector(
+              onTap: () {
+                /*
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Product(
+                      productName: 'Product-3',
+                    ), // Replace ProductDetailPage with your desired destination page
+                  ),
+                );
+                */
+              },
+              child: Card(
+                elevation: 5,
+                shadowColor: Colors.transparent,
+                color: Colors.white,
+                child: SizedBox(
+                  width: 300,
+                  height: 500,
+                  child: Stack(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Product-3',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Spacer(),
+                          ],
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Add your button logic here
+                            },
+                            style: ElevatedButton.styleFrom(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                  12.0, // Adjust the value for squareness
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal:
+                                    16.0, // Adjust the horizontal padding
+                                vertical: 8.0, // Adjust the vertical padding
+                              ),
+                            ),
+                            child: const Text('Add'),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Add more cards with different texts here...
+          ],
+
+          //Slider Container properties
+          options: CarouselOptions(
+            height: 150.0,
+            enlargeCenterPage: false,
+            autoPlay: false,
+            aspectRatio: 4 / 9,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enableInfiniteScroll: true,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 0.33,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({super.key});
+  final String? title; // Make the title parameter optional
+
+  const CustomAppBar({this.title, super.key});
 
   @override
   Size get preferredSize =>
@@ -402,18 +413,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.only(left: 5.0),
-                  margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: const Text(
-                    'Pronto',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                if (title != null) // Display title if provided
+                  Container(
+                    padding: const EdgeInsets.only(left: 5.0),
+                    margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Text(
+                      title!,
+                      style: const TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
-                ),
                 const Spacer(),
                 IconButton(
                   padding: const EdgeInsets.only(right: 15.0),
@@ -428,7 +440,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 IconButton(
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.person),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const CartPage()));
+                  },
                 ),
               ],
             ),

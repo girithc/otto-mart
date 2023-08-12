@@ -8,6 +8,7 @@ import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/category/api_client_catalog.dart';
 import 'package:pronto/catalog/item/api_client_item.dart';
 import 'package:pronto/catalog/catalog.dart';
+import 'package:pronto/item/product.dart';
 import 'package:provider/provider.dart';
 
 class MyCatalog extends StatefulWidget {
@@ -341,55 +342,66 @@ class ListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>(); // Access the CartModel instance
 
-    return Card(
-      color: Colors.white,
-      shadowColor: Colors.transparent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(0.0),
-      ),
-      margin: const EdgeInsets.only(
-        top: 1.0,
-        left: 1.0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          ListTile(
-            title: Text(name),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                Product(productName: name, productId: id, price: price),
           ),
-          const Spacer(), // Space filler to push the Price and Button to the bottom
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-                child: Text(
-                  price.toString(),
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TextButton(
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.all(1),
-                    textStyle: const TextStyle(fontSize: 16),
+        );
+      },
+      child: Card(
+        color: Colors.white,
+        shadowColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(0.0),
+        ),
+        margin: const EdgeInsets.only(
+          top: 1.0,
+          left: 1.0,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              title: Text(name),
+            ),
+            const Spacer(), // Space filler to push the Price and Button to the bottom
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+                  child: Text(
+                    price.toString(),
+                    style: const TextStyle(fontSize: 16),
                   ),
-                  onPressed: () {
-                    final cartItem = CartItem(
-                      productId: id.toString(),
-                      productName: name,
-                      price: price,
-                      quantity: 1,
-                    );
-                    cart.addItemToCart(cartItem);
-                  },
-                  child: const Text('Add'),
                 ),
-              ),
-            ],
-          ),
-        ],
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.all(1),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                    onPressed: () {
+                      final cartItem = CartItem(
+                        productId: id.toString(),
+                        productName: name,
+                        price: price,
+                        quantity: 1,
+                      );
+                      cart.addItemToCart(cartItem);
+                    },
+                    child: const Text('Add'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

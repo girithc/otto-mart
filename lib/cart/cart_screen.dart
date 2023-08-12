@@ -35,6 +35,8 @@ class MyCart extends StatelessWidget {
               ),
             ),
             const Divider(height: 4, color: Colors.black),
+            _TaxAndDelivery(),
+            const Divider(height: 4, color: Colors.black),
             _CartTotal()
           ],
         ),
@@ -47,7 +49,7 @@ class _CartList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-    var itemNameStyle = Theme.of(context).textTheme.titleLarge;
+    var itemNameStyle = Theme.of(context).textTheme.titleMedium;
 
     if (cart.isEmpty()) {
       return const Center(
@@ -72,7 +74,7 @@ class _CartList extends StatelessWidget {
               ),
               Text(
                 cart.items[index].quantity.toString(),
-                style: const TextStyle(fontSize: 18),
+                style: const TextStyle(fontSize: 15),
               ),
               IconButton(
                 icon: const Icon(Icons.add_circle_outline),
@@ -92,6 +94,41 @@ class _CartList extends StatelessWidget {
   }
 }
 
+class _TaxAndDelivery extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tax: ${calculateTax()}', // Replace with your tax calculation logic
+            style: const TextStyle(fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Delivery Fee: ${calculateDeliveryFee()}', // Replace with your delivery fee calculation logic
+            style: const TextStyle(fontSize: 18),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Add your tax calculation logic here
+  double calculateTax() {
+    // Replace with your actual tax calculation
+    return 10.0;
+  }
+
+  // Add your delivery fee calculation logic here
+  double calculateDeliveryFee() {
+    // Replace with your actual delivery fee calculation
+    return 5.0;
+  }
+}
+
 class _CartTotal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -102,18 +139,11 @@ class _CartTotal extends StatelessWidget {
 
     return Container(
       color: Colors.white,
-      height: 200,
+      height: 125,
       child: Center(
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Another way to listen to a model's change is to include
-            // the Consumer widget. This widget will automatically listen
-            // to CartModel and rerun its builder on every change.
-            //
-            // The important thing is that it will not rebuild
-            // the rest of the widgets in this build method.
-
             Text('\$${cart.totalPrice}', style: hugeStyle),
             const SizedBox(width: 24),
             FilledButton(

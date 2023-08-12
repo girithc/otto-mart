@@ -1,15 +1,26 @@
 import 'package:flutter/material.dart';
-
-import 'cart.dart';
+import 'package:pronto/cart/cart.dart';
+import 'package:pronto/cart/cart_screen.dart';
+import 'package:provider/provider.dart';
 
 class Product extends StatelessWidget {
   final String productName; // Add this variable to store the product name
+  final int productId;
+  final int price;
 
-  const Product({Key? key, required this.productName}) : super(key: key);
+  const Product(
+      {Key? key,
+      required this.productName,
+      required this.productId,
+      required this.price})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>(); // Access the CartModel instance
+
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: const CustomAppBar(),
       body: Center(
         child: Align(
@@ -26,7 +37,7 @@ class Product extends StatelessWidget {
                 color: Colors.white,
                 child: SizedBox(
                   width: MediaQuery.of(context).size.width * 0.75,
-                  height: MediaQuery.of(context).size.height * 0.5,
+                  height: MediaQuery.of(context).size.height * 0.45,
                   child: Padding(
                     padding:
                         const EdgeInsets.only(left: 15.0, right: 15.0, top: 0),
@@ -41,6 +52,14 @@ class Product extends StatelessWidget {
                           ),
                         ),
                         const Spacer(),
+                        Text(
+                          price.toString(),
+                          style: const TextStyle(
+                            fontSize: 15,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -56,6 +75,13 @@ class Product extends StatelessWidget {
                 child: ElevatedButton(
                   onPressed: () {
                     // Add your button logic here
+                    final cartItem = CartItem(
+                      productId: productId.toString(),
+                      productName: productName,
+                      price: price,
+                      quantity: 1,
+                    );
+                    cart.addItemToCart(cartItem);
                   },
                   style: ElevatedButton.styleFrom(
                     shape: RoundedRectangleBorder(
@@ -94,8 +120,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         FocusScope.of(context).unfocus();
       },
       child: AppBar(
-        backgroundColor: //Colors.deepPurpleAccent.shade100,
-            Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -106,7 +131,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   // GestureDetector captures taps on the input field
                   onTap: () {
                     // Prevent the focus from being triggered when tapping on the input field
-                    // The empty onTap handler ensures that the tap event is captured here
                   },
                   child: Container(
                     width: MediaQuery.of(context).size.width * 0.6,
@@ -144,8 +168,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                               hintText: 'Search Groceries',
                               border: InputBorder.none,
                             ),
-                            // Add your custom logic for handling text input, if needed.
-                            // For example, you can use the onChanged callback to get the typed text.
                             onChanged: (text) {
                               // Your custom logic here
                             },
@@ -163,19 +185,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     onPressed: () {
                       // Your notifications icon logic here
                       Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const CartPage()));
+                        context,
+                        MaterialPageRoute(builder: (context) => const MyCart()),
+                      );
                     },
                   ),
-                )
+                ),
               ],
             ),
           ],
         ),
         toolbarHeight: 130,
-        // Add any other actions or widgets to the AppBar if needed.
-        // For example, you can use actions to add buttons or icons.
       ),
     );
   }
