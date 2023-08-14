@@ -18,11 +18,16 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
+  bool _isBottomSheetOpen = false;
+  bool _isBottomSheetAddressOpen = false;
 
   @override
   void initState() {
     super.initState();
     fetchCategories();
+    Future.delayed(Duration.zero, () {
+      _openBottomSheet();
+    });
   }
 
   Future<void> fetchCategories() async {
@@ -47,10 +52,163 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _openBottomSheet() {
+    if (!_isBottomSheetOpen) {
+      setState(() {
+        _isBottomSheetOpen = true;
+      });
+
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext context) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              width: MediaQuery.of(context).size.width * 0.95,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Login In To Pronto',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Enter Phone No.',
+                        border: OutlineInputBorder(),
+                        counterText: '',
+                      ),
+                      keyboardType: TextInputType.phone,
+                      maxLength: 10,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _openAddressBottomSheet(); // Close the address bottom sheet
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                        fixedSize: const Size(double.infinity, 40),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                      ),
+                      child: const Text('Login / Signup'),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          );
+        },
+      ).whenComplete(
+        () => setState(() {
+          _isBottomSheetOpen = false;
+        }),
+      );
+    }
+  }
+
+  void _openAddressBottomSheet() {
+    if (!_isBottomSheetAddressOpen) {
+      setState(() {
+        _isBottomSheetAddressOpen = true;
+      });
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (BuildContext context) {
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height * 0.5,
+              width: MediaQuery.of(context).size.width * 0.95,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'Enter Your Address',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: const TextField(
+                      decoration: InputDecoration(
+                        hintText: 'Enter Address',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const Divider(
+                      height: 20,
+                      thickness: 2,
+                      color: Color.fromARGB(255, 235, 235, 235)),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(
+                            context); // Close the address bottom sheet
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.greenAccent,
+                        foregroundColor: Colors.black87,
+                        elevation: 0,
+                        fixedSize: const Size(double.infinity, 40),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(10)),
+                        ),
+                      ),
+                      child: const Text('Submit Address'),
+                    ),
+                  ),
+                  const Divider(
+                      height: 20,
+                      thickness: 2,
+                      color: Color.fromARGB(255, 235, 235, 235)),
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
+          );
+        },
+      ).whenComplete(
+        () => setState(() {
+          _isBottomSheetAddressOpen = false;
+        }),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: CustomAppBar(
+        homePageState: this, // Pass the reference to the state instance
+      ),
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
@@ -168,18 +326,7 @@ class HorizontalScrollItems extends StatelessWidget {
         CarouselSlider(
           items: [
             GestureDetector(
-              onTap: () {
-                /*
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const Product(
-                      productName: 'Product-1',
-                    ), // Replace ProductDetailPage with your desired destination page
-                  ),
-                );
-                */
-              },
+              onTap: () {},
               child: Card(
                 elevation: 5,
                 shadowColor: Colors.transparent,
@@ -235,18 +382,7 @@ class HorizontalScrollItems extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                /*
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const Product(
-                      productName: 'Product-2',
-                    ),
-                  ),
-                );
-                */
-              },
+              onTap: () {},
               child: Card(
                 elevation: 5,
                 shadowColor: Colors.transparent,
@@ -302,18 +438,7 @@ class HorizontalScrollItems extends StatelessWidget {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                /*
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const Product(
-                      productName: 'Product-3',
-                    ), // Replace ProductDetailPage with your desired destination page
-                  ),
-                );
-                */
-              },
+              onTap: () {},
               child: Card(
                 elevation: 5,
                 shadowColor: Colors.transparent,
@@ -390,8 +515,9 @@ class HorizontalScrollItems extends StatelessWidget {
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title; // Make the title parameter optional
+  final _MyHomePageState homePageState; // Add this line
 
-  const CustomAppBar({this.title, super.key});
+  const CustomAppBar({this.title, required this.homePageState, super.key});
 
   @override
   Size get preferredSize =>
@@ -413,19 +539,23 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                if (title != null) // Display title if provided
-                  Container(
-                    padding: const EdgeInsets.only(left: 5.0),
-                    margin: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text(
-                      title!,
-                      style: const TextStyle(
+                Container(
+                  padding: const EdgeInsets.only(left: 5.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                  child: TextButton(
+                    onPressed: () {
+                      homePageState._openBottomSheet();
+                    },
+                    child: const Text(
+                      'Pronto',
+                      style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                       ),
                     ),
                   ),
+                ),
                 const Spacer(),
                 IconButton(
                   padding: const EdgeInsets.only(right: 15.0),

@@ -2,6 +2,10 @@
 
 A new Flutter project.
 
+## Guide
+
+google place api https://www.youtube.com/watch?v=3CO8pGw7fzY
+
 ## Getting Started
 
 This project is a starting point for a Flutter application.
