@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/constants.dart';
 import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/horizontal-scroll-items.dart';
 import 'package:pronto/home/components/location-list-tile.dart';
+import 'package:pronto/home/components/network-utility.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -171,8 +173,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pop(
-                            context); // Close the address bottom sheet
+                        //Navigator.pop(context); // Close the address bottom sheet
+                        placeAutocomplete("Jamnabai Narsee School");
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.greenAccent,
@@ -183,14 +185,13 @@ class _MyHomePageState extends State<MyHomePage> {
                           borderRadius: BorderRadius.all(Radius.circular(10)),
                         ),
                       ),
-                      child: const Text('Submit Address'),
+                      child: const Text('Current Location'),
                     ),
                   ),
                   const Divider(
                       height: 20,
                       thickness: 2,
                       color: Color.fromARGB(255, 235, 235, 235)),
-                  LocationListTile(location: 'Juhu, Mumbai', press: () {}),
                   LocationListTile(location: 'Juhu, Mumbai', press: () {}),
                 ],
               ),
@@ -202,6 +203,23 @@ class _MyHomePageState extends State<MyHomePage> {
           _isBottomSheetAddressOpen = false;
         }),
       );
+    }
+  }
+
+  Future<void> placeAutocomplete(String query) async {
+    print("Entered placeAutocomplete");
+    print("ApiKey: $apiKey");
+
+    Uri uri =
+        Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
+      "input": query,
+      "key": apiKey,
+    });
+
+    String? response = await NetworkUtility.fetchUrl(uri);
+
+    if (response != null) {
+      print(response);
     }
   }
 

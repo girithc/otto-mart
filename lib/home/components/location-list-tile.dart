@@ -13,7 +13,11 @@ class LocationListTile extends StatelessWidget {
       children: [
         ListTile(
           onTap: press,
-          horizontalTitleGap: 0,
+          horizontalTitleGap: 10,
+          leading: const Icon(
+            Icons.location_city_outlined, // Replace with the desired icon
+            color: Colors.black, // Replace with the desired color
+          ),
           title: Text(
             location,
             maxLines: 2,
