@@ -51,82 +51,75 @@ class _AddressScreenState extends State<AddressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Set Delivery Location'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 40),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: TextField(
-                    onChanged: (value) => {
-                      _debouncer.run(() {
-                        placeAutocomplete(value);
-                      })
-                    }, //placeAutocomplete(value)},
-                    decoration: const InputDecoration(
-                      hintText: 'Enter Your Address',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyHomePage(
-                                  title:
-                                      'Pronto'))); // Close the address bottom sheet
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.greenAccent,
-                      foregroundColor: Colors.black87,
-                      elevation: 0,
-                      fixedSize: const Size(double.infinity, 40),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                    child: const Text('Current Location'),
-                  ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height *
-                      0.4, // Adjust as needed
-                  child: ListView.builder(
-                    itemCount: placePredictions.length,
-                    itemBuilder: (context, index) {
-                      print(
-                          "Description: ${placePredictions[index].description}");
-                      return LocationListTile(
-                        location: placePredictions[index].description!,
-                        press: () {},
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+    return SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-      ),
-    );
+        child: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.95,
+          height: MediaQuery.of(context).size.height * 0.65,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 40),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: TextField(
+                  onChanged: (value) => {
+                    _debouncer.run(() {
+                      placeAutocomplete(value);
+                    })
+                  }, //placeAutocomplete(value)},
+                  decoration: const InputDecoration(
+                    hintText: 'Enter Your Address',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyHomePage(
+                                title:
+                                    'Pronto'))); // Close the address bottom sheet
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.greenAccent,
+                    foregroundColor: Colors.black87,
+                    elevation: 0,
+                    fixedSize: const Size(double.infinity, 40),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10)),
+                    ),
+                  ),
+                  child: const Text('Current Location'),
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height *
+                    0.4, // Adjust as needed
+                child: ListView.builder(
+                  itemCount: placePredictions.length,
+                  itemBuilder: (context, index) {
+                    print(
+                        "Description: ${placePredictions[index].description}");
+                    return LocationListTile(
+                      location: placePredictions[index].description!,
+                      press: () {},
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ));
   }
 }

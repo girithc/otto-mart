@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:pronto/address/address_screen.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/constants.dart';
 import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/horizontal_scroll_items.dart';
-import 'package:pronto/home/components/location_list_tile.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
@@ -25,7 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
   bool _isBottomSheetOpen = false;
-  final bool _isBottomSheetAddressOpen = false;
+  bool _isBottomSheetAddressOpen = false;
 
   @override
   void initState() {
@@ -61,34 +61,21 @@ class _MyHomePageState extends State<MyHomePage> {
   List<PredictionAutoComplete> placePredictions = [];
 
   void placeAutocomplete(String query) async {
-    print("Entered placeAutocomplete");
-    print("ApiKey: $apiKey");
-
     Uri uri =
         Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
       "input": query,
       "key": apiKey,
     });
-
     String? response = await NetworkUtility.fetchUrl(uri);
 
     if (response != null) {
-      //print(response);
-
       PlaceAutoCompleteResponse result =
           PlaceAutoCompleteResponse.parseAutocompleteResult(response);
-
       String? predictions = result.predictions?[0].description;
-      print("Prediction[0].description  $predictions");
 
       if (result.predictions != null) {
         setState(() {
           placePredictions = result.predictions!;
-          print("PlacePredictions.length  ${placePredictions.length}");
-        });
-
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          setState(() {});
         });
       }
     }
@@ -104,66 +91,10 @@ class _MyHomePageState extends State<MyHomePage> {
         context: context,
         isScrollControlled: true,
         builder: (BuildContext context) {
-          return const LoginScreen(); // Replace with your actual login screen widget
+          return LoginScreen(postLogin: () {
+            _openAddressBottomSheet();
+          }); // Replace with your actual login screen widget
         },
-
-        /*
-          return SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.4,
-              width: MediaQuery.of(context).size.width * 0.95,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Text(
-                    'Login In To Pronto',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Enter Phone No.',
-                        border: OutlineInputBorder(),
-                        counterText: '',
-                      ),
-                      keyboardType: TextInputType.phone,
-                      maxLength: 10,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        _openAddressBottomSheet(); // Close the address bottom sheet
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
-                        foregroundColor: Colors.black87,
-                        elevation: 0,
-                        fixedSize: const Size(double.infinity, 40),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
-                        ),
-                      ),
-                      child: const Text('Login / Signup'),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-               ,
-            ), ],
-              )
-          );
-          */
       ).whenComplete(
         () => setState(() {
           _isBottomSheetOpen = false;
@@ -173,66 +104,20 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _openAddressBottomSheet() {
+    Navigator.of(context).pop();
     if (!_isBottomSheetAddressOpen) {
       setState(() {
-//_isBottomSheetAddressOpen = true;
+        _isBottomSheetAddressOpen = true;
       });
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         builder: (BuildContext context) {
-          return SingleChildScrollView(
-            child: Container(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Column(
-                mainAxisSize:
-                    MainAxisSize.min, // Important for avoiding overflow
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Your other widgets here
-                  const Text(
-                    'Set Delivery Location',
-                    style: TextStyle(fontSize: 20),
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: TextField(
-                      onChanged: (value) => {placeAutocomplete(value)},
-                      decoration: const InputDecoration(
-                        hintText: 'Enter Your Address',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                  // Rest of your widgets here
-                  SizedBox(
-                    height: MediaQuery.of(context).size.height *
-                        0.3, // Adjust as needed
-                    child: ListView.builder(
-                      itemCount: placePredictions.length,
-                      itemBuilder: (context, index) {
-                        print(
-                            "Description: ${placePredictions[index].description}");
-                        return LocationListTile(
-                          location: placePredictions[index].description!,
-                          press: () {},
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
+          return const AddressScreen();
         },
       ).whenComplete(
         () => setState(() {
-          //_isBottomSheetAddressOpen = false;
+          _isBottomSheetAddressOpen = false;
         }),
       );
     }

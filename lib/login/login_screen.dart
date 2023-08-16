@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({Key? key, required this.postLogin}) : super(key: key);
+
+  final VoidCallback postLogin;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +42,7 @@ class LoginScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: ElevatedButton(
                 onPressed: () {
-                  // Close the address bottom sheet
+                  postLogin();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.greenAccent,
