@@ -5,9 +5,12 @@ import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/constants.dart';
 import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/home/api_client_home.dart';
-import 'package:pronto/home/components/horizontal-scroll-items.dart';
-import 'package:pronto/home/components/location-list-tile.dart';
-import 'package:pronto/home/components/network-utility.dart';
+import 'package:pronto/home/components/horizontal_scroll_items.dart';
+import 'package:pronto/home/components/location_list_tile.dart';
+import 'package:pronto/home/components/network_utility.dart';
+import 'package:pronto/home/models/place_auto_complete_response.dart';
+import 'package:pronto/home/models/prediction_auto_complete.dart';
+import 'package:pronto/login/login_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -22,7 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
   bool _isBottomSheetOpen = false;
-  bool _isBottomSheetAddressOpen = false;
+  final bool _isBottomSheetAddressOpen = false;
 
   @override
   void initState() {
@@ -55,6 +58,42 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  List<PredictionAutoComplete> placePredictions = [];
+
+  void placeAutocomplete(String query) async {
+    print("Entered placeAutocomplete");
+    print("ApiKey: $apiKey");
+
+    Uri uri =
+        Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
+      "input": query,
+      "key": apiKey,
+    });
+
+    String? response = await NetworkUtility.fetchUrl(uri);
+
+    if (response != null) {
+      //print(response);
+
+      PlaceAutoCompleteResponse result =
+          PlaceAutoCompleteResponse.parseAutocompleteResult(response);
+
+      String? predictions = result.predictions?[0].description;
+      print("Prediction[0].description  $predictions");
+
+      if (result.predictions != null) {
+        setState(() {
+          placePredictions = result.predictions!;
+          print("PlacePredictions.length  ${placePredictions.length}");
+        });
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {});
+        });
+      }
+    }
+  }
+
   void _openBottomSheet() {
     if (!_isBottomSheetOpen) {
       setState(() {
@@ -65,6 +104,10 @@ class _MyHomePageState extends State<MyHomePage> {
         context: context,
         isScrollControlled: true,
         builder: (BuildContext context) {
+          return const LoginScreen(); // Replace with your actual login screen widget
+        },
+
+        /*
           return SingleChildScrollView(
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom,
@@ -116,11 +159,11 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                ],
-              ),
-            ),
+               ,
+            ), ],
+              )
           );
-        },
+          */
       ).whenComplete(
         () => setState(() {
           _isBottomSheetOpen = false;
@@ -132,67 +175,56 @@ class _MyHomePageState extends State<MyHomePage> {
   void _openAddressBottomSheet() {
     if (!_isBottomSheetAddressOpen) {
       setState(() {
-        _isBottomSheetAddressOpen = true;
+//_isBottomSheetAddressOpen = true;
       });
       showModalBottomSheet(
         context: context,
         isScrollControlled: true,
         builder: (BuildContext context) {
           return SingleChildScrollView(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height * 0.5,
-              width: MediaQuery.of(context).size.width * 0.95,
+            child: Container(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+              ),
               child: Column(
+                mainAxisSize:
+                    MainAxisSize.min, // Important for avoiding overflow
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // Your other widgets here
                   const Text(
-                    'Enter Your Address',
+                    'Set Delivery Location',
                     style: TextStyle(fontSize: 20),
                   ),
                   const SizedBox(height: 20),
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: const TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Enter Address',
+                    child: TextField(
+                      onChanged: (value) => {placeAutocomplete(value)},
+                      decoration: const InputDecoration(
+                        hintText: 'Enter Your Address',
                         border: OutlineInputBorder(),
                       ),
                     ),
                   ),
-                  const Divider(
-                      height: 20,
-                      thickness: 2,
-                      color: Color.fromARGB(255, 235, 235, 235)),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        //Navigator.pop(context); // Close the address bottom sheet
-                        placeAutocomplete("Jamnabai Narsee School");
+                  // Rest of your widgets here
+                  SizedBox(
+                    height: MediaQuery.of(context).size.height *
+                        0.3, // Adjust as needed
+                    child: ListView.builder(
+                      itemCount: placePredictions.length,
+                      itemBuilder: (context, index) {
+                        print(
+                            "Description: ${placePredictions[index].description}");
+                        return LocationListTile(
+                          location: placePredictions[index].description!,
+                          press: () {},
+                        );
                       },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
-                        foregroundColor: Colors.black87,
-                        elevation: 0,
-                        fixedSize: const Size(double.infinity, 40),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
-                        ),
-                      ),
-                      child: const Text('Current Location'),
                     ),
                   ),
-                  const Divider(
-                      height: 20,
-                      thickness: 2,
-                      color: Color.fromARGB(255, 235, 235, 235)),
-                  LocationListTile(location: 'Juhu, Mumbai', press: () {}),
                 ],
               ),
             ),
@@ -200,26 +232,9 @@ class _MyHomePageState extends State<MyHomePage> {
         },
       ).whenComplete(
         () => setState(() {
-          _isBottomSheetAddressOpen = false;
+          //_isBottomSheetAddressOpen = false;
         }),
       );
-    }
-  }
-
-  Future<void> placeAutocomplete(String query) async {
-    print("Entered placeAutocomplete");
-    print("ApiKey: $apiKey");
-
-    Uri uri =
-        Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
-      "input": query,
-      "key": apiKey,
-    });
-
-    String? response = await NetworkUtility.fetchUrl(uri);
-
-    if (response != null) {
-      print(response);
     }
   }
 
@@ -353,6 +368,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         FocusScope.of(context).unfocus();
       },
       child: AppBar(
+        automaticallyImplyLeading:
+            false, // This line removes the default back button
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,6 +383,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: TextButton(
                     onPressed: () {
                       homePageState._openBottomSheet();
+
+                      /*
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginScreen()));
+                      */
                     },
                     child: const Text(
                       'Pronto',

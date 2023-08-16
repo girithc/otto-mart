@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
 class LocationListTile extends StatelessWidget {
-  const LocationListTile(
-      {required this.location, required this.press, super.key});
+  const LocationListTile({this.location, this.press, super.key});
 
-  final String location;
-  final VoidCallback press;
+  final String? location;
+  final VoidCallback? press;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +18,7 @@ class LocationListTile extends StatelessWidget {
             color: Colors.black, // Replace with the desired color
           ),
           title: Text(
-            location,
+            location!,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
