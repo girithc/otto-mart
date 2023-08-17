@@ -55,107 +55,46 @@ class _MyCatalogState extends State<MyCatalog> {
         create: (context) => CatalogProvider(),
         child: ListOfItems(categories: categories),
       ),
-    );
-  }
-}
-
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String categoryName;
-  const CustomAppBar({required this.categoryName, Key? key}) : super(key: key);
-
-  @override
-  Size get preferredSize =>
-      const Size.fromHeight(80); // Increased height to accommodate content
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      // GestureDetector captures taps on the screen
-      onTap: () {
-        // When a tap is detected, reset the focus
-        FocusScope.of(context).unfocus();
-      },
-      child: AppBar(
-        backgroundColor: //Colors.deepPurpleAccent.shade100,
-            Theme.of(context).colorScheme.inversePrimary,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  // GestureDetector captures taps on the input field
-                  onTap: () {
-                    // Prevent the focus from being triggered when tapping on the input field
-                    // The empty onTap handler ensures that the tap event is captured here
-                  },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.6,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8.0),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          spreadRadius: 2,
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    height: 50, // Increased height to contain the input field
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () {
-                            // Your search logic here
-                          },
-                        ),
-                        Expanded(
-                          child: TextField(
-                            style: TextStyle(
-                              fontSize: 15,
-                              color:
-                                  Theme.of(context).colorScheme.inversePrimary,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'Search Groceries',
-                              border: InputBorder.none,
-                            ),
-                            // Add your custom logic for handling text input, if needed.
-                            // For example, you can use the onChanged callback to get the typed text.
-                            onChanged: (text) {
-                              // Your custom logic here
-                            },
-                          ),
-                        ),
-                      ],
+      bottomNavigationBar: BottomAppBar(
+        child: SizedBox(
+          child: Row(
+            mainAxisSize:
+                MainAxisSize.max, // Expand the Row to fill the available space
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                flex: 6, // Represents the 70% width
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(1.0), // Set the circular radius
                     ),
                   ),
+                  child: const Text('Cart'),
                 ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.1,
-                  child: IconButton(
-                      padding: const EdgeInsets.only(right: 15.0),
-                      icon: const Icon(Icons.shopping_bag_outlined),
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyCart()));
-                      }),
-                )
-              ],
-            ),
-          ],
+              ),
+              Expanded(
+                flex: 4, // Represents the 30% width
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(1.0), // Set the circular radius
+                    ),
+                  ),
+                  child: const Text('Cart'),
+                ),
+              ),
+            ],
+          ),
         ),
-        toolbarHeight: 130,
-        // Add any other actions or widgets to the AppBar if needed.
-        // For example, you can use actions to add buttons or icons.
       ),
     );
   }
@@ -184,15 +123,30 @@ class _ListOfItemsState extends State<ListOfItems> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Text(
-            widget.categories.isNotEmpty
-                ? (categoryName.isEmpty
-                    ? widget.categories[0].name
-                    : categoryName)
-                : "",
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Container(
+            width: double.infinity, // Expand to full width
+            color: Colors.deepPurple, // Background color
+            padding: const EdgeInsets.all(6.0), // Optional padding
+            child: Center(
+              child: Text(
+                widget.categories.isNotEmpty
+                    ? (categoryName.isEmpty
+                        ? widget.categories[0].name
+                        : categoryName)
+                    : "",
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white, // Text color
+                ),
+              ),
+            ),
           ),
           Expanded(
+              child: SizedBox(
+            height: MediaQuery.of(context)
+                .size
+                .height, // Set the container height to the screen height
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -202,16 +156,16 @@ class _ListOfItemsState extends State<ListOfItems> {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       border: Border.all(color: Colors.black, width: 1.0),
-                      borderRadius: BorderRadius.circular(
-                          4.0), // Optional: Add rounded corners
+                      borderRadius: BorderRadius.circular(4.0),
+                      color: Colors.white,
                     ),
                     child: ListView.builder(
-                      shrinkWrap: true, // Add this line to remove the padding
                       itemCount: widget.categories.length,
                       itemBuilder: (context, index) {
                         return CategoryItem(
-                            categoryID: widget.categories[index].id,
-                            categoryName: widget.categories[index].name);
+                          categoryID: widget.categories[index].id,
+                          categoryName: widget.categories[index].name,
+                        );
                       },
                     ),
                   ),
@@ -226,7 +180,7 @@ class _ListOfItemsState extends State<ListOfItems> {
                 )
               ],
             ),
-          ),
+          )),
         ],
       ),
     );
@@ -402,6 +356,108 @@ class ListItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String categoryName;
+  const CustomAppBar({required this.categoryName, Key? key}) : super(key: key);
+
+  @override
+  Size get preferredSize =>
+      const Size.fromHeight(80); // Increased height to accommodate content
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      // GestureDetector captures taps on the screen
+      onTap: () {
+        // When a tap is detected, reset the focus
+        FocusScope.of(context).unfocus();
+      },
+      child: AppBar(
+        elevation: 1.0,
+        backgroundColor: //Colors.deepPurpleAccent.shade100,
+            Colors.white, //Theme.of(context).colorScheme.inversePrimary,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                GestureDetector(
+                  // GestureDetector captures taps on the input field
+                  onTap: () {
+                    // Prevent the focus from being triggered when tapping on the input field
+                    // The empty onTap handler ensures that the tap event is captured here
+                  },
+                  child: Container(
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(4.0),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.deepPurpleAccent,
+                          spreadRadius: 1,
+                          blurRadius: 3,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    margin: const EdgeInsets.symmetric(horizontal: 10.0),
+                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                    height: 50, // Increased height to contain the input field
+                    child: Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.search),
+                          onPressed: () {
+                            // Your search logic here
+                          },
+                        ),
+                        Expanded(
+                          child: TextField(
+                            style: const TextStyle(
+                              fontSize: 18,
+                              color: Colors.black,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Search Groceries',
+                              border: InputBorder.none,
+                            ),
+                            // Add your custom logic for handling text input, if needed.
+                            // For example, you can use the onChanged callback to get the typed text.
+                            onChanged: (text) {
+                              // Your custom logic here
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * 0.1,
+                  child: IconButton(
+                      padding: const EdgeInsets.only(right: 15.0),
+                      icon: const Icon(Icons.shopping_bag_outlined),
+                      onPressed: () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyCart()));
+                      }),
+                )
+              ],
+            ),
+          ],
+        ),
+        toolbarHeight: 130,
+        // Add any other actions or widgets to the AppBar if needed.
+        // For example, you can use actions to add buttons or icons.
       ),
     );
   }

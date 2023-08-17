@@ -253,9 +253,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         FocusScope.of(context).unfocus();
       },
       child: AppBar(
+        elevation: 0,
         automaticallyImplyLeading:
             false, // This line removes the default back button
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        backgroundColor:
+            Colors.white, //Theme.of(context).colorScheme.inversePrimary,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -264,27 +266,36 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.only(left: 5.0),
-                  margin: const EdgeInsets.symmetric(horizontal: 5.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 0.0),
                   child: TextButton(
-                    onPressed: () {
-                      homePageState._openBottomSheet();
+                      onPressed: () {
+                        homePageState._openBottomSheet();
 
-                      /*
+                        /*
                       Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => const LoginScreen()));
                       */
-                    },
-                    child: const Text(
-                      'Pronto',
-                      style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ),
+                      },
+                      child: ShaderMask(
+                        shaderCallback: (bounds) => const RadialGradient(
+                                center: Alignment.topLeft,
+                                radius: 1.0,
+                                colors: [
+                                  Colors.deepPurple,
+                                  Colors.deepPurpleAccent
+                                ],
+                                tileMode: TileMode.mirror)
+                            .createShader(bounds),
+                        child: const Text(
+                          'Pronto',
+                          style: TextStyle(
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
+                      )),
                 ),
                 const Spacer(),
                 IconButton(
@@ -317,18 +328,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(8.0),
-                  boxShadow: [
+                  borderRadius: BorderRadius.circular(4.0),
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.3),
-                      spreadRadius: 2,
-                      blurRadius: 5,
-                      offset: const Offset(0, 3),
+                      color: Colors.deepPurpleAccent,
+                      spreadRadius: 1,
+                      blurRadius: 3,
+                      offset: Offset(0, 3),
                     ),
                   ],
                 ),
-                margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                margin: const EdgeInsets.symmetric(horizontal: 0.0),
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
                 height: 50, // Increased height to contain the input field
                 child: Row(
                   children: [
@@ -340,9 +351,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                     Expanded(
                       child: TextField(
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 18,
-                          color: Theme.of(context).colorScheme.inversePrimary,
+                          color: Colors.black,
                         ),
                         decoration: const InputDecoration(
                           hintText: 'Search For Groceries',
@@ -357,7 +368,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
-        toolbarHeight: 130,
+        toolbarHeight: 120,
       ),
     );
   }
