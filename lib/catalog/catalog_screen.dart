@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
@@ -56,40 +57,83 @@ class _MyCatalogState extends State<MyCatalog> {
         child: ListOfItems(categories: categories),
       ),
       bottomNavigationBar: BottomAppBar(
-        child: SizedBox(
+        child: Container(
+          margin: EdgeInsets.zero,
           child: Row(
-            mainAxisSize:
-                MainAxisSize.max, // Expand the Row to fill the available space
+            // Expand the Row to fill the available space
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               Expanded(
-                flex: 6, // Represents the 70% width
-                child: ElevatedButton(
-                  onPressed: () {},
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(1.0), // Set the circular radius
+                flex: 5,
+                child: CarouselSlider(
+                  options: CarouselOptions(
+                      autoPlay: true,
+                      enlargeCenterPage: true,
+                      aspectRatio: 3.5,
+                      viewportFraction: 1.0),
+                  items: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Center(
+                        child: Text("Offer 1"),
+                      ),
                     ),
-                  ),
-                  child: const Text('Cart'),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Center(
+                        child: Text("Offer 2"),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Center(
+                        child: Text("Offer 3"),
+                      ),
+                    ),
+                    // Add more items as needed
+                  ],
                 ),
               ),
               Expanded(
-                flex: 4, // Represents the 30% width
+                flex: 4,
                 child: ElevatedButton(
                   onPressed: () {},
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
+                    backgroundColor: Colors.pinkAccent,
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
                     shape: RoundedRectangleBorder(
-                      borderRadius:
-                          BorderRadius.circular(1.0), // Set the circular radius
+                      borderRadius: BorderRadius.circular(4.0),
                     ),
                   ),
-                  child: const Text('Cart'),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons
+                          .shopping_cart_outlined), // Add your desired icon here
+                      SizedBox(
+                          width:
+                              10), // Add some spacing between the icon and text
+                      Text('Cart'),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -239,7 +283,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
       flex: 8,
       child: Container(
         padding: EdgeInsets.zero,
-        color: const Color.fromARGB(255, 212, 187, 255),
+        color: Colors.white, //const Color.fromARGB(255, 212, 187, 255),
         child: GridView.builder(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -443,7 +487,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: MediaQuery.of(context).size.width * 0.1,
                   child: IconButton(
                       padding: const EdgeInsets.only(right: 15.0),
-                      icon: const Icon(Icons.shopping_bag_outlined),
+                      icon: const Icon(Icons.shopping_cart_outlined),
                       onPressed: () {
                         Navigator.push(
                             context,

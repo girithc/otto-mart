@@ -194,15 +194,6 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Your notifications icon logic here
-          Navigator.push(
-              context, MaterialPageRoute(builder: (context) => const MyCart()));
-        },
-        tooltip: 'Cart',
-        child: const Icon(Icons.shopping_bag_outlined),
-      ),
     );
   }
 
@@ -300,7 +291,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 const Spacer(),
                 IconButton(
                   padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.shopping_bag_outlined),
+                  icon: const Icon(Icons.shopping_cart_outlined),
                   onPressed: () {
                     Navigator.push(
                         context,
