@@ -57,6 +57,9 @@ class _MyCatalogState extends State<MyCatalog> {
         child: ListOfItems(categories: categories),
       ),
       bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        shadowColor: Colors.white,
+        surfaceTintColor: Colors.white,
         child: Container(
           margin: EdgeInsets.zero,
           child: Row(
@@ -169,7 +172,7 @@ class _ListOfItemsState extends State<ListOfItems> {
         children: [
           Container(
             width: double.infinity, // Expand to full width
-            color: Colors.deepPurple, // Background color
+            color: Colors.deepPurpleAccent, // Background color
             padding: const EdgeInsets.all(6.0), // Optional padding
             child: Center(
               child: Text(
@@ -197,20 +200,23 @@ class _ListOfItemsState extends State<ListOfItems> {
                 // First section consuming 2 columns
                 Expanded(
                   flex: 2,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black, width: 1.0),
-                      borderRadius: BorderRadius.circular(4.0),
-                      color: Colors.white,
-                    ),
-                    child: ListView.builder(
-                      itemCount: widget.categories.length,
-                      itemBuilder: (context, index) {
-                        return CategoryItem(
-                          categoryID: widget.categories[index].id,
-                          categoryName: widget.categories[index].name,
-                        );
-                      },
+                  child: Card(
+                    elevation: 5.0,
+                    shadowColor: Colors.white,
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        //borderRadius: BorderRadius.circular(4.0),
+                        color: Colors.white,
+                      ),
+                      child: ListView.builder(
+                        itemCount: widget.categories.length,
+                        itemBuilder: (context, index) {
+                          return CategoryItem(
+                            categoryID: widget.categories[index].id,
+                            categoryName: widget.categories[index].name,
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ),

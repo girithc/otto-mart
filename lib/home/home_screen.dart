@@ -71,7 +71,6 @@ class _MyHomePageState extends State<MyHomePage> {
     if (response != null) {
       PlaceAutoCompleteResponse result =
           PlaceAutoCompleteResponse.parseAutocompleteResult(response);
-      String? predictions = result.predictions?[0].description;
 
       if (result.predictions != null) {
         setState(() {

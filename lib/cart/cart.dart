@@ -16,11 +16,38 @@ class CartItem {
 
 class CartModel extends ChangeNotifier {
   final List<CartItem> _items = [];
+  int _deliveryPartnerTip = 0;
+  int _packagingFee = 15;
+  int _deliveryFee = 35;
 
   List<CartItem> get items => _items;
 
-  int get totalPrice => items.fold(
+  int get totalPriceItems => items.fold(
       0, (total, current) => total + current.price * current.quantity);
+
+  int get totalPrice =>
+      totalPriceItems + _deliveryPartnerTip + _deliveryFee + _packagingFee;
+
+  int get deliveryPartnerTip => _deliveryPartnerTip;
+
+  set deliveryPartnerTip(int tip) {
+    _deliveryPartnerTip = tip;
+    notifyListeners();
+  }
+
+  int get packagingFee => _packagingFee;
+
+  set packagingFee(int fee) {
+    _packagingFee = fee;
+    notifyListeners();
+  }
+
+  int get deliveryFee => _deliveryFee;
+
+  set deliveryFee(int fee) {
+    _deliveryFee = fee;
+    notifyListeners();
+  }
 
   void addItemToCart(CartItem item) {
     final existingItemIndex =
