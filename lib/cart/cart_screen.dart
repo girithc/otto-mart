@@ -68,7 +68,8 @@ class _CartList extends StatelessWidget {
       );
     } else {
       return Container(
-        color: Theme.of(context).colorScheme.inversePrimary, //Colors.white,
+        color: const Color.fromARGB(255, 255, 158,
+            190), //Theme.of(context).colorScheme.inversePrimary, //Colors.white,
         margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
         child: SingleChildScrollView(
@@ -239,7 +240,7 @@ class _TaxAndDelivery extends StatelessWidget {
             ),
             _CustomListItem(
               icon: Icons.volunteer_activism_outlined,
-              label: 'Delivery Fee',
+              label: 'Delivery Partner Tip',
               amount: '${cart.deliveryPartnerTip}',
               font: Theme.of(context).textTheme.titleSmall,
             ),
