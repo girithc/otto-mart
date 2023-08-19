@@ -3,7 +3,9 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:pronto/cart/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
+import 'package:pronto/order/place_order_screen.dart';
 import 'package:provider/provider.dart';
 
 class MyCart extends StatelessWidget {
@@ -11,6 +13,9 @@ class MyCart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>();
+    bool hasDeliveryAddress = !cart.deliveryAddress.isEmpty();
+
     return Scaffold(
       appBar: AppBar(
         title: ShaderMask(
@@ -30,6 +35,8 @@ class MyCart extends StatelessWidget {
         backgroundColor: //Colors.deepPurpleAccent.shade100,
             Colors.white,
         foregroundColor: Colors.deepPurple,
+        shadowColor: Colors.white,
+        surfaceTintColor: Colors.white,
       ),
       body: Container(
         color: Colors.white,
@@ -41,14 +48,132 @@ class MyCart extends StatelessWidget {
                 child: _CartList(),
               ),
             ),
-            const Divider(height: 4, color: Colors.black),
+            //const Divider(height: 4, color: Colors.black),
           ],
         ),
       ),
-      bottomNavigationBar: const BottomAppBar(
-        height: 100,
-        child: Text('BAR'),
-      ),
+      bottomNavigationBar: !hasDeliveryAddress
+          ? BottomAppBar(
+              height: MediaQuery.of(context).size.height * 0.15,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AddressScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pinkAccent,
+                  foregroundColor: Colors.white,
+                  textStyle: Theme.of(context).textTheme.titleLarge,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.electric_bike_outlined),
+                    SizedBox(width: 10),
+                    Text('Enter Delivery Address'),
+                  ],
+                ),
+              ),
+            )
+          : Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.grey,
+                    blurRadius: 10,
+                    offset: Offset(0, 5), // Specify the shadow's offset
+                  ),
+                ],
+              ),
+              padding: EdgeInsets.zero,
+              margin: EdgeInsets.zero,
+              height: MediaQuery.of(context).size.height * 0.18,
+              child: Column(
+                // Align children at the start
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+
+                children: [
+                  Container(
+                      margin: EdgeInsets.zero,
+                      padding: EdgeInsets.zero,
+                      height: MediaQuery.of(context).size.height * 0.065,
+                      decoration: BoxDecoration(
+                          border: Border.all(
+                              style: BorderStyle.solid, color: Colors.white)),
+                      child: Row(
+                        children: [
+                          Expanded(
+                              flex: 6,
+                              child: Text(
+                                  "Address: ${cart.deliveryAddress.mainText}")),
+                          Expanded(
+                            flex: 4,
+                            child: TextButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AddressScreen(),
+                                  ),
+                                );
+                              },
+                              child: const Text("Change Address"),
+                            ),
+                          ),
+                        ],
+                      )),
+                  Container(
+                    padding: const EdgeInsets.all(2),
+                    height: MediaQuery.of(context).size.height * (0.18 - 0.065),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PlaceOrder(),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pinkAccent,
+                        foregroundColor: Colors.white,
+                        textStyle: Theme.of(context).textTheme.titleLarge,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 0, vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(cart.totalPrice.toString()),
+                          const Text(" | "),
+                          const Icon(Icons.payments_outlined),
+                          const SizedBox(width: 10),
+                          const Text('Complete Payment'),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // ... other children of the Column ...
+                ],
+              ),
+            ),
+      // Return an empty SizedBox when no delivery address
     );
   }
 }
@@ -68,8 +193,8 @@ class _CartList extends StatelessWidget {
       );
     } else {
       return Container(
-        color: const Color.fromARGB(255, 255, 158,
-            190), //Theme.of(context).colorScheme.inversePrimary, //Colors.white,
+        color: //const Color.fromARGB(255, 255, 158,            190),
+            Theme.of(context).colorScheme.inversePrimary, //Colors.white,
         margin: EdgeInsets.zero,
         padding: EdgeInsets.zero,
         child: SingleChildScrollView(

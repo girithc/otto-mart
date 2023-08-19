@@ -14,11 +14,28 @@ class CartItem {
   });
 }
 
+class Address {
+  final String placeId;
+  final String mainText;
+  final String secondaryText;
+
+  Address(
+      {required this.placeId,
+      required this.mainText,
+      required this.secondaryText});
+
+  bool isEmpty() {
+    return (placeId.isEmpty && mainText.isEmpty && secondaryText.isEmpty);
+  }
+}
+
 class CartModel extends ChangeNotifier {
   final List<CartItem> _items = [];
   int _deliveryPartnerTip = 0;
   int _packagingFee = 15;
   int _deliveryFee = 35;
+  Address _deliveryAddress =
+      Address(placeId: "", mainText: "", secondaryText: "");
 
   List<CartItem> get items => _items;
 
@@ -46,6 +63,13 @@ class CartModel extends ChangeNotifier {
 
   set deliveryFee(int fee) {
     _deliveryFee = fee;
+    notifyListeners();
+  }
+
+  Address get deliveryAddress => _deliveryAddress;
+
+  set deliveryAddress(Address address) {
+    _deliveryAddress = address;
     notifyListeners();
   }
 
