@@ -39,10 +39,19 @@ class Item {
   final int id;
   final String name;
   final int price;
+  final int stockQuantity;
 
-  Item({required this.id, required this.name, required this.price});
+  Item(
+      {required this.id,
+      required this.name,
+      required this.price,
+      required this.stockQuantity});
 
   factory Item.fromJson(Map<String, dynamic> json) {
-    return Item(id: json['id'], name: json['name'], price: json['price']);
+    return Item(
+        id: json['id'],
+        name: json['name'],
+        price: json['price'],
+        stockQuantity: json['stock_quantity']);
   }
 }

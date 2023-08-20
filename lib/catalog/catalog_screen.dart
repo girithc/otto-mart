@@ -299,9 +299,11 @@ class _ItemCatalogState extends State<ItemCatalog> {
           itemCount: items.length,
           itemBuilder: (context, index) {
             return ListItem(
-                name: items[index].name,
-                id: items[index].id,
-                price: items[index].price);
+              name: items[index].name,
+              id: items[index].id,
+              price: items[index].price,
+              stockQuantity: items[index].stockQuantity,
+            );
           },
         ),
       ),
@@ -339,8 +341,13 @@ class ListItem extends StatelessWidget {
   final String name;
   final int id;
   final int price;
+  final int stockQuantity;
   const ListItem(
-      {required this.name, required this.id, required this.price, super.key});
+      {required this.name,
+      required this.id,
+      required this.price,
+      required this.stockQuantity,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -351,8 +358,12 @@ class ListItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                Product(productName: name, productId: id, price: price),
+            builder: (context) => Product(
+              productName: name,
+              productId: id,
+              price: price,
+              stockQuantity: stockQuantity,
+            ),
           ),
         );
       },
@@ -392,11 +403,11 @@ class ListItem extends StatelessWidget {
                     ),
                     onPressed: () {
                       final cartItem = CartItem(
-                        productId: id.toString(),
-                        productName: name,
-                        price: price,
-                        quantity: 1,
-                      );
+                          productId: id.toString(),
+                          productName: name,
+                          price: price,
+                          quantity: 1,
+                          stockQuantity: stockQuantity);
                       cart.addItemToCart(cartItem);
                     },
                     child: const Text('Add'),

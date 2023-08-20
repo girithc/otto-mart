@@ -7,12 +7,14 @@ class Product extends StatelessWidget {
   final String productName; // Add this variable to store the product name
   final int productId;
   final int price;
+  final int stockQuantity;
 
   const Product(
       {Key? key,
       required this.productName,
       required this.productId,
-      required this.price})
+      required this.price,
+      required this.stockQuantity})
       : super(key: key);
 
   @override
@@ -78,11 +80,11 @@ class Product extends StatelessWidget {
                   onPressed: () {
                     // Add your button logic here
                     final cartItem = CartItem(
-                      productId: productId.toString(),
-                      productName: productName,
-                      price: price,
-                      quantity: 1,
-                    );
+                        productId: productId.toString(),
+                        productName: productName,
+                        price: price,
+                        quantity: 1,
+                        stockQuantity: stockQuantity);
                     cart.addItemToCart(cartItem);
                   },
                   style: ElevatedButton.styleFrom(

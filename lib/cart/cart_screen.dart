@@ -289,10 +289,12 @@ class _CartList extends StatelessWidget {
                                       ),
                                     )),
                               ),
+                              /*
                               const Expanded(
                                 flex: 1,
                                 child: SizedBox(width: 10),
                               ),
+                              */
                               Expanded(
                                 flex: 3,
                                 child: Container(

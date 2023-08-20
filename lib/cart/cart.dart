@@ -5,13 +5,14 @@ class CartItem {
   final String productName;
   final int price;
   int quantity;
+  int stockQuantity;
 
-  CartItem({
-    required this.productId,
-    required this.productName,
-    required this.price,
-    this.quantity = 1,
-  });
+  CartItem(
+      {required this.productId,
+      required this.productName,
+      required this.price,
+      this.quantity = 1,
+      required this.stockQuantity});
 }
 
 class Address {
@@ -82,6 +83,10 @@ class CartModel extends ChangeNotifier {
     if (existingItemIndex != -1) {
       // If the item is already in the cart, update its quantity
       print("item already exists in cart, ${item.productName}");
+      if (_items[existingItemIndex].quantity + 1 >
+          _items[existingItemIndex].stockQuantity) {
+        throw Exception("No more items in stock");
+      }
       _items[existingItemIndex].quantity += 1;
     } else {
       // Otherwise, add the item to the cart
