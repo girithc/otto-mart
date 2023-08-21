@@ -352,7 +352,8 @@ class ListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>(); // Access the CartModel instance
-
+    var itemIndexInCart =
+        cart.items.indexWhere((item) => item.productId == id.toString());
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -410,7 +411,48 @@ class ListItem extends StatelessWidget {
                           stockQuantity: stockQuantity);
                       cart.addItemToCart(cartItem);
                     },
-                    child: const Text('Add'),
+                    child: itemIndexInCart != -1
+                        ? Container(
+                            decoration: BoxDecoration(
+                                color: Colors.deepPurpleAccent, // Add border
+                                borderRadius: BorderRadius.circular(3.0)),
+                            child: Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      context
+                                          .read<CartModel>()
+                                          .removeItem(itemId: id.toString());
+                                    },
+                                    child: const Icon(
+                                      Icons.horizontal_rule,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    cart.items[itemIndexInCart].quantity
+                                        .toString(),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      cart.addItemToCart(CartItem(
+                                          productId: id.toString(),
+                                          productName: name,
+                                          price: price,
+                                          stockQuantity: stockQuantity));
+                                    },
+                                    child: const Icon(
+                                      Icons.add,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ))
+                        : const Text('Add'),
                   ),
                 ),
               ],

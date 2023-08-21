@@ -30,6 +30,13 @@ class Address {
   }
 }
 
+class ItemInCart {
+  final bool flag;
+  final int quantity;
+
+  ItemInCart(this.flag, this.quantity);
+}
+
 class CartModel extends ChangeNotifier {
   final List<CartItem> _items = [];
   int _deliveryPartnerTip = 0;
@@ -78,7 +85,7 @@ class CartModel extends ChangeNotifier {
     final existingItemIndex =
         _items.indexWhere((cartItem) => cartItem.productId == item.productId);
 
-    printItems(_items);
+    //printItems(_items);
 
     if (existingItemIndex != -1) {
       // If the item is already in the cart, update its quantity
