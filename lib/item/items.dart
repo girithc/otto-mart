@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:master/add-item/add-items.dart';
 import 'package:master/item-detail/item-details.dart';
 import 'package:master/item/item.dart';
 
@@ -40,40 +41,53 @@ class _ItemsState extends State<Items> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 4.0,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        title: Text(
-          widget.categoryName,
-          style: const TextStyle(
-              color: Colors.deepPurpleAccent, fontWeight: FontWeight.bold),
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          elevation: 4.0,
+          shadowColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          title: Text(
+            widget.categoryName,
+            style: const TextStyle(
+                color: Colors.deepPurpleAccent, fontWeight: FontWeight.bold),
+          ),
         ),
-      ),
-      body: RefreshIndicator(
-        onRefresh: _refreshItems, // Define the refresh function here
-        child: ListView.builder(
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return ListTile(
-              title: Text(items[index].name),
-              onTap: () => {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ItemDetails(
-                      itemId: items[index].id,
-                      itemName: items[index].name,
+        body: RefreshIndicator(
+          onRefresh: _refreshItems,
+          child: ListView.builder(
+            itemCount: items.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddItem(
+                            categoryName: widget.categoryName,
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Add Item'));
+              }
+              return ListTile(
+                title: Text(items[index - 1].name),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ItemDetails(
+                        itemId: items[index].id,
+                        itemName: items[index].name,
+                      ),
                     ),
-                  ),
-                )
-              },
-            );
-          },
-        ),
-      ),
-    );
+                  );
+                },
+              );
+            },
+          ),
+        ));
   }
 
   Future<void> _refreshItems() async {
