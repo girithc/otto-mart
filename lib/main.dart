@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:master/category/categories.dart';
+import 'package:master/store/stores.dart';
 
 void main() {
   runApp(const MyApp());
@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       body:
-          const Categories(), // This trailing comma makes auto-formatting nicer for build methods.
+          const Stores(), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

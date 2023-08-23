@@ -5,9 +5,13 @@ import 'package:master/item/item.dart';
 
 class Items extends StatefulWidget {
   const Items(
-      {required this.categoryId, required this.categoryName, super.key});
+      {required this.categoryId,
+      required this.categoryName,
+      required this.storeId,
+      super.key});
   final int categoryId;
   final String categoryName;
+  final int storeId;
 
   @override
   State<Items> createState() => _ItemsState();
@@ -25,7 +29,8 @@ class _ItemsState extends State<Items> {
 
   Future<void> fetchItems() async {
     try {
-      final fetchedItems = await apiClient.fetchItems(widget.categoryId, 1);
+      final fetchedItems =
+          await apiClient.fetchItems(widget.categoryId, widget.storeId);
       setState(() {
         items = fetchedItems;
       });
@@ -78,8 +83,8 @@ class _ItemsState extends State<Items> {
                     context,
                     MaterialPageRoute(
                       builder: (context) => ItemDetails(
-                        itemId: items[index].id,
-                        itemName: items[index].name,
+                        itemId: items[index - 1].id,
+                        itemName: items[index - 1].name,
                       ),
                     ),
                   );

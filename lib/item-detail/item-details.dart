@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:master/item-detail/item-detail.dart';
 
 class ItemDetails extends StatefulWidget {
@@ -163,21 +166,67 @@ class _ItemDetailsState extends State<ItemDetails> {
                           hintText: 'Enter Image Link',
                           labelText: 'Image',
                         ),
-                        initialValue: '',
-                        enabled: true, // Make the field read-only
+                        enabled: false,
                       ),
+                      const ImageUpload(),
                       Container(
-                          padding:
-                              const EdgeInsets.only(left: 150.0, top: 40.0),
-                          child: ElevatedButton(
-                            onPressed: _saveItem,
-                            child: const Text('Save'),
-                          )),
+                        padding: const EdgeInsets.only(left: 150.0, top: 40.0),
+                        child: ElevatedButton(
+                          onPressed: _saveItem,
+                          child: const Text('Save'),
+                        ),
+                      ),
                     ],
                   ),
                 )
               : const CircularProgressIndicator(), // Show a loading indicator when data is being fetched
         ),
+      ),
+    );
+  }
+}
+
+class ImageUpload extends StatefulWidget {
+  const ImageUpload({super.key});
+
+  @override
+  State<ImageUpload> createState() => _ImageUploadState();
+}
+
+class _ImageUploadState extends State<ImageUpload> {
+  File? _image;
+
+  //image picker
+  Future getImage(ImageSource source) async {
+    try {
+      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (image == null) return;
+
+      final imageTemp = File(image.path);
+
+      setState(() {
+        _image = imageTemp;
+        print('Image: $_image');
+      });
+    } on Exception catch (e) {
+      print('Failed to pick image $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        children: [
+          ElevatedButton(
+              onPressed: () {
+                getImage(ImageSource.gallery);
+              },
+              child: const Text('Add Image')),
+          _image != null
+              ? Image.file(_image!, width: 250, height: 250, fit: BoxFit.cover)
+              : Image.network('https://picsum.photos/250?image=9')
+        ],
       ),
     );
   }
