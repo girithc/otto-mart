@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"pronto-go/api"
 	"pronto-go/store"
 	"time"
@@ -106,9 +105,6 @@ func main() {
     google_server := api.NewGoogleServer("pronto-bucket", "service-account")
     fmt.Println("Created Google Server")
     server.Run(google_server)
-
-    http.HandleFunc("/sign", signHandler)
-    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil))
 }
  
 func CheckError(err error) {
