@@ -1,4 +1,4 @@
-package storage
+package store
 
 import (
 	"database/sql"
@@ -9,7 +9,7 @@ import (
 )
 
 func (s *PostgresStore) CreateStoreTable() error {
-	fmt.Println("Entered CreateStoreTable")
+	//fmt.Println("Entered CreateStoreTable")
 
 	query := `create table if not exists store (
 		id SERIAL PRIMARY KEY,
@@ -21,7 +21,7 @@ func (s *PostgresStore) CreateStoreTable() error {
 
 	_, err := s.db.Exec(query)
 
-	fmt.Println("Exiting CreateStoreTable")
+	//fmt.Println("Exiting CreateStoreTable")
 
 	return err
 }

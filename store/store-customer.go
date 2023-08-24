@@ -1,13 +1,11 @@
-package storage
+package store
 
 import (
-	"fmt"
-
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateCustomerTable() error {
-	fmt.Println("Entered CreateCustomerTable")
+	//fmt.Println("Entered CreateCustomerTable")
 
 	query := `create table if not exists customer (
 		id SERIAL PRIMARY KEY,
@@ -19,7 +17,7 @@ func (s *PostgresStore) CreateCustomerTable() error {
 
 	_, err := s.db.Exec(query)
 
-	fmt.Println("Exiting CreateCustomerTable")
+	//fmt.Println("Exiting CreateCustomerTable")
 
 	return err
 }

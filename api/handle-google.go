@@ -1,39 +1,18 @@
-package main
+package api
 
 import (
 	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"pronto-go/api"
-	"pronto-go/store"
 	"time"
 
-	"github.com/google/uuid"
-	iam "google.golang.org/api/iam/v1"
-
 	"cloud.google.com/go/storage"
+	"github.com/google/uuid"
+	"google.golang.org/api/iam/v1"
 )
 
-var (
-    // iamService is a client for calling the signBlob API.
-    iamService *iam.Service
-
-    // serviceAccountName represents Service Account Name.
-    // See more details: https://cloud.google.com/iam/docs/service-accounts
-    serviceAccountName string
-
-    // serviceAccountID follows the below format.
-    // "projects/%s/serviceAccounts/%s"
-    serviceAccountID string
-
-    // uploadableBucket is the destination bucket.
-    // All users will upload files directly to this bucket by using generated Signed URL.
-    uploadableBucket string
-)
-
-func signHandler(w http.ResponseWriter, r *http.Request) {
+func (gs *GoogleServer) handleGoogleSignManager(w http.ResponseWriter, r *http.Request) {
     // Accepts only POST method.
     // Otherwise, this handler returns 405.
     if r.Method != "POST" {
@@ -47,6 +26,7 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
             http.Error(w, "content_type must be set", http.StatusBadRequest)
             return
     }
+    fmt.Println("Content-Type ", ct)
 
     // Generates an object key for use in new Cloud Storage Object.
     // It's not duplicate with any object keys because of UUID.
@@ -57,8 +37,8 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
 
     // Generates a signed URL for use in the PUT request to GCS.
     // Generated URL should be expired after 15 mins.
-    url, err := storage.SignedURL(uploadableBucket, key, &storage.SignedURLOptions{
-            GoogleAccessID: serviceAccountName,
+    url, err := storage.SignedURL(gs.bucket, key, &storage.SignedURLOptions{
+            GoogleAccessID: gs.service_account,
             Method:         "PUT",
             Expires:        time.Now().Add(15 * time.Minute),
             ContentType:    ct,
@@ -67,8 +47,8 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
             // If you hope to avoid API call for signing bytes every time,
             // you can use self hosted private key and pass it in Privatekey.
             SignBytes: func(b []byte) ([]byte, error) {
-                    resp, err := iamService.Projects.ServiceAccounts.SignBlob(
-                            serviceAccountID,
+                    resp, err := gs.iam_service.Projects.ServiceAccounts.SignBlob(
+                            gs.service_account_id,
                             &iam.SignBlobRequest{BytesToSign: base64.StdEncoding.EncodeToString(b)},
                     ).Context(r.Context()).Do()
                     if err != nil {
@@ -84,35 +64,4 @@ func signHandler(w http.ResponseWriter, r *http.Request) {
     }
     w.WriteHeader(http.StatusOK)
     fmt.Fprintln(w, url)
-}
-
- 
-
-func main() {
-    
-    fmt.Printf("Starting Pronto-DB\n\n")
-    store, err := store.NewPostgresStore()
-
-	if err != nil {
-		log.Fatal(err)
-	} 
-    if err := store.Init(); err != nil {
-		log.Fatal(err)
-	} else {
-        fmt.Println("Store.Init() is successful.")
-    }
-    server := api.NewServer(":3000", store)
-    
-    google_server := api.NewGoogleServer("pronto-bucket", "service-account")
-    fmt.Println("Created Google Server")
-    server.Run(google_server)
-
-    http.HandleFunc("/sign", signHandler)
-    log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil))
-}
- 
-func CheckError(err error) {
-    if err != nil {
-        panic(err)
-    }
 }

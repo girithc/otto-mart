@@ -1,4 +1,4 @@
-package storage
+package store
 
 import (
 	"database/sql"
@@ -9,7 +9,7 @@ import (
 )
 
 func (s *PostgresStore) Create_Higher_Level_Category_Table() error {
-	fmt.Println("Entered CreateHigherLevelCategoryTable")
+	//fmt.Println("Entered CreateHigherLevelCategoryTable")
 
 	query := `create table if not exists higher_level_category (
 		id SERIAL PRIMARY KEY,
@@ -21,7 +21,7 @@ func (s *PostgresStore) Create_Higher_Level_Category_Table() error {
 	_, err := s.db.Exec(query)
 
 	
-	fmt.Println("Exiting CreateHigherLevelCategoryTable")
+	//fmt.Println("Exiting CreateHigherLevelCategoryTable")
 
 	return err
 }

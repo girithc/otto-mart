@@ -6,6 +6,15 @@ https://github.com/anthdm/gobank/blob/master/storage.go
 
 https://www.calhoun.io/querying-for-a-single-record-using-gos-database-sql-package/
 
+# Google Cloud Storage
+
+https://cloud.google.com/blog/products/storage-data-transfer/uploading-images-directly-to-cloud-storage-by-using-signed-url
+
+## GCP Command
+
+gcloud init
+gcloud auth application-default login
+
 # Schema - Postgresql
 
 -- Create the Store table (same as before)
