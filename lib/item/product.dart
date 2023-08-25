@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
 class Product extends StatelessWidget {
@@ -134,38 +135,41 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                GestureDetector(
-                  // GestureDetector captures taps on the input field
-                  onTap: () {
-                    // Prevent the focus from being triggered when tapping on the input field
-                    // The empty onTap handler ensures that the tap event is captured here
-                  },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.6,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(4.0),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.deepPurpleAccent,
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    height: 50, // Increased height to contain the input field
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () {
-                            // Your search logic here
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(4.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.deepPurpleAccent,
+                        spreadRadius: 1,
+                        blurRadius: 3,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  margin: const EdgeInsets.symmetric(horizontal: 10.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  height: 50, // Increased height to contain the input field
+                  child: Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.search),
+                        onPressed: () {
+                          // Your search logic here
+                        },
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      SearchPage(searchFocusNode: FocusNode())),
+                            );
                           },
-                        ),
-                        Expanded(
                           child: TextField(
                             style: const TextStyle(
                               fontSize: 18,
@@ -177,13 +181,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                             ),
                             // Add your custom logic for handling text input, if needed.
                             // For example, you can use the onChanged callback to get the typed text.
-                            onChanged: (text) {
-                              // Your custom logic here
+                            onChanged: (text) {},
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => SearchPage(
+                                        searchFocusNode: FocusNode())),
+                              );
                             },
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
                 SizedBox(

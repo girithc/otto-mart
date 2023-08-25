@@ -10,6 +10,7 @@ import 'package:pronto/catalog/category/api_client_catalog.dart';
 import 'package:pronto/catalog/item/api_client_item.dart';
 import 'package:pronto/catalog/catalog.dart';
 import 'package:pronto/item/product.dart';
+import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
 class MyCatalog extends StatefulWidget {
@@ -24,6 +25,32 @@ class MyCatalog extends StatefulWidget {
 }
 
 class _MyCatalogState extends State<MyCatalog> {
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+        providers: [
+          ChangeNotifierProvider(
+            create: (context) => CatalogProvider(),
+          ),
+        ],
+        child: CatalogPage(
+          categoryID: widget.categoryID,
+          categoryName: widget.categoryName,
+        ));
+  }
+}
+
+class CatalogPage extends StatefulWidget {
+  const CatalogPage(
+      {required this.categoryID, required this.categoryName, super.key});
+  final int categoryID;
+  final String categoryName;
+
+  @override
+  State<CatalogPage> createState() => _CatalogPageState();
+}
+
+class _CatalogPageState extends State<CatalogPage> {
   final CatalogApiClient apiClient = CatalogApiClient('https://localhost:3000');
   List<Category> categories = [];
 
@@ -49,13 +76,10 @@ class _MyCatalogState extends State<MyCatalog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
+      appBar: CatalogAppBar(
         categoryName: widget.categoryName,
       ),
-      body: ChangeNotifierProvider(
-        create: (context) => CatalogProvider(),
-        child: ListOfItems(categories: categories),
-      ),
+      body: ListOfItems(categories: categories),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shadowColor: Colors.white,
@@ -112,7 +136,12 @@ class _MyCatalogState extends State<MyCatalog> {
               Expanded(
                 flex: 4,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyCart()));
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.pinkAccent,
                     foregroundColor: Colors.white,
@@ -170,25 +199,6 @@ class _ListOfItemsState extends State<ListOfItems> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity, // Expand to full width
-            color: Colors.deepPurpleAccent, // Background color
-            padding: const EdgeInsets.all(6.0), // Optional padding
-            child: Center(
-              child: Text(
-                widget.categories.isNotEmpty
-                    ? (categoryName.isEmpty
-                        ? widget.categories[0].name
-                        : categoryName)
-                    : "",
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white, // Text color
-                ),
-              ),
-            ),
-          ),
           Expanded(
               child: SizedBox(
             height: MediaQuery.of(context)
@@ -464,104 +474,206 @@ class ListItem extends StatelessWidget {
   }
 }
 
+class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String categoryName;
+
+  const CatalogAppBar({required this.categoryName, Key? key}) : super(key: key);
+
+  @override
+  Size get preferredSize =>
+      const Size.fromHeight(42); // Increased height to accommodate content
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      elevation: 4.0,
+      child: Container(
+        padding: const EdgeInsets.only(top: 10),
+        margin: const EdgeInsets.all(0),
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.deepPurpleAccent,
+            width: 1.0, // Adjust the border width as needed
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment:
+              MainAxisAlignment.spaceBetween, // Aligns children to the edges
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1.0, // Adjust the border width as needed
+                ),
+              ),
+              width: MediaQuery.of(context).size.width * 0.15,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_outlined,
+                  color: Colors.black,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1.0, // Adjust the border width as needed
+                ),
+              ),
+              width: MediaQuery.of(context).size.width * 0.69,
+              child: Center(
+                child: Text(
+                  categoryName,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+            ),
+            const Spacer(), // Expands to fill available space
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.white,
+                  width: 1.0, // Adjust the border width as needed
+                ),
+              ),
+              width: MediaQuery.of(context).size.width * 0.15,
+              child: IconButton(
+                //rpadding: const EdgeInsets.only(right: 15.0),
+                icon: Transform.scale(
+                  scale: 1.7, // Adjust the scale factor as needed
+                  child: const Icon(
+                    Icons.search_outlined,
+                    color: Colors.black,
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          SearchPage(searchFocusNode: FocusNode()),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String categoryName;
   const CustomAppBar({required this.categoryName, Key? key}) : super(key: key);
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(80); // Increased height to accommodate content
+      const Size.fromHeight(65); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      // GestureDetector captures taps on the screen
-      onTap: () {
-        // When a tap is detected, reset the focus
-        FocusScope.of(context).unfocus();
-      },
-      child: AppBar(
-        elevation: 1.0,
-        backgroundColor: //Colors.deepPurpleAccent.shade100,
-            Colors.white, //Theme.of(context).colorScheme.inversePrimary,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final catalogProvider = context.watch<CatalogProvider>();
+    final categoryName = catalogProvider.catalog.categoryName;
+    return AppBar(
+      leading: Container(
+        margin: EdgeInsets.zero,
+        padding: EdgeInsets.zero,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.black,
+            width: 1.0, // Adjust the border width as needed
+          ),
+        ),
+        child: IconButton(
+          icon: const Icon(
+            Icons
+                .arrow_back, // Use the icon you want for the custom back button
+            color: Colors.black, // Customize the color as needed
+          ),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back when the button is pressed
+          },
+        ),
+      ),
+      elevation: 1.0,
+      backgroundColor: //Colors.deepPurpleAccent.shade100,
+          Colors
+              .deepPurpleAccent, //Theme.of(context).colorScheme.inversePrimary,
+      title: Container(
+        margin: EdgeInsets.zero,
+        padding: EdgeInsets.zero,
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: Colors.white,
+            width: 1.0, // Adjust the border width as needed
+          ),
+        ),
+        child: Row(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                GestureDetector(
-                  // GestureDetector captures taps on the input field
-                  onTap: () {
-                    // Prevent the focus from being triggered when tapping on the input field
-                    // The empty onTap handler ensures that the tap event is captured here
-                  },
-                  child: Container(
-                    width: MediaQuery.of(context).size.width * 0.6,
-                    decoration: BoxDecoration(
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.black,
+                  width: 1.0, // Adjust the border width as needed
+                ),
+              ),
+              width: MediaQuery.of(context).size.width * 0.6,
+              // Increased height to contain the input field
+              child: Center(
+                child: Text(
+                  categoryName,
+                  style: const TextStyle(
+                      fontSize: 25,
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(4.0),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.deepPurpleAccent,
-                          spreadRadius: 1,
-                          blurRadius: 3,
-                          offset: Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                    padding: const EdgeInsets.symmetric(horizontal: 18.0),
-                    height: 50, // Increased height to contain the input field
-                    child: Row(
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.search),
-                          onPressed: () {
-                            // Your search logic here
-                          },
-                        ),
-                        Expanded(
-                          child: TextField(
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
-                            ),
-                            decoration: const InputDecoration(
-                              hintText: 'Search Groceries',
-                              border: InputBorder.none,
-                            ),
-                            // Add your custom logic for handling text input, if needed.
-                            // For example, you can use the onChanged callback to get the typed text.
-                            onChanged: (text) {
-                              // Your custom logic here
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+            Container(
+              width: MediaQuery.of(context).size.width * 0.15,
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: Colors.black,
+                  width: 1.0, // Adjust the border width as needed
+                ),
+              ),
+              child: IconButton(
+                padding: const EdgeInsets.only(right: 15.0),
+                icon: Transform.scale(
+                  scale: 1.4, // Adjust the scale factor as needed
+                  child: const Icon(
+                    Icons.search_outlined,
+                    color: Colors.white,
                   ),
                 ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.1,
-                  child: IconButton(
-                      padding: const EdgeInsets.only(right: 15.0),
-                      icon: const Icon(Icons.shopping_cart_outlined),
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyCart()));
-                      }),
-                )
-              ],
-            ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          SearchPage(searchFocusNode: FocusNode()),
+                    ),
+                  );
+                },
+              ),
+            )
           ],
         ),
-        toolbarHeight: 130,
-        // Add any other actions or widgets to the AppBar if needed.
-        // For example, you can use actions to add buttons or icons.
       ),
+      toolbarHeight: 65,
+      // Add any other actions or widgets to the AppBar if needed.
+      // For example, you can use actions to add buttons or icons.
     );
   }
 }
