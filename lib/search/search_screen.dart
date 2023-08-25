@@ -1,6 +1,30 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/search/search_data.dart';
+import 'package:provider/provider.dart';
+
+class SearchTopLevel extends StatefulWidget {
+  const SearchTopLevel({required this.searchFocusNode, super.key});
+  final FocusNode searchFocusNode;
+
+  @override
+  State<SearchTopLevel> createState() => _SearchTopLevelState();
+}
+
+class _SearchTopLevelState extends State<SearchTopLevel> {
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => SearchData(),
+        )
+      ],
+      child: SearchPage(searchFocusNode: widget.searchFocusNode),
+    );
+  }
+}
 
 class SearchPage extends StatelessWidget {
   final FocusNode searchFocusNode;
@@ -15,9 +39,7 @@ class SearchPage extends StatelessWidget {
     return Scaffold(
       appBar: CustomAppBar(
           categoryName: 'Pronto', searchFocusNode: searchFocusNode),
-      body: Container(
-        color: Colors.white,
-      ),
+      body: const SearchItemList(),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shadowColor: Colors.white,
@@ -114,6 +136,34 @@ class SearchPage extends StatelessWidget {
   }
 }
 
+class SearchItemList extends StatefulWidget {
+  const SearchItemList({super.key});
+
+  @override
+  SearchItemListState createState() => SearchItemListState();
+}
+
+class SearchItemListState extends State<SearchItemList> {
+  @override
+  Widget build(BuildContext context) {
+    final searchData = Provider.of<SearchData>(context);
+    final searchQuery = searchData.searchQuery;
+    final searchResults = searchData.searchResults;
+
+    // Use searchQuery to make API calls and update searchResults
+    // Use searchResults to display the list of items
+
+    return ListView.builder(
+      itemCount: searchResults.length,
+      itemBuilder: (context, index) {
+        return ListTile(
+          title: Text(searchResults[index]),
+        );
+      },
+    );
+  }
+}
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String categoryName;
   final FocusNode searchFocusNode;
@@ -128,6 +178,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final searchData = Provider.of<SearchData>(context);
+    final TextEditingController searchController = TextEditingController();
+
     return Material(
       elevation: 4.0,
       shadowColor: Colors.deepPurpleAccent,
@@ -169,15 +222,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   fontSize: 18,
                   color: Colors.black,
                 ),
+                controller: searchController,
+                onChanged: (value) {
+                  searchData.updateSearchQuery(value);
+                },
                 decoration: const InputDecoration(
                   hintText: 'Search Groceries',
                   border: InputBorder.none,
                 ),
                 // Add your custom logic for handling text input, if needed.
                 // For example, you can use the onChanged callback to get the typed text.
-                onChanged: (text) {
-                  // Your custom logic here
-                },
               ),
             ),
             //const Spacer(), // Expands to fill available space
