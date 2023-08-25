@@ -57,6 +57,7 @@ func (s *Server) Run(gs *GoogleServer) {
 
 	http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
 
+
 	http.HandleFunc("/store/available", makeHTTPHandleFunc(s.handleStoreClient))
 	http.HandleFunc("/store", makeHTTPHandleFunc(s.handleStoreManager))
 
@@ -66,6 +67,7 @@ func (s *Server) Run(gs *GoogleServer) {
 
 	http.HandleFunc("/category", makeHTTPHandleFunc(s.handleCategory))
 	http.HandleFunc("/item", makeHTTPHandleFunc(s.handleItem))
+	http.HandleFunc("/search-item", makeHTTPHandleFunc(s.handleSearchItem))
 
 	fmt.Println("Listening PORT", s.listen_address)
 

@@ -149,6 +149,18 @@ func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
+func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) error {
+
+	if req.Method == "POST" {
+
+		print_path("POST", "search-item")
+		return s.Handle_Post_Search_Items(res, req)
+
+	}
+
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }
