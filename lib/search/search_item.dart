@@ -7,21 +7,22 @@ class SearchItemApiClient {
 
   SearchItemApiClient(this.baseUrl);
 
-  Future<List<Item>> fetchItems(int categoryId, int storeId) async {
+  Future<List<Item>> fetchSearchItems(String queryString) async {
     var url = Uri.parse('http://localhost:3000/search-item');
 
-    if (categoryId == 0 || storeId == 0) {
-      throw Exception('(ItemApiClient) Parameters are not valid');
+    if (queryString.isEmpty) {
+      throw Exception('(SearchItemApiClient) Parameters are not valid');
     }
 
-    var queryParams = {
-      'category_id': categoryId.toString(),
-      'store_id': storeId.toString()
-    };
-    url = url.replace(queryParameters: queryParams);
+    var requestBody = jsonEncode({
+      'name': queryString,
+    });
 
-    print("Query Params $queryParams");
-    http.Response response = await http.get(url);
+    var response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: requestBody,
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);

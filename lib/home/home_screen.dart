@@ -11,6 +11,7 @@ import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
 import 'package:pronto/login/login_screen.dart';
+import 'package:pronto/search/search_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -260,13 +261,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: TextButton(
                       onPressed: () {
                         homePageState._openBottomSheet();
-
-                        /*
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const LoginScreen()));
-                      */
                       },
                       child: ShaderMask(
                         shaderCallback: (bounds) => const RadialGradient(
@@ -340,16 +334,28 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       },
                     ),
                     Expanded(
-                      child: TextField(
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.black,
+                      child: GestureDetector(
+                        onTap: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SearchTopLevel()),
+                          )
+                        },
+                        child: const AbsorbPointer(
+                          absorbing: true,
+                          child: TextField(
+                            readOnly: true,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search For Groceries',
+                              border: InputBorder.none,
+                            ),
+                          ),
                         ),
-                        decoration: const InputDecoration(
-                          hintText: 'Search For Groceries',
-                          border: InputBorder.none,
-                        ),
-                        onChanged: (text) {},
                       ),
                     ),
                   ],

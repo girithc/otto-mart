@@ -559,9 +559,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          SearchPage(searchFocusNode: FocusNode()),
-                    ),
+                        builder: (context) => const SearchTopLevel()),
                   );
                 },
               ),
@@ -569,111 +567,6 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String categoryName;
-  const CustomAppBar({required this.categoryName, Key? key}) : super(key: key);
-
-  @override
-  Size get preferredSize =>
-      const Size.fromHeight(65); // Increased height to accommodate content
-
-  @override
-  Widget build(BuildContext context) {
-    final catalogProvider = context.watch<CatalogProvider>();
-    final categoryName = catalogProvider.catalog.categoryName;
-    return AppBar(
-      leading: Container(
-        margin: EdgeInsets.zero,
-        padding: EdgeInsets.zero,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.black,
-            width: 1.0, // Adjust the border width as needed
-          ),
-        ),
-        child: IconButton(
-          icon: const Icon(
-            Icons
-                .arrow_back, // Use the icon you want for the custom back button
-            color: Colors.black, // Customize the color as needed
-          ),
-          onPressed: () {
-            Navigator.pop(context); // Navigate back when the button is pressed
-          },
-        ),
-      ),
-      elevation: 1.0,
-      backgroundColor: //Colors.deepPurpleAccent.shade100,
-          Colors
-              .deepPurpleAccent, //Theme.of(context).colorScheme.inversePrimary,
-      title: Container(
-        margin: EdgeInsets.zero,
-        padding: EdgeInsets.zero,
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.white,
-            width: 1.0, // Adjust the border width as needed
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.black,
-                  width: 1.0, // Adjust the border width as needed
-                ),
-              ),
-              width: MediaQuery.of(context).size.width * 0.6,
-              // Increased height to contain the input field
-              child: Center(
-                child: Text(
-                  categoryName,
-                  style: const TextStyle(
-                      fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
-            Container(
-              width: MediaQuery.of(context).size.width * 0.15,
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.black,
-                  width: 1.0, // Adjust the border width as needed
-                ),
-              ),
-              child: IconButton(
-                padding: const EdgeInsets.only(right: 15.0),
-                icon: Transform.scale(
-                  scale: 1.4, // Adjust the scale factor as needed
-                  child: const Icon(
-                    Icons.search_outlined,
-                    color: Colors.white,
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          SearchPage(searchFocusNode: FocusNode()),
-                    ),
-                  );
-                },
-              ),
-            )
-          ],
-        ),
-      ),
-      toolbarHeight: 65,
-      // Add any other actions or widgets to the AppBar if needed.
-      // For example, you can use actions to add buttons or icons.
     );
   }
 }
