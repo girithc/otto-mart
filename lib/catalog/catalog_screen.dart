@@ -196,52 +196,48 @@ class _ListOfItemsState extends State<ListOfItems> {
 
     return Container(
       padding: const EdgeInsets.only(left: 0, top: 8),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Expanded(
-              child: SizedBox(
-            height: MediaQuery.of(context)
-                .size
-                .height, // Set the container height to the screen height
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // First section consuming 2 columns
-                Expanded(
-                  flex: 2,
-                  child: Card(
-                    elevation: 5.0,
-                    shadowColor: Colors.white,
-                    child: DecoratedBox(
-                      decoration: const BoxDecoration(
-                        //borderRadius: BorderRadius.circular(4.0),
-                        color: Colors.white,
-                      ),
-                      child: ListView.builder(
-                        itemCount: widget.categories.length,
-                        itemBuilder: (context, index) {
-                          return CategoryItem(
-                            categoryID: widget.categories[index].id,
-                            categoryName: widget.categories[index].name,
-                          );
-                        },
-                      ),
-                    ),
+      height: MediaQuery.of(context).size.height,
+      child: Expanded(
+        // Set the container height to the screen height
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // First section consuming 2 columns
+            Expanded(
+              flex: 2,
+              child: Card(
+                elevation: 5.0,
+                shadowColor: Colors.white,
+                child: DecoratedBox(
+                  decoration: const BoxDecoration(
+                    //borderRadius: BorderRadius.circular(4.0),
+                    color: Colors.white,
+                  ),
+                  child: ListView.builder(
+                    itemCount: widget.categories.length,
+                    itemBuilder: (context, index) {
+                      return CategoryItem(
+                        categoryID: widget.categories[index].id,
+                        categoryName: widget.categories[index].name,
+                        isSelected: widget.categories[index].id == categoryId
+                            ? true
+                            : false,
+                      );
+                    },
                   ),
                 ),
-
-                // Second section consuming 8 columns
-                ItemCatalog(
-                  categoryId: widget.categories.isNotEmpty
-                      ? (categoryId == 0 ? widget.categories[0].id : categoryId)
-                      : 0,
-                  storeId: storeId == 0 ? 1 : storeId,
-                )
-              ],
+              ),
             ),
-          )),
-        ],
+
+            // Second section consuming 8 columns
+            ItemCatalog(
+              categoryId: widget.categories.isNotEmpty
+                  ? (categoryId == 0 ? widget.categories[0].id : categoryId)
+                  : 0,
+              storeId: storeId == 0 ? 1 : storeId,
+            )
+          ],
+        ),
       ),
     );
   }
@@ -324,9 +320,13 @@ class _ItemCatalogState extends State<ItemCatalog> {
 class CategoryItem extends StatelessWidget {
   final int categoryID;
   final String categoryName;
+  final bool isSelected;
 
   const CategoryItem(
-      {required this.categoryID, required this.categoryName, super.key});
+      {required this.categoryID,
+      required this.categoryName,
+      required this.isSelected,
+      super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -336,7 +336,10 @@ class CategoryItem extends StatelessWidget {
           child: Text(
         categoryName,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontSize: 12),
+        style: isSelected
+            ? const TextStyle(
+                fontSize: 12, backgroundColor: Colors.deepPurpleAccent)
+            : const TextStyle(fontSize: 12),
       )),
       onTap: () {
         final catalogProvider = context.read<CatalogProvider>();
