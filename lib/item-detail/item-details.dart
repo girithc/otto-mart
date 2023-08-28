@@ -1,7 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:master/item-detail/api.dart';
 import 'package:master/item-detail/item-detail.dart';
 
 class ItemDetails extends StatefulWidget {
@@ -16,7 +18,6 @@ class ItemDetails extends StatefulWidget {
 
 class _ItemDetailsState extends State<ItemDetails> {
   bool isDataFetched = false; // Flag to indicate whether data is fetched
-
   final ItemDetailApiClient apiClient =
       ItemDetailApiClient('https://localhost:3000');
   List<Item> items = [];
@@ -168,7 +169,6 @@ class _ItemDetailsState extends State<ItemDetails> {
                         ),
                         enabled: false,
                       ),
-                      const ImageUpload(),
                       Container(
                         padding: const EdgeInsets.only(left: 150.0, top: 40.0),
                         child: ElevatedButton(
@@ -176,6 +176,7 @@ class _ItemDetailsState extends State<ItemDetails> {
                           child: const Text('Save'),
                         ),
                       ),
+                      const ImageUpload(),
                     ],
                   ),
                 )
@@ -195,6 +196,9 @@ class ImageUpload extends StatefulWidget {
 
 class _ImageUploadState extends State<ImageUpload> {
   File? _image;
+  Uint8List? _imageBytes;
+  final picker = ImagePicker();
+  CloudApi? api;
 
   //image picker
   Future getImage(ImageSource source) async {
@@ -206,11 +210,25 @@ class _ImageUploadState extends State<ImageUpload> {
 
       setState(() {
         _image = imageTemp;
-        print('Image: $_image');
+        print('Image: ${_image?.path}');
+        _imageBytes = _image?.readAsBytesSync();
       });
     } on Exception catch (e) {
       print('Failed to pick image $e');
     }
+  }
+
+  void _saveImage() async {
+    final response = await api?.save('test', _imageBytes!);
+    print(response?.downloadLink);
+  }
+
+  @override
+  void initState() {
+    super.initState(); // Call the superclass's initState method
+    rootBundle.loadString('assets/credentials.json').then((json) {
+      api = CloudApi(json);
+    });
   }
 
   @override
@@ -218,14 +236,23 @@ class _ImageUploadState extends State<ImageUpload> {
     return Center(
       child: Column(
         children: [
-          ElevatedButton(
-              onPressed: () {
-                getImage(ImageSource.gallery);
-              },
-              child: const Text('Add Image')),
           _image != null
               ? Image.file(_image!, width: 250, height: 250, fit: BoxFit.cover)
-              : Image.network('https://picsum.photos/250?image=9')
+              : Image.network('https://picsum.photos/250?image=9'),
+          Row(
+            children: [
+              ElevatedButton(
+                  onPressed: () {
+                    getImage(ImageSource.gallery);
+                  },
+                  child: const Text('Add Image')),
+              ElevatedButton(
+                  onPressed: () {
+                    _saveImage();
+                  },
+                  child: const Text('Save Image')),
+            ],
+          )
         ],
       ),
     );
