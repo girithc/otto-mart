@@ -190,54 +190,54 @@ class _ListOfItemsState extends State<ListOfItems> {
   @override
   Widget build(BuildContext context) {
     final catalogProvider = context.watch<CatalogProvider>();
-    final categoryId = catalogProvider.catalog.categoryID;
+    final categoryId = catalogProvider.catalog.categoryID == 0
+        ? widget.categories[0].id
+        : catalogProvider.catalog.categoryID;
     final storeId = catalogProvider.catalog.storeID;
-    final categoryName = catalogProvider.catalog.categoryName;
 
     return Container(
-      padding: const EdgeInsets.only(left: 0, top: 8),
+      padding: const EdgeInsets.only(left: 0, top: 4),
+      margin: EdgeInsets.zero,
       height: MediaQuery.of(context).size.height,
-      child: Expanded(
-        // Set the container height to the screen height
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // First section consuming 2 columns
-            Expanded(
-              flex: 2,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // First section consuming 2 columns
+          Expanded(
+            flex: 2,
+            child: Material(
+              elevation: 4.0,
               child: Card(
-                elevation: 5.0,
-                shadowColor: Colors.white,
-                child: DecoratedBox(
-                  decoration: const BoxDecoration(
-                    //borderRadius: BorderRadius.circular(4.0),
-                    color: Colors.white,
-                  ),
-                  child: ListView.builder(
-                    itemCount: widget.categories.length,
-                    itemBuilder: (context, index) {
-                      return CategoryItem(
-                        categoryID: widget.categories[index].id,
-                        categoryName: widget.categories[index].name,
-                        isSelected: widget.categories[index].id == categoryId
-                            ? true
-                            : false,
-                      );
-                    },
-                  ),
+                surfaceTintColor: Colors.white,
+                shadowColor: Colors.grey,
+                margin: EdgeInsets.zero,
+                child: ListView.builder(
+                  itemCount: widget.categories.length,
+                  itemBuilder: (context, index) {
+                    return CategoryItem(
+                      categoryID: widget.categories[index].id,
+                      categoryName: widget.categories[index].name,
+                      isSelected: widget.categories[index].id == categoryId
+                          ? true
+                          : false,
+                    );
+                  },
                 ),
               ),
             ),
+          ),
 
-            // Second section consuming 8 columns
-            ItemCatalog(
+          // Second section consuming 8 columns
+          Expanded(
+            flex: 8,
+            child: ItemCatalog(
               categoryId: widget.categories.isNotEmpty
                   ? (categoryId == 0 ? widget.categories[0].id : categoryId)
                   : 0,
               storeId: storeId == 0 ? 1 : storeId,
-            )
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -291,27 +291,24 @@ class _ItemCatalogState extends State<ItemCatalog> {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      flex: 8,
-      child: Container(
-        padding: EdgeInsets.zero,
-        color: Colors.white, //const Color.fromARGB(255, 212, 187, 255),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 0.0,
-            crossAxisSpacing: 0.0,
-          ),
-          itemCount: items.length,
-          itemBuilder: (context, index) {
-            return ListItem(
+    return Container(
+      padding: EdgeInsets.zero,
+      color: Colors.white,
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          mainAxisSpacing: 0.0,
+          crossAxisSpacing: 0.0,
+        ),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          return ListItem(
               name: items[index].name,
               id: items[index].id,
               price: items[index].price,
               stockQuantity: items[index].stockQuantity,
-            );
-          },
-        ),
+              index: index % 2);
+        },
       ),
     );
   }
@@ -331,14 +328,17 @@ class CategoryItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: EdgeInsets.zero,
+      splashColor: Colors.white,
+      selected: isSelected ? true : false,
+      selectedTileColor: Colors.purpleAccent,
+      selectedColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
       title: Center(
           child: Text(
         categoryName,
         textAlign: TextAlign.center,
         style: isSelected
-            ? const TextStyle(
-                fontSize: 12, backgroundColor: Colors.deepPurpleAccent)
+            ? const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)
             : const TextStyle(fontSize: 12),
       )),
       onTap: () {
@@ -355,11 +355,13 @@ class ListItem extends StatelessWidget {
   final int id;
   final int price;
   final int stockQuantity;
+  final int index;
   const ListItem(
       {required this.name,
       required this.id,
       required this.price,
       required this.stockQuantity,
+      required this.index,
       super.key});
 
   @override
@@ -381,96 +383,109 @@ class ListItem extends StatelessWidget {
           ),
         );
       },
-      child: Card(
-        color: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color.fromARGB(255, 200, 183, 246)),
+          borderRadius: BorderRadius.circular(2.0),
         ),
-        margin: const EdgeInsets.only(
-          top: 1.0,
-          left: 1.0,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ListTile(
-              title: Text(name),
-            ),
-            const Spacer(), // Space filler to push the Price and Button to the bottom
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-                  child: Text(
-                    price.toString(),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.all(1),
-                      textStyle: const TextStyle(fontSize: 16),
+        margin: index == 0
+            ? const EdgeInsets.only(
+                top: 1.0,
+                left: 4.0,
+              )
+            : const EdgeInsets.only(top: 1.0, left: 4.0, right: 4.0),
+        child: Card(
+          shadowColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(1.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                title: Text(name),
+              ),
+              const Spacer(), // Space filler to push the Price and Button to the bottom
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+                    child: Text(
+                      price.toString(),
+                      style: const TextStyle(fontSize: 16),
                     ),
-                    onPressed: () {
-                      final cartItem = CartItem(
-                          productId: id.toString(),
-                          productName: name,
-                          price: price,
-                          quantity: 1,
-                          stockQuantity: stockQuantity);
-                      cart.addItemToCart(cartItem);
-                    },
-                    child: itemIndexInCart != -1
-                        ? Container(
-                            decoration: BoxDecoration(
-                                color: Colors.deepPurpleAccent, // Add border
-                                borderRadius: BorderRadius.circular(3.0)),
-                            child: Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      context
-                                          .read<CartModel>()
-                                          .removeItem(itemId: id.toString());
-                                    },
-                                    child: const Icon(
-                                      Icons.horizontal_rule,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    cart.items[itemIndexInCart].quantity
-                                        .toString(),
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      cart.addItemToCart(CartItem(
-                                          productId: id.toString(),
-                                          productName: name,
-                                          price: price,
-                                          stockQuantity: stockQuantity));
-                                    },
-                                    child: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ))
-                        : const Text('Add'),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.all(1),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      onPressed: () {
+                        final cartItem = CartItem(
+                            productId: id.toString(),
+                            productName: name,
+                            price: price,
+                            quantity: 1,
+                            stockQuantity: stockQuantity);
+                        cart.addItemToCart(cartItem);
+                      },
+                      child: itemIndexInCart != -1
+                          ? Container(
+                              decoration: BoxDecoration(
+                                  color: const Color.fromARGB(
+                                      255, 140, 98, 255), // Add border
+                                  borderRadius: BorderRadius.circular(3.0)),
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        context
+                                            .read<CartModel>()
+                                            .removeItem(itemId: id.toString());
+                                      },
+                                      child: const Icon(
+                                        Icons.horizontal_rule,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      cart.items[itemIndexInCart].quantity
+                                          .toString(),
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        cart.addItemToCart(CartItem(
+                                            productId: id.toString(),
+                                            productName: name,
+                                            price: price,
+                                            stockQuantity: stockQuantity));
+                                      },
+                                      child: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          : const Text(
+                              'Add +',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -495,7 +510,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(
           border: Border.all(
-            color: Colors.deepPurpleAccent,
+            color: Colors.grey,
             width: 1.0, // Adjust the border width as needed
           ),
         ),

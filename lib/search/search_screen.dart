@@ -159,34 +159,35 @@ class SearchItemListState extends State<SearchItemList> {
       children: [
         //const Chip(label: Text('apple')),
         Container(
-            height: MediaQuery.of(context).size.height * 0.08,
-            width: MediaQuery.of(context).size.width * 0.95,
-            alignment: Alignment.centerLeft,
-            //decoration: BoxDecoration(border: Border.all(color: Colors.black)),
-            child: Chip(
-                label: searchData.notFound
-                    ? Text('no results for $searchQuery')
-                    : RichText(
-                        text: TextSpan(
-                          style: DefaultTextStyle.of(context).style,
-                          children: <TextSpan>[
-                            const TextSpan(
-                              text: 'search ',
-                              style: TextStyle(color: Colors.black),
-                            ),
-                            TextSpan(
-                              text: searchQuery,
-                              style: const TextStyle(color: Colors.deepPurple),
-                            ),
-                          ],
+          height: MediaQuery.of(context).size.height * 0.08,
+          width: MediaQuery.of(context).size.width * 0.95,
+          alignment: Alignment.centerLeft,
+          //decoration: BoxDecoration(border: Border.all(color: Colors.black)),
+          child: Chip(
+            label: searchData.notFound
+                ? Text('no results for $searchQuery')
+                : RichText(
+                    text: TextSpan(
+                      style: DefaultTextStyle.of(context).style,
+                      children: <TextSpan>[
+                        const TextSpan(
+                          text: 'search ',
+                          style: TextStyle(color: Colors.black),
                         ),
-                      ))),
+                        TextSpan(
+                          text: searchQuery,
+                          style: const TextStyle(color: Colors.deepPurple),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ),
         Expanded(
           child: Container(
             padding: EdgeInsets.zero,
             color: Colors.white, //const Color.fromARGB(255, 212, 187, 255),
             child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisSpacing: 0.0,
@@ -199,6 +200,7 @@ class SearchItemListState extends State<SearchItemList> {
                   id: searchResults[index].id,
                   price: searchResults[index].price,
                   stockQuantity: searchResults[index].stockQuantity,
+                  index: index % 2,
                 );
               },
             ),
@@ -214,11 +216,13 @@ class ListItem extends StatelessWidget {
   final int id;
   final int price;
   final int stockQuantity;
+  final int index;
   const ListItem(
       {required this.name,
       required this.id,
       required this.price,
       required this.stockQuantity,
+      required this.index,
       super.key});
 
   @override
@@ -240,96 +244,109 @@ class ListItem extends StatelessWidget {
           ),
         );
       },
-      child: Card(
-        color: Colors.white,
-        shadowColor: Colors.transparent,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(0.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color.fromARGB(255, 200, 183, 246)),
+          borderRadius: BorderRadius.circular(4.0),
         ),
-        margin: const EdgeInsets.only(
-          top: 1.0,
-          left: 1.0,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ListTile(
-              title: Text(name),
-            ),
-            const Spacer(), // Space filler to push the Price and Button to the bottom
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-                  child: Text(
-                    price.toString(),
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextButton(
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.all(1),
-                      textStyle: const TextStyle(fontSize: 16),
+        margin: index == 0
+            ? const EdgeInsets.only(
+                top: 2.0,
+                left: 6.0,
+              )
+            : const EdgeInsets.only(top: 2.0, left: 6.0, right: 6.0),
+        child: Card(
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(2.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ListTile(
+                title: Text(name),
+              ),
+              const Spacer(), // Space filler to push the Price and Button to the bottom
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
+                    child: Text(
+                      price.toString(),
+                      style: const TextStyle(fontSize: 16),
                     ),
-                    onPressed: () {
-                      final cartItem = CartItem(
-                          productId: id.toString(),
-                          productName: name,
-                          price: price,
-                          quantity: 1,
-                          stockQuantity: stockQuantity);
-                      cart.addItemToCart(cartItem);
-                    },
-                    child: itemIndexInCart != -1
-                        ? Container(
-                            decoration: BoxDecoration(
-                                color: Colors.deepPurpleAccent, // Add border
-                                borderRadius: BorderRadius.circular(3.0)),
-                            child: Center(
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      context
-                                          .read<CartModel>()
-                                          .removeItem(itemId: id.toString());
-                                    },
-                                    child: const Icon(
-                                      Icons.horizontal_rule,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    cart.items[itemIndexInCart].quantity
-                                        .toString(),
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      cart.addItemToCart(CartItem(
-                                          productId: id.toString(),
-                                          productName: name,
-                                          price: price,
-                                          stockQuantity: stockQuantity));
-                                    },
-                                    child: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ))
-                        : const Text('Add'),
                   ),
-                ),
-              ],
-            ),
-          ],
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextButton(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.all(1),
+                        textStyle: const TextStyle(fontSize: 16),
+                      ),
+                      onPressed: () {
+                        final cartItem = CartItem(
+                            productId: id.toString(),
+                            productName: name,
+                            price: price,
+                            quantity: 1,
+                            stockQuantity: stockQuantity);
+                        cart.addItemToCart(cartItem);
+                      },
+                      child: itemIndexInCart != -1
+                          ? Container(
+                              decoration: BoxDecoration(
+                                  color: const Color.fromARGB(
+                                      255, 140, 98, 255), // Add border
+                                  borderRadius: BorderRadius.circular(3.0)),
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        context
+                                            .read<CartModel>()
+                                            .removeItem(itemId: id.toString());
+                                      },
+                                      child: const Icon(
+                                        Icons.horizontal_rule,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                    Text(
+                                      cart.items[itemIndexInCart].quantity
+                                          .toString(),
+                                      style:
+                                          const TextStyle(color: Colors.white),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        cart.addItemToCart(CartItem(
+                                            productId: id.toString(),
+                                            productName: name,
+                                            price: price,
+                                            stockQuantity: stockQuantity));
+                                      },
+                                      child: const Icon(
+                                        Icons.add,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          : const Text(
+                              'Add +',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
-import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -133,10 +132,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Container(
-                  width: MediaQuery.of(context).size.width * 0.6,
+                  width: MediaQuery.of(context).size.width * 0.71,
+
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(4.0),
@@ -149,8 +149,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                     ],
                   ),
-                  margin: const EdgeInsets.symmetric(horizontal: 10.0),
-                  padding: const EdgeInsets.symmetric(horizontal: 18.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 0.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 0.0),
                   height: 50, // Increased height to contain the input field
                   child: Row(
                     children: [
@@ -162,52 +162,32 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       ),
                       Expanded(
                         child: GestureDetector(
-                          onTap: () {
+                          onTap: () => {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (context) =>
-                                      SearchPage(searchFocusNode: FocusNode())),
-                            );
+                                  builder: (context) => const SearchTopLevel()),
+                            )
                           },
-                          child: TextField(
-                            style: const TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
+                          child: const AbsorbPointer(
+                            absorbing: true,
+                            child: TextField(
+                              readOnly: true,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: 'Search For Groceries',
+                                border: InputBorder.none,
+                              ),
                             ),
-                            decoration: const InputDecoration(
-                              hintText: 'Search Groceries',
-                              border: InputBorder.none,
-                            ),
-                            // Add your custom logic for handling text input, if needed.
-                            // For example, you can use the onChanged callback to get the typed text.
-                            onChanged: (text) {},
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => SearchPage(
-                                        searchFocusNode: FocusNode())),
-                              );
-                            },
                           ),
                         ),
                       ),
                     ],
                   ),
                 ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.1,
-                  child: IconButton(
-                      padding: const EdgeInsets.only(right: 15.0),
-                      icon: const Icon(Icons.shopping_cart_outlined),
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyCart()));
-                      }),
-                )
               ],
             ),
           ],

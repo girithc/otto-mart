@@ -6,7 +6,6 @@ import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/constants.dart';
 import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/home/api_client_home.dart';
-import 'package:pronto/home/components/horizontal_scroll_items.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
@@ -138,8 +137,8 @@ class _MyHomePageState extends State<MyHomePage> {
               // Your other body content goes here
               Container(
                 //color: Theme.of(context).colorScheme.primary,
-                padding: const EdgeInsets.all(8),
-                height: 80,
+                padding: const EdgeInsets.all(2),
+                height: 60,
                 decoration: const BoxDecoration(
                   image: DecorationImage(
                     image: AssetImage("assets/images/store.png"),
@@ -160,7 +159,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Container(
                 alignment: Alignment.centerLeft, // Align text to the left
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  top: 10.0,
+                ),
                 child: const Text(
                   'Explore By Categories',
                   style: TextStyle(
@@ -189,7 +191,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
-              const HorizontalScrollItems(),
+              //const HorizontalScrollItems(),
             ],
           ),
         ),
@@ -210,8 +212,20 @@ class _MyHomePageState extends State<MyHomePage> {
         )
       },
       child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(4.0),
+          border: Border.all(color: Colors.deepPurpleAccent),
+          boxShadow: const [
+            BoxShadow(
+              color: Color.fromARGB(255, 248, 219, 253),
+              spreadRadius: 1,
+              blurRadius: 3,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
         padding: const EdgeInsets.all(8),
-        color: const Color.fromARGB(255, 248, 219, 253),
         child: Text(
           categoryName,
           style: GoogleFonts.cantoraOne(
@@ -307,59 +321,56 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             const SizedBox(
               height: 8,
             ),
-            GestureDetector(
-              onTap: () {},
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(4.0),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.deepPurpleAccent,
-                      spreadRadius: 1,
-                      blurRadius: 3,
-                      offset: Offset(0, 3),
-                    ),
-                  ],
-                ),
-                margin: const EdgeInsets.symmetric(horizontal: 0.0),
-                padding: const EdgeInsets.symmetric(horizontal: 0.0),
-                height: 50, // Increased height to contain the input field
-                child: Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.search),
-                      onPressed: () {
-                        // Your search logic here
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(4.0),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.deepPurpleAccent,
+                    spreadRadius: 1,
+                    blurRadius: 3,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 0.0),
+              padding: const EdgeInsets.symmetric(horizontal: 0.0),
+              height: 50, // Increased height to contain the input field
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: () {
+                      // Your search logic here
+                    },
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SearchTopLevel()),
+                        )
                       },
-                    ),
-                    Expanded(
-                      child: GestureDetector(
-                        onTap: () => {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const SearchTopLevel()),
-                          )
-                        },
-                        child: const AbsorbPointer(
-                          absorbing: true,
-                          child: TextField(
-                            readOnly: true,
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: 'Search For Groceries',
-                              border: InputBorder.none,
-                            ),
+                      child: const AbsorbPointer(
+                        absorbing: true,
+                        child: TextField(
+                          readOnly: true,
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.black,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search For Groceries',
+                            border: InputBorder.none,
                           ),
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
