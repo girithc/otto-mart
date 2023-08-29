@@ -307,6 +307,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
               id: items[index].id,
               price: items[index].price,
               stockQuantity: items[index].stockQuantity,
+              image: items[index].image,
               index: index % 2);
         },
       ),
@@ -356,11 +357,13 @@ class ListItem extends StatelessWidget {
   final int price;
   final int stockQuantity;
   final int index;
+  final String image;
   const ListItem(
       {required this.name,
       required this.id,
       required this.price,
       required this.stockQuantity,
+      required this.image,
       required this.index,
       super.key});
 
@@ -405,6 +408,13 @@ class ListItem extends StatelessWidget {
             children: [
               ListTile(
                 title: Text(name),
+              ),
+              Expanded(
+                child: Image.network(
+                  image,
+                  height: 50,
+                  width: 40,
+                ),
               ),
               const Spacer(), // Space filler to push the Price and Button to the bottom
               Row(

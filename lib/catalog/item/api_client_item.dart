@@ -40,18 +40,21 @@ class Item {
   final String name;
   final int price;
   final int stockQuantity;
+  final String image;
 
   Item(
       {required this.id,
       required this.name,
       required this.price,
-      required this.stockQuantity});
+      required this.stockQuantity,
+      required this.image});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
         id: json['id'],
         name: json['name'],
         price: json['price'],
-        stockQuantity: json['stock_quantity']);
+        stockQuantity: json['stock_quantity'],
+        image: json['image']);
   }
 }
