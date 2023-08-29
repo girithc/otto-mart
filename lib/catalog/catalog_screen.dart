@@ -230,11 +230,13 @@ class _ListOfItemsState extends State<ListOfItems> {
           // Second section consuming 8 columns
           Expanded(
             flex: 8,
-            child: ItemCatalog(
-              categoryId: widget.categories.isNotEmpty
-                  ? (categoryId == 0 ? widget.categories[0].id : categoryId)
-                  : 0,
-              storeId: storeId == 0 ? 1 : storeId,
+            child: SizedBox(
+              child: ItemCatalog(
+                categoryId: widget.categories.isNotEmpty
+                    ? (categoryId == 0 ? widget.categories[0].id : categoryId)
+                    : 0,
+                storeId: storeId == 0 ? 1 : storeId,
+              ),
             ),
           ),
         ],
@@ -296,10 +298,10 @@ class _ItemCatalogState extends State<ItemCatalog> {
       color: Colors.white,
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 0.0,
-          crossAxisSpacing: 0.0,
-        ),
+            crossAxisCount: 2,
+            mainAxisSpacing: 0.0,
+            crossAxisSpacing: 0.0,
+            childAspectRatio: 0.60),
         itemCount: items.length,
         itemBuilder: (context, index) {
           return ListItem(
@@ -389,7 +391,9 @@ class ListItem extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(color: const Color.fromARGB(255, 200, 183, 246)),
+          border: Border.all(
+            color: const Color.fromARGB(255, 200, 183, 246),
+          ),
           borderRadius: BorderRadius.circular(2.0),
         ),
         margin: index == 0
@@ -398,58 +402,78 @@ class ListItem extends StatelessWidget {
                 left: 4.0,
               )
             : const EdgeInsets.only(top: 1.0, left: 4.0, right: 4.0),
+        height: 1000,
         child: Card(
           shadowColor: Colors.black,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(1.0),
           ),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              ListTile(
-                title: Text(name),
+              Image.network(
+                image,
+                height: 140,
+                fit: BoxFit.cover,
               ),
-              Expanded(
-                child: Image.network(
-                  image,
-                  height: 50,
-                  width: 40,
+              Container(
+                margin: const EdgeInsets.only(top: 4.0),
+                alignment: Alignment.center,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: Colors.black,
+                  ),
+                  borderRadius: BorderRadius.circular(1.0),
+                ),
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.bold, height: 1.2),
                 ),
               ),
-              const Spacer(), // Space filler to push the Price and Button to the bottom
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0, bottom: 8.0),
-                    child: Text(
-                      price.toString(),
-                      style: const TextStyle(fontSize: 16),
-                    ),
+              //const Spacer(), // Space filler to push the Price and Button to the bottom
+              Container(
+                padding: EdgeInsets.zero,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(
+                    color: Colors.black,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: TextButton(
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.all(1),
-                        textStyle: const TextStyle(fontSize: 16),
+                  borderRadius: BorderRadius.circular(2.0),
+                ),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.zero,
+                      child: Text(
+                        price.toString(),
+                        style: const TextStyle(fontSize: 16),
                       ),
-                      onPressed: () {
-                        final cartItem = CartItem(
-                            productId: id.toString(),
-                            productName: name,
-                            price: price,
-                            quantity: 1,
-                            stockQuantity: stockQuantity);
-                        cart.addItemToCart(cartItem);
-                      },
-                      child: itemIndexInCart != -1
-                          ? Container(
-                              decoration: BoxDecoration(
-                                  color: const Color.fromARGB(
-                                      255, 140, 98, 255), // Add border
-                                  borderRadius: BorderRadius.circular(3.0)),
-                              child: Center(
+                    ),
+                    Padding(
+                      padding: EdgeInsets.zero,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          textStyle: const TextStyle(fontSize: 16),
+                        ),
+                        onPressed: () {
+                          final cartItem = CartItem(
+                              productId: id.toString(),
+                              productName: name,
+                              price: price,
+                              quantity: 1,
+                              stockQuantity: stockQuantity);
+                          cart.addItemToCart(cartItem);
+                        },
+                        child: itemIndexInCart != -1
+                            ? Container(
+                                decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                        255, 140, 98, 255), // Add border
+                                    borderRadius: BorderRadius.circular(3.0)),
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -485,14 +509,15 @@ class ListItem extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                              ))
-                          : const Text(
-                              'Add +',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
+                              )
+                            : const Text(
+                                'Add +',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
