@@ -199,6 +199,7 @@ class _ImageUploadState extends State<ImageUpload> {
   Uint8List? _imageBytes;
   final picker = ImagePicker();
   CloudApi? api;
+  String? _imageName;
 
   //image picker
   Future getImage(ImageSource source) async {
@@ -212,6 +213,7 @@ class _ImageUploadState extends State<ImageUpload> {
         _image = imageTemp;
         print('Image: ${_image?.path}');
         _imageBytes = _image?.readAsBytesSync();
+        _imageName = _image?.path.split('/').last;
       });
     } on Exception catch (e) {
       print('Failed to pick image $e');
@@ -219,7 +221,7 @@ class _ImageUploadState extends State<ImageUpload> {
   }
 
   void _saveImage() async {
-    final response = await api?.save('test', _imageBytes!);
+    final response = await api?.save(_imageName!, _imageBytes!);
     print(response?.downloadLink);
   }
 

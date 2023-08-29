@@ -24,6 +24,7 @@ class CloudApi {
     var bucket = storage.bucket('pronto-bucket');
 
     final type = lookupMimeType(name);
+    print('Content Type $type');
 
     return await bucket.writeBytes(name, imgBytes,
         metadata: ObjectMetadata(contentType: type));
