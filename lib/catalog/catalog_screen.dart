@@ -216,8 +216,11 @@ class _ListOfItemsState extends State<ListOfItems> {
   Widget build(BuildContext context) {
     final catalogProvider = context.watch<CatalogProvider>();
     final categoryId = catalogProvider.catalog.categoryID == 0
-        ? widget.categories[0].id
-        : catalogProvider.catalog.categoryID;
+        ? widget.categories.isNotEmpty
+            ? widget.categories[0].id
+            : 0
+        : catalogProvider.catalog.categoryID ?? 0;
+
     final storeId = catalogProvider.catalog.storeID;
 
     return Container(
