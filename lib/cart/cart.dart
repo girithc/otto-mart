@@ -47,6 +47,9 @@ class CartModel extends ChangeNotifier {
 
   List<CartItem> get items => _items;
 
+  int get numberOfItems =>
+      items.fold(0, (total, current) => total + current.quantity);
+
   int get totalPriceItems => items.fold(
       0, (total, current) => total + current.price * current.quantity);
 
