@@ -21,7 +21,7 @@ func (s *Server) Handle_Create_Item(res http.ResponseWriter, req *http.Request) 
 		return err
 	}
 	
-	new_item, err := types.New_Item(new_req.Name, new_req.Price, new_req.Category_ID, new_req.Store_ID, new_req.Stock_Quantity)
+	new_item, err := types.New_Item(new_req.Name, new_req.Price, new_req.Category_ID, new_req.Store_ID, new_req.Stock_Quantity, new_req.Image)
 
 	if err != nil {
 		return err
@@ -101,11 +101,11 @@ func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) 
 		return err
 	}
 
-	print("Updated Id: ", new_req.ID)
-	print("Updated Name: ", new_req.Name)
-	print("Updated Price: ", new_req.Price)
-	print("Updated Stock Quantity: ", new_req.Stock_Quantity)
-	print("Updated Category Id: ", new_req.Category_ID)
+	fmt.Println("Updated Id: ", new_req.ID)
+	fmt.Println("Updated Name: ", new_req.Name)
+	fmt.Println("Updated Price: ", new_req.Price)
+	fmt.Println("Updated Stock Quantity: ", new_req.Stock_Quantity)
+	fmt.Println("Updated Category Id: ", new_req.Category_ID)
 
 
 
@@ -115,6 +115,7 @@ func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) 
 		return err
 	}
 
+	fmt.Println("Valid Record Change Requested ", item)
 	
 	if len(new_req.Name) == 0 {
 		new_req.Name = item.Name
@@ -127,17 +128,17 @@ func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) 
 	}
   	if new_req.Category_ID == 0 {
 		new_req.Category_ID = item.Category_ID
-	} else {
-		_, err := s.store.Get_Item_By_ID(new_req.Category_ID)
-		if err != nil {
-			return err
-		}
+	} 
+	if len(new_req.Image) == 0 {
+		new_req.Image = item.Image
 	}
 
 	updated_item, err := s.store.Update_Item(new_req)
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("Record Change Completed", item)
 
 
 	return WriteJSON(res, http.StatusOK, updated_item)

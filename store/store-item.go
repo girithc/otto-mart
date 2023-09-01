@@ -18,6 +18,7 @@ func (s *PostgresStore) CreateItemTable() error {
 		store_id INT REFERENCES Store(id) ON DELETE CASCADE,
 		category_id INT REFERENCES Category(id) ON DELETE CASCADE,
 		stock_quantity INT NOT NULL,
+		image TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		created_by INT
 	)`
@@ -31,9 +32,9 @@ func (s *PostgresStore) CreateItemTable() error {
 
 func (s *PostgresStore) Create_Item(p *types.Item) (*types.Item,error) {
 	query := `insert into item 
-	(name, price, store_id, category_id, stock_quantity, created_by)
-	values ($1, $2, $3, $4, $5, $6)
-	returning id, name, price, store_id, category_id, stock_quantity, created_at, created_by`
+	(name, price, store_id, category_id, stock_quantity, image, created_by)
+	values ($1, $2, $3, $4, $5, $6, $7)
+	returning id, name, price, store_id, category_id, stock_quantity, image, created_at, created_by`
 	rows , err := s.db.Query(
 		query,
 		p.Name,
@@ -41,6 +42,7 @@ func (s *PostgresStore) Create_Item(p *types.Item) (*types.Item,error) {
 		p.Store_ID,
 		p.Category_ID,
 		p.Stock_Quantity, 
+		p.Image,
 		p.Created_By)
 
 	fmt.Println("CheckPoint 1")
@@ -92,7 +94,7 @@ func (s *PostgresStore) Get_Items() ([]*types.Item, error) {
 func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, store_id int) ([]*types.Get_Items_By_CategoryID_And_StoreID, error) {
 	
 	fmt.Println("Entered Get_Items_By_CategoryID_And_StoreID")
-	rows, err := s.db.Query("select id, name, price, store_id, category_id, stock_quantity from item where category_id = $1 AND store_id = $2", category_id, store_id)
+	rows, err := s.db.Query("select id, name, price, store_id, category_id, stock_quantity, image from item where category_id = $1 AND store_id = $2", category_id, store_id)
 
 	if err != nil {
 		return nil, err
@@ -129,9 +131,10 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 	name = $1, 
 	price = $2, 
 	category_id = $3, 
-	stock_quantity = $4
-	where id = $5 
-	returning id, name, price, category_id, stock_quantity`
+	stock_quantity = $4,
+	image = $5
+	where id = $6
+	returning id, name, price, category_id, stock_quantity, image`
 	
 	rows, err := s.db.Query(
 		query, 
@@ -139,12 +142,17 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 		item.Price,
 		item.Category_ID,
 		item.Stock_Quantity,
+		item.Image,
 		item.ID,
 	)
+
+	fmt.Println("Checkpoint 1")
 
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Checkpoint 2")
 
 	items := []*types.Update_Item{}
 	
@@ -156,6 +164,7 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 		items = append(items, item)
 	}
 	
+	fmt.Println("Checkpoint 3")
 
 	return items[0], nil
 }
@@ -174,6 +183,7 @@ func scan_Into_Item(rows *sql.Rows) (*types.Item, error) {
 		&item.Store_ID,
 		&item.Category_ID, 
 		&item.Stock_Quantity,
+		&item.Image,
 		&item.Created_At,
 		&item.Created_By,
 	)
@@ -189,6 +199,7 @@ func scan_Into_Update_Item(rows *sql.Rows) (*types.Update_Item, error) {
 		&item.Price,
 		&item.Category_ID,
 		&item.Stock_Quantity,
+		&item.Image,
 	)
 
 	return item, error
@@ -203,6 +214,7 @@ func scan_Into_Items_By_CategoryID_And_StoreID(rows *sql.Rows) (*types.Get_Items
 		&item.Store_ID,
 		&item.Category_ID, 
 		&item.Stock_Quantity,
+		&item.Image,
 	)
 
 	return item, err

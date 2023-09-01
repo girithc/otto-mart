@@ -55,6 +55,8 @@ func NewGoogleServer(bucket string, service_account string) *GoogleServer {
 
 func (s *Server) Run(gs *GoogleServer) {
 
+	//workerPool := worker.NewWorkerPool(10)
+
 	http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
 
 
@@ -72,6 +74,12 @@ func (s *Server) Run(gs *GoogleServer) {
 	fmt.Println("Listening PORT", s.listen_address)
 
 	http.ListenAndServe(s.listen_address, nil)
+
+	//go func() {
+	//	_ = http.ListenAndServe(s.listen_address, nil)
+	//} ()
+
+	//workerPool.Wait()
 }
 
 type apiFunc func(http.ResponseWriter, *http.Request) error
