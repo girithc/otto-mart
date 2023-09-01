@@ -77,6 +77,7 @@ class Item {
   final int createdBy;
   final int storeId;
   final int categoryId;
+  final String image;
 
   Item(
       {required this.id,
@@ -86,7 +87,8 @@ class Item {
       required this.createdAt,
       required this.createdBy,
       required this.storeId,
-      required this.categoryId});
+      required this.categoryId,
+      required this.image});
 
   Map<String, dynamic> toJson() {
     return {
@@ -98,6 +100,7 @@ class Item {
       'created_by': createdBy,
       'store_id': storeId,
       'category_id': categoryId,
+      'image': image,
     };
   }
 
@@ -110,7 +113,8 @@ class Item {
         createdAt: json['created_at'],
         createdBy: json['created_by'],
         storeId: json['store_id'],
-        categoryId: json['category_id']);
+        categoryId: json['category_id'],
+        image: json['image']);
   }
 }
 
@@ -120,13 +124,15 @@ class UpdateItem {
   final int price;
   final int stockQuantity;
   final int categoryId;
+  final String image;
 
   UpdateItem(
       {required this.id,
       required this.name,
       required this.price,
       required this.stockQuantity,
-      required this.categoryId});
+      required this.categoryId,
+      required this.image});
 
   Map<String, dynamic> toJson() {
     return {
@@ -135,6 +141,7 @@ class UpdateItem {
       'price': price,
       'stock_quantity': stockQuantity,
       'category_id': categoryId,
+      'image': image
     };
   }
 
@@ -144,6 +151,7 @@ class UpdateItem {
         name: json['name'],
         price: json['price'],
         stockQuantity: json['stock_quantity'],
-        categoryId: json['category_id']);
+        categoryId: json['category_id'],
+        image: json['image']);
   }
 }

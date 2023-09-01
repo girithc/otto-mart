@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -34,6 +35,7 @@ class _ItemDetailsState extends State<ItemDetails> {
         name: _nameController.text,
         price: int.parse(_priceController.text),
         stockQuantity: int.parse(_stockQuantityController.text),
+        image: _imageController.text,
         categoryId: items[0].categoryId);
 
     try {
@@ -55,6 +57,7 @@ class _ItemDetailsState extends State<ItemDetails> {
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _stockQuantityController =
       TextEditingController();
+  final TextEditingController _imageController = TextEditingController();
 
   @override
   void initState() {
@@ -67,6 +70,7 @@ class _ItemDetailsState extends State<ItemDetails> {
     _nameController.dispose();
     _priceController.dispose();
     _stockQuantityController.dispose();
+    _imageController.dispose();
     super.dispose();
   }
 
@@ -81,6 +85,7 @@ class _ItemDetailsState extends State<ItemDetails> {
         _nameController.text = fetchedItem.name;
         _priceController.text = fetchedItem.price.toString();
         _stockQuantityController.text = fetchedItem.stockQuantity.toString();
+        _imageController.text = fetchedItem.image;
         isDataFetched = true; // Mark data as fetched
       });
     } catch (err) {
@@ -144,6 +149,14 @@ class _ItemDetailsState extends State<ItemDetails> {
                         //initialValue: items[0].price.toString(),
                       ),
                       TextFormField(
+                        controller: _imageController,
+                        decoration: const InputDecoration(
+                          icon: Icon(Icons.person_2_outlined),
+                          hintText: 'Enter Image Link',
+                          labelText: 'Image',
+                        ),
+                      ),
+                      TextFormField(
                         decoration: const InputDecoration(
                           icon: Icon(Icons.calendar_today),
                           hintText: 'Enter Created Date',
@@ -161,22 +174,53 @@ class _ItemDetailsState extends State<ItemDetails> {
                         initialValue: items[0].createdBy.toString(),
                         enabled: false, // Make the field read-only
                       ),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.person_2_outlined),
-                          hintText: 'Enter Image Link',
-                          labelText: 'Image',
-                        ),
-                        enabled: false,
-                      ),
                       Container(
                         padding: const EdgeInsets.only(left: 150.0, top: 40.0),
                         child: ElevatedButton(
-                          onPressed: _saveItem,
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (_) => CupertinoAlertDialog(
+                                title: Column(
+                                  children: [
+                                    const Text('Accept Image'),
+                                    const SizedBox(
+                                        height:
+                                            10), // Add spacing between text and image
+                                    Image.network(_imageController.text,
+                                        height: 200),
+                                  ],
+                                ),
+                                content: const Text(
+                                    'Are you sure you want to accept this image?'),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    onPressed: () {
+                                      Navigator.pop(
+                                          context); // Close the dialog
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  CupertinoDialogAction(
+                                    onPressed: () {
+                                      // Perform the action you want when "Save" is pressed
+                                      _saveItem();
+                                      Navigator.pop(
+                                          context); // Close the dialog
+                                    },
+                                    child: const Text('Save'),
+                                  ),
+                                ],
+                              ),
+                              barrierDismissible: false,
+                            );
+                          },
                           child: const Text('Save'),
                         ),
                       ),
-                      const ImageUpload(),
+                      ImageUpload(
+                        image: _imageController.text,
+                      ),
                     ],
                   ),
                 )
@@ -188,7 +232,9 @@ class _ItemDetailsState extends State<ItemDetails> {
 }
 
 class ImageUpload extends StatefulWidget {
-  const ImageUpload({super.key});
+  const ImageUpload({super.key, required this.image});
+
+  final String image;
 
   @override
   State<ImageUpload> createState() => _ImageUploadState();
@@ -240,7 +286,7 @@ class _ImageUploadState extends State<ImageUpload> {
         children: [
           _image != null
               ? Image.file(_image!, width: 250, height: 250, fit: BoxFit.cover)
-              : Image.network('https://picsum.photos/250?image=9'),
+              : Image.network(widget.image, height: 300),
           Row(
             children: [
               ElevatedButton(
@@ -248,11 +294,6 @@ class _ImageUploadState extends State<ImageUpload> {
                     getImage(ImageSource.gallery);
                   },
                   child: const Text('Add Image')),
-              ElevatedButton(
-                  onPressed: () {
-                    _saveImage();
-                  },
-                  child: const Text('Save Image')),
             ],
           )
         ],
