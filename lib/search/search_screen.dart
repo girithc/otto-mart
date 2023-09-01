@@ -61,7 +61,7 @@ class SearchPage extends StatelessWidget {
                       autoPlay: true,
                       enlargeCenterPage: true,
                       aspectRatio: 3.5,
-                      viewportFraction: 1.0),
+                      viewportFraction: 0.95),
                   items: [
                     Container(
                       decoration: BoxDecoration(
@@ -252,6 +252,7 @@ class ListItem extends StatelessWidget {
               productId: id,
               price: price,
               stockQuantity: stockQuantity,
+              image: image,
             ),
           ),
         );
@@ -261,208 +262,236 @@ class ListItem extends StatelessWidget {
         shadowColor: Colors.white,
         surfaceTintColor: Colors.white,
         color: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: border_color, width: 1.0),
-            borderRadius: BorderRadius.circular(3.0),
-          ),
-          margin: index == 0
-              ? const EdgeInsets.only(
-                  top: 4.0,
-                  left: 6.0,
-                )
-              : const EdgeInsets.only(top: 4.0, left: 4.0, right: 6.0),
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 4.0, bottom: 2.0),
-                child: Center(
-                  child: Image.network(
-                    image,
-                    height: 110,
-                    fit: BoxFit.cover,
-                  ),
-                ),
+        child: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: border_color, width: 1.0),
+                borderRadius: BorderRadius.circular(3.0),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Container(
-                  margin: const EdgeInsets.only(top: 2.0),
-                  alignment: Alignment.centerLeft,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(1.0),
-                    border: Border.all(color: border_color),
-                  ),
-                  child: Text(
-                    name,
-                    maxLines: 2,
-                    style: GoogleFonts.hind(
-                      textStyle: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          height: 0.9,
-                          overflow: TextOverflow.ellipsis),
-                    ),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Container(
-                  margin: EdgeInsets.zero,
-                  alignment: Alignment.centerLeft,
-                  height: 17,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(1.0),
-                    border: Border.all(color: border_color),
-                  ),
-                  child: const Text(
-                    '100g',
-                    style: TextStyle(
-                        fontSize: 11, fontWeight: FontWeight.w500, height: 1.2),
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Container(
-                    height: 17,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(1.0),
-                      border: Border.all(color: border_color),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.local_offer_outlined,
-                          color: Colors.deepPurple,
-                          size: 15,
-                        ),
-                        const SizedBox(
-                            width:
-                                5), // Adding some spacing between icon and text
-                        Text(
-                          'Add 1, Unlock offer',
-                          maxLines: 2,
-                          style: GoogleFonts.firaSans(
-                            textStyle: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              height: 1.1,
-                              color: Colors.deepPurple,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    )),
-              ),
-              const Spacer(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Container(
-                  height: 37,
-                  margin: const EdgeInsets.only(top: 0),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(1.0),
-                    border: Border.all(color: border_color),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        '\u{20B9}$price',
+              margin: index == 0
+                  ? const EdgeInsets.only(
+                      top: 4.0,
+                      left: 6.0,
+                    )
+                  : const EdgeInsets.only(top: 4.0, left: 4.0, right: 6.0),
+              padding: EdgeInsets.zero,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4.0, bottom: 2.0),
+                    child: Center(
+                      child: Image.network(
+                        image,
+                        height: 110,
+                        fit: BoxFit.cover,
                       ),
-                      itemIndexInCart != -1
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 2, vertical: 2),
-                              margin: const EdgeInsets.only(right: 2),
-                              decoration: BoxDecoration(
-                                  color: const Color.fromARGB(
-                                      255, 140, 98, 255), // Add border
-                                  borderRadius: BorderRadius.circular(3.0)),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  InkWell(
-                                    onTap: () {
-                                      context
-                                          .read<CartModel>()
-                                          .removeItem(itemId: id.toString());
-                                    },
-                                    child: const Icon(
-                                      Icons.horizontal_rule,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  Text(
-                                    cart.items[itemIndexInCart].quantity
-                                        .toString(),
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  InkWell(
-                                    onTap: () {
-                                      cart.addItemToCart(CartItem(
-                                          productId: id.toString(),
-                                          productName: name,
-                                          price: price,
-                                          stockQuantity: stockQuantity));
-                                    },
-                                    child: const Icon(
-                                      Icons.add,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 2.0),
+                      alignment: Alignment.centerLeft,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(1.0),
+                        border: Border.all(color: border_color),
+                      ),
+                      child: Text(
+                        name,
+                        maxLines: 2,
+                        style: GoogleFonts.hind(
+                          textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              height: 0.9,
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Container(
+                      margin: EdgeInsets.zero,
+                      alignment: Alignment.centerLeft,
+                      height: 17,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(1.0),
+                        border: Border.all(color: border_color),
+                      ),
+                      child: const Text(
+                        '100g',
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                            height: 1.2),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Container(
+                        height: 17,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(1.0),
+                          border: Border.all(color: border_color),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.local_offer_outlined,
+                              color: Colors.deepPurple,
+                              size: 15,
+                            ),
+                            const SizedBox(
+                                width:
+                                    5), // Adding some spacing between icon and text
+                            Text(
+                              'Add 1, Unlock offer',
+                              maxLines: 2,
+                              style: GoogleFonts.firaSans(
+                                textStyle: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.1,
+                                  color: Colors.deepPurple,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
-                            )
-                          : Container(
-                              padding: EdgeInsets.zero,
-                              margin: const EdgeInsets.only(
-                                  right: 2, top: 2, bottom: 4),
-                              child: ElevatedButton(
-                                  onPressed: () {
-                                    final cartItem = CartItem(
-                                        productId: id.toString(),
-                                        productName: name,
-                                        price: price,
-                                        quantity: 1,
-                                        stockQuantity: stockQuantity);
-                                    cart.addItemToCart(cartItem);
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      padding: const EdgeInsets.all(0),
-                                      side: const BorderSide(
-                                        width: 1.0,
-                                        color: Colors.pinkAccent,
+                            ),
+                          ],
+                        )),
+                  ),
+                  const Spacer(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: Container(
+                      height: 37,
+                      margin: const EdgeInsets.only(top: 0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(1.0),
+                        border: Border.all(color: border_color),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '\u{20B9}$price',
+                          ),
+                          itemIndexInCart != -1
+                              ? Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 2, vertical: 2),
+                                  margin: const EdgeInsets.only(right: 2),
+                                  decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                          255, 140, 98, 255), // Add border
+                                      borderRadius: BorderRadius.circular(3.0)),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      InkWell(
+                                        onTap: () {
+                                          context.read<CartModel>().removeItem(
+                                              itemId: id.toString());
+                                        },
+                                        child: const Icon(
+                                          Icons.horizontal_rule,
+                                          color: Colors.white,
+                                        ),
                                       ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
+                                      Text(
+                                        cart.items[itemIndexInCart].quantity
+                                            .toString(),
+                                        style: const TextStyle(
+                                            color: Colors.white),
+                                      ),
+                                      InkWell(
+                                        onTap: () {
+                                          cart.addItemToCart(CartItem(
+                                              productId: id.toString(),
+                                              productName: name,
+                                              price: price,
+                                              stockQuantity: stockQuantity,
+                                              image: image));
+                                        },
+                                        child: const Icon(
+                                          Icons.add,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : Container(
+                                  padding: EdgeInsets.zero,
+                                  margin: const EdgeInsets.only(
+                                      right: 2, top: 2, bottom: 4),
+                                  child: ElevatedButton(
+                                      onPressed: () {
+                                        final cartItem = CartItem(
+                                            productId: id.toString(),
+                                            productName: name,
+                                            price: price,
+                                            quantity: 1,
+                                            stockQuantity: stockQuantity,
+                                            image: image);
+                                        cart.addItemToCart(cartItem);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.white,
+                                          padding: const EdgeInsets.all(0),
+                                          side: const BorderSide(
+                                            width: 1.0,
+                                            color: Colors.pinkAccent,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(10.0),
+                                          )),
+                                      child: const Text(
+                                        'Add+',
+                                        style: TextStyle(
+                                            color: Colors.pinkAccent,
+                                            fontSize: 12),
                                       )),
-                                  child: const Text(
-                                    'Add+',
-                                    style: TextStyle(
-                                        color: Colors.pinkAccent, fontSize: 12),
-                                  )),
-                            )
-                    ],
+                                )
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Positioned(
+              top: 10, // Adjust the position as needed
+              left: 10, // Adjust the position as needed
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.pinkAccent,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: const Text(
+                  '5% OFF',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

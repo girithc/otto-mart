@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/order/place_order_screen.dart';
@@ -182,7 +183,7 @@ class _CartList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-    var itemNameStyle = Theme.of(context).textTheme.titleMedium;
+    var itemNameStyle = Theme.of(context).textTheme.titleSmall;
 
     if (cart.isEmpty()) {
       return const Center(
@@ -207,7 +208,7 @@ class _CartList extends StatelessWidget {
                 color: Colors.white,
                 surfaceTintColor: Colors.white,
                 elevation: 2,
-                margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 0),
+                margin: const EdgeInsets.symmetric(vertical: 0, horizontal: 0),
                 child: Column(
                   children: [
                     for (var item in cart.items)
@@ -227,11 +228,8 @@ class _CartList extends StatelessWidget {
                                       // Add border
                                       ),
                                   child: Center(
-                                    child: Text(
-                                      'Image',
-                                      style: itemNameStyle,
-                                    ),
-                                  ),
+                                      child: Image.network(item.image,
+                                          height: 45)),
                                 ),
                               ),
                               Expanded(
@@ -289,12 +287,6 @@ class _CartList extends StatelessWidget {
                                       ),
                                     )),
                               ),
-                              /*
-                              const Expanded(
-                                flex: 1,
-                                child: SizedBox(width: 10),
-                              ),
-                              */
                               Expanded(
                                 flex: 3,
                                 child: Container(
@@ -303,12 +295,15 @@ class _CartList extends StatelessWidget {
                                       ),
                                   child: Center(
                                     child: Text(
-                                      "\$${item.price * item.quantity}", // Replace with your price calculation
-                                      style: const TextStyle(
+                                        "\u{20B9}${item.price * item.quantity}", // Replace with your price calculation
+                                        style: itemNameStyle
+                                        /*
+                                      const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.normal,
                                       ),
-                                    ),
+                                      */
+                                        ),
                                   ),
                                 ),
                               ),
@@ -319,6 +314,8 @@ class _CartList extends StatelessWidget {
                   ],
                 ),
               ),
+              const SizedBox(height: 5),
+              const TotalAmountSaved(),
               const SizedBox(height: 5),
               const _DeliveryPartnerTip(),
               const SizedBox(height: 5),
@@ -350,7 +347,7 @@ class _TaxAndDelivery extends StatelessWidget {
             _CustomListItem(
               icon: Icons.done_all_outlined,
               label: 'Item Total',
-              amount: '\$${cart.totalPriceItems}',
+              amount: '${cart.totalPriceItems}',
               font: Theme.of(context).textTheme.titleSmall,
             ),
             _CustomListItem(
@@ -365,21 +362,68 @@ class _TaxAndDelivery extends StatelessWidget {
               amount: '${cart.deliveryFee}',
               font: Theme.of(context).textTheme.titleSmall,
             ),
-            _CustomListItem(
-              icon: Icons.volunteer_activism_outlined,
-              label: 'Delivery Partner Tip',
-              amount: '${cart.deliveryPartnerTip}',
-              font: Theme.of(context).textTheme.titleSmall,
-            ),
+            cart.deliveryPartnerTip > 0
+                ? _CustomListItem(
+                    icon: Icons.volunteer_activism_outlined,
+                    label: 'Delivery Partner Tip',
+                    amount: '${cart.deliveryPartnerTip}',
+                    font: Theme.of(context).textTheme.titleSmall,
+                  )
+                : Container(),
             const Divider(),
             _CustomListItem(
               icon: Icons.payments,
               label: 'To Pay',
-              amount: '${cart.totalPrice}',
+              amount: '\u{20B9}${cart.totalPrice}',
               font: Theme.of(context).textTheme.titleMedium,
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class TotalAmountSaved extends StatelessWidget {
+  const TotalAmountSaved({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>();
+    return Container(
+      height: 55,
+      decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            stops: [0.3, 0.5],
+            colors: [Colors.white, Colors.deepPurpleAccent],
+          ),
+          border: Border.all(color: Colors.white, width: 1.0)),
+      padding: const EdgeInsets.symmetric(horizontal: 15),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(
+            width: 13,
+          ),
+          Text(
+            'Total Saved',
+            style: GoogleFonts.phudu(textStyle: const TextStyle(fontSize: 24)),
+          ),
+          const SizedBox(
+            width: 33,
+          ),
+          Text(
+            '\u{20B9} ${(cart.totalPriceItems * 0.10).toStringAsFixed(2)}',
+            style: GoogleFonts.phudu(
+                textStyle: const TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.w400,
+                    color: Colors.white)),
+          )
+        ],
       ),
     );
   }

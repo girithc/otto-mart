@@ -6,13 +6,15 @@ class CartItem {
   final int price;
   int quantity;
   int stockQuantity;
+  final String image;
 
   CartItem(
       {required this.productId,
       required this.productName,
       required this.price,
       this.quantity = 1,
-      required this.stockQuantity});
+      required this.stockQuantity,
+      required this.image});
 }
 
 class Address {

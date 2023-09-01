@@ -1,5 +1,7 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
+import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -8,13 +10,15 @@ class Product extends StatelessWidget {
   final int productId;
   final int price;
   final int stockQuantity;
+  final String image;
 
   const Product(
       {Key? key,
       required this.productName,
       required this.productId,
       required this.price,
-      required this.stockQuantity})
+      required this.stockQuantity,
+      required this.image})
       : super(key: key);
 
   @override
@@ -84,7 +88,8 @@ class Product extends StatelessWidget {
                         productName: productName,
                         price: price,
                         quantity: 1,
-                        stockQuantity: stockQuantity);
+                        stockQuantity: stockQuantity,
+                        image: image);
                     cart.addItemToCart(cartItem);
                   },
                   style: ElevatedButton.styleFrom(
@@ -98,6 +103,98 @@ class Product extends StatelessWidget {
                     ),
                   ),
                   child: const Text('Add To Cart'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        shadowColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        child: Container(
+          margin: EdgeInsets.zero,
+          child: Row(
+            // Expand the Row to fill the available space
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              Expanded(
+                flex: 5,
+                child: CarouselSlider(
+                  options: CarouselOptions(
+                      autoPlay: true,
+                      enlargeCenterPage: true,
+                      aspectRatio: 3.5,
+                      viewportFraction: 0.95),
+                  items: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Center(
+                        child: Text("Offer 1"),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Center(
+                        child: Text("Offer 2"),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: Border.all(color: Colors.pinkAccent),
+                        borderRadius: BorderRadius.circular(4.0),
+                      ),
+                      child: const Center(
+                        child: Text("Offer 3"),
+                      ),
+                    ),
+                    // Add more items as needed
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 4,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyCart()));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons
+                          .shopping_cart_outlined), // Add your desired icon here
+                      SizedBox(
+                          width:
+                              10), // Add some spacing between the icon and text
+                      Text('Cart'),
+                    ],
+                  ),
                 ),
               ),
             ],
