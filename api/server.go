@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"pronto-go/store"
+	"pronto-go/worker"
 
 	iam "google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
@@ -15,12 +16,14 @@ import (
 type Server struct {
 	listen_address string
 	store *store.PostgresStore
+	workerPool *worker.WorkerPool
 }
 
-func NewServer(listen_address string, store *store.PostgresStore) *Server {
+func NewServer(listen_address string, store *store.PostgresStore, workerPool *worker.WorkerPool) *Server {
 	return &Server{
 		listen_address: listen_address,
 		store: store,
+		workerPool: workerPool,
 	}
 }
 
@@ -53,12 +56,12 @@ func NewGoogleServer(bucket string, service_account string) *GoogleServer {
 	}
 }
 
-func (s *Server) Run(gs *GoogleServer) {
+func (s *Server) Run(/*gs *GoogleServer*/) {
 
 	//workerPool := worker.NewWorkerPool(10)
 
-	http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
-
+	//http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
+	workerPool := worker.NewWorkerPool(10)
 
 	http.HandleFunc("/store/available", makeHTTPHandleFunc(s.handleStoreClient))
 	http.HandleFunc("/store", makeHTTPHandleFunc(s.handleStoreManager))
@@ -73,13 +76,14 @@ func (s *Server) Run(gs *GoogleServer) {
 
 	fmt.Println("Listening PORT", s.listen_address)
 
+	
 	http.ListenAndServe(s.listen_address, nil)
 
 	//go func() {
 	//	_ = http.ListenAndServe(s.listen_address, nil)
 	//} ()
 
-	//workerPool.Wait()
+	workerPool.Wait()
 }
 
 type apiFunc func(http.ResponseWriter, *http.Request) error

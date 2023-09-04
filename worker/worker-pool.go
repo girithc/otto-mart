@@ -2,7 +2,6 @@ package worker
 
 import (
 	"fmt"
-	"net/http"
 	"sync"
 )
 
@@ -19,51 +18,30 @@ func NewWorkerPool(workerCount int) *WorkerPool {
 	}
 }
 
-func (wp *WorkerPool) StartWorker(task func()) {
-	wp.workers <- struct{}{}
-	wp.wg.Add(1)
+func (wp *WorkerPool) StartWorker(task func() error, resultCallback func(error)) {
+    wp.workers <- struct{}{}
+    wp.wg.Add(1)
 
-	go func() {
-		defer wp.wg.Done()
-		defer func() { <-wp.workers }()
-		task()
-	}()
+    // Assign a unique worker ID
+    workerID := len(wp.workers)
+
+    fmt.Printf("Worker %d started\n", workerID)
+
+    go func() {
+        defer wp.wg.Done()
+        defer func() {
+            <-wp.workers
+            fmt.Printf("Worker %d ended\n", workerID)
+        }()
+        err := task()
+        resultCallback(err) // Pass the result to the callback function
+    }()
 }
+
+
+
 
 func (wp *WorkerPool) Wait() {
 	wp.wg.Wait()
 }
 
-func main() {
-	
-	// Create a worker pool with a specific number of workers
-	workerPool := NewWorkerPool(10)
-
-	http.HandleFunc("/process", func(w http.ResponseWriter, r *http.Request) {
-		// Define the task you want to perform concurrently
-		task := func() {
-			// Perform the task here
-			fmt.Println("Processing task...")
-		}
-
-		// Start the task in a worker goroutine
-		workerPool.StartWorker(task)
-
-		// Respond to the client
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Task submitted for processing"))
-	})
-
-	server := http.Server{
-		Addr: ":8080",
-	}
-
-	go func() {
-		_ = server.ListenAndServe()
-	}()
-
-	fmt.Println("Server started on :8080")
-
-	// Wait for all tasks to finish before exiting
-	workerPool.Wait()
-}
