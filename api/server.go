@@ -61,7 +61,7 @@ func (s *Server) Run(/*gs *GoogleServer*/) {
 	//workerPool := worker.NewWorkerPool(10)
 
 	//http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
-	workerPool := worker.NewWorkerPool(10)
+	workerPool := worker.NewWorkerPool(50)
 
 	http.HandleFunc("/store/available", makeHTTPHandleFunc(s.handleStoreClient))
 	http.HandleFunc("/store", makeHTTPHandleFunc(s.handleStoreManager))

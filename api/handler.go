@@ -61,8 +61,25 @@ func (s *Server) handleHigherLevelCategory(res http.ResponseWriter, req *http.Re
 
 	} else if req.Method == "POST" {
 
-		print_path("POST", "higher_level_category")
-		return s.Handle_Create_Higher_Level_Category(res, req)
+		//print_path("POST", "higher_level_category")
+        resultChan := make(chan error, 1) // Create a channel to capture the result
+
+        task := func() error {
+            // Your actual GET category logic here
+            return s.Handle_Create_Higher_Level_Category(res, req)
+        }
+
+        // Start the task in a worker and pass a callback to capture the result
+        workerPool.StartWorker(task, func(err error) {
+            resultChan <- err // Send the result to the channel
+        })
+
+        // Wait for the result and return it
+        return <-resultChan
+
+
+		
+		
 
 	} else if req.Method == "PUT" {
 

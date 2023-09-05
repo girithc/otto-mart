@@ -36,13 +36,13 @@ func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Cat
 		hlc.Name,
 		hlc.Created_By)
 
-	fmt.Println("CheckPoint 1")
+	//fmt.Println("CheckPoint 1")
 
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("CheckPoint 2")
+	//fmt.Println("CheckPoint 2")
 
 	higher_level_categories := []*types.Higher_Level_Category{}
 	
@@ -54,7 +54,7 @@ func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Cat
 		higher_level_categories = append(higher_level_categories, higher_level_category)
 	}
 
-	fmt.Println("CheckPoint 3")
+	//fmt.Println("CheckPoint 3")
 
 	return higher_level_categories[0], nil
 }
