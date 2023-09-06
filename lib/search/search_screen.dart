@@ -39,11 +39,15 @@ class SearchPage extends StatelessWidget {
   Widget build(BuildContext context) {
     // Focus the text field when the page is loaded
     searchFocusNode.requestFocus();
+    final searchData = context.watch<SearchData>();
+    final searchQuery = searchData.searchQuery;
 
     return Scaffold(
       appBar: CustomAppBar(
           categoryName: 'Pronto', searchFocusNode: searchFocusNode),
-      body: const SearchItemList(),
+      body: searchQuery.length > 2
+          ? const SearchItemList()
+          : const SearchTemplate(),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shadowColor: Colors.white,
@@ -139,6 +143,260 @@ class SearchPage extends StatelessWidget {
     );
   }
 }
+
+/*
+Search Template Page
+*/
+
+class SearchTemplate extends StatefulWidget {
+  const SearchTemplate({super.key});
+
+  @override
+  State<SearchTemplate> createState() => _SearchTemplateState();
+}
+
+class _SearchTemplateState extends State<SearchTemplate> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          children: [
+            Container(
+              alignment: Alignment.centerLeft,
+              padding:
+                  const EdgeInsets.only(top: 15.0, bottom: 2.0, left: 10.0),
+              child: const Text(
+                'Popular Items',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const HorizontalScrollItems(),
+            Container(
+              alignment: Alignment.centerLeft,
+              padding:
+                  const EdgeInsets.only(top: 15.0, bottom: 2.0, left: 10.0),
+              child: const Text(
+                'Popular Brands',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const HorizontalScrollBrands(),
+            const SizedBox(height: 10),
+            const Highlights(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HorizontalScrollItems extends StatelessWidget {
+  const HorizontalScrollItems({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        CarouselSlider(
+          items: [
+            GestureDetector(
+              onTap: () {},
+              child: Card(
+                elevation: 1,
+                shadowColor: Colors.grey,
+                surfaceTintColor: Colors.white,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(8.0), // Adjust the radius as needed
+                ),
+                child: SizedBox(
+                  width: 300,
+                  height: 500,
+                  child: Stack(
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: Column(
+                          children: [
+                            Text(
+                              'Product-1',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Spacer(),
+                          ],
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: Padding(
+                          padding: const EdgeInsets.all(5.0),
+                          child: ElevatedButton(
+                            onPressed: () {},
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shadowColor: Colors.white,
+                              surfaceTintColor: Colors.white,
+                              padding: const EdgeInsets.all(0),
+                              side: const BorderSide(
+                                width: 1.0,
+                                color: Colors.pinkAccent,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    8.0), // Adjust the radius as needed
+                              ),
+                            ),
+                            child: const Text(
+                              'Add+',
+                              style: TextStyle(
+                                color: Colors.pinkAccent,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+
+          // Slider Container properties
+          options: CarouselOptions(
+            height: 175.0,
+            enlargeCenterPage: false,
+            autoPlay: false,
+            aspectRatio: 6 / 9,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enableInfiniteScroll: true,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 0.38,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class HorizontalScrollBrands extends StatelessWidget {
+  const HorizontalScrollBrands({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        CarouselSlider(
+          items: [
+            GestureDetector(
+              onTap: () {},
+              child: Card(
+                elevation: 1,
+                shadowColor: Colors.grey,
+                surfaceTintColor: Colors.white,
+                color: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(8.0), // Adjust the radius as needed
+                ),
+                child: SizedBox(
+                    width: 300,
+                    height: 500,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(20),
+                      child: const Text('Brand Name'),
+                    )),
+              ),
+            ),
+          ],
+
+          // Slider Container properties
+          options: CarouselOptions(
+            height: 120.0,
+            enlargeCenterPage: false,
+            autoPlay: false,
+            aspectRatio: 6 / 9,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enableInfiniteScroll: true,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 0.25,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class Highlights extends StatelessWidget {
+  const Highlights({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        CarouselSlider(
+          items: [
+            GestureDetector(
+              onTap: () {},
+              child: Card(
+                elevation: 1,
+                shadowColor: Colors.grey,
+                surfaceTintColor: Colors.white,
+                color: Colors.purpleAccent,
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(8.0), // Adjust the radius as needed
+                ),
+                child: SizedBox(
+                    width: 300,
+                    height: 500,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(20),
+                      child: Text('Promotion',
+                          style: GoogleFonts.lobster(
+                            textStyle: const TextStyle(
+                                color: Colors.white, fontSize: 24),
+                          )),
+                    )),
+              ),
+            ),
+          ],
+
+          // Slider Container properties
+          options: CarouselOptions(
+            height: 160.0,
+            enlargeCenterPage: false,
+            autoPlay: true,
+            aspectRatio: 6 / 9,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            enableInfiniteScroll: true,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 0.95,
+          ),
+        ),
+      ],
+    );
+  }
+}
+/*
+Search Results
+*/
 
 class SearchItemList extends StatefulWidget {
   const SearchItemList({super.key});
@@ -521,11 +779,16 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
   Future<void> fetchSearchItems(String queryString) async {
     try {
-      final fetchedSearchItems = await apiClient.fetchSearchItems(queryString);
-      setState(() {
-        resultSearchItems = fetchedSearchItems;
-        print(resultSearchItems[1].name);
-      });
+      if (queryString.length > 2) {
+        final fetchedSearchItems =
+            await apiClient.fetchSearchItems(queryString);
+        setState(() {
+          resultSearchItems = fetchedSearchItems;
+          print(resultSearchItems[1].name);
+        });
+      } else {
+        print('Query String is small.');
+      }
     } catch (err) {
       print('(catalog)fetchCategories error $err');
     }
@@ -581,7 +844,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 controller: searchController,
                 onChanged: (value) async {
                   searchData.updateSearchQuery(value);
-                  if (value.isNotEmpty) {
+                  if (value.length > 2) {
                     apiClient.fetchSearchItems(value).then((searchItemResults) {
                       context
                           .read<SearchData>()

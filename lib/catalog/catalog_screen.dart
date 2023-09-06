@@ -611,6 +611,7 @@ class ListItem extends StatelessWidget {
                                       cart.addItemToCart(cartItem);
                                     },
                                     style: ElevatedButton.styleFrom(
+                                        surfaceTintColor: Colors.white,
                                         backgroundColor: Colors.white,
                                         padding: const EdgeInsets.all(0),
                                         side: const BorderSide(
@@ -625,7 +626,7 @@ class ListItem extends StatelessWidget {
                                       'Add+',
                                       style: TextStyle(
                                           color: Colors.pinkAccent,
-                                          fontSize: 12),
+                                          fontSize: 13),
                                     )),
                               )
                       ],

@@ -1,3 +1,4 @@
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/address/address_screen.dart';
@@ -157,12 +158,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
+              const Highlights(),
               Container(
                 alignment: Alignment.centerLeft, // Align text to the left
-                padding: const EdgeInsets.only(
-                  left: 16,
-                  top: 10.0,
-                ),
+                padding: const EdgeInsets.only(left: 16, top: 8.0, bottom: 2.0),
                 child: const Text(
                   'Explore By Categories',
                   style: TextStyle(
@@ -174,7 +173,7 @@ class _MyHomePageState extends State<MyHomePage> {
               SizedBox(
                 height: 400,
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithFixedCrossAxisCount(
@@ -235,6 +234,62 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class Highlights extends StatelessWidget {
+  const Highlights({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: [
+        CarouselSlider(
+          items: [
+            GestureDetector(
+              onTap: () {},
+              child: Card(
+                elevation: 1,
+                shadowColor: Colors.grey,
+                surfaceTintColor: Colors.white,
+                color: const Color.fromARGB(255, 207, 31, 238),
+                shape: RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.circular(8.0), // Adjust the radius as needed
+                ),
+                child: SizedBox(
+                    width: 300,
+                    height: 500,
+                    child: Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(20),
+                      child: Text('Promotion',
+                          style: GoogleFonts.lobster(
+                            textStyle: const TextStyle(
+                                color: Colors.white, fontSize: 24),
+                          )),
+                    )),
+              ),
+            ),
+          ],
+
+          // Slider Container properties
+          options: CarouselOptions(
+            height: 125.0,
+            enlargeCenterPage: false,
+            autoPlay: true,
+            aspectRatio: 4 / 9,
+            autoPlayCurve: Curves.fastOutSlowIn,
+            autoPlayInterval: const Duration(seconds: 2),
+            enableInfiniteScroll: true,
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            viewportFraction: 0.85,
+          ),
+        ),
+      ],
     );
   }
 }
