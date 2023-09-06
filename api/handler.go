@@ -119,11 +119,23 @@ func (s *Server) handleCategory(res http.ResponseWriter, req *http.Request) erro
         return <-resultChan
 
 	} else if req.Method == "POST" {
+        print_path("POST", "category")
+        resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		print_path("POST", "category")
-		return s.Handle_Create_Category(res, req)
+        task := func() error {
+            // Your actual GET category logic here
+            return s.Handle_Create_Category(res, req)
+        }
 
-	} else if req.Method == "PUT" {
+        // Start the task in a worker and pass a callback to capture the result
+        workerPool.StartWorker(task, func(err error) {
+            resultChan <- err // Send the result to the channel
+        })
+
+        // Wait for the result and return it
+        return <-resultChan
+
+	}  else if req.Method == "PUT" {
 
 		print_path("PUT", "category")
 		return s.Handle_Update_Category(res, req)
@@ -195,11 +207,23 @@ func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 		return  <-resultChan
        
     } else if req.Method == "POST" {
+        print_path("POST", "item")
+        resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		print_path("POST", "item")
-		return s.Handle_Create_Item(res, req)
+        task := func() error {
+            // Your actual GET category logic here
+            return s.Handle_Create_Item(res, req)
+        }
 
-	} else if req.Method == "PUT" {
+        // Start the task in a worker and pass a callback to capture the result
+        workerPool.StartWorker(task, func(err error) {
+            resultChan <- err // Send the result to the channel
+        })
+
+        // Wait for the result and return it
+        return <-resultChan
+
+	}  else if req.Method == "PUT" {
 
 		print_path("PUT", "item")
 		return s.Handle_Update_Item(res, req)
@@ -216,12 +240,30 @@ func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 
 func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) error {
 
-	if req.Method == "POST" {
+	workerPool := s.workerPool
 
-		print_path("POST", "search-item")
-		return s.Handle_Post_Search_Items(res, req)
+    if req.Method == "POST" {
+        print_path("POST", "search item")
 
-	}
+        // Create a channel to capture the results of multiple runs
+        resultChan := make(chan error, 1)
+
+        // Define the task function to run
+        task := func() error {
+            // Your actual GET category logic here
+            return s.Handle_Post_Search_Items(res, req)
+        }
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(err error) {
+			resultChan <- err // Send the result to the channel
+		})
+
+        // Collect all results
+        
+		return  <-resultChan
+       
+    }
 
 	return nil
 }
