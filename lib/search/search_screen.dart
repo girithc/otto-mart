@@ -238,28 +238,32 @@ class HorizontalScrollItems extends StatelessWidget {
                       Align(
                         alignment: Alignment.bottomRight,
                         child: Padding(
-                          padding: const EdgeInsets.all(5.0),
-                          child: ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              shadowColor: Colors.white,
-                              surfaceTintColor: Colors.white,
-                              padding: const EdgeInsets.all(0),
-                              side: const BorderSide(
-                                width: 1.0,
-                                color: Colors.pinkAccent,
+                          padding: const EdgeInsets.all(7.0),
+                          child: SizedBox(
+                            height: 32,
+                            width: 48,
+                            child: ElevatedButton(
+                              onPressed: () {},
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                shadowColor: Colors.white,
+                                surfaceTintColor: Colors.white,
+                                padding: const EdgeInsets.all(0),
+                                side: const BorderSide(
+                                  width: 1.0,
+                                  color: Colors.pinkAccent,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      8.0), // Adjust the radius as needed
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    8.0), // Adjust the radius as needed
-                              ),
-                            ),
-                            child: const Text(
-                              'Add+',
-                              style: TextStyle(
-                                color: Colors.pinkAccent,
-                                fontSize: 15,
+                              child: const Text(
+                                'Add+',
+                                style: TextStyle(
+                                  color: Colors.pinkAccent,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ),
@@ -274,7 +278,7 @@ class HorizontalScrollItems extends StatelessWidget {
 
           // Slider Container properties
           options: CarouselOptions(
-            height: 175.0,
+            height: 155.0,
             enlargeCenterPage: false,
             autoPlay: false,
             aspectRatio: 6 / 9,
@@ -380,14 +384,15 @@ class Highlights extends StatelessWidget {
 
           // Slider Container properties
           options: CarouselOptions(
-            height: 160.0,
+            height: 135.0,
             enlargeCenterPage: false,
             autoPlay: true,
-            aspectRatio: 6 / 9,
+            aspectRatio: 4 / 9,
             autoPlayCurve: Curves.fastOutSlowIn,
+            autoPlayInterval: const Duration(seconds: 4),
             enableInfiniteScroll: true,
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
-            viewportFraction: 0.95,
+            viewportFraction: 0.85,
           ),
         ),
       ],
