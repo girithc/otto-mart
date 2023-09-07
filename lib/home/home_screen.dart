@@ -171,7 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
               SizedBox(
-                height: 400,
+                height: 650,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: GridView.builder(
@@ -255,7 +255,7 @@ class Highlights extends StatelessWidget {
                 elevation: 1,
                 shadowColor: Colors.grey,
                 surfaceTintColor: Colors.white,
-                color: const Color.fromARGB(255, 207, 31, 238),
+                color: const Color.fromARGB(255, 230, 88, 255),
                 shape: RoundedRectangleBorder(
                   borderRadius:
                       BorderRadius.circular(8.0), // Adjust the radius as needed
@@ -283,7 +283,7 @@ class Highlights extends StatelessWidget {
             autoPlay: true,
             aspectRatio: 4 / 9,
             autoPlayCurve: Curves.fastOutSlowIn,
-            autoPlayInterval: const Duration(seconds: 2),
+            autoPlayInterval: const Duration(seconds: 4),
             enableInfiniteScroll: true,
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
             viewportFraction: 0.85,
