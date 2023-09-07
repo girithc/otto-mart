@@ -30,7 +30,7 @@ class Product extends StatelessWidget {
     ]; // Creates growable list.
 
     return Scaffold(
-      resizeToAvoidBottomInset: false,
+      //resizeToAvoidBottomInset: false,
       appBar: const CustomAppBar(
         categoryName: 'Pronto',
       ),
@@ -43,7 +43,7 @@ class Product extends StatelessWidget {
               child: Image.network(image),
             ),
             Container(
-                height: 450,
+                height: 600,
                 width: MediaQuery.of(context).size.width * 0.97,
                 margin: EdgeInsets.only(
                     left: MediaQuery.of(context).size.width * 0.015),
@@ -131,7 +131,10 @@ class Product extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: const Text(
                         'Brand',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.deepPurple,
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
                     Container(
@@ -149,20 +152,47 @@ class Product extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: const Text(
                         'Quantity',
-                        style: TextStyle(fontSize: 16),
+                        style: TextStyle(fontSize: 16, color: Colors.black54),
                       ),
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10.0, vertical: 2.5),
+                        horizontal: 10.0,
+                        vertical: 2.5,
+                      ),
                       alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Price \u{20B9}$price',
-                        style: const TextStyle(fontSize: 16),
+                      child: Row(
+                        children: [
+                          const Text(
+                            'Price:',
+                            style: TextStyle(
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            '\u{20B9}$price',
+                            style: const TextStyle(
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(
+                              width: 5), // Add some spacing between the prices
+                          Text(
+                            '\u{20B9}${price * 1.2}', // Replace XXX with your original price
+                            style: const TextStyle(
+                              fontSize: 16,
+                              decoration: TextDecoration
+                                  .lineThrough, // Add the strikethrough decoration
+                              decorationColor: Colors
+                                  .red, // Customize the strikethrough color
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(
-                      height: 10,
+                      height: 40,
                     ),
                     Expanded(
                       child: ListView.builder(
@@ -195,98 +225,6 @@ class Product extends StatelessWidget {
           ],
         ),
       ),
-
-      /*
-        child: Align(
-          alignment: Alignment
-              .topCenter, // Align the card and button to the top and center
-          child: Column(
-            children: [
-              Expanded(
-                  child: Container(
-                height: MediaQuery.of(context).size.height * 0.45,
-                color: Colors.black,
-              )),
-              /*
-              Card(
-                elevation: 5,
-                shadowColor: Colors.transparent,
-                color: Colors.white,
-                surfaceTintColor: Colors.deepOrangeAccent,
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.75,
-                  height: MediaQuery.of(context).size.height * 0.45,
-                  child: Column(
-                    children: [
-                      Text(
-                        productName,
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        price.toString(),
-                        style: const TextStyle(
-                          fontSize: 15,
-                          color: Colors.black,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              */
-              Expanded(
-                child: Material(
-                  elevation: 4.0,
-                  child: Container(
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Colors.grey,
-                          width: 1.0, // Adjust the border width as needed
-                        ),
-                        borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(5),
-                            topRight: Radius.circular(5))),
-                    //width: MediaQuery.of(context).size.width * 0.75,
-                    height: MediaQuery.of(context).size.height *
-                        0.55, // Set the width of the button to 300
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Add your button logic here
-                        final cartItem = CartItem(
-                            productId: productId.toString(),
-                            productName: productName,
-                            price: price,
-                            quantity: 1,
-                            stockQuantity: stockQuantity,
-                            image: image);
-                        cart.addItemToCart(cartItem);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                              12.0), // Adjust the value for squareness
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, // Adjust the horizontal padding
-                          vertical: 8.0, // Adjust the vertical padding
-                        ),
-                      ),
-                      child: const Text('Add To Cart'),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      */
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shadowColor: Colors.white,
