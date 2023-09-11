@@ -7,6 +7,13 @@ import (
 
 // Store
 
+func (s *Server) handleUser(res http.ResponseWriter, req *http.Request) error {
+    if req.Method == "POST" {
+        fmt.Println("Login Initiated")
+    }    
+    return nil
+}
+
 func (s *Server) handleStoreClient(res http.ResponseWriter, req *http.Request) error {
 
 	if req.Method == "GET" {
