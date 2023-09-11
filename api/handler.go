@@ -10,6 +10,7 @@ import (
 func (s *Server) handleUser(res http.ResponseWriter, req *http.Request) error {
     if req.Method == "POST" {
         fmt.Println("Login Initiated")
+        return s.Handle_User_Login(res, req)
     }    
     return nil
 }
