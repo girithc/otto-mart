@@ -97,6 +97,13 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Category Higher Level Mapping Table")
 	}
 
+	errUser := s.Create_User_Table()
+	if errUser != nil{
+		return errUser
+	} else {
+		fmt.Println("Success - Created User Table")
+	}
+
 	//fmt.Println("Exiting Init() -- db.go")
 	return nil
 }

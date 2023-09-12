@@ -13,7 +13,6 @@ type User struct {
 }
 
 type Create_User struct {
-	Name              string    `json:"name"`
 	Phone			  int 		`json:"phone"`
 }
 
@@ -28,9 +27,8 @@ type Delete_User struct {
 }
 
 
-func New_User(name string, phone int)(*User, error) {
-	return &User{
-		Name: name,
+func New_User(phone int)(*Create_User, error) {
+	return &Create_User{
 		Phone: phone,
 }, nil
 }
