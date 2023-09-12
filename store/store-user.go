@@ -14,6 +14,7 @@ func (s *PostgresStore) Create_User_Table() error {
 		id SERIAL PRIMARY KEY,
     	name VARCHAR(100) NOT NULL,
 		phone INT NOT NULL,
+		refresh_token TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
