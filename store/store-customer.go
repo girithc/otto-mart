@@ -11,7 +11,7 @@ func (s *PostgresStore) CreateCustomerTable() error {
 		id SERIAL PRIMARY KEY,
 		customer_name VARCHAR(100) NOT NULL,
 		email VARCHAR(100),
-		phone_number VARCHAR(10), 
+		phone_number VARCHAR(10) NOT NULL, 
 		address VARCHAR(200)
 	)`
 
