@@ -12,6 +12,7 @@ import (
 	"google.golang.org/api/iam/v1"
 )
 
+
 func (gs *GoogleServer) handleGoogleSignManager(w http.ResponseWriter, r *http.Request) {
     // Accepts only POST method.
     // Otherwise, this handler returns 405.

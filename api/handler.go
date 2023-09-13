@@ -7,11 +7,35 @@ import (
 
 // Store
 
-func (s *Server) handleUser(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) handleCustomer(res http.ResponseWriter, req *http.Request) error {
     if req.Method == "POST" {
         fmt.Println("Login Initiated")
-        return s.Handle_User_Login(res, req)
+        return s.Handle_Customer_Login(res, req)
+    } else if req.Method == "GET" {
+        print_path("[GET]", "customer")
+        return s.Handle_Get_Customers(res, req)
     }    
+    return nil
+}
+
+func (s *Server) handleShoppingCart(res http.ResponseWriter, req *http.Request) error {
+    if req.Method == "GET" {
+        print_path("GET", "shopping_cart")
+        return s.Handle_Get_All_Active_Shopping_Carts(res, req)
+    }
+
+    return nil
+}
+
+func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) error {
+    if req.Method == "POST" {
+
+    } else if req.Method == "DELETE" {
+        
+    } else if req.Method == "GET" {
+
+    }
+
     return nil
 }
 

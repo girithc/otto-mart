@@ -46,6 +46,9 @@ func (s *Server) Handle_Get_Categories(res http.ResponseWriter, req *http.Reques
 		return WriteJSON(res, http.StatusOK, categories)
     } else {
 		num, err := strconv.Atoi(hlc_id)
+		if err != nil {
+			return err
+		}
 		new_category_parent, err := types.New_Category_Parent_Id(num)
 
 		if err != nil {
@@ -62,7 +65,7 @@ func (s *Server) Handle_Get_Categories(res http.ResponseWriter, req *http.Reques
 
 		}
 	}
-	return fmt.Errorf("End Of Function Handle_Get_Categories")
+	return fmt.Errorf("end of function handle_get_categories")
 }
 
 
