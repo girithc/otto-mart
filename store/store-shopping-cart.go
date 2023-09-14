@@ -76,6 +76,17 @@ func (s *PostgresStore) Get_All_Active_Shopping_Carts() ([]*types.Shopping_Cart,
 	return shopping_carts, nil
 }
 
+func (s *PostgresStore) DoesCartExist(cartID int) (bool, error) {
+    var count int
+    err := s.db.QueryRow("SELECT COUNT(*) FROM shopping_cart WHERE id = $1 AND active = true", cartID).Scan(&count)
+    if err != nil {
+        return false, err
+    }
+
+    return count > 0, nil
+}
+
+
 func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 	cart := new(types.Shopping_Cart)
 	err := rows.Scan(

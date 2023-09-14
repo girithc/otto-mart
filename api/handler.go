@@ -41,16 +41,19 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
         }
 
         // Check if the desired field exists in the request body
-        if fieldValue, ok := requestBody["customer_id"].(float64); ok {
+        if cartId, cartOk := requestBody["cart_id"].(float64); cartOk {
             // Field exists, you can take further action
-            customerID := int(fieldValue) // Convert to int if it's a valid integer
-            fmt.Printf("Field 'customer_id' found with value (numeric): %d\n", customerID)
+            cartID := int(cartId) // Convert to int if it's a valid integer
+            fmt.Printf("Field 'cart_id' found with value (numeric): %d\n", cartID)
             // Redirect or perform other actions based on the field's value
-        } else if fieldValue, ok := requestBody["customer_id"].(string); ok {
+            if itemId, itemOk := requestBody["item_id"].(float64); itemOk {
             // Field exists, you can take further action
-            fmt.Printf("Field 'customer_id' found with value (string): %s\n", fieldValue)
+            itemID := int(itemId) // Convert to int if it's a valid integer
+            fmt.Printf("Field 'item_id' found with value (numeric): %d\n", itemID)
             // Redirect or perform other actions based on the field's value
-        }
+                return s.Handle_Add_Cart_item(res, req)
+            } 
+        } 
 
         
     } else if req.Method == "DELETE" {
