@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 )
@@ -29,10 +30,34 @@ func (s *Server) handleShoppingCart(res http.ResponseWriter, req *http.Request) 
 
 func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) error {
     if req.Method == "POST" {
+        print_path("POST", "cart-item")
 
-    } else if req.Method == "DELETE" {
+        var requestBody map[string]interface{}
+        decoder := json.NewDecoder(req.Body)
+        if err := decoder.Decode(&requestBody); err != nil {
+            // Handle error
+            http.Error(res, "Failed to parse request body", http.StatusBadRequest)
+            return err
+        }
+
+        // Check if the desired field exists in the request body
+        if fieldValue, ok := requestBody["customer_id"].(float64); ok {
+            // Field exists, you can take further action
+            customerID := int(fieldValue) // Convert to int if it's a valid integer
+            fmt.Printf("Field 'customer_id' found with value (numeric): %d\n", customerID)
+            // Redirect or perform other actions based on the field's value
+        } else if fieldValue, ok := requestBody["customer_id"].(string); ok {
+            // Field exists, you can take further action
+            fmt.Printf("Field 'customer_id' found with value (string): %s\n", fieldValue)
+            // Redirect or perform other actions based on the field's value
+        }
+
         
+    } else if req.Method == "DELETE" {
+        print_path("DELETE", "cart-item")
+        return s.Handle_Delete_Cart_item(res, req)
     } else if req.Method == "GET" {
+        print_path("GET", "cart-item")
 
     }
 
