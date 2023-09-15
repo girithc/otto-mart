@@ -19,6 +19,14 @@ type Remove_Cart_Item struct {
 	Quantity int `json:"quantity"`
 }
 
+type Get_Cart_Items struct {
+	CartId int `json:"cart_id"`
+}
+
+type Cart_Item_Quantity struct {
+	Quantity int `json:"quantity"`
+}
+
 
 func New_Cart_Item(cart_id int, item_id int, quantity int)(*Cart_Item, error) {
 	return &Cart_Item{

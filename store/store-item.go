@@ -117,6 +117,7 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Item, error) {
 	if err != nil {
 		return nil, err
 	}
+	
 
 	for row.Next() {
 		return scan_Into_Item(row)

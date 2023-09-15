@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -47,12 +48,25 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
             fmt.Printf("Field 'cart_id' found with value (numeric): %d\n", cartID)
             // Redirect or perform other actions based on the field's value
             if itemId, itemOk := requestBody["item_id"].(float64); itemOk {
-            // Field exists, you can take further action
-            itemID := int(itemId) // Convert to int if it's a valid integer
-            fmt.Printf("Field 'item_id' found with value (numeric): %d\n", itemID)
-            // Redirect or perform other actions based on the field's value
-                return s.Handle_Add_Cart_item(res, req)
-            } 
+                // Field exists, you can take further action
+                itemID := int(itemId) // Convert to int if it's a valid integer
+                fmt.Printf("Field 'item_id' found with value (numeric): %d\n", itemID)
+                // Redirect or perform other actions based on the field's value
+                
+                // Create a new reader from the decoded data
+                requestBodyBytes, _ := json.Marshal(requestBody)
+                requestBodyReader := bytes.NewReader(requestBodyBytes)
+                
+                // Pass the new reader to Handle_Add_Cart_Item
+                return s.Handle_Add_Cart_Item(res, req, requestBodyReader)
+            } else {
+                // Create a new reader from the decoded data
+                requestBodyBytes, _ := json.Marshal(requestBody)
+                requestBodyReader := bytes.NewReader(requestBodyBytes)
+                
+                // Pass the new reader to Handle_Add_Cart_Item
+                return s.Handle_Get_All_Cart_Items(res, req, requestBodyReader)
+            }
         } 
 
         
