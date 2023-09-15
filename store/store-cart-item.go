@@ -163,12 +163,3 @@ func scan_Into_Cart_Item(rows *sql.Rows) (*types.Cart_Item, error) {
 
 	return cart_item, err
 }
-
-func scan_Into_Cart_Item_Quantity(rows *sql.Rows) (*types.Cart_Item_Quantity, error) {
-	cart_item_quantity := new(types.Cart_Item_Quantity)
-	err := rows.Scan(
-		&cart_item_quantity.Quantity,
-	)
-
-	return cart_item_quantity, err
-}
