@@ -51,7 +51,7 @@ func(s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request,
 				return WriteJSON(res, http.StatusOK, updated_cart_item)
 			} else {
 				error_message := new(types.Error_Message)
-				error_message.Message = "Out Of Stock"
+				error_message.Message = "Out Of Stock - Item In Cart"
 				return WriteJSON(res, http.StatusNotAcceptable, error_message)
 			}
 			
@@ -70,7 +70,7 @@ func(s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request,
 				return WriteJSON(res, http.StatusOK, add_cart_item)
 			} else {
 				error_message := new(types.Error_Message)
-				error_message.Message = "Out Of Stock"
+				error_message.Message = "Out Of Stock - No Cart"
 				return WriteJSON(res, http.StatusNotAcceptable, error_message)
 			}
 		}

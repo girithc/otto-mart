@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"pronto-go/types"
 
 	_ "github.com/lib/pq"
@@ -41,17 +42,21 @@ func (s *PostgresStore) IsItemInStock(stock_quantity int, item_id int, cart_id i
         WHERE cart_id = $1 AND item_id = $2
     `
     
-    var quantity int
+    var quantity int = 0
     err := s.db.QueryRow(query, cart_id, item_id).Scan(&quantity)
     if err != nil {
-        if err == sql.ErrNoRows {
-            // No matching record found, the item is not in the cart
-            return false, nil
+        if err != sql.ErrNoRows {
+			// Handle other database errors
+			fmt.Println("Database Error")
+			return false, err
         }
-        // Handle other database errors
-        return false, err
+        //no rows returned - its fine
     }
-    
+
+	fmt.Println("Quantity: ", quantity)
+	fmt.Println("Item Quantity: ", item_quantity)
+	fmt.Println("Stock Quantity: ", stock_quantity)
+
     // Check if the quantity is less than the stock_quantity parameter
     return ((quantity + item_quantity) <= stock_quantity) , nil
 }
