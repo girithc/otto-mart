@@ -42,6 +42,7 @@ dependencies:
   image_picker: ^1.0.2
   mime: ^1.0.4
   gcloud: ^0.8.11
+  pinput: ^3.0.1
 
 dev_dependencies:
   flutter_test:

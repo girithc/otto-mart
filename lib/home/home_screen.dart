@@ -10,7 +10,8 @@ import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
-import 'package:pronto/login/login_screen.dart';
+import 'package:pronto/deprecated/login/login_screen.dart';
+import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/search/search_screen.dart';
 
 class MyHomePage extends StatefulWidget {
@@ -329,7 +330,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   margin: const EdgeInsets.symmetric(horizontal: 0.0),
                   child: TextButton(
                       onPressed: () {
-                        homePageState._openBottomSheet();
+                        //homePageState._openBottomSheet();
+
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyPhone()));
                       },
                       child: ShaderMask(
                         shaderCallback: (bounds) => const RadialGradient(
