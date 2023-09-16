@@ -1,15 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pinput/pinput.dart';
 import 'package:pronto/home/home_screen.dart';
+import 'package:pronto/login/phone_api_client.dart';
 
 class MyVerify extends StatefulWidget {
-  const MyVerify({Key? key}) : super(key: key);
+  MyVerify({Key? key, required this.number}) : super(key: key);
+  String number;
 
   @override
   State<MyVerify> createState() => _MyVerifyState();
 }
 
 class _MyVerifyState extends State<MyVerify> {
+  late CustomerApiClient apiClient; // Declare apiClient here
+  late Customer customer;
+
+  final storage = const FlutterSecureStorage();
+
+  bool isLoggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    apiClient = CustomerApiClient(widget.number);
+    checkLoginStatus();
+  }
+
+  Future<void> checkLoginStatus() async {
+    const storage = FlutterSecureStorage();
+    final customerId = await storage.read(key: 'customerId');
+
+    setState(() {
+      isLoggedIn = customerId != null;
+    });
+  }
+
+  Future<void> loginCustomer() async {
+    try {
+      final loggedCustomer = await apiClient.loginCustomer();
+      setState(() {
+        customer = loggedCustomer;
+        isLoggedIn = true;
+        print("Logged in Customer: ${customer.id}");
+      });
+
+      // Store the user's credentials securely
+      await storage.write(key: 'customerId', value: customer.id.toString());
+      await storage.write(key: 'phone', value: customer.phone.toString());
+
+      // You can store other user-related data as well
+    } catch (err) {
+      print('(login) customer error $err');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final defaultPinTheme = PinTheme(
@@ -48,7 +93,7 @@ class _MyVerifyState extends State<MyVerify> {
                   tileMode: TileMode.mirror)
               .createShader(bounds),
           child: const Text(
-            'Pronto',
+            "Pronto",
             style: TextStyle(
                 fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
           ),
@@ -118,12 +163,14 @@ class _MyVerifyState extends State<MyVerify> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10))),
                     onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyHomePage(
-                                    title: "Pronto",
-                                  )));
+                      loginCustomer().then(
+                        (value) => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyHomePage(
+                                      title: "Pronto",
+                                    ))),
+                      );
                     },
                     child: const Text(
                       "Submit Code",
@@ -143,9 +190,9 @@ class _MyVerifyState extends State<MyVerify> {
                           (route) => false,
                         );
                       },
-                      child: const Text(
-                        "Edit Phone Number ?",
-                        style: TextStyle(color: Colors.deepPurple),
+                      child: Text(
+                        "Edit Phone Number ${widget.number} ? ",
+                        style: const TextStyle(color: Colors.deepPurple),
                       ))
                 ],
               )

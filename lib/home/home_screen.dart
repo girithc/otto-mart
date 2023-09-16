@@ -1,11 +1,11 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/address/address_screen.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/constants.dart';
-import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
@@ -29,12 +29,26 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _isBottomSheetOpen = false;
   bool _isBottomSheetAddressOpen = false;
 
+  bool isLoggedIn = false;
+  String customerId = "0";
+  String phone = "0";
+
   @override
   void initState() {
     super.initState();
     fetchCategories();
-    Future.delayed(Duration.zero, () {
-      _openBottomSheet();
+    retrieveCustomerInfo();
+    // Add the following code to retrieve the values
+    retrieveCustomerInfo();
+  }
+
+  Future<void> retrieveCustomerInfo() async {
+    const storage = FlutterSecureStorage();
+    customerId = await storage.read(key: 'customerId') ?? '';
+    phone = await storage.read(key: 'phone') ?? '';
+
+    setState(() {
+      isLoggedIn = customerId.isNotEmpty;
     });
   }
 
@@ -159,7 +173,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
               ),
-              const Highlights(),
+              Highlights(
+                  customerId: customerId,
+                  phone: phone), // Pass retrieved values
               Container(
                 alignment: Alignment.centerLeft, // Align text to the left
                 padding: const EdgeInsets.only(left: 16, top: 8.0, bottom: 2.0),
@@ -240,7 +256,10 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class Highlights extends StatelessWidget {
-  const Highlights({super.key});
+  const Highlights({required this.customerId, required this.phone, super.key});
+
+  final String customerId;
+  final String phone;
 
   @override
   Widget build(BuildContext context) {
@@ -267,7 +286,7 @@ class Highlights extends StatelessWidget {
                     child: Container(
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(20),
-                      child: Text('Promotion',
+                      child: Text('Hi $phone',
                           style: GoogleFonts.lobster(
                             textStyle: const TextStyle(
                                 color: Colors.white, fontSize: 24),
@@ -300,6 +319,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final _MyHomePageState homePageState; // Add this line
 
   const CustomAppBar({this.title, required this.homePageState, super.key});
+
+  Future<void> signOutUser() async {
+    // Clear the data in "customerId" key
+    print("Signing Out User");
+    const storage = FlutterSecureStorage();
+    await storage.delete(key: 'customerId');
+
+    // Perform any additional sign-out logic if needed
+    // For example, you might want to navigate to the login screen
+  }
 
   @override
   Size get preferredSize =>
@@ -371,10 +400,19 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.person),
                   onPressed: () {
+                    signOutUser().then(
+                      (value) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyPhone())),
+                    );
+
+                    /*
                     Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const CartPage()));
+                    */
                   },
                 ),
               ],
