@@ -24,6 +24,9 @@ func (s *Server) handleShoppingCart(res http.ResponseWriter, req *http.Request) 
     if req.Method == "GET" {
         print_path("GET", "shopping_cart")
         return s.Handle_Get_All_Active_Shopping_Carts(res, req)
+    } else if req.Method == "POST" {
+        print_path("POST", "shopping_cart")
+        return s.Handle_Get_Shopping_Cart_By_Customer_Id(res, req)
     }
 
     return nil

@@ -13,7 +13,10 @@ type Create_Shopping_Cart struct {
 	Customer_Id       int       `json:"customer_id"`
 }
 
-
+type Get_Shopping_Cart struct {
+	Customer_Id		  int 		`json:"customer_id"`
+	Active 		      bool		`json:"active"`
+}
 
 func New_Shopping_Cart(customer_id int)(*Create_Shopping_Cart, error) {
 	return &Create_Shopping_Cart{
