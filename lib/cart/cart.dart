@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class CartItem {
   final String productId;
@@ -12,9 +14,19 @@ class CartItem {
       {required this.productId,
       required this.productName,
       required this.price,
-      this.quantity = 1,
+      required this.quantity,
       required this.stockQuantity,
       required this.image});
+
+  factory CartItem.fromJson(Map<String, dynamic> json) {
+    return CartItem(
+        productId: json['id'].toString(),
+        productName: json['name'],
+        price: json['price'],
+        quantity: json['quantity'],
+        stockQuantity: json['stock_quantity'],
+        image: json['image']);
+  }
 }
 
 class Address {
@@ -47,6 +59,37 @@ class CartModel extends ChangeNotifier {
   Address _deliveryAddress =
       Address(placeId: "", mainText: "", secondaryText: "");
 
+  CartModel() {
+    final url = Uri.parse(
+        'http://localhost:3000/cart-item'); // Replace with your server URL
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      // Add any other headers you need
+    };
+    final body = <String, dynamic>{
+      'cart_id': 1,
+      'items': true,
+      // Add any other parameters you need
+    };
+
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      if (response.statusCode == 200) {
+        //final responseData = jsonDecode(response.body);
+        final List<dynamic> jsonData = json.decode(response.body);
+        final List<CartItem> items =
+            jsonData.map((item) => CartItem.fromJson(item)).toList();
+
+        _items.clear();
+        _items.addAll(items);
+        notifyListeners();
+      } else {
+        print(
+            'HTTP POST request failed with status code ${response.statusCode}');
+      }
+    }).catchError((error) {
+      print('HTTP POST request error: $error');
+    });
+  }
   List<CartItem> get items => _items;
 
   int get numberOfItems =>
@@ -87,11 +130,71 @@ class CartModel extends ChangeNotifier {
   }
 
   void addItemToCart(CartItem item) {
+    print("Add Item To Cart");
+    final url = Uri.parse(
+        'http://localhost:3000/cart-item'); // Replace with your server URL
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      // Add any other headers you need
+    };
+    final body = <String, dynamic>{
+      'cart_id': 1,
+      'item_id': item.productId,
+      'quantity': 1,
+      // Add any other parameters you need
+    };
+
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      if (response.statusCode == 200) {
+        //final responseData = jsonDecode(response.body);
+
+        //final List<dynamic> jsonData = json.decode(response.body);
+        print("Add Item To Cart response: ");
+        final url = Uri.parse(
+            'http://localhost:3000/cart-item'); // Replace with your server URL
+        final headers = <String, String>{
+          'Content-Type': 'application/json',
+          // Add any other headers you need
+        };
+        final body = <String, dynamic>{
+          'cart_id': 1,
+          'items': true,
+          // Add any other parameters you need
+        };
+
+        http
+            .post(url, headers: headers, body: jsonEncode(body))
+            .then((response) {
+          if (response.statusCode == 200) {
+            print("CartModel Items Success");
+            //final responseData = jsonDecode(response.body);
+            final List<dynamic> jsonData = json.decode(response.body);
+            final List<CartItem> items =
+                jsonData.map((item) => CartItem.fromJson(item)).toList();
+
+            _items.clear();
+            _items.addAll(items);
+            notifyListeners();
+          } else {
+            print(
+                'HTTP POST request failed with status code ${response.statusCode}');
+          }
+        }).catchError((error) {
+          print('HTTP POST request error: $error');
+        });
+        //notifyListeners();
+      } else {
+        print(
+            'HTTP POST request failed with status code ${response.statusCode}');
+      }
+    }).catchError((error) {
+      print('HTTP POST request error: $error');
+    });
+
     final existingItemIndex =
         _items.indexWhere((cartItem) => cartItem.productId == item.productId);
 
-    //printItems(_items);
-
+    /*printItems(_items);
     if (existingItemIndex != -1) {
       // If the item is already in the cart, update its quantity
       print("item already exists in cart, ${item.productName}");
@@ -105,6 +208,7 @@ class CartModel extends ChangeNotifier {
       print("adding item to cart, ${item.productName}");
       _items.add(item);
     }
+    */
 
     notifyListeners(); // Notify listeners about the change
   }
