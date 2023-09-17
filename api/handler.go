@@ -62,14 +62,18 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
                 
                 // Pass the new reader to Handle_Add_Cart_Item
                 return s.Handle_Add_Cart_Item(res, req, requestBodyReader)
-            } else {
+            } else if itemList, itemListOk := requestBody["items"].(bool); itemListOk {
                 // Create a new reader from the decoded data
                 requestBodyBytes, _ := json.Marshal(requestBody)
                 requestBodyReader := bytes.NewReader(requestBodyBytes)
-                
-                // Pass the new reader to Handle_Add_Cart_Item
-                return s.Handle_Get_All_Cart_Items(res, req, requestBodyReader)
-            }
+
+                if(itemList) {
+                    return s.Handle_Get_Item_List_From_Cart_Item(res, req, requestBodyReader)
+                } else {
+                    return s.Handle_Get_All_Cart_Items(res, req, requestBodyReader)
+                }
+
+            } 
         } 
 
         

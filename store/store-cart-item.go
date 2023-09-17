@@ -157,6 +157,33 @@ func (s *PostgresStore) Get_All_Cart_Items(cart_id int)([]*types.Cart_Item, erro
 	return cart_items, nil
 }
 
+func (s *PostgresStore) Get_All_Items_List_From_Cart_Items(cart_id int) ([]*types.Cart_Item_Item_List, error) {
+    rows, err := s.db.Query(`
+        SELECT i.id, i.name, i.price::numeric::float8, i.image, i.stock_quantity, ci.quantity
+        FROM cart_item ci
+        JOIN item i ON ci.item_id = i.id
+        WHERE ci.cart_id = $1;
+    `, cart_id)
+
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    cart_items := []*types.Cart_Item_Item_List{}
+    for rows.Next() {
+        cart_item, err := scan_Into_Cart_Item_Item_List(rows)
+        if err != nil {
+            return nil, err
+        }
+
+        cart_items = append(cart_items, cart_item)
+    }
+
+    return cart_items, nil
+}
+
+
 func scan_Into_Cart_Item(rows *sql.Rows) (*types.Cart_Item, error) {
 	cart_item := new(types.Cart_Item)
 	err := rows.Scan(
@@ -167,4 +194,18 @@ func scan_Into_Cart_Item(rows *sql.Rows) (*types.Cart_Item, error) {
 	)
 
 	return cart_item, err
+}
+
+func scan_Into_Cart_Item_Item_List(rows *sql.Rows) (*types.Cart_Item_Item_List, error) {
+	cart_item_item_list := new(types.Cart_Item_Item_List)
+	err:= rows.Scan(
+		&cart_item_item_list.Id,
+		&cart_item_item_list.Name,
+		&cart_item_item_list.Price,
+		&cart_item_item_list.Image,
+		&cart_item_item_list.Stock_Quantity,
+		&cart_item_item_list.Quantity,
+	)
+
+	return cart_item_item_list, err
 }

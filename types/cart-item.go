@@ -23,6 +23,20 @@ type Get_Cart_Items struct {
 	CartId int `json:"cart_id"`
 }
 
+type Cart_Item_Item_List struct {
+	Id int `json:"id"`
+	Name string `json:"name"`
+	Price int `json:"price"`
+	Quantity int `json:"quantity"`
+	Image string `json:"image"`
+	Stock_Quantity int `json:"stock_quantity"`
+}
+
+type Get_Cart_Items_Item_List struct {
+	CartId int `json:"cart_id"`
+	Items bool `json:"items"`
+}
+
 type Cart_Item_Quantity struct {
 	Quantity int `json:"quantity"`
 }

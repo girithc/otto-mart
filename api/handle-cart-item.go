@@ -111,3 +111,28 @@ func (s *Server) Handle_Get_All_Cart_Items(res http.ResponseWriter, req *http.Re
 	return nil
 }
 
+func (s *Server) Handle_Get_Item_List_From_Cart_Item(res http.ResponseWriter, req *http.Request, requestBodyReader *bytes.Reader) error {
+
+	new_req := new(types.Get_Cart_Items_Item_List)
+	if err := json.NewDecoder(requestBodyReader).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in Handle_Get_Item_List_From_Cart_Item()", err)
+		return err
+	}
+
+	cart_id_exists, err := s.store.DoesCartExist(new_req.CartId) 
+	if err != nil {
+		return err
+	}
+	if(cart_id_exists) {
+		if(new_req.Items) {
+			cart_items, err := s.store.Get_All_Items_List_From_Cart_Items(new_req.CartId)
+			if err != nil {
+				return err
+			}
+
+			return WriteJSON(res, http.StatusOK, cart_items)
+		}
+	}
+
+	return nil
+}
