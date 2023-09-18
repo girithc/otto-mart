@@ -39,6 +39,7 @@ dependencies:
   mime: ^1.0.4
   googleapis_auth: ^1.4.1
   gcloud: ^0.8.11
+  flutter_animate: ^4.2.0+1
 
 dev_dependencies:
   flutter_test:
@@ -62,3 +63,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/credentials.json
+    - assets/scooter.avif

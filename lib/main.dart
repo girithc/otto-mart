@@ -6,18 +6,63 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({Key? key}) : super(key: key);
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Pronto',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
+      title: 'Scooter Animation',
+      theme: ThemeData(primarySwatch: Colors.blue),
+      home: const OpeningPageAnimation(),
+    );
+  }
+}
+
+class OpeningPageAnimation extends StatefulWidget {
+  const OpeningPageAnimation({Key? key}) : super(key: key);
+
+  @override
+  _OpeningPageAnimationState createState() => _OpeningPageAnimationState();
+}
+
+class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
+  late double _begin;
+  late double _end;
+
+  @override
+  void initState() {
+    super.initState();
+    _begin = -0.5; // start outside the screen on the left
+    _end = 1; // end outside the screen on the right
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Center(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: _begin, end: _end),
+          duration: const Duration(seconds: 3, milliseconds: 20),
+          builder: (BuildContext context, double position, Widget? child) {
+            return Transform.translate(
+              offset: Offset(position * MediaQuery.of(context).size.width, 0),
+              child: Transform.scale(
+                scale: 0.75,
+                child: child!,
+              ),
+            );
+          },
+          onEnd: () {
+            // Navigate to the next page after the animation ends
+            Navigator.of(context).pushReplacement(MaterialPageRoute(
+                builder: (context) => const MyHomePage(
+                      title: 'Pronto',
+                    )));
+          },
+          child: Image.asset('assets/scooter.avif'),
+        ),
       ),
-      home: const MyHomePage(title: 'Pronto'),
     );
   }
 }
