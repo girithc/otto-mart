@@ -139,50 +139,22 @@ class CartModel extends ChangeNotifier {
     };
     final body = <String, dynamic>{
       'cart_id': 1,
-      'item_id': item.productId,
+      'item_id': int.parse(item.productId),
       'quantity': 1,
       // Add any other parameters you need
     };
 
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      //print('HTTP POST response body: ${response.body}');
       if (response.statusCode == 200) {
         //final responseData = jsonDecode(response.body);
+        final List<dynamic> jsonData = json.decode(response.body);
+        final List<CartItem> items =
+            jsonData.map((item) => CartItem.fromJson(item)).toList();
 
-        //final List<dynamic> jsonData = json.decode(response.body);
-        print("Add Item To Cart response: ");
-        final url = Uri.parse(
-            'http://localhost:3000/cart-item'); // Replace with your server URL
-        final headers = <String, String>{
-          'Content-Type': 'application/json',
-          // Add any other headers you need
-        };
-        final body = <String, dynamic>{
-          'cart_id': 1,
-          'items': true,
-          // Add any other parameters you need
-        };
-
-        http
-            .post(url, headers: headers, body: jsonEncode(body))
-            .then((response) {
-          if (response.statusCode == 200) {
-            print("CartModel Items Success");
-            //final responseData = jsonDecode(response.body);
-            final List<dynamic> jsonData = json.decode(response.body);
-            final List<CartItem> items =
-                jsonData.map((item) => CartItem.fromJson(item)).toList();
-
-            _items.clear();
-            _items.addAll(items);
-            notifyListeners();
-          } else {
-            print(
-                'HTTP POST request failed with status code ${response.statusCode}');
-          }
-        }).catchError((error) {
-          print('HTTP POST request error: $error');
-        });
-        //notifyListeners();
+        _items.clear();
+        _items.addAll(items);
+        notifyListeners();
       } else {
         print(
             'HTTP POST request failed with status code ${response.statusCode}');
@@ -190,47 +162,41 @@ class CartModel extends ChangeNotifier {
     }).catchError((error) {
       print('HTTP POST request error: $error');
     });
-
-    final existingItemIndex =
-        _items.indexWhere((cartItem) => cartItem.productId == item.productId);
-
-    /*printItems(_items);
-    if (existingItemIndex != -1) {
-      // If the item is already in the cart, update its quantity
-      print("item already exists in cart, ${item.productName}");
-      if (_items[existingItemIndex].quantity + 1 >
-          _items[existingItemIndex].stockQuantity) {
-        throw Exception("No more items in stock");
-      }
-      _items[existingItemIndex].quantity += 1;
-    } else {
-      // Otherwise, add the item to the cart
-      print("adding item to cart, ${item.productName}");
-      _items.add(item);
-    }
-    */
-
-    notifyListeners(); // Notify listeners about the change
   }
 
   void removeItem({required String itemId}) {
-    final existingItemIndex =
-        _items.indexWhere((cartItem) => cartItem.productId == itemId);
+    print("Remove Item From Cart");
+    final url = Uri.parse(
+        'http://localhost:3000/cart-item'); // Replace with your server URL
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+      // Add any other headers you need
+    };
+    final body = <String, dynamic>{
+      'cart_id': 1,
+      'item_id': int.parse(itemId),
+      'quantity': -1,
+      // Add any other parameters you need
+    };
 
-    if (existingItemIndex != -1) {
-      CartItem foundItem =
-          _items.firstWhere((item) => item.productId == itemId);
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      //print('HTTP POST response body: ${response.body}');
+      if (response.statusCode == 200) {
+        //final responseData = jsonDecode(response.body);
+        final List<dynamic> jsonData = json.decode(response.body);
+        final List<CartItem> items =
+            jsonData.map((item) => CartItem.fromJson(item)).toList();
 
-      if (foundItem.quantity > 1) {
-        _items[existingItemIndex].quantity -= 1;
+        _items.clear();
+        _items.addAll(items);
+        notifyListeners();
       } else {
-        _items.remove(foundItem);
+        print(
+            'HTTP POST request failed with status code ${response.statusCode}');
       }
-    } else {
-      print("Item does not exist in cart");
-    }
-
-    notifyListeners();
+    }).catchError((error) {
+      print('HTTP POST request error: $error');
+    });
   }
 
   bool isEmpty() {
