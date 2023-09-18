@@ -44,11 +44,17 @@ func(s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request,
 			}
 
 			if(item_is_in_stock) {
-				updated_cart_item, err := s.store.Update_Cart_Item_Quantity(new_req.CartId, new_req.ItemId, new_req.Quantity)
+				_, err := s.store.Update_Cart_Item_Quantity(new_req.CartId, new_req.ItemId, new_req.Quantity)
 				if err != nil {
 					return err
 				}
-				return WriteJSON(res, http.StatusOK, updated_cart_item)
+
+				cart_item_list, err := s.store.Get_All_Items_List_From_Cart_Items(new_req.CartId);
+				if err != nil {
+					return err
+				}
+
+				return WriteJSON(res, http.StatusOK, cart_item_list)
 			} else {
 				error_message := new(types.Error_Message)
 				error_message.Message = "Out Of Stock - Item In Cart"
@@ -63,11 +69,17 @@ func(s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request,
 			}
 
 			if(item_is_in_stock) {
-				add_cart_item, err := s.store.Add_Cart_Item(new_req.CartId, new_req.ItemId, new_req.Quantity)
+				_, err := s.store.Add_Cart_Item(new_req.CartId, new_req.ItemId, new_req.Quantity)
 				if err != nil {
 					return err
 				}
-				return WriteJSON(res, http.StatusOK, add_cart_item)
+
+				cart_item_list, err := s.store.Get_All_Items_List_From_Cart_Items(new_req.CartId);
+				if err != nil {
+					return err
+				}
+
+				return WriteJSON(res, http.StatusOK, cart_item_list)
 			} else {
 				error_message := new(types.Error_Message)
 				error_message.Message = "Out Of Stock - No Cart"

@@ -349,6 +349,35 @@ func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
+func (s *Server) handleCheckout(res http.ResponseWriter, req *http.Request) error {
+    workerPool := s.workerPool
+
+    if req.Method == "POST" {
+        print_path("POST", "checkout")
+
+        // Create a channel to capture the results of multiple runs
+        resultChan := make(chan error, 1)
+
+        // Define the task function to run
+        task := func() error {
+            // Your actual GET category logic here
+            return s.Handle_Checkout_Cart(res, req)
+        }
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(err error) {
+			resultChan <- err // Send the result to the channel
+		})
+
+        // Collect all results
+        
+		return  <-resultChan
+       
+    }
+
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }
