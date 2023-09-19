@@ -40,7 +40,7 @@ func (s *PostgresStore) Checkout_Items (cart_id int) error {
         // Check if enough stock is available
         if stockQuantity < quantity {
             tx.Rollback()
-            return fmt.Errorf("Not enough stock for item %d", itemID)
+            return fmt.Errorf("not enough stock for item %d", itemID)
         }
     }
 
