@@ -1,6 +1,9 @@
 package store
 
-import "fmt"
+import (
+	"fmt"
+	"time"
+)
 
 
 func (s *PostgresStore) Checkout_Items (cart_id int) error {
@@ -75,10 +78,51 @@ func (s *PostgresStore) Checkout_Items (cart_id int) error {
 	}
 
 	// Commit the transaction
-	err = tx.Commit()
-	if err != nil {
-		return err
-	}
+    err = tx.Commit()
+    if err != nil {
+        return err
+    }
 
-	return nil
+    // After committing the transaction, start the monitoring goroutine
+    go s.MonitorLockedItems(cart_id, 45*time.Second) // Assuming a 15-minute timeout
+
+    return nil
+}
+
+// MonitorLockedItems checks the payment status after a specified timeout
+func (s *PostgresStore) MonitorLockedItems(cart_id int, timeoutDuration time.Duration) {
+    <-time.After(timeoutDuration)
+
+    isPaid, err := s.IsPaymentDone(cart_id)
+    if err != nil {
+        // Log the error and return
+        fmt.Printf("Error checking payment status for cart %d: %s\n", cart_id, err)
+        return
+    }
+
+    if !isPaid {
+        err := s.ResetLockedQuantities(cart_id)
+        if err != nil {
+            // Log the error and return
+            fmt.Printf("Error resetting locked quantities for cart %d: %s\n", cart_id, err)
+        }
+    }
+}
+
+// IsPaymentDone checks if the payment has been done for a cart
+// You'll need to properly implement this based on your payment system and database schema.
+func (s *PostgresStore) IsPaymentDone(cart_id int) (bool, error) {
+    // Placeholder: Implement logic to check if payment has been completed for the cart.
+    // For now, it always returns true. You'll need to query your database or payment system to check the payment status.
+   
+	// Introducing a delay of 5 seconds
+    time.Sleep(5 * time.Second)
+
+	return true, nil
+}
+
+// ResetLockedQuantities resets the locked quantities for items in a cart
+func (s *PostgresStore) ResetLockedQuantities(cart_id int) error {
+    _, err := s.db.Exec(`UPDATE items SET stock_quantity = stock_quantity + (SELECT quantity FROM cart_item WHERE cart_id = $1 AND item_id = items.id), lock_quantity = 0 WHERE id IN (SELECT item_id FROM cart_item WHERE cart_id = $1)`, cart_id)
+    return err
 }

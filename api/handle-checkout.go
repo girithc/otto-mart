@@ -22,9 +22,12 @@ func (s *Server) Handle_Checkout_Cart(res http.ResponseWriter, req *http.Request
 		return err
 	}
 
-	if(cart_id_exists) {
-		//checkout, err := s.store.Checkout_Items()
+	if cart_id_exists {
+		err := s.store.Checkout_Items(new_req.Cart_Id)
+		if err != nil {
+			return err
+		}
 	}
-	
+
 	return nil
 }
