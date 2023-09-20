@@ -9,6 +9,7 @@ import (
 
 func (s *Server) Handle_Checkout_Cart(res http.ResponseWriter, req *http.Request) error {
 	
+	fmt.Println("Entered Handle_Checkout_Cart")
 	new_req := new(types.Checkout)
 	
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
@@ -23,6 +24,7 @@ func (s *Server) Handle_Checkout_Cart(res http.ResponseWriter, req *http.Request
 	}
 
 	if cart_id_exists {
+		fmt.Println("Cart_id Exists")
 		err := s.store.Checkout_Items(new_req.Cart_Id)
 		if err != nil {
 			return err

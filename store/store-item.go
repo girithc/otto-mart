@@ -18,6 +18,7 @@ func (s *PostgresStore) CreateItemTable() error {
 		store_id INT REFERENCES Store(id) ON DELETE CASCADE,
 		category_id INT REFERENCES Category(id) ON DELETE CASCADE,
 		stock_quantity INT NOT NULL,
+		locled_quantity INT DEFAULT 0,
 		image TEXT,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		created_by INT
@@ -73,7 +74,8 @@ func (s *PostgresStore) Get_Items() ([]*types.Item, error) {
 	
 	fmt.Println("Entered Get_Items")
 	
-	rows, err := s.db.Query("select * from item")
+	rows, err := s.db.Query("SELECT * FROM item ORDER BY id ASC")
+
 
 	if err != nil {
 		return nil, err
@@ -183,10 +185,12 @@ func scan_Into_Item(rows *sql.Rows) (*types.Item, error) {
 		&item.Price,
 		&item.Store_ID,
 		&item.Category_ID, 
-		&item.Stock_Quantity,
-		&item.Image,
-		&item.Created_At,
-		&item.Created_By,
+		&item.Stock_Quantity, // Move Locked_Quantity before Image
+        &item.Image, // Image after Locked_Quantity
+        &item.Created_At,
+        &item.Created_By,
+		&item.Locked_Quantity, // Move Locked_Quantity before Image
+
 	)
 
 	return item, err
