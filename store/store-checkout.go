@@ -74,63 +74,57 @@ func (s *PostgresStore) Checkout_Items(cart_id int) error {
     }
 
     // After committing the transaction, start the monitoring goroutine
-    go s.MonitorLockedItems(cart_id, 16*time.Second) // Assuming a 45-second timeout
+
+    ctx, cancel := context.WithCancel(context.Background())
+    s.cancelFuncs[cart_id] = cancel
+    go s.MonitorLockedItems(ctx, cart_id, 16 * time.Second)
+
 
     return nil
 }
 
 
 
-func (s *PostgresStore) MonitorLockedItems(cart_id int, timeoutDuration time.Duration) {
-    // Create a cancelable context
-    ctx, cancel := context.WithCancel(context.Background())
-    defer cancel()
-
-    // Create a channel to signal the completion of the payment check
+//func (s *PostgresStore) MonitorLockedItems(cart_id int, timeoutDuration time.Duration) {
+func (s *PostgresStore) MonitorLockedItems(ctx context.Context, cart_id int, timeoutDuration time.Duration) {
     doneChan := make(chan bool)
     var isPaid bool
     var err error
 
-    // Start the payment check in a separate goroutine
+    // Use the provided context
     go func() {
         isPaid, err = s.IsPaymentDone(ctx, cart_id)
         doneChan <- true 
     }()
 
-    // Wait for the payment check to complete or for the timeout to expire
     select {
     case <-doneChan:
         if err != nil {
             fmt.Printf("Error checking payment status for cart %d: %s\n", cart_id, err)
             return
         }
-
         if !isPaid {
-            err := s.ResetLockedQuantities(cart_id)
-            if err != nil {
-                fmt.Printf("Error resetting locked quantities for cart %d: %s\n", cart_id, err)
-            }
-            fmt.Println("Payment Failed! : ResetLockedQuantities")
+            s.ResetLockedQuantities(cart_id)
         }
     case <-time.After(timeoutDuration):
-        cancel()  // Cancel the context to stop the IsPaymentDone goroutine
         fmt.Println("Payment check timeout. Resetting quantities...")
         err := s.ResetLockedQuantities(cart_id)
         if err != nil {
             fmt.Printf("Error resetting locked quantities for cart %d: %s\n", cart_id, err)
         }
+    case <-ctx.Done():
+        return
     }
 }
+    
 
 
 // IsPaymentDone checks if the payment has been done for a cart
-// You'll need to properly implement this based on your payment system and database schema.
+
 func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int) (bool, error) {
-    // Placeholder: Implement logic to check if payment has been completed for the cart.
-    // For now, it always returns true. You'll need to query your database or payment system to check the payment status.
     fmt.Println("Started Payment Delay")
     select {
-    case <-time.After(14 * time.Second):
+    case <-time.After(14 * time.Second):  // Placeholder time; replace with your actual payment verification duration
         fmt.Println("End Payment Delay")
         return false, nil
     case <-ctx.Done():
@@ -140,9 +134,20 @@ func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int) (bool, e
 }
 
 
+
 // ResetLockedQuantities resets the locked quantities for items in a cart
 func (s *PostgresStore) ResetLockedQuantities(cart_id int) error {
-    _, err := s.db.Exec(`UPDATE item SET stock_quantity = stock_quantity + (SELECT quantity FROM cart_item WHERE cart_id = $1 AND item_id = item.id), locked_quantity = 0 WHERE id IN (SELECT item_id FROM cart_item WHERE cart_id = $1)`, cart_id)
+    _, err := s.db.Exec(`WITH quantities AS (
+        SELECT item_id, quantity 
+        FROM cart_item 
+        WHERE cart_id = $1
+    )
+    UPDATE item 
+    SET stock_quantity = stock_quantity + quantities.quantity, 
+        locked_quantity = locked_quantity - quantities.quantity
+    FROM quantities 
+    WHERE item.id = quantities.item_id;
+    `, cart_id)
     return err
 }
 

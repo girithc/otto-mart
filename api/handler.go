@@ -358,6 +358,34 @@ func (s *Server) handleCheckout(res http.ResponseWriter, req *http.Request) erro
 	return nil
 }
 
+func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request) error {
+    workerPool := s.workerPool
+
+    if req.Method == "POST" {
+        print_path("POST", "cancel-checkout")
+
+        // Create a channel to capture the results of multiple runs
+        resultChan := make(chan error, 1)
+
+        // Define the task function to run
+        task := func() worker.Result {
+            err := s.Handle_Cancel_Checkout_Cart(res, req)
+            return worker.Result{Error: err}
+        }
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+        // Collect all results and return the first one (since you're using a buffer of size 1)
+        return <-resultChan
+    }
+
+	return nil
+}
+
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }

@@ -58,10 +58,8 @@ func NewGoogleServer(bucket string, service_account string) *GoogleServer {
 
 func (s *Server) Run(/*gs *GoogleServer*/) {
 
-	//workerPool := worker.NewWorkerPool(10)
 
 	//http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
-	workerPool := worker.NewWorkerPool(10)
 
 	http.HandleFunc("/store/available", makeHTTPHandleFunc(s.handleStoreClient))
 	http.HandleFunc("/store", makeHTTPHandleFunc(s.handleStoreManager))
@@ -79,6 +77,7 @@ func (s *Server) Run(/*gs *GoogleServer*/) {
 	http.HandleFunc("/cart-item", makeHTTPHandleFunc(s.handleCartItem))
 
 	http.HandleFunc("/checkout", makeHTTPHandleFunc(s.handleCheckout))
+	http.HandleFunc("/cancel-checkout", makeHTTPHandleFunc(s.handleCancelCheckout))
 
 	fmt.Println("Listening PORT", s.listen_address)
 
@@ -89,7 +88,7 @@ func (s *Server) Run(/*gs *GoogleServer*/) {
 	//	_ = http.ListenAndServe(s.listen_address, nil)
 	//} ()
 
-	workerPool.Wait()
+	s.workerPool.Wait()
 }
 
 type apiFunc func(http.ResponseWriter, *http.Request) error

@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 
@@ -10,6 +11,7 @@ import (
 
 type PostgresStore struct {
 	db *sql.DB
+	cancelFuncs map[int]context.CancelFunc
 }
 
 func NewPostgresStore() (*PostgresStore, error) {
@@ -34,6 +36,7 @@ func NewPostgresStore() (*PostgresStore, error) {
 
 	return &PostgresStore{
 		db: db,
+		cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
 	}, nil
 }
 

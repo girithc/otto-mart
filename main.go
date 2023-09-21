@@ -32,6 +32,10 @@ var (
 func main() {
     
     fmt.Printf("Starting Pronto-DB\n\n")
+    
+
+    workerPool := worker.NewWorkerPool(10) 
+
     store, err := store.NewPostgresStore()
 
 	if err != nil {
@@ -42,10 +46,6 @@ func main() {
 	} else {
         fmt.Println("Store.Init() is successful.")
     }
-
-    workerPool := worker.NewWorkerPool(10) 
-
-
     server := api.NewServer(":3000", store, workerPool)
     
     //google_server := api.NewGoogleServer("pronto-bucket", "service-account")
