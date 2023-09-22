@@ -45,6 +45,8 @@ dependencies:
   pinput: ^3.0.1
   flutter_secure_storage: ^9.0.0
   flutter_animate: ^4.2.0+1
+  firebase_core: ^2.16.0
+  firebase_messaging: ^14.6.8
 
 dev_dependencies:
   flutter_test:

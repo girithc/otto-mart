@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "191605126026",
+    "project_id": "order-delivery-partner",
+    "storage_bucket": "order-delivery-partner.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:191605126026:android:77121dda0a84764f59ce73",
+        "android_client_info": {
+          "package_name": "com.example.pronto"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXiR4iNvf5CJ8eC7X-0sgM68Ac4gJhE6I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
