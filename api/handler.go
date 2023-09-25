@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"pronto-go/worker"
 )
@@ -332,31 +333,41 @@ func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) er
 }
 
 func (s *Server) handleCheckout(res http.ResponseWriter, req *http.Request) error {
-    workerPool := s.workerPool
-
     if req.Method == "POST" {
         print_path("POST", "checkout")
 
-        // Create a channel to capture the results of multiple runs
-        resultChan := make(chan error, 1)
-
-        // Define the task function to run
-        task := func() worker.Result {
-            err := s.Handle_Checkout_Cart(res, req)
-            return worker.Result{Error: err}
+        // Read and store the request body
+        bodyBytes, err := io.ReadAll(req.Body)
+        if err != nil {
+            return err  // or handle this error accordingly
         }
 
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
+        // You can then create a new request body from bodyBytes to pass to your handler
+        newReq := &http.Request{
+            Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
+            // ... copy other needed fields from the original request
+        }
 
-        // Collect all results and return the first one (since you're using a buffer of size 1)
-        return <-resultChan
+        // Spawn a goroutine to handle the checkout process
+        go func() {
+            err := s.Handle_Checkout_Cart(res, newReq)
+            if err != nil {
+                // Handle the error, e.g., log it
+                fmt.Printf("Error handling checkout: %s\n", err)
+            }
+        }()
+
+        // Return an acknowledgment to the user immediately or some placeholder response
+        // Example: 
+        res.WriteHeader(http.StatusOK)
+        res.Write([]byte("Checkout initiated, please wait..."))
+
+        return nil
     }
-
-	return nil
+    return nil
 }
+
+
 
 func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request) error {
     workerPool := s.workerPool
@@ -383,6 +394,17 @@ func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request
     }
 
 	return nil
+}
+
+func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Request) error {
+    if req.Method == "POST" {
+        print_path("[POST]", "delivery_partner")
+        return s.Handle_Delivery_Partner_Login(res, req)
+    } else if req.Method == "GET" {
+        print_path("[GET]", "delivery_partner")
+        return nil
+    }    
+    return nil
 }
 
 

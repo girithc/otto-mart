@@ -77,7 +77,7 @@ func (s *PostgresStore) Checkout_Items(cart_id int) error {
 
     ctx, cancel := context.WithCancel(context.Background())
     s.cancelFuncs[cart_id] = cancel
-    go s.MonitorLockedItems(ctx, cart_id, 16 * time.Second)
+    s.MonitorLockedItems(ctx, cart_id, 16 * time.Second)
 
 
     return nil

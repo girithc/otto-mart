@@ -100,6 +100,13 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Category Higher Level Mapping Table")
 	}
 
+	errDeliveryPartner := s.CreateDeliveryPartnerTable()
+	if errDeliveryPartner != nil{
+		return errDeliveryPartner
+	} else {
+		fmt.Println("Success - Created Delivery Partner Table")
+	}
+
 
 	//fmt.Println("Exiting Init() -- db.go")
 	return nil
