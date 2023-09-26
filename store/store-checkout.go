@@ -153,13 +153,3 @@ func (s *PostgresStore) ResetLockedQuantities(cart_id int) error {
 
 
 
-func scan_Into_Checkout_Cart_Item(rows *sql.Rows) (*types.Checkout_Cart_Item, error) {
-	item := new(types.Checkout_Cart_Item)
-	err := rows.Scan(
-		&item.Item_Id,
-        &item.Quantity,
-
-	)
-
-	return item, err
-}

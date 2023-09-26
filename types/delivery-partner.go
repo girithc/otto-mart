@@ -5,46 +5,46 @@ import (
 )
 
 // Basic
-type DeliveryPartner struct {
+type Delivery_Partner struct {
 	ID        int       `json:"id"`
 	Name      string    `json:"name"`
+	FCM_Token string    `json:"fcm_token"`
 	Store_ID  int       `json:"store_id"`
-	Phone     string    `json:"phone"`
+	Phone     int    `json:"phone"`
 	Address   string    `json:"address"`
 	Created_At time.Time `json:"created_at"`
 }
 
-type Create_DeliveryPartner struct {
-	Name     string `json:"name"`
-	Store_ID int    `json:"store_id"`
-	Phone    string `json:"phone"`
-	Address  string `json:"address"`
+type Create_Delivery_Partner struct {
+	Phone    int `json:"phone"`
 }
 
-type Update_DeliveryPartner struct {
+type FCM_Token_Delivery_Partner struct {
+	Phone    int `json:"phone"`
+	Fcm_Token    string `json:"fcm_token"`
+}
+
+type Update_Delivery_Partner struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
 	Store_ID int    `json:"store_id"`
-	Phone    string `json:"phone"`
+	Phone    int `json:"phone"`
 	Address  string `json:"address"`
 }
 
-type Delete_DeliveryPartner struct {
+type Delete_Delivery_Partner struct {
 	ID    int    `json:"id"`
-	Phone string `json:"phone"`
+	Phone int `json:"phone"`
 }
 
-func New_DeliveryPartner(name string, storeID int, phone string, address string) (*Create_DeliveryPartner, error) {
-	return &Create_DeliveryPartner{
-		Name:     name,
-		Store_ID: storeID,
+func New_Delivery_Partner(phone int) (*Create_Delivery_Partner, error) {
+	return &Create_Delivery_Partner{
 		Phone:    phone,
-		Address:  address,
 	}, nil
 }
 
-func New_Update_DeliveryPartner(id int, name string, storeID int, phone string, address string) (*Update_DeliveryPartner, error) {
-	return &Update_DeliveryPartner{
+func New_Update_Delivery_Partner(id int, name string, storeID int, phone int, address string) (*Update_Delivery_Partner, error) {
+	return &Update_Delivery_Partner{
 		ID:       id,
 		Name:     name,
 		Store_ID: storeID,

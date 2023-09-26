@@ -12,47 +12,33 @@ import (
 func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *http.Request) error {
 	// Preprocessing
 
-	new_req := new(types.Create_Customer)
+	new_req := new(types.Create_Delivery_Partner)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error in Decoding req.body in Handle_User_Login()")
+		fmt.Println("Error in Decoding req.body in Handle_Delivery_Partner_Login()")
 		return err
 	}
 
-	new_user, err := types.New_Customer(new_req.Phone)
-	fmt.Println(new_user.Phone)
-
+	new_user, err := types.New_Delivery_Partner(new_req.Phone)
 	if err != nil {
 		return err
 	}
 
-	// Check if User Exists
-
-	user, err := s.store.Get_Customer_By_Phone(new_user.Phone)
-
+	// Check if Delivery Partner Exists
+	user, err := s.store.Get_Delivery_Partner_By_Phone(new_user.Phone)
 	if err != nil {
 		return err
 	}
 
-	// User Does Not Exist
+	// Delivery Partner
 	if user == nil {
-		fmt.Println("User Does Not Exist")
+		fmt.Println("Delivery Partner Does Not Exist")
 
-		user, err := s.store.Create_Customer(new_req)
+		user, err := s.store.Create_Delivery_Partner(new_req)
 		if err != nil {
 			return err
 		}
 
-		cart_req, err := types.New_Shopping_Cart(user.ID)
-		if err != nil {
-			return err
-		}
-
-		cart, err := s.store.Create_Shopping_Cart(cart_req)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Shopping Cart Created " , cart)
 
 		// Generate JWT token
 		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
@@ -69,8 +55,8 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 		})
 
 		return WriteJSON(res, http.StatusOK, user)
-	} else { // User Exists
-		fmt.Println("User Exists")
+	} else { // Delivery Partner Exists
+		fmt.Println("Delivery Partner Exists")
 
 		// Generate JWT token
 		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
@@ -90,9 +76,33 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 	}
 }
 
+func (s *Server) Handle_Delivery_Partner_FCM_Token(res http.ResponseWriter, req *http.Request) error {
+	
+	new_req := new(types.FCM_Token_Delivery_Partner)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in Handle_Delivery_Partner_FCM_Token()")
+		return err
+	}
+
+	// Check if Delivery Partner Exists
+	_, err := s.store.Get_Delivery_Partner_By_Phone(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	
+
+	delivery_partner, err := s.store.Update_FCM_Token_Delivery_Partner(new_req.Phone, new_req.Fcm_Token)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, delivery_partner)
+}
+
 func (s *Server) Handle_Get_Delivery_Partners(res http.ResponseWriter, req *http.Request) error {
 
-	customers, err := s.store.Get_All_Customers();
+	customers, err := s.store.Get_All_Delivery_Partners();
 	if err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ func (s *PostgresStore) CreateOrderTable() error {
 		store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
 		customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
 		delivery_address TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	)`
 
 	_, err := s.db.Exec(query)

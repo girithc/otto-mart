@@ -400,9 +400,12 @@ func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Reques
     if req.Method == "POST" {
         print_path("[POST]", "delivery_partner")
         return s.Handle_Delivery_Partner_Login(res, req)
+    } else if req.Method == "PUT" {
+        print_path("[PUT]", "delivery_partner")
+        return s.Handle_Delivery_Partner_FCM_Token(res, req)
     } else if req.Method == "GET" {
         print_path("[GET]", "delivery_partner")
-        return nil
+        return s.Handle_Get_Delivery_Partners(res, req)
     }    
     return nil
 }
