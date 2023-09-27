@@ -19,6 +19,7 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool? isLoggedIn;
+  String? customerId; // <-- Add this to store the customerId
 
   @override
   void initState() {
@@ -28,7 +29,7 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> checkLoginStatus() async {
     const storage = FlutterSecureStorage();
-    final customerId = await storage.read(key: 'customerId');
+    customerId = await storage.read(key: 'customerId'); // <-- Update this line
 
     setState(() {
       isLoggedIn = customerId != null;
@@ -39,9 +40,12 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(create: (context) => CartModel()),
+        Provider(
+            create: (context) =>
+                CartModel(customerId ?? "")), // <-- Update this line
         ChangeNotifierProvider<CartModel>(
-          create: (context) => CartModel(),
+          create: (context) =>
+              CartModel(customerId ?? ""), // <-- Update this line
         ),
       ],
       child: MaterialApp(

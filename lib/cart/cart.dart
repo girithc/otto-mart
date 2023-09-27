@@ -56,25 +56,22 @@ class CartModel extends ChangeNotifier {
   int _deliveryPartnerTip = 0;
   int _packagingFee = 15;
   int _deliveryFee = 35;
+  final String customerId;
   Address _deliveryAddress =
       Address(placeId: "", mainText: "", secondaryText: "");
 
-  CartModel() {
-    final url = Uri.parse(
-        'http://localhost:3000/cart-item'); // Replace with your server URL
+  CartModel(this.customerId) {
+    final url = Uri.parse('http://localhost:3000/cart-item');
     final headers = <String, String>{
       'Content-Type': 'application/json',
-      // Add any other headers you need
     };
     final body = <String, dynamic>{
-      'cart_id': 1,
+      'cart_id': customerId,
       'items': true,
-      // Add any other parameters you need
     };
 
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
       if (response.statusCode == 200) {
-        //final responseData = jsonDecode(response.body);
         final List<dynamic> jsonData = json.decode(response.body);
         final List<CartItem> items =
             jsonData.map((item) => CartItem.fromJson(item)).toList();
