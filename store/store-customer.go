@@ -14,7 +14,7 @@ func (s *PostgresStore) CreateCustomerTable() error {
 	query := `create table if not exists customer (
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
-		phone VARCHAR(10) NOT NULL, 
+		phone VARCHAR(10) UNIQUE NOT NULL, 
 		address TEXT NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
