@@ -1,0 +1,7 @@
+Login Logout 
+    1. Cart is not reset
+    2. All variables and information should be cleaned
+
+No Internet
+    1. Redirect to no internet page.
+    
