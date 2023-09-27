@@ -13,6 +13,16 @@ type Customer struct {
 	Created_At        time.Time `json:"created_at"`
 }
 
+type Customer_With_Cart struct {
+	ID                int       `json:"id"`
+	Name              string    `json:"name"`
+	Phone			  int 		`json:"phone"`
+	Address 		 string		`json:"address"`
+	Created_At        time.Time `json:"created_at"`
+	Cart_Id				int     `json:"cart_id"`
+	Store_Id			int 	`json:"store_id"`
+}
+
 type Create_Customer struct {
 	Phone			  int 		`json:"phone"`
 }

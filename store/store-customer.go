@@ -2,7 +2,6 @@ package store
 
 import (
 	"database/sql"
-	"log"
 	"pronto-go/types"
 
 	_ "github.com/lib/pq"
@@ -85,36 +84,41 @@ func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 	
 		return customers, nil
 }
+func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_Cart, error) {
+    query := `
+        SELECT c.*, sc.id AS shopping_cart_id, sc.store_id
+        FROM customer c
+        LEFT JOIN shopping_cart sc ON c.id = sc.customer_id AND sc.active = true
+        WHERE c.phone = $1
+    `
 
-func(s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer, error) {
-	
-	rows, err := s.db.Query("select * from customer where phone = $1", phone)
+    row := s.db.QueryRow(query, phone)
+    
+    var customer types.Customer_With_Cart
+    var storeID sql.NullInt64   // using NullInt64 for store_id 
 
-	if err != nil {
-		log.Fatal(err)
-	}
-	
-	defer rows.Close()
+    err := row.Scan(
+        &customer.ID,
+        &customer.Name,
+        &customer.Phone,
+        &customer.Address,
+		&customer.Created_At,
+		&customer.Cart_Id,
+		&storeID,
+    )
 
-	customers := []*types.Customer{}
+    if storeID.Valid {
+        customer.Store_Id = int(storeID.Int64)  // If not null, assign to customer.Store_Id
+    }
 
-	for rows.Next() {
-		customer, err := scan_Into_Customer(rows)
-		if err != nil {
-			return nil, err
-		}
-		customers = append(customers, customer)
-	}
+    switch {
+    case err == sql.ErrNoRows:
+        return nil, nil
+    case err != nil:
+        return nil, err
+    }
 
-	if err := rows.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	if len(customers) == 0 {
-		return nil, nil
-	}
- 
-	return customers[0], nil
+    return &customer, nil
 }
 
 
