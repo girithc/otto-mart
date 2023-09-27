@@ -25,37 +25,40 @@ func (s *PostgresStore) CreateCustomerTable() error {
 
 	return err
 }
-
-func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer, error) {
-	
-	
-	query := `insert into customer
-	(name, phone, address) 
-	values ($1, $2, $3) returning id, name, phone, address, created_at
-	`
-	rows, err := s.db.Query(
-		query,
-		"",
-		user.Phone, 
-		"")
-
+// Combined Create_Customer and Create_Shopping_Cart
+func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer, *types.Shopping_Cart, error) {
+	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
+	defer tx.Rollback() // Will do nothing if the transaction is already committed
 
-
-	customers := []*types.Customer{}
+	// Create the customer
+	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at`
+	row := tx.QueryRow(query, "", user.Phone, "")
 	
-	for rows.Next() {
-		customer, err := scan_Into_Customer(rows)
-		if err != nil {
-			return nil, err
-		}
-		customers = append(customers, customer)
+	customer := &types.Customer{}
+	err = row.Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Address, &customer.Created_At)
+	if err != nil {
+		return nil, nil, err
 	}
 
+	// Create the shopping cart
+	query = `INSERT INTO shopping_cart (customer_id, active) VALUES ($1, $2) RETURNING id, customer_id, active, created_at`
+	row = tx.QueryRow(query, customer.ID, true)
 
-	return customers[0], nil
+	shoppingCart := &types.Shopping_Cart{}
+	err = row.Scan(&shoppingCart.ID, &shoppingCart.Customer_Id, &shoppingCart.Active, &shoppingCart.Created_At)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, nil, err
+	}
+
+	return customer, shoppingCart, nil
 }
 
 

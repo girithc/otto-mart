@@ -43,20 +43,11 @@ func (s *Server) Handle_Customer_Login(res http.ResponseWriter, req *http.Reques
 	if user == nil {
 		fmt.Println("User Does Not Exist")
 
-		user, err := s.store.Create_Customer(new_req)
+		user, cart, err := s.store.Create_Customer(new_req)
 		if err != nil {
 			return err
 		}
 
-		cart_req, err := types.New_Shopping_Cart(user.ID)
-		if err != nil {
-			return err
-		}
-
-		cart, err := s.store.Create_Shopping_Cart(cart_req)
-		if err != nil {
-			return err
-		}
 		fmt.Println("Shopping Cart Created " , cart)
 
 		// Generate JWT token

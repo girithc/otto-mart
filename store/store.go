@@ -72,13 +72,6 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Customer Table")
 	}
 
-	errShoppingCart := s.CreateShoppingCartTable()
-	if errShoppingCart != nil{
-		return errShoppingCart
-	}else {
-		fmt.Println("Success - Created Shopping Cart Table")
-	}
-
 	errCartItem := s.CreateCartItemTable()
 	if errCartItem != nil{
 		return errCartItem
@@ -107,8 +100,41 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Delivery Partner Table")
 	}
 
+	errShoppingCart := s.CreateShoppingCartTable()
+	if errShoppingCart != nil{
+		return errShoppingCart
+	}else {
+		fmt.Println("Success - Created Shopping Cart Table")
+	}
 
-	//fmt.Println("Exiting Init() -- db.go")
-	return nil
+	errSalesOrder := s.CreateSalesOrderTable()
+	if errSalesOrder != nil {
+		return errSalesOrder
+	} else {
+		fmt.Println("Success  - Created Sales Order Table")
+	}
+
+	// Check and add the constraint only if it doesn't exist
+    constraintQuery := `
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT constraint_name 
+            FROM information_schema.table_constraints 
+            WHERE table_name = 'shopping_cart' AND constraint_name = 'shopping_cart_order_id_fkey'
+        ) THEN
+            ALTER TABLE shopping_cart ADD CONSTRAINT shopping_cart_order_id_fkey FOREIGN KEY (order_id) REFERENCES sales_order(id) ON DELETE CASCADE;
+        END IF;
+    END
+    $$;
+    `
+
+    if _, err := s.db.Exec(constraintQuery); err != nil {
+        return fmt.Errorf("failed to add constraint to shopping_cart: %w", err)
+    }
+
+    // ... [your other code, if any]
+
+    return nil
 }
 

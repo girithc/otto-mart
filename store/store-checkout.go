@@ -7,17 +7,14 @@ import (
 	"pronto-go/types"
 	"time"
 )
-
-func (s *PostgresStore) Checkout_Items(cart_id int) error {
+func (s *PostgresStore) Checkout_Items(cart_id int, payment_done bool) error {
     fmt.Println("Entered Checkout_Items")
 
-    // Begin a Transaction 
     tx, err := s.db.Begin()
     if err != nil {
         return err
     }
 
-    // Declare a cursor for fetching items from the cart
     _, err = tx.Exec(`DECLARE cart_cursor CURSOR FOR SELECT item_id, quantity FROM cart_item WHERE cart_id = $1`, cart_id)
     if err != nil {
         tx.Rollback()
@@ -25,22 +22,16 @@ func (s *PostgresStore) Checkout_Items(cart_id int) error {
     }
 
     for {
-        fmt.Println("Fetching from cursor")
         checkout_cart_item := &types.Checkout_Cart_Item{}
-
-        // Fetch the next row from the cursor
         err := tx.QueryRow(`FETCH NEXT FROM cart_cursor`).Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity)
         if err == sql.ErrNoRows {
-            break // No more rows left to fetch
+            break 
         }
         if err != nil {
             tx.Rollback()
             return err
         }
 
-        fmt.Println("Fetched Item - ID:", checkout_cart_item.Item_Id, "Quantity:", checkout_cart_item.Quantity)
-
-        // Try to update stock and locked quantities. This will only work if stock quantity is still available.
         res, err := tx.Exec(`UPDATE item SET stock_quantity = stock_quantity - $1, locked_quantity = locked_quantity + $1 WHERE id = $2 AND stock_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
         if err != nil {
             tx.Rollback()
@@ -53,32 +44,30 @@ func (s *PostgresStore) Checkout_Items(cart_id int) error {
             return err
         }
 
-        // If no rows were updated, that means stock was not sufficient.
         if affectedRows == 0 {
             tx.Rollback()
             return fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
         }
     }
 
-    // Close the cursor
     _, err = tx.Exec(`CLOSE cart_cursor`)
     if err != nil {
         tx.Rollback()
         return err
     }
 
-    // Commit the transaction
+    ctx := context.Background()
+
+    err = s.MonitorLockedItems(ctx, tx, cart_id, 16*time.Second, payment_done)
+    if err != nil {
+        tx.Rollback()
+        return err
+    }
+
     err = tx.Commit()
     if err != nil {
         return err
     }
-
-    // After committing the transaction, start the monitoring goroutine
-
-    ctx, cancel := context.WithCancel(context.Background())
-    s.cancelFuncs[cart_id] = cancel
-    s.MonitorLockedItems(ctx, cart_id, 16 * time.Second)
-
 
     return nil
 }
@@ -86,47 +75,75 @@ func (s *PostgresStore) Checkout_Items(cart_id int) error {
 
 
 //func (s *PostgresStore) MonitorLockedItems(cart_id int, timeoutDuration time.Duration) {
-func (s *PostgresStore) MonitorLockedItems(ctx context.Context, cart_id int, timeoutDuration time.Duration) {
+func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart_id int, timeoutDuration time.Duration, payment_done bool) error {
     doneChan := make(chan bool)
     var isPaid bool
     var err error
 
-    // Use the provided context
     go func() {
-        isPaid, err = s.IsPaymentDone(ctx, cart_id)
+        isPaid, err = s.IsPaymentDone(ctx, cart_id, payment_done)
         doneChan <- true 
     }()
 
     select {
     case <-doneChan:
         if err != nil {
-            fmt.Printf("Error checking payment status for cart %d: %s\n", cart_id, err)
-            return
+            return fmt.Errorf("error checking payment status for cart %d: %s", cart_id, err)
         }
-        if !isPaid {
-            s.ResetLockedQuantities(cart_id)
+
+        if isPaid {
+            var customerID, storeID sql.NullInt64
+            var address sql.NullString
+        
+            err := tx.QueryRowContext(ctx, `SELECT customer_id, store_id, address FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID, &address)
+            if err != nil {
+                return fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
+            }
+
+            _, err = tx.ExecContext(ctx, `
+                INSERT INTO sales_order ( cart_id, store_id, customer_id, delivery_address)
+                VALUES ($1, $2, $3, $4)
+            `, cart_id, 1, customerID, address.String)
+            if err != nil {
+                return fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
+            }
+
+            _, err = tx.ExecContext(ctx, `UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
+            if err != nil {
+                return fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
+            }
+        } else {
+            fmt.Println("Payment was not successful. Resetting quantities...")
+            err := s.ResetLockedQuantities(cart_id)
+            if err != nil {
+                return fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
+            }
         }
+
     case <-time.After(timeoutDuration):
         fmt.Println("Payment check timeout. Resetting quantities...")
         err := s.ResetLockedQuantities(cart_id)
         if err != nil {
-            fmt.Printf("Error resetting locked quantities for cart %d: %s\n", cart_id, err)
+            return fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
         }
     case <-ctx.Done():
-        return
+        return fmt.Errorf("monitorLockedItems was aborted")
     }
+
+    return nil
 }
-    
+
+
 
 
 // IsPaymentDone checks if the payment has been done for a cart
 
-func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int) (bool, error) {
+func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int, payment_done bool) (bool, error) {
     fmt.Println("Started Payment Delay")
     select {
     case <-time.After(14 * time.Second):  // Placeholder time; replace with your actual payment verification duration
         fmt.Println("End Payment Delay")
-        return false, nil
+        return payment_done, nil
     case <-ctx.Done():
         fmt.Println("Payment check was aborted!")
         return false, ctx.Err()
