@@ -2,13 +2,14 @@ package store
 
 import (
 	"database/sql"
+
 	"pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateCustomerTable() error {
-	//fmt.Println("Entered CreateCustomerTable")
+	// fmt.Println("Entered CreateCustomerTable")
 
 	query := `create table if not exists customer (
 		id SERIAL PRIMARY KEY,
@@ -20,112 +21,110 @@ func (s *PostgresStore) CreateCustomerTable() error {
 
 	_, err := s.db.Exec(query)
 
-	//fmt.Println("Exiting CreateCustomerTable")
+	// fmt.Println("Exiting CreateCustomerTable")
 
 	return err
 }
+
 // Combined Create_Customer and Create_Shopping_Cart
-func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer, *types.Shopping_Cart, error) {
+func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer_With_Cart, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	defer tx.Rollback() // Will do nothing if the transaction is already committed
+	defer func() {
+		if r := recover(); r != nil { // This catches panics along with Rollback in case of an error.
+			tx.Rollback()
+		}
+	}()
 
 	// Create the customer
 	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at`
 	row := tx.QueryRow(query, "", user.Phone, "")
-	
-	customer := &types.Customer{}
+
+	customer := &types.Customer_With_Cart{}
 	err = row.Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Address, &customer.Created_At)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	// Create the shopping cart
-	query = `INSERT INTO shopping_cart (customer_id, active) VALUES ($1, $2) RETURNING id, customer_id, active, created_at`
-	row = tx.QueryRow(query, customer.ID, true)
-
-	shoppingCart := &types.Shopping_Cart{}
-	err = row.Scan(&shoppingCart.ID, &shoppingCart.Customer_Id, &shoppingCart.Active, &shoppingCart.Created_At)
+	query = `INSERT INTO shopping_cart (customer_id, active) VALUES ($1, $2) RETURNING id`
+	var cartId int
+	err = tx.QueryRow(query, customer.ID, true).Scan(&cartId)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
+	customer.Cart_Id = cartId
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return customer, shoppingCart, nil
+	return customer, nil
 }
-
 
 func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 	query := `select * from customer
 	`
 	rows, err := s.db.Query(
 		query)
+	if err != nil {
+		return nil, err
+	}
 
+	customers := []*types.Customer{}
+
+	for rows.Next() {
+		customer, err := scan_Into_Customer(rows)
 		if err != nil {
 			return nil, err
 		}
-	
-	
-		customers := []*types.Customer{}
-		
-		for rows.Next() {
-			customer, err := scan_Into_Customer(rows)
-			if err != nil {
-				return nil, err
-			}
-			customers = append(customers, customer)
-		}
-	
-		return customers, nil
+		customers = append(customers, customer)
+	}
+
+	return customers, nil
 }
+
 func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_Cart, error) {
-    query := `
+	query := `
         SELECT c.*, sc.id AS shopping_cart_id, sc.store_id
         FROM customer c
         LEFT JOIN shopping_cart sc ON c.id = sc.customer_id AND sc.active = true
         WHERE c.phone = $1
     `
 
-    row := s.db.QueryRow(query, phone)
-    
-    var customer types.Customer_With_Cart
-    var storeID sql.NullInt64   // using NullInt64 for store_id 
+	row := s.db.QueryRow(query, phone)
 
-    err := row.Scan(
-        &customer.ID,
-        &customer.Name,
-        &customer.Phone,
-        &customer.Address,
+	var customer types.Customer_With_Cart
+	var storeID sql.NullInt64 // using NullInt64 for store_id
+
+	err := row.Scan(
+		&customer.ID,
+		&customer.Name,
+		&customer.Phone,
+		&customer.Address,
 		&customer.Created_At,
 		&customer.Cart_Id,
 		&storeID,
-    )
+	)
 
-    if storeID.Valid {
-        customer.Store_Id = int(storeID.Int64)  // If not null, assign to customer.Store_Id
-    }
+	if storeID.Valid {
+		customer.Store_Id = int(storeID.Int64) // If not null, assign to customer.Store_Id
+	}
 
-    switch {
-    case err == sql.ErrNoRows:
-        return nil, nil
-    case err != nil:
-        return nil, err
-    }
+	switch {
+	case err == sql.ErrNoRows:
+		return nil, nil
+	case err != nil:
+		return nil, err
+	}
 
-    return &customer, nil
+	return &customer, nil
 }
 
-
-
-
-
-//Helper
+// Helper
 func scan_Into_Customer(rows *sql.Rows) (*types.Customer, error) {
 	customer := new(types.Customer)
 	err := rows.Scan(
@@ -149,4 +148,4 @@ func scan_Into_Update_Customer(rows *sql.Rows) (*types.Update_Customer, error) {
 	)
 
 	return customer, error
-} 
+}

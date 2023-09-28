@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+
 	"pronto-go/types"
 
 	_ "github.com/lib/pq"
@@ -22,7 +23,6 @@ func (s *PostgresStore) CreateShoppingCartTable() error {
 	return err
 }
 
-
 func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (*types.Shopping_Cart, error) {
 	query := `insert into shopping_cart
 	(customer_id, active) 
@@ -31,15 +31,14 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 	rows, err := s.db.Query(
 		query,
 		cart.Customer_Id,
-		true)
-
+		true,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-
 	shopping_carts := []*types.Shopping_Cart{}
-	
+
 	for rows.Next() {
 		shopping_cart, err := scan_Into_Shopping_Cart(rows)
 		if err != nil {
@@ -47,21 +46,18 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 		}
 		shopping_carts = append(shopping_carts, shopping_cart)
 	}
-
 
 	return shopping_carts[0], nil
 }
 
 func (s *PostgresStore) Get_All_Active_Shopping_Carts() ([]*types.Shopping_Cart, error) {
 	rows, err := s.db.Query("select * from shopping_cart where active = $1", true)
-	
 	if err != nil {
 		return nil, err
 	}
 
-
 	shopping_carts := []*types.Shopping_Cart{}
-	
+
 	for rows.Next() {
 		shopping_cart, err := scan_Into_Shopping_Cart(rows)
 		if err != nil {
@@ -70,13 +66,11 @@ func (s *PostgresStore) Get_All_Active_Shopping_Carts() ([]*types.Shopping_Cart,
 		shopping_carts = append(shopping_carts, shopping_cart)
 	}
 
-
 	return shopping_carts, nil
 }
 
 func (s *PostgresStore) Get_Shopping_Cart_By_Customer_Id(customer_id int, active bool) (*types.Shopping_Cart, error) {
 	rows, err := s.db.Query("select * from shopping_cart where active = $1 and customer_id = $2", active, customer_id)
-	
 	if err != nil {
 		return nil, err
 	}
@@ -89,15 +83,14 @@ func (s *PostgresStore) Get_Shopping_Cart_By_Customer_Id(customer_id int, active
 }
 
 func (s *PostgresStore) DoesCartExist(cartID int) (bool, error) {
-    var count int
-    err := s.db.QueryRow("SELECT COUNT(*) FROM shopping_cart WHERE id = $1 AND active = true", cartID).Scan(&count)
-    if err != nil {
-        return false, err
-    }
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM shopping_cart WHERE id = $1 AND active = true", cartID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
 
-    return count > 0, nil
+	return count > 0, nil
 }
-
 
 func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 	cart := new(types.Shopping_Cart)
@@ -107,7 +100,7 @@ func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 	var storeID sql.NullInt64
 	// Use sql.NullString for address to handle NULL values
 	var address sql.NullString
-	
+
 	err := rows.Scan(
 		&cart.ID,
 		&cart.Customer_Id,
@@ -132,4 +125,3 @@ func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 
 	return cart, err
 }
-
