@@ -9,9 +9,14 @@ import 'package:pronto/cart/cart.dart';
 import 'package:pronto/order/place_order_screen.dart';
 import 'package:provider/provider.dart';
 
-class MyCart extends StatelessWidget {
+class MyCart extends StatefulWidget {
   const MyCart({super.key});
 
+  @override
+  State<MyCart> createState() => _MyCartState();
+}
+
+class _MyCartState extends State<MyCart> {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -605,6 +610,7 @@ class _CustomListItem extends StatelessWidget {
   }
 }
 
+/*
 class _CartTotal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -636,3 +642,4 @@ class _CartTotal extends StatelessWidget {
     );
   }
 }
+*/

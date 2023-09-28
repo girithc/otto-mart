@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 
 class CartItem {
   final String productId;
@@ -57,36 +59,65 @@ class CartModel extends ChangeNotifier {
   int _packagingFee = 15;
   int _deliveryFee = 35;
   final String customerId;
+
+  // Initialize storage
+  final storage = const FlutterSecureStorage();
+  final Logger _logger = Logger();
+
+  // Other variables
+  String? cartId;
+
   Address _deliveryAddress =
       Address(placeId: "", mainText: "", secondaryText: "");
 
   CartModel(this.customerId) {
+    _fetchCartId().then((_) {
+      _fetchCartItems(); // Then fetch cart items from the server
+    });
+  }
+
+  Future<void> _fetchCartId() async {
+    cartId = await storage.read(key: 'cartId');
+    // You should handle cases where cartId is null!
+    if (cartId == null) {
+      // Handle it according to your requirements.
+      // Maybe set a default value, or log an error.
+      _logger.e('cartId is not found in the storage');
+    }
+  }
+
+  void _fetchCartItems() {
     final url = Uri.parse('http://localhost:3000/cart-item');
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
     final body = <String, dynamic>{
-      'cart_id': customerId,
-      'items': true,
+      'customer_id': int.parse(customerId),
     };
 
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      _logger.e('Response: $response');
       if (response.statusCode == 200) {
-        final List<dynamic> jsonData = json.decode(response.body);
-        final List<CartItem> items =
-            jsonData.map((item) => CartItem.fromJson(item)).toList();
+        if (response.body.isNotEmpty) {
+          final List<dynamic> jsonData = json.decode(response.body);
+          final List<CartItem> items =
+              jsonData.map((item) => CartItem.fromJson(item)).toList();
 
-        _items.clear();
-        _items.addAll(items);
-        notifyListeners();
+          _items.clear();
+          _items.addAll(items);
+          notifyListeners();
+        } else {
+          _logger.e('Empty response received from server');
+        }
       } else {
-        print(
+        _logger.e(
             'HTTP POST request failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      print('HTTP POST request error: $error');
+      _logger.e('(cart model) HTTP POST request error: $error');
     });
   }
+
   List<CartItem> get items => _items;
 
   int get numberOfItems =>
@@ -127,7 +158,7 @@ class CartModel extends ChangeNotifier {
   }
 
   void addItemToCart(CartItem item) {
-    print("Add Item To Cart");
+    //print("Add Item To Cart: $cartId");
     final url = Uri.parse(
         'http://localhost:3000/cart-item'); // Replace with your server URL
     final headers = <String, String>{
@@ -135,7 +166,7 @@ class CartModel extends ChangeNotifier {
       // Add any other headers you need
     };
     final body = <String, dynamic>{
-      'cart_id': 1,
+      'cart_id': int.parse(cartId!),
       'item_id': int.parse(item.productId),
       'quantity': 1,
       // Add any other parameters you need
@@ -153,16 +184,16 @@ class CartModel extends ChangeNotifier {
         _items.addAll(items);
         notifyListeners();
       } else {
-        print(
+        _logger.e(
             'HTTP POST request failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      print('HTTP POST request error: $error');
+      _logger.e('HTTP POST request error: $error');
     });
   }
 
   void removeItem({required String itemId}) {
-    print("Remove Item From Cart");
+    //print("Remove Item From Cart");
     final url = Uri.parse(
         'http://localhost:3000/cart-item'); // Replace with your server URL
     final headers = <String, String>{
@@ -170,7 +201,7 @@ class CartModel extends ChangeNotifier {
       // Add any other headers you need
     };
     final body = <String, dynamic>{
-      'cart_id': 1,
+      'cart_id': int.parse(cartId!),
       'item_id': int.parse(itemId),
       'quantity': -1,
       // Add any other parameters you need
@@ -188,11 +219,11 @@ class CartModel extends ChangeNotifier {
         _items.addAll(items);
         notifyListeners();
       } else {
-        print(
+        _logger.e(
             'HTTP POST request failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      print('HTTP POST request error: $error');
+      _logger.e('HTTP POST request error: $error');
     });
   }
 
@@ -202,8 +233,8 @@ class CartModel extends ChangeNotifier {
 
   void printItems(List<CartItem> items) {
     for (var item in _items) {
-      print("Item Id {${item.productId}}");
-      print("Item Name ${item.productName}");
+      _logger.e("Item Id {${item.productId}}");
+      _logger.e("Item Name ${item.productName}");
     }
   }
 }

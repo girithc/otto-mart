@@ -2,7 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pronto/address/address_screen.dart';
+import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/constants.dart';
@@ -10,9 +10,10 @@ import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
-import 'package:pronto/deprecated/login/login_screen.dart';
+import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/search/search_screen.dart';
+import 'package:provider/provider.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -26,12 +27,15 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
-  bool _isBottomSheetOpen = false;
-  bool _isBottomSheetAddressOpen = false;
+  //final bool _isBottomSheetOpen = false;
+  //final bool _isBottomSheetAddressOpen = false;
 
   bool isLoggedIn = false;
   String customerId = "0";
   String phone = "0";
+  String cartId = "0";
+
+  final Logger _logger = Logger();
 
   @override
   void initState() {
@@ -44,11 +48,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> retrieveCustomerInfo() async {
     const storage = FlutterSecureStorage();
-    customerId = await storage.read(key: 'customerId') ?? '';
-    phone = await storage.read(key: 'phone') ?? '';
+
+    String? storedCustomerId = await storage.read(key: 'customerId');
+    String? storedPhone = await storage.read(key: 'phone');
+    String? storedCartId =
+        await storage.read(key: 'cartId'); // Get cartId from secure storage
 
     setState(() {
-      isLoggedIn = customerId.isNotEmpty;
+      customerId = storedCustomerId ?? "0";
+      phone = storedPhone ?? "0";
+      cartId = storedCartId ?? "0"; // Set the cartId
+
+      isLoggedIn = customerId.isNotEmpty && customerId != "0";
     });
   }
 
@@ -59,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage> {
         categories = fetchedCategories;
       });
     } catch (err) {
-      print('(home)fetchCategories error $err');
+      _logger.e('(home)fetchCategories error $err');
     }
   }
 
@@ -96,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  /*
   void _openBottomSheet() {
     if (!_isBottomSheetOpen) {
       setState(() {
@@ -117,7 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
       );
     }
   }
-
+  
   void _openAddressBottomSheet() {
     Navigator.of(context).pop();
     if (!_isBottomSheetAddressOpen) {
@@ -138,12 +150,12 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  */
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(
-        homePageState: this, // Pass the reference to the state instance
-      ),
+      appBar: const CustomAppBar(),
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
@@ -316,15 +328,22 @@ class Highlights extends StatelessWidget {
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title; // Make the title parameter optional
-  final _MyHomePageState homePageState; // Add this line
+  //final _MyHomePageState homePageState; // Add this line
 
-  const CustomAppBar({this.title, required this.homePageState, super.key});
+  const CustomAppBar({this.title, super.key});
 
-  Future<void> signOutUser() async {
+  Future<void> signOutUser(BuildContext context) async {
     // Clear the data in "customerId" key
-    print("Signing Out User");
-    const storage = FlutterSecureStorage();
-    await storage.delete(key: 'customerId');
+    if (ModalRoute.of(context)?.isActive == true) {
+      //print("Signing Out User");
+      const storage = FlutterSecureStorage();
+      await storage.delete(key: 'customerId');
+      await storage.delete(key: 'cartId');
+      await storage.delete(key: 'phone');
+    }
+    // ignore: use_build_context_synchronously
+    Provider.of<LoginStatusProvider>(context, listen: false)
+        .updateLoginStatus(false, null);
 
     // Perform any additional sign-out logic if needed
     // For example, you might want to navigate to the login screen
@@ -400,7 +419,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.person),
                   onPressed: () {
-                    signOutUser().then(
+                    signOutUser(context).then(
                       (value) => Navigator.push(
                           context,
                           MaterialPageRoute(

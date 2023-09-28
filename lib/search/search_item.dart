@@ -28,7 +28,7 @@ class SearchItemApiClient {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Item> items =
           jsonData.map((item) => Item.fromJson(item)).toList();
-      print("Items Length ${items.length} First Item: ${items[0].name}");
+      //print("Items Length ${items.length} First Item: ${items[0].name}");
       return items;
     } else {
       throw Exception('Failed to load items');

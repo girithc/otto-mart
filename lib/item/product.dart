@@ -24,10 +24,6 @@ class Product extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>(); // Access the CartModel instance
-    final itemDescription = <String>[
-      'Description : Item Description',
-      'Country of Origin : India'
-    ]; // Creates growable list.
 
     return Scaffold(
       //resizeToAvoidBottomInset: false,

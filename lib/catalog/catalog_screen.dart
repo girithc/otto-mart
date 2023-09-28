@@ -5,6 +5,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/category/api_client_catalog.dart';
@@ -54,6 +55,7 @@ class CatalogPage extends StatefulWidget {
 
 class _CatalogPageState extends State<CatalogPage> {
   final CatalogApiClient apiClient = CatalogApiClient('https://localhost:3000');
+  final Logger _logger = Logger();
   List<Category> categories = [];
 
   @override
@@ -68,10 +70,10 @@ class _CatalogPageState extends State<CatalogPage> {
           await apiClient.fetchCategories(widget.categoryID);
       setState(() {
         categories = fetchedCategories;
-        print(categories[1].name);
+        //print(categories[1].name);
       });
     } catch (err) {
-      print('(catalog)fetchCategories error $err');
+      _logger.e('(catalog)fetchCategories error $err');
     }
   }
 
@@ -219,7 +221,7 @@ class _ListOfItemsState extends State<ListOfItems> {
         ? widget.categories.isNotEmpty
             ? widget.categories[0].id
             : 0
-        : catalogProvider.catalog.categoryID ?? 0;
+        : catalogProvider.catalog.categoryID;
 
     final storeId = catalogProvider.catalog.storeID;
 
@@ -295,6 +297,7 @@ class ItemCatalog extends StatefulWidget {
 class _ItemCatalogState extends State<ItemCatalog> {
   final ItemApiClient apiClient = ItemApiClient('https://localhost:3000');
   List<Item> items = [];
+  final Logger _logger = Logger();
 
   @override
   void initState() {
@@ -323,7 +326,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
       setState(() {
         items = [];
       });
-      print('(catalog)fetchItems error $err');
+      _logger.e('(catalog)fetchItems error $err');
     }
   }
 
@@ -461,7 +464,7 @@ class ListItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(1.0),
-                      border: Border.all(color: border_color),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Text(
                       name,
@@ -485,7 +488,7 @@ class ListItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(1.0),
-                      border: Border.all(color: border_color),
+                      border: Border.all(color: borderColor),
                     ),
                     child: const Text(
                       '100g',
@@ -503,7 +506,7 @@ class ListItem extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: border_color),
+                        border: Border.all(color: borderColor),
                       ),
                       child: Row(
                         children: [
@@ -540,7 +543,7 @@ class ListItem extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(1.0),
-                      border: Border.all(color: border_color),
+                      border: Border.all(color: borderColor),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

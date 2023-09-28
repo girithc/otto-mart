@@ -47,6 +47,7 @@ dependencies:
   flutter_animate: ^4.2.0+1
   firebase_core: ^2.16.0
   firebase_messaging: ^14.6.8
+  logger: ^2.0.2+1
 
 dev_dependencies:
   flutter_test:

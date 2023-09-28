@@ -5,6 +5,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:provider/provider.dart';
 import 'cart/cart.dart';
+import 'login/login_status_provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -40,23 +41,26 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider(
-            create: (context) =>
-                CartModel(customerId ?? "")), // <-- Update this line
-        ChangeNotifierProvider<CartModel>(
-          create: (context) =>
-              CartModel(customerId ?? ""), // <-- Update this line
+        ChangeNotifierProvider(create: (context) => LoginStatusProvider()),
+        ChangeNotifierProxyProvider<LoginStatusProvider, CartModel>(
+          create: (context) => CartModel(""),
+          update: (context, loginProvider, cartModel) =>
+              CartModel(loginProvider.customerId ?? ""),
         ),
       ],
-      child: MaterialApp(
-        title: 'Provider Demo',
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-          useMaterial3: true,
-        ),
-        home: (isLoggedIn == null)
-            ? const CircularProgressIndicator() // Loading indicator while checking login status
-            : OpeningPageAnimation(isLoggedIn: isLoggedIn!),
+      child: Consumer<LoginStatusProvider>(
+        builder: (context, loginProvider, child) {
+          return MaterialApp(
+            title: 'Provider Demo',
+            theme: ThemeData(
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
+            ),
+            home: (isLoggedIn == null)
+                ? const CircularProgressIndicator() // Loading indicator while checking login status
+                : OpeningPageAnimation(isLoggedIn: isLoggedIn!),
+          );
+        },
       ),
     );
   }
@@ -69,6 +73,7 @@ class OpeningPageAnimation extends StatefulWidget {
       : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _OpeningPageAnimationState createState() => _OpeningPageAnimationState();
 }
 

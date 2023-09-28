@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/constants.dart';
 import 'package:pronto/home/components/location_list_tile.dart';
@@ -18,12 +19,14 @@ class AddressScreen extends StatefulWidget {
 
 class _AddressScreenState extends State<AddressScreen> {
   List<PredictionAutoComplete> placePredictions = [];
+  final Logger _logger = Logger();
+
   final _debouncer =
       Debouncer(milliseconds: 1000); // Adjust the delay as needed
 
   void placeAutocomplete(String query) async {
-    print("Entered placeAutocomplete");
-    print("ApiKey: $apiKey");
+    _logger.e("Entered placeAutocomplete");
+    _logger.e("ApiKey: $apiKey");
 
     Uri uri =
         Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
@@ -40,12 +43,12 @@ class _AddressScreenState extends State<AddressScreen> {
           PlaceAutoCompleteResponse.parseAutocompleteResult(response);
 
       String? predictions = result.predictions?[0].description;
-      print("Prediction[0].description  $predictions");
+      _logger.e("Prediction[0].description  $predictions");
 
       if (result.predictions != null) {
         setState(() {
           placePredictions = result.predictions!;
-          print("PlacePredictions.length  ${placePredictions.length}");
+          _logger.e("PlacePredictions.length  ${placePredictions.length}");
         });
       }
     }
@@ -118,7 +121,6 @@ class _AddressScreenState extends State<AddressScreen> {
               child: ListView.builder(
                 itemCount: placePredictions.length,
                 itemBuilder: (context, index) {
-                  print("Description: ${placePredictions[index].description}");
                   return LocationListTile(
                     location: placePredictions[index].description!,
                     press: () {

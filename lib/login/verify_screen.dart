@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:logger/logger.dart';
 import 'package:pinput/pinput.dart';
 import 'package:pronto/home/home_screen.dart';
+import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_api_client.dart';
+import 'package:provider/provider.dart';
 
 class MyVerify extends StatefulWidget {
-  MyVerify({Key? key, required this.number}) : super(key: key);
-  String number;
+  const MyVerify({Key? key, required this.number}) : super(key: key);
+  final String number; // Mark this as final
 
   @override
   State<MyVerify> createState() => _MyVerifyState();
@@ -15,6 +18,7 @@ class MyVerify extends StatefulWidget {
 class _MyVerifyState extends State<MyVerify> {
   late CustomerApiClient apiClient; // Declare apiClient here
   late Customer customer;
+  final Logger _logger = Logger();
 
   final storage = const FlutterSecureStorage();
 
@@ -42,45 +46,25 @@ class _MyVerifyState extends State<MyVerify> {
       setState(() {
         customer = loggedCustomer;
         isLoggedIn = true;
-        print("Logged in Customer: ${customer.id}");
+        _logger.e("Logged in Customer: ${customer.id}");
       });
 
       // Store the user's credentials securely
       await storage.write(key: 'customerId', value: customer.id.toString());
       await storage.write(key: 'phone', value: customer.phone.toString());
+      await storage.write(key: 'cartId', value: customer.cartId.toString());
+      // ignore: use_build_context_synchronously
+      Provider.of<LoginStatusProvider>(context, listen: false)
+          .updateLoginStatus(true, customer.id.toString());
 
       // You can store other user-related data as well
     } catch (err) {
-      print('(login) customer error $err');
+      _logger.e('(login) customer error $err');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 56,
-      textStyle: const TextStyle(
-          fontSize: 20,
-          color: Color.fromRGBO(30, 60, 87, 1),
-          fontWeight: FontWeight.w600),
-      decoration: BoxDecoration(
-        border: Border.all(color: const Color.fromRGBO(234, 239, 243, 1)),
-        borderRadius: BorderRadius.circular(20),
-      ),
-    );
-
-    final focusedPinTheme = defaultPinTheme.copyDecorationWith(
-      border: Border.all(color: const Color.fromRGBO(114, 178, 238, 1)),
-      borderRadius: BorderRadius.circular(8),
-    );
-
-    final submittedPinTheme = defaultPinTheme.copyWith(
-      decoration: defaultPinTheme.decoration?.copyWith(
-        color: const Color.fromRGBO(234, 239, 243, 1),
-      ),
-    );
-
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -149,7 +133,7 @@ class _MyVerifyState extends State<MyVerify> {
                 // submittedPinTheme: submittedPinTheme,
 
                 showCursor: true,
-                onCompleted: (pin) => print(pin),
+                onCompleted: (pin) => _logger.e(pin),
               ),
               const SizedBox(
                 height: 20,

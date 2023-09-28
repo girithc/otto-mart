@@ -1,6 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/item/product.dart';
@@ -530,7 +531,7 @@ class ListItem extends StatelessWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                border: Border.all(color: border_color, width: 1.0),
+                border: Border.all(color: borderColor, width: 1.0),
                 borderRadius: BorderRadius.circular(3.0),
               ),
               margin: index == 0
@@ -562,7 +563,7 @@ class ListItem extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: border_color),
+                        border: Border.all(color: borderColor),
                       ),
                       child: Text(
                         name,
@@ -586,7 +587,7 @@ class ListItem extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: border_color),
+                        border: Border.all(color: borderColor),
                       ),
                       child: const Text(
                         '100g',
@@ -604,7 +605,7 @@ class ListItem extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(1.0),
-                          border: Border.all(color: border_color),
+                          border: Border.all(color: borderColor),
                         ),
                         child: Row(
                           children: [
@@ -641,7 +642,7 @@ class ListItem extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: border_color),
+                        border: Border.all(color: borderColor),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -780,6 +781,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 class _CustomAppBarState extends State<CustomAppBar> {
   final SearchItemApiClient apiClient =
       SearchItemApiClient('https://localhost:3000');
+  final Logger _logger = Logger();
 
   List<Item> resultSearchItems = [];
 
@@ -790,13 +792,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
             await apiClient.fetchSearchItems(queryString);
         setState(() {
           resultSearchItems = fetchedSearchItems;
-          print(resultSearchItems[1].name);
+          //print(resultSearchItems[1].name);
         });
       } else {
-        print('Query String is small.');
+        _logger.e('Query String is small.');
       }
     } catch (err) {
-      print('(catalog)fetchCategories error $err');
+      _logger.e('(catalog)fetchCategories error $err');
     }
   }
 
@@ -856,8 +858,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                           .read<SearchData>()
                           .updateSearchResults(searchItemResults);
                     }).catchError((error) {
-                      print('(catalog)fetchCategories error $error');
                       searchData.updateNotFound();
+                      _logger.e('(catalog)fetchCategories error $error');
                     });
                   } else {
                     context
