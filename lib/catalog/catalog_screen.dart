@@ -95,7 +95,7 @@ class _CatalogPageState extends State<CatalogPage> {
             // Expand the Row to fill the available space
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Expanded(
+              Flexible(
                 flex: 5,
                 child: CarouselSlider(
                   options: CarouselOptions(
@@ -138,7 +138,7 @@ class _CatalogPageState extends State<CatalogPage> {
                   ],
                 ),
               ),
-              Expanded(
+              Flexible(
                 flex: 4,
                 child: ElevatedButton(
                     onPressed: () {
@@ -672,7 +672,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(42); // Increased height to accommodate content
+      const Size.fromHeight(65); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {

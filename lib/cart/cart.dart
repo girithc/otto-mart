@@ -91,12 +91,22 @@ class CartModel extends ChangeNotifier {
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
+
+    int? parsedCustomerId;
+    try {
+      parsedCustomerId = int.parse(customerId);
+    } catch (e) {
+      _logger.e('Failed to parse customerId: $customerId, error: $e ');
+    }
+
+    if (parsedCustomerId == null) return;
+
     final body = <String, dynamic>{
-      'customer_id': int.parse(customerId),
+      'customer_id': parsedCustomerId,
     };
 
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
-      _logger.e('Response: $response');
+      //_logger.e('Response: $response');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final List<dynamic> jsonData = json.decode(response.body);

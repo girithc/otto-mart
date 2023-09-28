@@ -42,6 +42,7 @@ class TextCycler extends StatefulWidget {
   const TextCycler({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _TextCyclerState createState() => _TextCyclerState();
 }
 
