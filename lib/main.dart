@@ -120,7 +120,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                       MaterialPageRoute(builder: (context) => const MyPhone()));
                 }
               },
-              child: Image.asset('assets/images/scooter.avif'),
+              child: Image.asset('assets/images/scooter.jpg'),
             ),
             const SizedBox(
                 height:
