@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/girithc/pronto-go/api"
 	"github.com/girithc/pronto-go/store"
@@ -22,7 +23,11 @@ func main() {
 	} else {
 		fmt.Println("Store.Init() is successful.")
 	}
-	server := api.NewServer(":3000", store, workerPool)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	server := api.NewServer(port, store, workerPool)
 
 	// google_server := api.NewGoogleServer("pronto-bucket", "service-account")
 	// fmt.Println("Created Google Server")
