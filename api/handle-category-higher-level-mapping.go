@@ -4,29 +4,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 )
 
 func (s *Server) Handle_Create_Category_Higher_Level_Mapping(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.Create_Category_Higher_Level_Mapping)
-	
+
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in Create New_Category_Higher_Level_Mapping()")
 		return err
 	}
 
 	fmt.Println(" Create chlm checkpoint 1")
-	
-	new_category_higher_level_mapping, err := types.New_Category_Higher_Level_Mapping(new_req.Higher_Level_Category_ID, new_req.Category_ID)
 
+	new_category_higher_level_mapping, err := types.New_Category_Higher_Level_Mapping(new_req.Higher_Level_Category_ID, new_req.Category_ID)
 	if err != nil {
 		return err
 	}
 
 	fmt.Println(" Create chlm checkpoint 2")
 
-	category_higher_level_mapping, err := s.store.Create_Category_Higher_Level_Mapping(new_category_higher_level_mapping); 
-	
+	category_higher_level_mapping, err := s.store.Create_Category_Higher_Level_Mapping(new_category_higher_level_mapping)
 	if err != nil {
 		return err
 	}
@@ -46,8 +45,6 @@ func (s *Server) Handle_Get_Category_Higher_Level_Mappings(res http.ResponseWrit
 }
 
 func (s *Server) Handle_Update_Category_Higher_Level_Mapping(res http.ResponseWriter, req *http.Request) error {
-
-
 	new_req := new(types.Update_Category_Higher_Level_Mapping)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Category()")
@@ -59,7 +56,6 @@ func (s *Server) Handle_Update_Category_Higher_Level_Mapping(res http.ResponseWr
 		return err
 	}
 
-	
 	if new_req.Higher_Level_Category_ID == 0 {
 		new_req.Higher_Level_Category_ID = category_higher_level_mapping.Higher_Level_Category_ID
 	} else {
@@ -86,7 +82,6 @@ func (s *Server) Handle_Update_Category_Higher_Level_Mapping(res http.ResponseWr
 }
 
 func (s *Server) Handle_Delete_Category_Higher_Level_Mapping(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Delete_Category_Higher_Level_Mapping)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Category_Higher_Level_Mapping()")

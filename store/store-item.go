@@ -3,13 +3,14 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateItemTable() error {
-	//fmt.Println("Entered CreateItemTable")
+	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists item(
 		id SERIAL PRIMARY KEY,
@@ -26,23 +27,23 @@ func (s *PostgresStore) CreateItemTable() error {
 
 	_, err := s.db.Exec(query)
 
-	//fmt.Println("Exiting CreateItemTable")
+	// fmt.Println("Exiting CreateItemTable")
 
 	return err
 }
 
-func (s *PostgresStore) Create_Item(p *types.Item) (*types.Item,error) {
+func (s *PostgresStore) Create_Item(p *types.Item) (*types.Item, error) {
 	query := `insert into item 
 	(name, price, store_id, category_id, stock_quantity, image, created_by)
 	values ($1, $2, $3, $4, $5, $6, $7)
 	returning id, name, price, store_id, category_id, stock_quantity, image, created_at, created_by`
-	rows , err := s.db.Query(
+	rows, err := s.db.Query(
 		query,
 		p.Name,
 		p.Price,
 		p.Store_ID,
 		p.Category_ID,
-		p.Stock_Quantity, 
+		p.Stock_Quantity,
 		p.Image,
 		p.Created_By)
 
@@ -71,12 +72,9 @@ func (s *PostgresStore) Create_Item(p *types.Item) (*types.Item,error) {
 }
 
 func (s *PostgresStore) Get_Items() ([]*types.Item, error) {
-	
 	fmt.Println("Entered Get_Items")
-	
+
 	rows, err := s.db.Query("SELECT * FROM item ORDER BY id ASC")
-
-
 	if err != nil {
 		return nil, err
 	}
@@ -90,14 +88,12 @@ func (s *PostgresStore) Get_Items() ([]*types.Item, error) {
 		items = append(items, item)
 	}
 
-	return items , nil
+	return items, nil
 }
 
 func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, store_id int) ([]*types.Get_Items_By_CategoryID_And_StoreID, error) {
-	
 	fmt.Println("Entered Get_Items_By_CategoryID_And_StoreID")
 	rows, err := s.db.Query("select id, name, price, store_id, category_id, stock_quantity, image from item where category_id = $1 AND store_id = $2", category_id, store_id)
-
 	if err != nil {
 		return nil, err
 	}
@@ -111,7 +107,7 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 		items = append(items, item)
 	}
 
-	return items , nil
+	return items, nil
 }
 
 func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Item, error) {
@@ -119,7 +115,6 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	
 
 	for row.Next() {
 		return scan_Into_Item(row)
@@ -128,7 +123,7 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Item, error) {
 	return nil, fmt.Errorf("item with id = [%d] not found", id)
 }
 
-func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item,error) {
+func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item, error) {
 	query := `update item
 	set 
 	name = $1, 
@@ -138,9 +133,9 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 	image = $5
 	where id = $6
 	returning id, name, price, category_id, stock_quantity, image`
-	
+
 	rows, err := s.db.Query(
-		query, 
+		query,
 		item.Name,
 		item.Price,
 		item.Category_ID,
@@ -158,7 +153,7 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 	fmt.Println("Checkpoint 2")
 
 	items := []*types.Update_Item{}
-	
+
 	for rows.Next() {
 		item, err := scan_Into_Update_Item(rows)
 		if err != nil {
@@ -166,7 +161,7 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 		}
 		items = append(items, item)
 	}
-	
+
 	fmt.Println("Checkpoint 3")
 
 	return items[0], nil
@@ -184,11 +179,11 @@ func scan_Into_Item(rows *sql.Rows) (*types.Item, error) {
 		&item.Name,
 		&item.Price,
 		&item.Store_ID,
-		&item.Category_ID, 
+		&item.Category_ID,
 		&item.Stock_Quantity, // Move Locked_Quantity before Image
-        &item.Image, // Image after Locked_Quantity
-        &item.Created_At,
-        &item.Created_By,
+		&item.Image,          // Image after Locked_Quantity
+		&item.Created_At,
+		&item.Created_By,
 		&item.Locked_Quantity, // Move Locked_Quantity before Image
 
 	)
@@ -208,7 +203,7 @@ func scan_Into_Update_Item(rows *sql.Rows) (*types.Update_Item, error) {
 	)
 
 	return item, error
-} 
+}
 
 func scan_Into_Items_By_CategoryID_And_StoreID(rows *sql.Rows) (*types.Get_Items_By_CategoryID_And_StoreID, error) {
 	item := new(types.Get_Items_By_CategoryID_And_StoreID)
@@ -217,7 +212,7 @@ func scan_Into_Items_By_CategoryID_And_StoreID(rows *sql.Rows) (*types.Get_Items
 		&item.Name,
 		&item.Price,
 		&item.Store_ID,
-		&item.Category_ID, 
+		&item.Category_ID,
 		&item.Stock_Quantity,
 		&item.Image,
 	)

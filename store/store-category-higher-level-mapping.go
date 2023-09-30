@@ -3,13 +3,14 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) Create_Category_Higher_Level_Mapping_Table() error {
-	//fmt.Println("Entered CreateCategoryHigherLevelMappingTable")
+	// fmt.Println("Entered CreateCategoryHigherLevelMappingTable")
 
 	query := `create table if not exists category_higher_level_mapping (
 		id SERIAL PRIMARY KEY,
@@ -22,7 +23,7 @@ func (s *PostgresStore) Create_Category_Higher_Level_Mapping_Table() error {
 
 	_, err := s.db.Exec(query)
 
-	//fmt.Println("Exiting CreateCategoryHigherLevelMappingTable")
+	// fmt.Println("Exiting CreateCategoryHigherLevelMappingTable")
 
 	return err
 }
@@ -47,7 +48,7 @@ func (s *PostgresStore) Create_Category_Higher_Level_Mapping(chlm *types.Categor
 	fmt.Println("CheckPoint 2")
 
 	category_higher_level_mappings := []*types.Category_Higher_Level_Mapping{}
-	
+
 	for rows.Next() {
 		category_higher_level_mapping, err := scan_Into_Category_Higher_Level_Mapping(rows)
 		if err != nil {
@@ -63,7 +64,6 @@ func (s *PostgresStore) Create_Category_Higher_Level_Mapping(chlm *types.Categor
 
 func (s *PostgresStore) Get_Category_Higher_Level_Mappings() ([]*types.Category_Higher_Level_Mapping, error) {
 	rows, err := s.db.Query("select id, higher_level_category_id, category_id, created_by from category_higher_level_mapping")
-
 	if err != nil {
 		return nil, err
 	}
@@ -93,27 +93,26 @@ func (s *PostgresStore) Get_Category_Higher_Level_Mapping_By_ID(id int) (*types.
 	return nil, fmt.Errorf("category_higher_level_mapping with id = [%d] not found", id)
 }
 
-func (s *PostgresStore) Update_Category_Higher_Level_Mapping(chlm *types.Update_Category_Higher_Level_Mapping) (*types.Update_Category_Higher_Level_Mapping,error) {
+func (s *PostgresStore) Update_Category_Higher_Level_Mapping(chlm *types.Update_Category_Higher_Level_Mapping) (*types.Update_Category_Higher_Level_Mapping, error) {
 	query := `update category_higher_level_mapping
 	set 
 	higher_level_category_id = $1
 	category_id = $2
 	where id = $3 
 	returning higher_level_category_id, category_id, id`
-	
+
 	rows, err := s.db.Query(
-		query, 
+		query,
 		chlm.Higher_Level_Category_ID,
 		chlm.Category_ID,
 		chlm.ID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	chlms := []*types.Update_Category_Higher_Level_Mapping{}
-	
+
 	for rows.Next() {
 		chlm, err := scan_Into_Update_Category_Higher_Level_Mapping(rows)
 		if err != nil {
@@ -121,7 +120,6 @@ func (s *PostgresStore) Update_Category_Higher_Level_Mapping(chlm *types.Update_
 		}
 		chlms = append(chlms, chlm)
 	}
-	
 
 	return chlms[0], nil
 }
@@ -151,5 +149,4 @@ func scan_Into_Update_Category_Higher_Level_Mapping(rows *sql.Rows) (*types.Upda
 		&chlm.ID,
 	)
 	return chlm, error
-} 
-
+}

@@ -3,13 +3,14 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateStoreTable() error {
-	//fmt.Println("Entered CreateStoreTable")
+	// fmt.Println("Entered CreateStoreTable")
 
 	query := `create table if not exists store (
 		id SERIAL PRIMARY KEY,
@@ -21,7 +22,7 @@ func (s *PostgresStore) CreateStoreTable() error {
 
 	_, err := s.db.Exec(query)
 
-	//fmt.Println("Exiting CreateStoreTable")
+	// fmt.Println("Exiting CreateStoreTable")
 
 	return err
 }
@@ -46,7 +47,7 @@ func (s *PostgresStore) Create_Store(st *types.Store) (*types.Store, error) {
 	fmt.Println("CheckPoint 2")
 
 	stores := []*types.Store{}
-	
+
 	for rows.Next() {
 		store, err := scan_Into_Store(rows)
 		if err != nil {
@@ -62,7 +63,6 @@ func (s *PostgresStore) Create_Store(st *types.Store) (*types.Store, error) {
 
 func (s *PostgresStore) Get_Stores() ([]*types.Store, error) {
 	rows, err := s.db.Query("select * from store")
-
 	if err != nil {
 		return nil, err
 	}
@@ -92,25 +92,24 @@ func (s *PostgresStore) Get_Store_By_ID(id int) (*types.Store, error) {
 	return nil, fmt.Errorf("store with id = [%d] not found", id)
 }
 
-func (s *PostgresStore) Update_Store(st *types.Update_Store) (*types.Update_Store,error) {
+func (s *PostgresStore) Update_Store(st *types.Update_Store) (*types.Update_Store, error) {
 	query := `update store
 	set name = $1, address = $2
 	where id = $3 
 	returning name, address, id`
-	
+
 	rows, err := s.db.Query(
-		query, 
+		query,
 		st.Name,
 		st.Address,
 		st.ID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	stores := []*types.Update_Store{}
-	
+
 	for rows.Next() {
 		store, err := scan_Into_Update_Store(rows)
 		if err != nil {
@@ -118,7 +117,6 @@ func (s *PostgresStore) Update_Store(st *types.Update_Store) (*types.Update_Stor
 		}
 		stores = append(stores, store)
 	}
-	
 
 	return stores[0], nil
 }
@@ -128,7 +126,7 @@ func (s *PostgresStore) Delete_Store(id int) error {
 	return err
 }
 
-func scan_Into_Store (rows *sql.Rows) (*types.Store, error) {
+func scan_Into_Store(rows *sql.Rows) (*types.Store, error) {
 	store := new(types.Store)
 	err := rows.Scan(
 		&store.ID,
@@ -150,4 +148,4 @@ func scan_Into_Update_Store(rows *sql.Rows) (*types.Update_Store, error) {
 	)
 
 	return store, error
-} 
+}

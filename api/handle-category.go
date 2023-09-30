@@ -4,26 +4,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"pronto-go/types"
 	"strconv"
+
+	"github.com/girithc/pronto-go/types"
 )
 
 func (s *Server) Handle_Create_Category(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Create_Category)
-	
+
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in CreateCategory()")
 		return err
 	}
-	
-	new_category, err := types.New_Category(new_req.Name)
 
+	new_category, err := types.New_Category(new_req.Name)
 	if err != nil {
 		return err
 	}
-	category, err := s.store.Create_Category(new_category); 
-	
+	category, err := s.store.Create_Category(new_category)
 	if err != nil {
 		return err
 	}
@@ -32,25 +30,23 @@ func (s *Server) Handle_Create_Category(res http.ResponseWriter, req *http.Reque
 }
 
 func (s *Server) Handle_Get_Categories(res http.ResponseWriter, req *http.Request) error {
-
-	//check if req has empty url param
+	// check if req has empty url param
 	hlc_id := req.URL.Query().Get("id")
 
-    // Check if URL Param is empty or 0
-    if hlc_id == "" || hlc_id == "0" {
-        categories, err := s.store.Get_Categories()
+	// Check if URL Param is empty or 0
+	if hlc_id == "" || hlc_id == "0" {
+		categories, err := s.store.Get_Categories()
 		if err != nil {
 			return err
 		}
 
 		return WriteJSON(res, http.StatusOK, categories)
-    } else {
+	} else {
 		num, err := strconv.Atoi(hlc_id)
 		if err != nil {
 			return err
 		}
 		new_category_parent, err := types.New_Category_Parent_Id(num)
-
 		if err != nil {
 			return err
 		}
@@ -68,10 +64,7 @@ func (s *Server) Handle_Get_Categories(res http.ResponseWriter, req *http.Reques
 	return fmt.Errorf("end of function handle_get_categories")
 }
 
-
 func (s *Server) Handle_Update_Category(res http.ResponseWriter, req *http.Request) error {
-
-
 	new_req := new(types.Update_Category)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Category()")
@@ -82,7 +75,7 @@ func (s *Server) Handle_Update_Category(res http.ResponseWriter, req *http.Reque
 	if err != nil {
 		return err
 	}
-	
+
 	if len(new_req.Name) == 0 {
 		new_req.Name = category.Name
 	}
@@ -96,7 +89,6 @@ func (s *Server) Handle_Update_Category(res http.ResponseWriter, req *http.Reque
 }
 
 func (s *Server) Handle_Delete_Category(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Delete_Category)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Category()")

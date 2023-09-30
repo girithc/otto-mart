@@ -4,106 +4,108 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
 
+	"cloud.google.com/go/cloudsqlconn"
+	"cloud.google.com/go/cloudsqlconn/postgres/pgxv4"
 	_ "github.com/lib/pq"
 )
 
-
 type PostgresStore struct {
-	db *sql.DB
+	db          *sql.DB
 	cancelFuncs map[int]context.CancelFunc
 }
 
-func NewPostgresStore() (*PostgresStore, error) {
-	//fmt.Println("Entered NewPostgresStore() -- db.go")
-
-	connStr := "user=postgres dbname=prontodb password=g190201 sslmode=disable"
-	db, err := sql.Open("postgres", connStr)
+func NewPostgresStore() (*PostgresStore, func() error) {
+	// fmt.Println("Entered NewPostgresStore() -- db.go")
+	cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
 	if err != nil {
-		//fmt.Println("Exiting (Err) NewPostgresStore() -- db.go")
-	
-		return nil, err
+		log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
 	}
+
+	dsn := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"))
+	db, err := sql.Open("cloudsql-postgres", dsn)
+	if err != nil {
+		log.Fatalf("Error on sql.Open: %v", err)
+	}
+
+	// connStr := "user=postgres dbname=prontodb password=g190201 sslmode=disable"
+	// db, err := sql.Open("postgres", connStr)
 
 	if err := db.Ping(); err != nil {
-		//fmt.Println("Exiting (db.Ping()) NewPostgresStore() -- db.go")
-	
-		return nil, err
+		log.Fatalf("Error on db.Ping(). Db connection error: %v", err)
 	}
 
-	//fmt.Println("Exiting NewPostgresStore() -- db.go")
-	
-
 	return &PostgresStore{
-		db: db,
+		db:          db,
 		cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
-	}, nil
+	}, cleanup
 }
 
 func (s *PostgresStore) Init() error {
-
-	//fmt.Println("Entered Init() -- db.go")
+	// fmt.Println("Entered Init() -- db.go")
 
 	errCategory := s.Create_Category_Table()
-	if errCategory != nil{
+	if errCategory != nil {
 		return errCategory
 	} else {
 		fmt.Println("Success - Created Category Table")
 	}
 
 	errStore := s.CreateStoreTable()
-	if errStore != nil{
+	if errStore != nil {
 		return errStore
 	} else {
 		fmt.Println("Success - Created Store Table")
 	}
 
 	errItem := s.CreateItemTable()
-	if errItem != nil{
+	if errItem != nil {
 		return errItem
 	} else {
 		fmt.Println("Success - Created Item Table")
 	}
 
 	errCustomer := s.CreateCustomerTable()
-	if errCustomer != nil{
+	if errCustomer != nil {
 		return errCustomer
 	} else {
 		fmt.Println("Success - Created Customer Table")
 	}
 
 	errCartItem := s.CreateCartItemTable()
-	if errCartItem != nil{
+	if errCartItem != nil {
 		return errCartItem
-	}else {
+	} else {
 		fmt.Println("Success - Created Cart Item Table")
 	}
 
 	errHigherLevelCategory := s.Create_Higher_Level_Category_Table()
-	if errHigherLevelCategory != nil{
+	if errHigherLevelCategory != nil {
 		return errHigherLevelCategory
 	} else {
 		fmt.Println("Success - Created Higher Level Category Table")
 	}
 
 	errCategoryHigherLevelMapping := s.Create_Category_Higher_Level_Mapping_Table()
-	if errCategoryHigherLevelMapping != nil{
+	if errCategoryHigherLevelMapping != nil {
 		return errCategoryHigherLevelMapping
 	} else {
 		fmt.Println("Success - Created Category Higher Level Mapping Table")
 	}
 
 	errDeliveryPartner := s.CreateDeliveryPartnerTable()
-	if errDeliveryPartner != nil{
+	if errDeliveryPartner != nil {
 		return errDeliveryPartner
 	} else {
 		fmt.Println("Success - Created Delivery Partner Table")
 	}
 
 	errShoppingCart := s.CreateShoppingCartTable()
-	if errShoppingCart != nil{
+	if errShoppingCart != nil {
 		return errShoppingCart
-	}else {
+	} else {
 		fmt.Println("Success - Created Shopping Cart Table")
 	}
 
@@ -115,7 +117,7 @@ func (s *PostgresStore) Init() error {
 	}
 
 	// Check and add the constraint only if it doesn't exist
-    constraintQuery := `
+	constraintQuery := `
     DO $$
     BEGIN
         IF NOT EXISTS (
@@ -129,12 +131,11 @@ func (s *PostgresStore) Init() error {
     $$;
     `
 
-    if _, err := s.db.Exec(constraintQuery); err != nil {
-        return fmt.Errorf("failed to add constraint to shopping_cart: %w", err)
-    }
+	if _, err := s.db.Exec(constraintQuery); err != nil {
+		return fmt.Errorf("failed to add constraint to shopping_cart: %w", err)
+	}
 
-    // ... [your other code, if any]
+	// ... [your other code, if any]
 
-    return nil
+	return nil
 }
-

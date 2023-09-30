@@ -2,13 +2,14 @@ package store
 
 import (
 	"database/sql"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateDeliveryPartnerTable() error {
-	//fmt.Println("Entered CreateItemTable")
+	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists delivery_partner(
 		id SERIAL PRIMARY KEY,
@@ -22,10 +23,11 @@ func (s *PostgresStore) CreateDeliveryPartnerTable() error {
 
 	_, err := s.db.Exec(query)
 
-	//fmt.Println("Exiting CreateItemTable")
+	// fmt.Println("Exiting CreateItemTable")
 
 	return err
 }
+
 // 1. Create a function to insert a new delivery partner
 func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partner) (*types.Delivery_Partner, error) {
 	query := `insert into delivery_partner
@@ -41,7 +43,6 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 		"",
 		1,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -59,50 +60,48 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 }
 
 func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone int, fcm_token string) (*types.Delivery_Partner, error) {
-    // Start a transaction
-    tx, err := s.db.Begin()
-    if err != nil {
-        return nil, err
-    }
-    defer tx.Rollback() // This will rollback any changes in case of error or if the commit fails
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // This will rollback any changes in case of error or if the commit fails
 
-    // Reset existing rows with the same fcm_token to 0
-    resetStatement := `
+	// Reset existing rows with the same fcm_token to 0
+	resetStatement := `
         UPDATE delivery_partner
         SET fcm_token = '0'
         WHERE fcm_token = $1
     `
-    _, err = tx.Exec(resetStatement, fcm_token)
-    if err != nil {
-        return nil, err
-    }
+	_, err = tx.Exec(resetStatement, fcm_token)
+	if err != nil {
+		return nil, err
+	}
 
-    // Update the fcm_token for the matching phone
-    sqlStatement := `
+	// Update the fcm_token for the matching phone
+	sqlStatement := `
         UPDATE delivery_partner
         SET fcm_token = $1
         WHERE phone = $2
         RETURNING id, name, fcm_token, store_id, phone, address, created_at
     `
 
-    // Execute the SQL statement
-    row := tx.QueryRow(sqlStatement, fcm_token, phone)
+	// Execute the SQL statement
+	row := tx.QueryRow(sqlStatement, fcm_token, phone)
 
-    partner := &types.Delivery_Partner{}
-    err = row.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At)
-    if err != nil {
-        return nil, err
-    }
+	partner := &types.Delivery_Partner{}
+	err = row.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At)
+	if err != nil {
+		return nil, err
+	}
 
-    // Commit the transaction
-    if err := tx.Commit(); err != nil {
-        return nil, err
-    }
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
 
-    return partner, nil
+	return partner, nil
 }
-
-
 
 // 2. Create a function to retrieve all delivery partners
 func (s *PostgresStore) Get_All_Delivery_Partners() ([]*types.Delivery_Partner, error) {

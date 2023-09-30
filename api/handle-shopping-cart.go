@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 )
 
-
 func (s *Server) Handle_Get_All_Active_Shopping_Carts(res http.ResponseWriter, req *http.Request) error {
-
-	carts, err := s.store.Get_All_Active_Shopping_Carts();
+	carts, err := s.store.Get_All_Active_Shopping_Carts()
 	if err != nil {
 		return err
 	}
@@ -19,15 +18,14 @@ func (s *Server) Handle_Get_All_Active_Shopping_Carts(res http.ResponseWriter, r
 }
 
 func (s *Server) Handle_Get_Shopping_Cart_By_Customer_Id(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Get_Shopping_Cart)
-	
+
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in CreateCategory()")
 		return err
 	}
-	
-	cart, err := s.store.Get_Shopping_Cart_By_Customer_Id(new_req.Customer_Id, new_req.Active);
+
+	cart, err := s.store.Get_Shopping_Cart_By_Customer_Id(new_req.Customer_Id, new_req.Active)
 	if err != nil {
 		return err
 	}

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"pronto-go/types"
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )

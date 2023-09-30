@@ -4,27 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 )
 
-
-
 func (s *Server) Handle_Create_Store(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Create_Store)
-	
+
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in CreateCategory()")
 		return err
 	}
-	
-	new_store, err := types.New_Store(new_req.Name, new_req.Address)
 
+	new_store, err := types.New_Store(new_req.Name, new_req.Address)
 	if err != nil {
 		return err
 	}
-	store, err := s.store.Create_Store(new_store); 
-	
+	store, err := s.store.Create_Store(new_store)
 	if err != nil {
 		return err
 	}
@@ -41,10 +37,7 @@ func (s *Server) Handle_Get_Stores(res http.ResponseWriter, req *http.Request) e
 	return WriteJSON(res, http.StatusOK, stores)
 }
 
-
 func (s *Server) Handle_Update_Store(res http.ResponseWriter, req *http.Request) error {
-
-
 	new_req := new(types.Update_Store)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Store()")
@@ -55,7 +48,7 @@ func (s *Server) Handle_Update_Store(res http.ResponseWriter, req *http.Request)
 	if err != nil {
 		return err
 	}
-	
+
 	if len(new_req.Name) == 0 {
 		new_req.Name = store.Name
 	}
@@ -72,7 +65,6 @@ func (s *Server) Handle_Update_Store(res http.ResponseWriter, req *http.Request)
 }
 
 func (s *Server) Handle_Delete_Store(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Delete_Store)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Store()")

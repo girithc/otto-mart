@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"pronto-go/worker"
+	"github.com/girithc/pronto-go/worker"
 )
 
 // Store

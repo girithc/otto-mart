@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"pronto-go/types"
 	"strconv"
 	"time"
+
+	"github.com/girithc/pronto-go/types"
 )
 
 func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *http.Request) error {
@@ -38,7 +39,6 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 		if err != nil {
 			return err
 		}
-
 
 		// Generate JWT token
 		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
@@ -77,7 +77,6 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 }
 
 func (s *Server) Handle_Delivery_Partner_FCM_Token(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.FCM_Token_Delivery_Partner)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in Handle_Delivery_Partner_FCM_Token()")
@@ -90,8 +89,6 @@ func (s *Server) Handle_Delivery_Partner_FCM_Token(res http.ResponseWriter, req 
 		return err
 	}
 
-	
-
 	delivery_partner, err := s.store.Update_FCM_Token_Delivery_Partner(new_req.Phone, new_req.Fcm_Token)
 	if err != nil {
 		return err
@@ -101,8 +98,7 @@ func (s *Server) Handle_Delivery_Partner_FCM_Token(res http.ResponseWriter, req 
 }
 
 func (s *Server) Handle_Get_Delivery_Partners(res http.ResponseWriter, req *http.Request) error {
-
-	customers, err := s.store.Get_All_Delivery_Partners();
+	customers, err := s.store.Get_All_Delivery_Partners()
 	if err != nil {
 		return err
 	}

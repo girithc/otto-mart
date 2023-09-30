@@ -2,13 +2,14 @@ package store
 
 import (
 	"database/sql"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateSalesOrderTable() error {
-	//fmt.Println("Entered CreateItemTable")
+	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists sales_order (
 		id SERIAL PRIMARY KEY,
@@ -22,7 +23,7 @@ func (s *PostgresStore) CreateSalesOrderTable() error {
 
 	_, err := s.db.Exec(query)
 
-	//fmt.Println("Exiting CreateItemTable")
+	// fmt.Println("Exiting CreateItemTable")
 
 	return err
 }
@@ -48,27 +49,27 @@ func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
 }
 
 func scanIntoSalesOrder(rows *sql.Rows) (*types.Sales_Order, error) {
-    order := new(types.Sales_Order)
-    
-    // Use sql.NullInt64 for nullable integer columns.
-    var deliveryPartnerID sql.NullInt64
+	order := new(types.Sales_Order)
 
-    err := rows.Scan(
-        &order.ID, 
-        &deliveryPartnerID, 
-        &order.CartID, 
-        &order.StoreID, 
-        &order.CustomerID, 
-        &order.DeliveryAddress, 
-        &order.OrderDate,
-    )
+	// Use sql.NullInt64 for nullable integer columns.
+	var deliveryPartnerID sql.NullInt64
 
-    // Assign the value from the sql.NullInt64 to the Sales_Order struct's field if it's valid (i.e., not NULL).
-    if deliveryPartnerID.Valid {
-        order.DeliveryPartnerID = int(deliveryPartnerID.Int64)
-    } else {
-        order.DeliveryPartnerID = 0 // Or whatever default or sentinel value you want for NULLs.
-    }
+	err := rows.Scan(
+		&order.ID,
+		&deliveryPartnerID,
+		&order.CartID,
+		&order.StoreID,
+		&order.CustomerID,
+		&order.DeliveryAddress,
+		&order.OrderDate,
+	)
 
-    return order, err
+	// Assign the value from the sql.NullInt64 to the Sales_Order struct's field if it's valid (i.e., not NULL).
+	if deliveryPartnerID.Valid {
+		order.DeliveryPartnerID = int(deliveryPartnerID.Int64)
+	} else {
+		order.DeliveryPartnerID = 0 // Or whatever default or sentinel value you want for NULLs.
+	}
+
+	return order, err
 }

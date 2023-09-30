@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"pronto-go/store"
-	"pronto-go/worker"
+	"github.com/girithc/pronto-go/store"
+	"github.com/girithc/pronto-go/worker"
 )
 
 type Server struct {

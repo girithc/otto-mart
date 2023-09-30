@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"pronto-go/types"
+	"github.com/girithc/pronto-go/types"
 
 	"github.com/golang-jwt/jwt/v4"
 )

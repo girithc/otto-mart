@@ -2,11 +2,11 @@ package store
 
 import (
 	"fmt"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
-
 
 func (s *PostgresStore) Search_Items(query string) ([]*types.Item, error) {
 	fmt.Println("Entered Search_Items")
@@ -18,7 +18,7 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Item, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	defer rows.Close()
 
 	items := []*types.Item{}
@@ -30,5 +30,5 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Item, error) {
 		items = append(items, item)
 	}
 
-	return items , nil
+	return items, nil
 }

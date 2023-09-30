@@ -4,25 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 )
 
 func (s *Server) Handle_Create_Higher_Level_Category(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Create_Higher_Level_Category)
-	
+
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in CreateCategory()")
 		return err
 	}
-	
-	new_higher_level_category, err := types.New_Higher_Level_Category(new_req.Name)
 
+	new_higher_level_category, err := types.New_Higher_Level_Category(new_req.Name)
 	if err != nil {
 		return err
 	}
-	higher_level_category, err := s.store.Create_Higher_Level_Category(new_higher_level_category); 
-	
+	higher_level_category, err := s.store.Create_Higher_Level_Category(new_higher_level_category)
 	if err != nil {
 		return err
 	}
@@ -40,8 +38,6 @@ func (s *Server) Handle_Get_Higher_Level_Categories(res http.ResponseWriter, req
 }
 
 func (s *Server) Handle_Update_Higher_Level_Category(res http.ResponseWriter, req *http.Request) error {
-
-
 	new_req := new(types.Update_Higher_Level_Category)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Higher_Level_Category()")
@@ -52,7 +48,7 @@ func (s *Server) Handle_Update_Higher_Level_Category(res http.ResponseWriter, re
 	if err != nil {
 		return err
 	}
-	
+
 	if len(new_req.Name) == 0 {
 		new_req.Name = higher_level_category.Name
 	}
@@ -66,7 +62,6 @@ func (s *Server) Handle_Update_Higher_Level_Category(res http.ResponseWriter, re
 }
 
 func (s *Server) Handle_Delete_Higher_Level_Category(res http.ResponseWriter, req *http.Request) error {
-	
 	new_req := new(types.Delete_Higher_Level_Category)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode Handle_Update_Higher_Level_Category()")

@@ -3,7 +3,7 @@ package store
 import (
 	"database/sql"
 
-	"pronto-go/types"
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )

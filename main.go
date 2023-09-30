@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"pronto-go/api"
-	"pronto-go/store"
-	"pronto-go/worker"
+	"github.com/girithc/pronto-go/api"
+	"github.com/girithc/pronto-go/store"
+	"github.com/girithc/pronto-go/worker"
 )
 
 func main() {
@@ -14,10 +14,9 @@ func main() {
 
 	workerPool := worker.NewWorkerPool(10)
 
-	store, err := store.NewPostgresStore()
-	if err != nil {
-		log.Fatal(err)
-	}
+	store, cleanup := store.NewPostgresStore()
+	defer cleanup()
+
 	if err := store.Init(); err != nil {
 		log.Fatal(err)
 	} else {

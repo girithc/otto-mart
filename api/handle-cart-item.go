@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"pronto-go/types"
+	"github.com/girithc/pronto-go/types"
 )
 
 func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request, requestBodyReader *bytes.Reader) error {

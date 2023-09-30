@@ -3,7 +3,7 @@ package store
 import (
 	"database/sql"
 
-	"pronto-go/types"
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
@@ -136,16 +136,4 @@ func scan_Into_Customer(rows *sql.Rows) (*types.Customer, error) {
 	)
 
 	return customer, err
-}
-
-func scan_Into_Update_Customer(rows *sql.Rows) (*types.Update_Customer, error) {
-	customer := new(types.Update_Customer)
-	error := rows.Scan(
-		&customer.Phone,
-		&customer.Address,
-		&customer.Name,
-		&customer.ID,
-	)
-
-	return customer, error
 }

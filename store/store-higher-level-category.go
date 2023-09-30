@@ -3,13 +3,14 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"pronto-go/types"
+
+	"github.com/girithc/pronto-go/types"
 
 	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) Create_Higher_Level_Category_Table() error {
-	//fmt.Println("Entered CreateHigherLevelCategoryTable")
+	// fmt.Println("Entered CreateHigherLevelCategoryTable")
 
 	query := `create table if not exists higher_level_category (
 		id SERIAL PRIMARY KEY,
@@ -20,8 +21,7 @@ func (s *PostgresStore) Create_Higher_Level_Category_Table() error {
 
 	_, err := s.db.Exec(query)
 
-	
-	//fmt.Println("Exiting CreateHigherLevelCategoryTable")
+	// fmt.Println("Exiting CreateHigherLevelCategoryTable")
 
 	return err
 }
@@ -35,17 +35,15 @@ func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Cat
 		query,
 		hlc.Name,
 		hlc.Created_By)
-
-	//fmt.Println("CheckPoint 1")
-
+	// fmt.Println("CheckPoint 1")
 	if err != nil {
 		return nil, err
 	}
 
-	//fmt.Println("CheckPoint 2")
+	// fmt.Println("CheckPoint 2")
 
 	higher_level_categories := []*types.Higher_Level_Category{}
-	
+
 	for rows.Next() {
 		higher_level_category, err := scan_Into_Higher_Level_Category(rows)
 		if err != nil {
@@ -54,14 +52,13 @@ func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Cat
 		higher_level_categories = append(higher_level_categories, higher_level_category)
 	}
 
-	//fmt.Println("CheckPoint 3")
+	// fmt.Println("CheckPoint 3")
 
 	return higher_level_categories[0], nil
 }
 
 func (s *PostgresStore) Get_Higher_Level_Categories() ([]*types.Higher_Level_Category, error) {
 	rows, err := s.db.Query("select * from higher_level_category")
-
 	if err != nil {
 		return nil, err
 	}
@@ -91,24 +88,23 @@ func (s *PostgresStore) Get_Higher_Level_Category_By_ID(id int) (*types.Higher_L
 	return nil, fmt.Errorf("higher_level_category with id = [%d] not found", id)
 }
 
-func (s *PostgresStore) Update_Higher_Level_Category(hlc *types.Update_Higher_Level_Category) (*types.Update_Higher_Level_Category,error) {
+func (s *PostgresStore) Update_Higher_Level_Category(hlc *types.Update_Higher_Level_Category) (*types.Update_Higher_Level_Category, error) {
 	query := `update higher_level_category
 	set name = $1
 	where id = $2 
 	returning name, id`
-	
+
 	rows, err := s.db.Query(
-		query, 
+		query,
 		hlc.Name,
 		hlc.ID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
 
 	higher_level_categories := []*types.Update_Higher_Level_Category{}
-	
+
 	for rows.Next() {
 		higher_level_category, err := scan_Into_Update_Higher_Level_Category(rows)
 		if err != nil {
@@ -116,7 +112,6 @@ func (s *PostgresStore) Update_Higher_Level_Category(hlc *types.Update_Higher_Le
 		}
 		higher_level_categories = append(higher_level_categories, higher_level_category)
 	}
-	
 
 	return higher_level_categories[0], nil
 }
@@ -126,7 +121,7 @@ func (s *PostgresStore) Delete_Higher_Level_Category(id int) error {
 	return err
 }
 
-func scan_Into_Higher_Level_Category (rows *sql.Rows) (*types.Higher_Level_Category, error) {
+func scan_Into_Higher_Level_Category(rows *sql.Rows) (*types.Higher_Level_Category, error) {
 	higher_level_category := new(types.Higher_Level_Category)
 	err := rows.Scan(
 		&higher_level_category.ID,
@@ -146,4 +141,4 @@ func scan_Into_Update_Higher_Level_Category(rows *sql.Rows) (*types.Update_Highe
 	)
 
 	return higher_level_category, error
-} 
+}
