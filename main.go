@@ -16,6 +16,7 @@ func main() {
 	workerPool := worker.NewWorkerPool(10)
 
 	store, cleanup := store.NewPostgresStore()
+
 	defer cleanup()
 
 	if err := store.Init(); err != nil {
@@ -27,12 +28,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	server := api.NewServer(port, store, workerPool)
-
-	// google_server := api.NewGoogleServer("pronto-bucket", "service-account")
-	// fmt.Println("Created Google Server")
-	// server.Run(google_server)
-
+	server := api.NewServer(":"+port, store, workerPool)
 	server.Run()
 }
 

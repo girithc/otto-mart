@@ -17,8 +17,9 @@ type PostgresStore struct {
 	cancelFuncs map[int]context.CancelFunc
 }
 
-func NewPostgresStore() (*PostgresStore, func() error) {
+func NewPostgresStore() (*PostgresStore, func() error) { // error) {
 	// fmt.Println("Entered NewPostgresStore() -- db.go")
+
 	cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
 	if err != nil {
 		log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
@@ -30,13 +31,17 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 		log.Fatalf("Error on sql.Open: %v", err)
 	}
 
-	// connStr := "user=postgres dbname=prontodb password=g190201 sslmode=disable"
-	// db, err := sql.Open("postgres", connStr)
+	/*
+			connStr := "host=host.docker.internal user=postgres dbname=prontodb password=g190201 sslmode=disable"
+			db, err := sql.Open("postgres", connStr)
+			if err != nil {
+				log.Fatalf("Error on sql.Open: %v", err)
+			}
 
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Error on db.Ping(). Db connection error: %v", err)
-	}
-
+		if err := db.Ping(); err != nil {
+			log.Fatalf("Error on db.Ping(). Db connection error: %v", err)
+		}
+	*/
 	return &PostgresStore{
 		db:          db,
 		cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
