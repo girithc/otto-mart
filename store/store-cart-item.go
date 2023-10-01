@@ -29,9 +29,19 @@ func (s *PostgresStore) CreateCartItemTable() error {
 func (s *PostgresStore) SetCartItemForeignKeys() error {
 	// Add foreign key constraint to the already created table
 	query := `
-	ALTER TABLE cart_item 
-	ADD CONSTRAINT FK_cart_item_cart_id 
-	FOREIGN KEY (cart_id) REFERENCES Shopping_Cart(id) ON DELETE CASCADE
+	DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT constraint_name 
+			FROM information_schema.table_constraints 
+			WHERE table_name = 'cart_item' AND constraint_name = 'cart_item_cart_id_fkey'
+		) THEN
+			ALTER TABLE cart_item 
+			ADD CONSTRAINT cart_item_cart_id_fkey 
+			FOREIGN KEY (cart_id) REFERENCES Shopping_Cart(id) ON DELETE CASCADE;
+		END IF;
+	END
+	$$;
 	`
 
 	_, err := s.db.Exec(query)
