@@ -17,8 +17,11 @@ func main() {
 
 	store, cleanup := store.NewPostgresStore()
 
+	fmt.Println("Connection Started...")
+
 	defer cleanup()
 
+	fmt.Println("Starting Store.Init()...")
 	if err := store.Init(); err != nil {
 		log.Fatal(err)
 	} else {

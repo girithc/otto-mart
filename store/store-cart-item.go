@@ -14,7 +14,7 @@ func (s *PostgresStore) CreateCartItemTable() error {
 
 	query := `create table if not exists cart_item (
 		id SERIAL PRIMARY KEY,
-		cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE,
+		cart_id INT,
 		item_id INT REFERENCES Item(id) ON DELETE CASCADE,
 		quantity INT NOT NULL 
 	)`
@@ -23,6 +23,18 @@ func (s *PostgresStore) CreateCartItemTable() error {
 
 	// fmt.Println("Exiting CreateCartItemTable")
 
+	return err
+}
+
+func (s *PostgresStore) SetCartItemForeignKeys() error {
+	// Add foreign key constraint to the already created table
+	query := `
+	ALTER TABLE cart_item 
+	ADD CONSTRAINT FK_cart_item_cart_id 
+	FOREIGN KEY (cart_id) REFERENCES Shopping_Cart(id) ON DELETE CASCADE
+	`
+
+	_, err := s.db.Exec(query)
 	return err
 }
 

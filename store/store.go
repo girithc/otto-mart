@@ -25,7 +25,7 @@ func NewPostgresStore() (*PostgresStore, func() error) { // error) {
 		log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
 	}
 
-	dsn := fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"))
+	dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
 	db, err := sql.Open("cloudsql-postgres", dsn)
 	if err != nil {
 		log.Fatalf("Error on sql.Open: %v", err)
@@ -112,6 +112,11 @@ func (s *PostgresStore) Init() error {
 		return errShoppingCart
 	} else {
 		fmt.Println("Success - Created Shopping Cart Table")
+	}
+
+	errSetCartItemFKs := s.SetCartItemForeignKeys()
+	if errSetCartItemFKs != nil {
+		return errSetCartItemFKs
 	}
 
 	errSalesOrder := s.CreateSalesOrderTable()
