@@ -40,7 +40,7 @@ class _MyVerifyState extends State<MyVerify> {
     });
   }
 
-  Future<void> loginCustomer() async {
+  Future<bool> loginCustomer() async {
     try {
       final loggedCustomer = await apiClient.loginCustomer();
       setState(() {
@@ -53,13 +53,13 @@ class _MyVerifyState extends State<MyVerify> {
       await storage.write(key: 'customerId', value: customer.id.toString());
       await storage.write(key: 'phone', value: customer.phone.toString());
       await storage.write(key: 'cartId', value: customer.cartId.toString());
-      // ignore: use_build_context_synchronously
+
       Provider.of<LoginStatusProvider>(context, listen: false)
           .updateLoginStatus(true, customer.id.toString());
-
-      // You can store other user-related data as well
+      return true; // Login was successful
     } catch (err) {
       _logger.e('(login) customer error $err');
+      return false; // Login failed
     }
   }
 
@@ -147,14 +147,19 @@ class _MyVerifyState extends State<MyVerify> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10))),
                     onPressed: () {
-                      loginCustomer().then(
-                        (value) => Navigator.push(
+                      loginCustomer().then((isSuccess) {
+                        if (isSuccess) {
+                          Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) => const MyHomePage(
-                                      title: "Pronto",
-                                    ))),
-                      );
+                              builder: (context) =>
+                                  const MyHomePage(title: "Pronto"),
+                            ),
+                          );
+                        } else {
+                          // Show an error message to the user or handle the failure appropriately.
+                        }
+                      });
                     },
                     child: const Text(
                       "Submit Code",

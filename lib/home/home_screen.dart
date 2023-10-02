@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
-import 'package:pronto/constants.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
@@ -106,51 +106,6 @@ class _MyHomePageState extends State<MyHomePage> {
       }
     }
   }
-
-  /*
-  void _openBottomSheet() {
-    if (!_isBottomSheetOpen) {
-      setState(() {
-        _isBottomSheetOpen = true;
-      });
-
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (BuildContext context) {
-          return LoginScreen(postLogin: () {
-            _openAddressBottomSheet();
-          }); // Replace with your actual login screen widget
-        },
-      ).whenComplete(
-        () => setState(() {
-          _isBottomSheetOpen = false;
-        }),
-      );
-    }
-  }
-  
-  void _openAddressBottomSheet() {
-    Navigator.of(context).pop();
-    if (!_isBottomSheetAddressOpen) {
-      setState(() {
-        _isBottomSheetAddressOpen = true;
-      });
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        builder: (BuildContext context) {
-          return const AddressScreen();
-        },
-      ).whenComplete(
-        () => setState(() {
-          _isBottomSheetAddressOpen = false;
-        }),
-      );
-    }
-  }
-
-  */
 
   @override
   Widget build(BuildContext context) {

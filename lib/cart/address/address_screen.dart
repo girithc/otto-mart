@@ -4,7 +4,7 @@ import 'package:pronto/cart/address/location_list_tile.dart';
 import 'package:pronto/cart/address/network_utility.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
-import 'package:pronto/constants.dart';
+import 'package:pronto/utils/constants.dart';
 
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';

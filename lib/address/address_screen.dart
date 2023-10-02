@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
-import 'package:pronto/constants.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/components/location_list_tile.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/home_screen.dart';

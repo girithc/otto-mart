@@ -1,14 +1,15 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pronto/utils/constants.dart';
 
 class HomeApiClient {
-  final String baseUrl;
+  final String localbaseUrl;
 
-  HomeApiClient(this.baseUrl);
+  HomeApiClient(this.localbaseUrl);
 
   Future<List<Category>> fetchCategories() async {
-    var request = http.Request(
-        'GET', Uri.parse('http://localhost:3000/higher-level-category'));
+    var request =
+        http.Request('GET', Uri.parse('$baseUrl/higher-level-category'));
 
     http.StreamedResponse response = await request.send();
 

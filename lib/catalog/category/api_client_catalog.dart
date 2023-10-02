@@ -1,13 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pronto/utils/constants.dart';
 
 class CatalogApiClient {
-  final String baseUrl;
+  final String localBaseUrl;
 
-  CatalogApiClient(this.baseUrl);
+  CatalogApiClient(this.localBaseUrl);
 
   Future<List<Category>> fetchCategories(int id) async {
-    var url = Uri.parse('http://localhost:3000/category');
+    var url = Uri.parse('$baseUrl/category');
 
     if (id == 0) {
       throw Exception('(CatalogApiClient) Parameters are not valid');

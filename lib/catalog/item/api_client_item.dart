@@ -1,14 +1,15 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:pronto/utils/constants.dart';
 
 class ItemApiClient {
-  final String baseUrl;
+  final String localbaseUrl;
 
-  ItemApiClient(this.baseUrl);
+  ItemApiClient(this.localbaseUrl);
 
   Future<List<Item>> fetchItems(int categoryId, int storeId) async {
-    var url = Uri.parse('http://localhost:3000/item');
+    var url = Uri.parse('$baseUrl/item');
 
     if (categoryId == 0 || storeId == 0) {
       throw Exception('(ItemApiClient) Parameters are not valid');

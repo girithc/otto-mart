@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:pronto/utils/constants.dart';
 
 class CustomerApiClient {
   CustomerApiClient(this.phone);
@@ -12,7 +13,7 @@ class CustomerApiClient {
     };
 
     final http.Response response = await http.post(
-      Uri.parse('http://localhost:3000/customer'),
+      Uri.parse('$baseUrl/customer'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

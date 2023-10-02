@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:pronto/utils/constants.dart';
 
 class CartItem {
   final String productId;
@@ -87,7 +88,7 @@ class CartModel extends ChangeNotifier {
   }
 
   void _fetchCartItems() {
-    final url = Uri.parse('http://localhost:3000/cart-item');
+    final url = Uri.parse('$baseUrl/cart-item');
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
