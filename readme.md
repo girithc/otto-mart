@@ -15,3 +15,8 @@ docker build -t gcr.io/hip-well-400702/myapp:version1 .
 # Docker push
 
 docker push gcr.io/hip-well-400702/myapp:version1
+
+# Local build and deploy
+
+export RUN_ENV=LOCAL
+go run main.go
