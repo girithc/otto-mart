@@ -436,6 +436,58 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
+func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "address")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		// Check the content of the request body to determine which handler to invoke
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
+		}
+
+		// You can then create a new request body from bodyBytes to pass to your handler
+		newReq := &http.Request{
+			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
+			// ... copy other needed fields from the original request
+		}
+
+		// Assuming that the request body is in JSON format, let's unmarshal it into a map
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+			return err
+		}
+
+		// Define the task based on the request content
+		var task func() worker.Result
+
+		// Check if only 'customer_id' is present in the request body
+		if _, exists := requestBody["customer_id"]; exists && len(requestBody) == 1 {
+			task = func() worker.Result {
+				err := s.Handle_Get_Address_By_Customer_Id(res, newReq)
+				return worker.Result{Error: err}
+			}
+		} else {
+			task = func() worker.Result {
+				err := s.Handle_Create_Address(res, newReq)
+				return worker.Result{Error: err}
+			}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+	}
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }
