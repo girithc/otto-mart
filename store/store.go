@@ -79,6 +79,13 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Customer Table")
 	}
 
+	errAddressTable := s.CreateAddressTable()
+	if errAddressTable != nil {
+		return errAddressTable
+	} else {
+		fmt.Println("Success - Created Address Table")
+	}
+
 	errCartItem := s.CreateCartItemTable()
 	if errCartItem != nil {
 		return errCartItem

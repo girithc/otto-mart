@@ -2,6 +2,8 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
+	"strconv"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -38,9 +40,11 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 		}
 	}()
 
+	phoneNumberStr := strconv.Itoa(user.Phone)
+
 	// Create the customer
 	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at`
-	row := tx.QueryRow(query, "", user.Phone, "")
+	row := tx.QueryRow(query, "", phoneNumberStr, "")
 
 	customer := &types.Customer_With_Cart{}
 	err = row.Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Address, &customer.Created_At)
@@ -88,14 +92,18 @@ func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 }
 
 func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_Cart, error) {
+	fmt.Println("Started Get_Customer_By_Phone")
 	query := `
         SELECT c.*, sc.id AS shopping_cart_id, sc.store_id
         FROM customer c
         LEFT JOIN shopping_cart sc ON c.id = sc.customer_id AND sc.active = true
         WHERE c.phone = $1
     `
+	phoneNumberStr := strconv.Itoa(phone)
 
-	row := s.db.QueryRow(query, phone)
+	row := s.db.QueryRow(query, phoneNumberStr)
+
+	fmt.Println("I Query Successful")
 
 	var customer types.Customer_With_Cart
 	var storeID sql.NullInt64 // using NullInt64 for store_id
@@ -109,6 +117,8 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_C
 		&customer.Cart_Id,
 		&storeID,
 	)
+
+	fmt.Println("II Row Scan Successful")
 
 	if storeID.Valid {
 		customer.Store_Id = int(storeID.Int64) // If not null, assign to customer.Store_Id
