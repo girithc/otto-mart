@@ -58,8 +58,11 @@ class _SavedAddressScreenState extends State<SavedAddressScreen> {
                 shrinkWrap: true,
                 itemCount: addressModel.addrs.length,
                 itemBuilder: (context, index) => ListTile(
-                  title: Text(addressModel.addrs[index]
-                      .toString()), // adjust according to your Address object
+                  title: Text(addressModel.addrs[index].streetAddress +
+                      addressModel.addrs[index].lineOne +
+                      addressModel.addrs[index].lineTwo +
+                      addressModel.addrs[index].city
+                          .toString()), // adjust according to your Address object
                   // Add additional properties if needed
                 ),
               ),

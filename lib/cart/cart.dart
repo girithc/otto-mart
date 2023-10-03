@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -32,29 +32,6 @@ class CartItem {
   }
 }
 
-class Address {
-  final String placeId;
-  final String mainText;
-  final String secondaryText;
-
-  Address(
-      {required this.placeId,
-      required this.mainText,
-      required this.secondaryText});
-
-  factory Address.fromJson(Map<String, dynamic> json) {
-    return Address(
-      placeId: json['place_id'],
-      mainText: json['main_text'],
-      secondaryText: json['secondary_text'],
-    );
-  }
-
-  bool isEmpty() {
-    return (placeId.isEmpty && mainText.isEmpty && secondaryText.isEmpty);
-  }
-}
-
 class ItemInCart {
   final bool flag;
   final int quantity;
@@ -76,8 +53,16 @@ class CartModel extends ChangeNotifier {
   // Other variables
   String? cartId;
 
-  Address _deliveryAddress =
-      Address(placeId: "", mainText: "", secondaryText: "");
+  Address _deliveryAddress = Address(
+      id: 0,
+      lineOne: "",
+      lineTwo: "",
+      city: '',
+      state: '',
+      streetAddress: '',
+      zip: '',
+      createdAt: DateTime(2020),
+      customerId: 0);
 
   CartModel(this.customerId) {
     _fetchCartId().then((_) {
@@ -277,6 +262,48 @@ class CartModel extends ChangeNotifier {
       _logger.e("Item Id {${item.productId}}");
       _logger.e("Item Name ${item.productName}");
     }
+  }
+}
+
+class Address {
+  final int id;
+  int customerId;
+  final String streetAddress;
+  final String lineOne;
+  final String lineTwo;
+  final String city;
+  final String state;
+  final String zip;
+  DateTime createdAt;
+
+  Address({
+    required this.id,
+    required this.customerId,
+    required this.streetAddress,
+    required this.lineOne,
+    required this.lineTwo,
+    required this.city,
+    required this.state,
+    required this.zip,
+    required this.createdAt,
+  });
+
+  factory Address.fromJson(Map<String, dynamic> json) {
+    return Address(
+      id: json['id'],
+      customerId: json['customer_id'],
+      streetAddress: json['street_address'],
+      lineOne: json['line_one'],
+      lineTwo: json['line_two'],
+      city: json['city'],
+      state: json['state'],
+      zip: json['zip'],
+      createdAt: DateTime.parse(json['created_at']),
+    );
+  }
+
+  bool isEmpty() {
+    return (streetAddress.isEmpty && lineOne.isEmpty && lineTwo.isEmpty);
   }
 }
 

@@ -120,8 +120,9 @@ class _AddressScreenState extends State<AddressScreen> {
                     itemBuilder: (context, index) {
                       //print("Description: ${placePredictions[index].description}");
                       return LocationListTile(
-                        location: placePredictions[index].description!,
-                        press: () {
+                          location: placePredictions[index].description!,
+                          press: () {}
+                          /*
                           cart.deliveryAddress = Address(
                             placeId: placePredictions[index].placeId!,
                             mainText: placePredictions[index]
@@ -130,9 +131,10 @@ class _AddressScreenState extends State<AddressScreen> {
                             secondaryText: placePredictions[index]
                                 .structuredFormatting!
                                 .secondaryText!,
-                          );
-
-                          Navigator.pop(context);
+                                
+                          )
+*/
+                          //Navigator.pop(context),
                           /*
                           Navigator.push(
                             context,
@@ -145,8 +147,8 @@ class _AddressScreenState extends State<AddressScreen> {
                             ),
                           );
                           */
-                        },
-                      );
+
+                          );
                     },
                   ),
                 ),

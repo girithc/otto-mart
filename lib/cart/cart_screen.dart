@@ -123,7 +123,7 @@ class _MyCartState extends State<MyCart> {
                           Expanded(
                               flex: 6,
                               child: Text(
-                                  "Address: ${cart.deliveryAddress.mainText}")),
+                                  "Address: ${cart.deliveryAddress.lineOne}")),
                           Expanded(
                             flex: 4,
                             child: TextButton(

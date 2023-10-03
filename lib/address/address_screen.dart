@@ -124,15 +124,17 @@ class _AddressScreenState extends State<AddressScreen> {
                   return LocationListTile(
                     location: placePredictions[index].description!,
                     press: () {
+                      /*
                       cart.deliveryAddress = Address(
-                          placeId: placePredictions[index].placeId!,
-                          mainText: placePredictions[index]
+                          //placeId: placePredictions[index].placeId!,
+                          lineOne: placePredictions[index]
                               .structuredFormatting!
                               .mainText!,
-                          secondaryText: placePredictions[index]
+                          lineTwo: placePredictions[index]
                               .structuredFormatting!
                               .secondaryText!);
                       Navigator.of(context).pop();
+                      */
                     },
                   );
                 },
