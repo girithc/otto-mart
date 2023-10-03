@@ -11,6 +11,7 @@ type Address struct {
 	City             string    `json:"city"`
 	State            string    `json:"state"`
 	Zipcode          string    `json:"zip"`
+	Place_Id         string    `json:"place_id"`
 	Created_At       time.Time `json:"created_at"`
 }
 
@@ -22,6 +23,7 @@ type Create_Address struct {
 	City             string `json:"city"`
 	State            string `json:"state"`
 	Zipcode          string `json:"zip"`
+	Place_Id         string `json:"place_id"`
 }
 
 type Address_Customer_Id struct {

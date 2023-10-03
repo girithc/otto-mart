@@ -8,6 +8,7 @@ func (s *PostgresStore) CreateAddressTable() error {
 	query := `create table if not exists address (
 		id SERIAL PRIMARY KEY,
 		customer_id INTEGER REFERENCES customer(id) ON DELETE CASCADE,
+		place_id TEXT,
 		street_address TEXT NOT NULL,
 		line_one_address TEXT NOT NULL,
 		line_two_address TEXT NOT NULL,
