@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:pronto/cart/address/address_screen.dart';
+import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/order/place_order_screen.dart';
 import 'package:provider/provider.dart';
@@ -66,7 +66,7 @@ class _MyCartState extends State<MyCart> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => const AddressScreen(),
+                      builder: (context) => const SavedAddressScreen(),
                     ),
                   );
                 },
@@ -131,7 +131,8 @@ class _MyCartState extends State<MyCart> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const AddressScreen(),
+                                    builder: (context) =>
+                                        const SavedAddressScreen(),
                                   ),
                                 );
                               },
@@ -609,37 +610,3 @@ class _CustomListItem extends StatelessWidget {
     );
   }
 }
-
-/*
-class _CartTotal extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    var hugeStyle =
-        Theme.of(context).textTheme.displayLarge!.copyWith(fontSize: 48);
-
-    var cart = context.watch<CartModel>();
-
-    return Container(
-      color: Colors.white,
-      height: 125,
-      child: Center(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text('\$${cart.totalPrice}', style: hugeStyle),
-            const SizedBox(width: 24),
-            FilledButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Buying not supported yet.')));
-              },
-              style: TextButton.styleFrom(foregroundColor: Colors.white),
-              child: const Text('BUY'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-*/

@@ -42,6 +42,14 @@ class Address {
       required this.mainText,
       required this.secondaryText});
 
+  factory Address.fromJson(Map<String, dynamic> json) {
+    return Address(
+      placeId: json['place_id'],
+      mainText: json['main_text'],
+      secondaryText: json['secondary_text'],
+    );
+  }
+
   bool isEmpty() {
     return (placeId.isEmpty && mainText.isEmpty && secondaryText.isEmpty);
   }
@@ -168,6 +176,28 @@ class CartModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<Address> postAddress() async {
+    final Map<String, dynamic> requestData = {
+      //"phone": int.parse(phone),
+    };
+
+    final http.Response response = await http.post(
+      Uri.parse('$baseUrl/customer'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(requestData),
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseBody = json.decode(response.body);
+      final Address addr = Address.fromJson(responseBody);
+      return addr;
+    } else {
+      throw Exception('Failed to login Customer');
+    }
+  }
+
   void addItemToCart(CartItem item) {
     //print("Add Item To Cart: $cartId");
     final url = Uri.parse(
@@ -247,5 +277,55 @@ class CartModel extends ChangeNotifier {
       _logger.e("Item Id {${item.productId}}");
       _logger.e("Item Name ${item.productName}");
     }
+  }
+}
+
+class AddressModel extends ChangeNotifier {
+  final List<Address> addrs = [];
+  final String customerId;
+  final Logger _logger = Logger();
+
+  AddressModel(this.customerId);
+
+  void fetchAddresses() {
+    final url = Uri.parse('$baseUrl/address');
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+
+    int? parsedCustomerId;
+    try {
+      parsedCustomerId = int.parse(customerId);
+    } catch (e) {
+      _logger.e('Failed to parse customerId: $customerId, error: $e ');
+    }
+
+    if (parsedCustomerId == null) return;
+
+    final body = <String, dynamic>{
+      'customer_id': parsedCustomerId,
+    };
+
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      //_logger.e('Response: $response');
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final List<dynamic> jsonData = json.decode(response.body);
+          final List<Address> addresses =
+              jsonData.map((address) => Address.fromJson(address)).toList();
+
+          addrs.clear();
+          addrs.addAll(addresses);
+          notifyListeners();
+        } else {
+          _logger.e('Empty response received from server');
+        }
+      } else {
+        _logger.e(
+            'HTTP POST request failed with status code ${response.statusCode}');
+      }
+    }).catchError((error) {
+      _logger.e('(cart model) HTTP POST request error: $error');
+    });
   }
 }

@@ -42,6 +42,7 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => LoginStatusProvider()),
+        ChangeNotifierProvider(create: (context) => AddressModel(customerId!)),
         ChangeNotifierProxyProvider<LoginStatusProvider, CartModel>(
           create: (context) => CartModel(""),
           update: (context, loginProvider, cartModel) =>

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pronto/cart/address/debouncer.dart';
-import 'package:pronto/cart/address/location_list_tile.dart';
-import 'package:pronto/cart/address/network_utility.dart';
+import 'package:pronto/cart/address/worker/debouncer.dart';
+import 'package:pronto/cart/address/worker/location_list_tile.dart';
+import 'package:pronto/cart/address/worker/network_utility.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/utils/constants.dart';
