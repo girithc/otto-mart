@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pronto/cart/address/screen/confirm_address.dart';
 import 'package:pronto/cart/address/worker/debouncer.dart';
 import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
@@ -120,35 +121,16 @@ class _AddressScreenState extends State<AddressScreen> {
                     itemBuilder: (context, index) {
                       //print("Description: ${placePredictions[index].description}");
                       return LocationListTile(
-                          location: placePredictions[index].description!,
-                          press: () {}
-                          /*
-                          cart.deliveryAddress = Address(
-                            placeId: placePredictions[index].placeId!,
-                            mainText: placePredictions[index]
-                                .structuredFormatting!
-                                .mainText!,
-                            secondaryText: placePredictions[index]
-                                .structuredFormatting!
-                                .secondaryText!,
-                                
-                          )
-*/
-                          //Navigator.pop(context),
-                          /*
+                        location: placePredictions[index].description!,
+                        press: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ConfirmAddress(
-                                placeId: placePredictions[index].placeId!,
-                                structuredFormatting: placePredictions[index]
-                                    .structuredFormatting!,
-                              ),
+                              builder: (context) => const ConfirmAddress(),
                             ),
                           );
-                          */
-
-                          );
+                        },
+                      );
                     },
                   ),
                 ),
