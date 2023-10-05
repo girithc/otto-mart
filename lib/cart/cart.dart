@@ -355,4 +355,48 @@ class AddressModel extends ChangeNotifier {
       _logger.e('(cart model) HTTP POST request error: $error');
     });
   }
+
+  // adds addresss to profile
+  // sets address to default
+  void addAddress() {
+    final url = Uri.parse('$baseUrl/address');
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+
+    int? parsedCustomerId;
+    try {
+      parsedCustomerId = int.parse(customerId);
+    } catch (e) {
+      _logger.e('Failed to parse customerId: $customerId, error: $e ');
+    }
+
+    if (parsedCustomerId == null) return;
+
+    final body = <String, dynamic>{
+      'customer_id': parsedCustomerId,
+    };
+
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      //_logger.e('Response: $response');
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final List<dynamic> jsonData = json.decode(response.body);
+          final List<Address> addresses =
+              jsonData.map((address) => Address.fromJson(address)).toList();
+
+          addrs.clear();
+          addrs.addAll(addresses);
+          notifyListeners();
+        } else {
+          _logger.e('Empty response received from server');
+        }
+      } else {
+        _logger.e(
+            'HTTP POST request failed with status code ${response.statusCode}');
+      }
+    }).catchError((error) {
+      _logger.e('(cart model) HTTP POST request error: $error');
+    });
+  }
 }

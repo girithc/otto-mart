@@ -73,7 +73,7 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
                 onPressed: () {
                   _gotoUserCurrentPosition();
                 },
-                backgroundColor: const Color.fromRGBO(154, 223, 255, 1),
+                backgroundColor: const Color.fromARGB(255, 188, 234, 255),
                 child: const Text("Reset"),
               ),
             ],
@@ -94,7 +94,7 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
                   child: const Center(
                     child: Text(
                       "Confirm Address",
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 18),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -106,7 +106,7 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
                 onPressed: () {
                   _gotoUserCurrentPosition();
                 },
-                backgroundColor: const Color.fromRGBO(154, 223, 255, 1),
+                backgroundColor: const Color.fromARGB(255, 188, 234, 255),
                 child: const Icon(
                   Icons.location_on,
                 ),
