@@ -62,13 +62,58 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
         title: const Text("Confirm Address"),
       ),
       body: _buildBody(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _gotoUserCurrentPosition();
-        },
-        child: const Icon(
-          Icons.location_on,
-        ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <Widget>[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FloatingActionButton(
+                heroTag: "reset",
+                onPressed: () {
+                  _gotoUserCurrentPosition();
+                },
+                backgroundColor: const Color.fromRGBO(154, 223, 255, 1),
+                child: const Text("Reset"),
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.7,
+                child: FloatingActionButton(
+                  heroTag: "confirm",
+                  onPressed: () {
+                    _gotoUserCurrentPosition();
+                  },
+                  child: const Center(
+                    child: Text(
+                      "Confirm Address",
+                      style: TextStyle(fontSize: 16),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FloatingActionButton(
+                heroTag: "location",
+                onPressed: () {
+                  _gotoUserCurrentPosition();
+                },
+                backgroundColor: const Color.fromRGBO(154, 223, 255, 1),
+                child: const Icon(
+                  Icons.location_on,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
