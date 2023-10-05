@@ -3,8 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_screen.dart';
-import 'package:pronto/utils/no_internet.dart';
-import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
@@ -21,7 +19,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String? customerId;
+  bool? isLoggedIn;
+  String? customerId; // <-- Add this to store the customerId
 
   @override
   void initState() {
@@ -31,8 +30,11 @@ class _MyAppState extends State<MyApp> {
 
   Future<void> checkLoginStatus() async {
     const storage = FlutterSecureStorage();
-    customerId = await storage.read(key: 'customerId');
-    setState(() {});
+    customerId = await storage.read(key: 'customerId'); // <-- Update this line
+
+    setState(() {
+      isLoggedIn = customerId != null;
+    });
   }
 
   @override
@@ -46,30 +48,18 @@ class _MyAppState extends State<MyApp> {
           update: (context, loginProvider, cartModel) =>
               CartModel(loginProvider.customerId ?? ""),
         ),
-        ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
       ],
-      child: Consumer2<LoginStatusProvider, ConnectivityProvider>(
-        builder: (context, loginProvider, connectivityProvider, child) {
-          if (!connectivityProvider.hasInternet) {
-            return MaterialApp(
-              title: 'Provider Demo',
-              theme: ThemeData(
-                colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              ),
-              home: NoInternetPage(
-                onRetry: connectivityProvider.checkInternetConnection,
-              ),
-            );
-          }
-
+      child: Consumer<LoginStatusProvider>(
+        builder: (context, loginProvider, child) {
           return MaterialApp(
             title: 'Provider Demo',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+              useMaterial3: true,
             ),
-            home: (customerId == null)
-                ? const CircularProgressIndicator()
-                : OpeningPageAnimation(isLoggedIn: customerId != null),
+            home: (isLoggedIn == null)
+                ? const CircularProgressIndicator() // Loading indicator while checking login status
+                : OpeningPageAnimation(isLoggedIn: isLoggedIn!),
           );
         },
       ),

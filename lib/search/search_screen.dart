@@ -431,7 +431,22 @@ class SearchItemListState extends State<SearchItemList> {
           //decoration: BoxDecoration(border: Border.all(color: Colors.black)),
           child: Chip(
             label: searchData.notFound
-                ? Text('no results for $searchQuery')
+                ? RichText(
+                    text: TextSpan(
+                      children: [
+                        const TextSpan(
+                            text: 'no results for ',
+                            style: TextStyle(
+                                color: Colors
+                                    .black) // or any other color you want for the rest of the text
+                            ),
+                        TextSpan(
+                            text: searchQuery,
+                            style: const TextStyle(
+                                color: Colors.deepPurpleAccent)),
+                      ],
+                    ),
+                  )
                 : RichText(
                     text: TextSpan(
                       style: DefaultTextStyle.of(context).style,
