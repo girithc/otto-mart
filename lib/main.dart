@@ -1,10 +1,10 @@
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/utils/no_internet.dart';
+import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
@@ -21,32 +21,18 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool? isLoggedIn;
-  bool? hasInternet;
-
   String? customerId;
 
   @override
   void initState() {
     super.initState();
     checkLoginStatus();
-    checkInternetConnection();
-  }
-
-  Future<void> checkInternetConnection() async {
-    var connectivityResult = await (Connectivity().checkConnectivity());
-    setState(() {
-      hasInternet = connectivityResult != ConnectivityResult.none;
-    });
   }
 
   Future<void> checkLoginStatus() async {
     const storage = FlutterSecureStorage();
-    customerId = await storage.read(key: 'customerId'); // <-- Update this line
-
-    setState(() {
-      isLoggedIn = customerId != null;
-    });
+    customerId = await storage.read(key: 'customerId');
+    setState(() {});
   }
 
   @override
@@ -60,30 +46,30 @@ class _MyAppState extends State<MyApp> {
           update: (context, loginProvider, cartModel) =>
               CartModel(loginProvider.customerId ?? ""),
         ),
+        ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
       ],
-      child: Consumer<LoginStatusProvider>(
-        builder: (context, loginProvider, child) {
-          if (hasInternet == false) {
+      child: Consumer2<LoginStatusProvider, ConnectivityProvider>(
+        builder: (context, loginProvider, connectivityProvider, child) {
+          if (!connectivityProvider.hasInternet) {
             return MaterialApp(
               title: 'Provider Demo',
               theme: ThemeData(
                 colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-                useMaterial3: true,
               ),
               home: NoInternetPage(
-                onRetry: checkInternetConnection,
+                onRetry: connectivityProvider.checkInternetConnection,
               ),
             );
           }
+
           return MaterialApp(
             title: 'Provider Demo',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
             ),
-            home: (isLoggedIn == null)
-                ? const CircularProgressIndicator() // Loading indicator while checking login status
-                : OpeningPageAnimation(isLoggedIn: isLoggedIn!),
+            home: (customerId == null)
+                ? const CircularProgressIndicator()
+                : OpeningPageAnimation(isLoggedIn: customerId != null),
           );
         },
       ),
