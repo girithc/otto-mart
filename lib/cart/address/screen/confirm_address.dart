@@ -1,42 +1,58 @@
 import 'dart:async';
-
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
+import 'package:pronto/utils/constants.dart';
 
 class ConfirmAddress extends StatefulWidget {
-  const ConfirmAddress({Key? key}) : super(key: key);
+  final String placeId;
+
+  const ConfirmAddress({Key? key, required this.placeId}) : super(key: key);
 
   @override
   State<ConfirmAddress> createState() => _ConfirmAddressState();
 }
 
 class _ConfirmAddressState extends State<ConfirmAddress> {
-  //get map controller to access map
   final Completer<GoogleMapController> _googleMapController = Completer();
   CameraPosition? _cameraPosition;
   late LatLng _defaultLatLng;
   late LatLng _draggedLatlng;
   String _draggedAddress = "";
+  final String placedApiKey = apiKey;
 
   @override
   void initState() {
     _init();
+    //_setInitialMapLocationFromPlaceId();
     super.initState();
   }
 
   _init() {
-    //set default latlng for camera position
-    _defaultLatLng = const LatLng(11, 104);
+    _defaultLatLng = const LatLng(90, 104);
     _draggedLatlng = _defaultLatLng;
-    _cameraPosition =
-        CameraPosition(target: _defaultLatLng, zoom: 17.5 // number of map view
-            );
+    _cameraPosition = CameraPosition(target: _defaultLatLng, zoom: 17.5);
+    //_gotoUserCurrentPosition();
+    _setInitialMapLocationFromPlaceId();
+  }
 
-    //map will redirect to my current location when loaded
-    _gotoUserCurrentPosition();
+  Future<void> _setInitialMapLocationFromPlaceId() async {
+    LatLng? initialLatLng = await getLocationFromPlaceId(widget.placeId);
+    if (initialLatLng != null) {
+      print("Location Found From PlaceID");
+      setState(() {
+        _defaultLatLng = initialLatLng;
+        _draggedLatlng = _defaultLatLng;
+        _cameraPosition = CameraPosition(target: _defaultLatLng, zoom: 17.5);
+        _gotoSpecificPosition(
+            LatLng(_defaultLatLng.latitude, _defaultLatLng.longitude));
+        print("LatLang $_defaultLatLng");
+      });
+    }
   }
 
   @override
@@ -46,8 +62,6 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
         title: const Text("Confirm Address"),
       ),
       body: _buildBody(),
-      //get a float button to click and go to current location
-
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           _gotoUserCurrentPosition();
@@ -86,23 +100,16 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
 
   Widget _getMap() {
     return GoogleMap(
-      initialCameraPosition:
-          _cameraPosition!, //initialize camera position for map
+      initialCameraPosition: _cameraPosition!,
       mapType: MapType.normal,
       onCameraIdle: () {
-        //this function will trigger when user stop dragging on map
-        //every time user drag and stop it will display address
         _getAddress(_draggedLatlng);
       },
       onCameraMove: (cameraPosition) {
-        //this function will trigger when user keep dragging on map
-        //every time user drag this will get value of latlng
         _draggedLatlng = cameraPosition.target;
       },
       onMapCreated: (GoogleMapController controller) {
-        //this function will trigger when map is fully loaded
         if (!_googleMapController.isCompleted) {
-          //set controller to google map when it is fully loaded
           _googleMapController.complete(controller);
         }
       },
@@ -118,12 +125,10 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
     );
   }
 
-  //get address from dragged pin
   Future _getAddress(LatLng position) async {
-    //this will list down all address around the position
     List<Placemark> placemarks =
         await placemarkFromCoordinates(position.latitude, position.longitude);
-    Placemark address = placemarks[0]; // get only first and closest address
+    Placemark address = placemarks[0];
     String addresStr =
         "${address.street}, ${address.locality}, ${address.administrativeArea}, ${address.country}";
     setState(() {
@@ -131,33 +136,27 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
     });
   }
 
-  //get user's current location and set the map's camera to that location
   Future _gotoUserCurrentPosition() async {
-    Position currentPosition = await _determineUserCurrentPosition();
+    //Position currentPosition = await _determineUserCurrentPosition();
     _gotoSpecificPosition(
-        LatLng(currentPosition.latitude, currentPosition.longitude));
+        LatLng(_defaultLatLng.latitude, _defaultLatLng.longitude));
   }
 
-  //go to specific position by latlng
   Future _gotoSpecificPosition(LatLng position) async {
     GoogleMapController mapController = await _googleMapController.future;
     mapController.animateCamera(CameraUpdate.newCameraPosition(
         CameraPosition(target: position, zoom: 17.5)));
-    //every time that we dragged pin , it will list down the address here
     await _getAddress(position);
   }
 
-  Future _determineUserCurrentPosition() async {
+  Future<Position> _determineUserCurrentPosition() async {
     LocationPermission locationPermission;
     bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
-    //check if user enable service for location permission
     if (!isLocationServiceEnabled) {
       print("user don't enable location permission");
     }
 
     locationPermission = await Geolocator.checkPermission();
-
-    //check if user denied location and retry requesting for permission
     if (locationPermission == LocationPermission.denied) {
       locationPermission = await Geolocator.requestPermission();
       if (locationPermission == LocationPermission.denied) {
@@ -165,12 +164,33 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
       }
     }
 
-    //check if user denied permission forever
     if (locationPermission == LocationPermission.deniedForever) {
       print("user denied permission forever");
     }
 
     return await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.best);
+  }
+
+  Future<LatLng?> getLocationFromPlaceId(String placeId) async {
+    print("PlaceId: $placeId");
+    var url =
+        "https://maps.googleapis.com/maps/api/geocode/json?place_id=$placeId&key=$modapikey";
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      //print("Response=200 ${response.body}");
+      final data = jsonDecode(response.body);
+
+      if (data["status"] == "OK") {
+        final lat = data["results"][0]["geometry"]["location"]["lat"];
+        final lng = data["results"][0]["geometry"]["location"]["lng"];
+        print("Lat $lat Long $lng");
+        return LatLng(lat, lng);
+      }
+    } else {
+      print("Response $response");
+    }
+    return null;
   }
 }

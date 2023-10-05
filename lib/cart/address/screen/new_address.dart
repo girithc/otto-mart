@@ -126,7 +126,9 @@ class _AddressScreenState extends State<AddressScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ConfirmAddress(),
+                              builder: (context) => ConfirmAddress(
+                                placeId: placePredictions[index].placeId!,
+                              ),
                             ),
                           );
                         },
