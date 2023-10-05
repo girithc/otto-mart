@@ -361,6 +361,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 const Spacer(),
                 IconButton(
+                  color: Colors.black,
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.shopping_cart_outlined),
                   onPressed: () {
@@ -371,6 +372,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   },
                 ),
                 IconButton(
+                  color: Colors.black,
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.person),
                   onPressed: () {
