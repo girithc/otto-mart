@@ -1,8 +1,10 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/utils/no_internet.dart';
 import 'package:provider/provider.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
@@ -20,12 +22,22 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool? isLoggedIn;
-  String? customerId; // <-- Add this to store the customerId
+  bool? hasInternet;
+
+  String? customerId;
 
   @override
   void initState() {
     super.initState();
     checkLoginStatus();
+    checkInternetConnection();
+  }
+
+  Future<void> checkInternetConnection() async {
+    var connectivityResult = await (Connectivity().checkConnectivity());
+    setState(() {
+      hasInternet = connectivityResult != ConnectivityResult.none;
+    });
   }
 
   Future<void> checkLoginStatus() async {
@@ -51,6 +63,18 @@ class _MyAppState extends State<MyApp> {
       ],
       child: Consumer<LoginStatusProvider>(
         builder: (context, loginProvider, child) {
+          if (hasInternet == false) {
+            return MaterialApp(
+              title: 'Provider Demo',
+              theme: ThemeData(
+                colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+                useMaterial3: true,
+              ),
+              home: NoInternetPage(
+                onRetry: checkInternetConnection,
+              ),
+            );
+          }
           return MaterialApp(
             title: 'Provider Demo',
             theme: ThemeData(
