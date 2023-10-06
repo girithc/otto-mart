@@ -38,7 +38,6 @@ func (s *PostgresStore) CreateAddressTable() error {
 
 	return nil
 }
-
 func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Address, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -46,19 +45,29 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 	}
 
 	defer func() {
-		if r := recover(); r != nil { // This catches panics along with Rollback in case of an error.
-			tx.Rollback()
+		if r := recover(); r != nil { 
+			tx.Rollback() // Rollback in case of panic
 		}
 	}()
 
-	query := `INSERT INTO address (customer_id, street_address, line_one_address, line_two_address, city, state, zipcode) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7) 
+	// First, set all other addresses for this customer to is_default=false
+	updateQuery := `UPDATE address SET is_default=false WHERE customer_id=$1 AND is_default=true`
+	_, err = tx.Exec(updateQuery, addr.Customer_Id)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Insert the new address and set is_default=true
+	query := `INSERT INTO address (customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, true) 
 		RETURNING id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, created_at`
 	row := tx.QueryRow(query, addr.Customer_Id, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode)
 
 	address := &types.Address{}
 	err = row.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Created_At)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
