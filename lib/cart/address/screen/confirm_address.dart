@@ -84,23 +84,6 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.7,
-                child: FloatingActionButton(
-                  heroTag: "confirm",
-                  onPressed: () {
-                    _gotoUserCurrentPosition();
-                  },
-                  child: const Center(
-                    child: Text(
-                      "Confirm Address",
-                      style: TextStyle(fontSize: 18),
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
               FloatingActionButton(
                 heroTag: "location",
                 onPressed: () {
@@ -112,6 +95,34 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(
+            height: 5,
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              SizedBox(
+                width: MediaQuery.of(context).size.width * 0.8,
+                height: MediaQuery.of(context).size.height * 0.1,
+                child: FloatingActionButton(
+                  heroTag: "confirm",
+                  onPressed: () {
+                    _gotoUserCurrentPosition();
+                  },
+                  child: const Center(
+                    child: Text(
+                      "Confirm Address",
+                      style: TextStyle(fontSize: 22),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 2,
           ),
         ],
       ),

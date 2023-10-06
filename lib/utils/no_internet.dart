@@ -15,7 +15,7 @@ class NoInternetPage extends StatelessWidget {
             const Text('No Internet Connection'),
             ElevatedButton(
               onPressed: onRetry,
-              child: Text('Retry'),
+              child: const Text('Retry'),
             )
           ],
         ),

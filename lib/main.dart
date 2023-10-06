@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/utils/no_internet.dart';
+import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
@@ -41,6 +43,7 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (context) => LoginStatusProvider()),
         ChangeNotifierProvider(create: (context) => AddressModel(customerId!)),
         ChangeNotifierProxyProvider<LoginStatusProvider, CartModel>(
@@ -49,8 +52,19 @@ class _MyAppState extends State<MyApp> {
               CartModel(loginProvider.customerId ?? ""),
         ),
       ],
-      child: Consumer<LoginStatusProvider>(
-        builder: (context, loginProvider, child) {
+      child: Consumer2<LoginStatusProvider, ConnectivityProvider>(
+        builder: (context, loginProvider, connectivityProvider, child) {
+          if (!connectivityProvider.hasInternet) {
+            return MaterialApp(
+              home: NoInternetPage(
+                onRetry: () {
+                  // Call checkInternetConnection method of ConnectivityProvider
+                  connectivityProvider.checkInternetConnection();
+                },
+              ),
+            );
+          }
+
           return MaterialApp(
             title: 'Provider Demo',
             theme: ThemeData(
