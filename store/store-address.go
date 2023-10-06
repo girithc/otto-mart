@@ -1,27 +1,42 @@
 package store
 
-import (
-	"github.com/girithc/pronto-go/types"
-)
+import "github.com/girithc/pronto-go/types"
 
 func (s *PostgresStore) CreateAddressTable() error {
-	query := `create table if not exists address (
-		id SERIAL PRIMARY KEY,
-		customer_id INTEGER REFERENCES customer(id) ON DELETE CASCADE,
-		place_id TEXT,
-		street_address TEXT NOT NULL,
-		line_one_address TEXT NOT NULL,
-		line_two_address TEXT NOT NULL,
-		city VARCHAR(50),
-		state VARCHAR(50),
-		zipcode VARCHAR(10),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	)
-	`
+	// Create the address table without the partial unique constraint
+	tableQuery := `
+    CREATE TABLE IF NOT EXISTS address (
+        id SERIAL PRIMARY KEY,
+        customer_id INTEGER REFERENCES customer(id) ON DELETE CASCADE,
+        place_id TEXT,
+        street_address TEXT NOT NULL,
+        line_one_address TEXT NOT NULL,
+        line_two_address TEXT NOT NULL,
+        city VARCHAR(50),
+        state VARCHAR(50),
+        zipcode VARCHAR(10),
+        is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+    `
 
-	_, err := s.db.Exec(query)
+	_, err := s.db.Exec(tableQuery)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// Now, add the partial unique index
+	indexQuery := `
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_one_default_address_per_customer 
+    ON address (customer_id) WHERE (is_default IS TRUE)
+    `
+
+	_, err = s.db.Exec(indexQuery)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Address, error) {

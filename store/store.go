@@ -18,48 +18,42 @@ type PostgresStore struct {
 }
 
 func NewPostgresStore() (*PostgresStore, func() error) {
+	// Check the runtime environment
+	runEnv := os.Getenv("RUN_ENV")
 
-    // Check the runtime environment
-    runEnv := os.Getenv("RUN_ENV")
+	if runEnv == "LOCAL" {
+		// Use local credentials
+		// connStr := "host=host.docker.internal user=postgres dbname=prontodb password=g190201 sslmode=disable"
+		// db, err = sql.Open("postgres", connStr)
 
-    if runEnv == "LOCAL" {
-        // Use local credentials
-        //connStr := "host=host.docker.internal user=postgres dbname=prontodb password=g190201 sslmode=disable"
-        //db, err = sql.Open("postgres", connStr)
-		
-        connStr := "user=postgres dbname=prontodb password=g190201 sslmode=disable"
+		connStr := "user=postgres dbname=prontodb password=g190201 sslmode=disable"
 		db, err := sql.Open("postgres", connStr)
 		if err != nil {
-        log.Fatalf("(local) Error on sql.Open: %v", err)
-    	}
+			log.Fatalf("(local) Error on sql.Open: %v", err)
+		}
 		return &PostgresStore{
-        db:          db,
-        cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
-    }, nil
-    } else {
-        // Use Cloud SQL credentials
-        cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
-        if err != nil {
-            log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
-        }
-
-        dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
-        db, err := sql.Open("cloudsql-postgres", dsn)
+			db:          db,
+			cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
+		}, nil
+	} else {
+		// Use Cloud SQL credentials
+		cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
 		if err != nil {
-        log.Fatalf("(prod) Error on sql.Open: %v", err)
-    	}
+			log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
+		}
+
+		dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
+		db, err := sql.Open("cloudsql-postgres", dsn)
+		if err != nil {
+			log.Fatalf("(prod) Error on sql.Open: %v", err)
+		}
 
 		return &PostgresStore{
-        db:          db,
-        cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
-    }, cleanup
-    }
-
-    
-
-    
+			db:          db,
+			cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
+		}, cleanup
+	}
 }
-
 
 func (s *PostgresStore) Init() error {
 	// fmt.Println("Entered Init() -- db.go")
@@ -85,6 +79,27 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Item Table")
 	}
 
+	errItemCategory := s.CreateItemCategoryTable()
+	if errItemCategory != nil {
+		return errItemCategory
+	} else {
+		fmt.Println("Success - Created Item Category Table")
+	}
+
+	errItemImage := s.CreateItemImageTable()
+	if errItemImage != nil {
+		return errItemImage
+	} else {
+		fmt.Println("Success - Created Item Image Table")
+	}
+
+	errItemStore := s.CreateItemStoreTable()
+	if errItemStore != nil {
+		return errItemStore
+	} else {
+		fmt.Println("Success - Created Item Store Table")
+	}
+
 	errCustomer := s.CreateCustomerTable()
 	if errCustomer != nil {
 		return errCustomer
@@ -106,7 +121,7 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Cart Item Table")
 	}
 
-	errHigherLevelCategory := s.Create_Higher_Level_Category_Table()
+	errHigherLevelCategory := s.CreateHigherLevelCategoryTable()
 	if errHigherLevelCategory != nil {
 		return errHigherLevelCategory
 	} else {

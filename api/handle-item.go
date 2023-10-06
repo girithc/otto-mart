@@ -25,7 +25,7 @@ func (s *Server) Handle_Create_Item(res http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		return err
 	}
-	item, err := s.store.Create_Item(new_item)
+	item, err := s.store.CreateItem(new_item)
 	if err != nil {
 		return err
 	}
@@ -44,7 +44,7 @@ func (s *Server) Handle_Get_Items(res http.ResponseWriter, req *http.Request) er
 		item_id := req.URL.Query().Get("item_id")
 
 		if item_id == "" || item_id == "0" {
-			items, err := s.store.Get_Items()
+			items, err := s.store.GetItems()
 			if err != nil {
 				return err
 			}
@@ -116,12 +116,6 @@ func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) 
 	}
 	if new_req.Stock_Quantity < 0 {
 		new_req.Stock_Quantity = item.Stock_Quantity
-	}
-	if new_req.Category_ID == 0 {
-		new_req.Category_ID = item.Category_ID
-	}
-	if len(new_req.Image) == 0 {
-		new_req.Image = item.Image
 	}
 
 	updated_item, err := s.store.Update_Item(new_req)
