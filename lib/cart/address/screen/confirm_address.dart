@@ -6,6 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
+import 'package:pronto/cart/address/screen/reconfirm_address.dart';
 import 'package:pronto/utils/constants.dart';
 
 class ConfirmAddress extends StatefulWidget {
@@ -22,8 +23,8 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
   CameraPosition? _cameraPosition;
   late LatLng _defaultLatLng;
   late LatLng _draggedLatlng;
-  String _draggedAddress = "";
-  final String placedApiKey = apiKey;
+  String _draggedAddress_one = "";
+  String _draggedAddress_two = "";
 
   @override
   void initState() {
@@ -108,7 +109,16 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
                 child: FloatingActionButton(
                   heroTag: "confirm",
                   onPressed: () {
-                    _gotoUserCurrentPosition();
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReconfirmAddress(
+                          coordinates: _defaultLatLng,
+                          lineOneAddress: _draggedAddress_one,
+                          lineTwoAddress: _draggedAddress_two,
+                        ),
+                      ),
+                    );
                   },
                   child: const Center(
                     child: Text(
@@ -146,7 +156,7 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
         ),
         child: Center(
             child: Text(
-          _draggedAddress,
+          _draggedAddress_one + _draggedAddress_two,
           style:
               const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         )),
@@ -185,10 +195,22 @@ class _ConfirmAddressState extends State<ConfirmAddress> {
     List<Placemark> placemarks =
         await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark address = placemarks[0];
-    String addresStr =
-        "${address.street}, ${address.locality}, ${address.administrativeArea}, ${address.country}";
+    print("Placemarks: $placemarks");
+    print("Address: $address");
+
+    List<String> addressComponents = [
+      address.street ?? "",
+      address.locality ?? "",
+      address.administrativeArea ?? "",
+      address.country ?? ""
+    ];
+
     setState(() {
-      _draggedAddress = addresStr;
+      //_draggedAddress = addressStr;
+      _draggedAddress_one = address.street!;
+      _draggedAddress_two = address.locality!.isNotEmpty
+          ? "${address.subLocality}, ${address.locality}, ${address.administrativeArea}"
+          : "${address.administrativeArea}";
     });
   }
 

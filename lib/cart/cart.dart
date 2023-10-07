@@ -62,7 +62,9 @@ class CartModel extends ChangeNotifier {
       streetAddress: '',
       zip: '',
       createdAt: DateTime(2020),
-      customerId: 0);
+      customerId: 0,
+      longitude: 0.00,
+      latitude: 0.0);
 
   CartModel(this.customerId) {
     _fetchCartId().then((_) {
@@ -119,6 +121,61 @@ class CartModel extends ChangeNotifier {
       }
     }).catchError((error) {
       _logger.e('(cart model) HTTP POST request error: $error');
+    });
+  }
+
+  void postDeliveryAddress(
+      String flatBuildingName,
+      String lineOne,
+      String lineTwo,
+      String? city,
+      String? zipCode,
+      String? state,
+      double latitude,
+      double longitude) {
+    final url = Uri.parse('$baseUrl/address');
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+
+    int? parsedCustomerId;
+    try {
+      parsedCustomerId = int.parse(customerId);
+    } catch (e) {
+      _logger.e('Failed to parse customerId: $customerId, error: $e ');
+    }
+
+    if (parsedCustomerId == null) return;
+
+    final body = <String, dynamic>{
+      'customer_id': parsedCustomerId,
+      'street_address': flatBuildingName,
+      'line_one': lineOne,
+      'line_two': lineTwo,
+      'city': city,
+      'state': state,
+      'zip': zipCode,
+      'latitude': latitude,
+      'longitude': longitude
+    };
+
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final data = json.decode(response.body);
+          Address address = Address.fromJson(data);
+          // You can now use this `address` object as needed
+
+          notifyListeners();
+        } else {
+          _logger.e('Empty response received from server');
+        }
+      } else {
+        _logger.e(
+            'HTTP POST request failed with status code ${response.statusCode}');
+      }
+    }).catchError((error) {
+      _logger.e('(cart model (address)) HTTP POST request error: $error');
     });
   }
 
@@ -267,14 +324,16 @@ class CartModel extends ChangeNotifier {
 
 class Address {
   final int id;
-  int customerId;
+  final int customerId;
   final String streetAddress;
   final String lineOne;
   final String lineTwo;
   final String city;
   final String state;
   final String zip;
-  DateTime createdAt;
+  final double latitude;
+  final double longitude;
+  final DateTime createdAt;
 
   Address({
     required this.id,
@@ -285,6 +344,8 @@ class Address {
     required this.city,
     required this.state,
     required this.zip,
+    required this.latitude,
+    required this.longitude,
     required this.createdAt,
   });
 
@@ -298,6 +359,8 @@ class Address {
       city: json['city'],
       state: json['state'],
       zip: json['zip'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
       createdAt: DateTime.parse(json['created_at']),
     );
   }

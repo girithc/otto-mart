@@ -53,6 +53,7 @@ dependencies:
   google_maps_flutter: ^2.5.0
   lottie: ^2.6.0
   connectivity_plus: ^4.0.2
+  flutter_form_builder: ^9.1.1
 
 dev_dependencies:
   flutter_test:

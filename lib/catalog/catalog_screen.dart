@@ -102,6 +102,7 @@ class _CatalogPageState extends State<CatalogPage> {
                       autoPlay: true,
                       enlargeCenterPage: true,
                       aspectRatio: 3.5,
+                      autoPlayInterval: const Duration(seconds: 3),
                       viewportFraction: 0.95),
                   items: [
                     Container(
@@ -141,59 +142,59 @@ class _CatalogPageState extends State<CatalogPage> {
               Flexible(
                 flex: 4,
                 child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyCart()));
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pinkAccent,
-                      foregroundColor: Colors.white,
-                      textStyle: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 0, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyCart()));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent,
+                    foregroundColor: Colors.white,
+                    textStyle: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
                     ),
-                    child: cart.numberOfItems > 0
-                        ? (cart.numberOfItems > 1
-                            ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.shopping_cart_outlined),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                      '${cart.numberOfItems.toString()} Items'),
-                                ],
-                              )
-                            : Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(Icons.shopping_cart_outlined),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text('${cart.numberOfItems.toString()} Item'),
-                                ],
-                              ))
-                        : const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.shopping_cart_outlined),
-                              SizedBox(
-                                width: 10,
-                              ), // Add your desired icon here
-                              // Add some spacing between the icon and text
-                              Text('Cart'),
-                            ],
-                          )),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4.0),
+                    ),
+                  ),
+                  child: cart.numberOfItems > 0
+                      ? (cart.numberOfItems > 1
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shopping_cart_outlined),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('${cart.numberOfItems.toString()} Items'),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shopping_cart_outlined),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('${cart.numberOfItems.toString()} Item'),
+                              ],
+                            ))
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.shopping_cart_outlined),
+                            SizedBox(
+                              width: 10,
+                            ), // Add your desired icon here
+                            // Add some spacing between the icon and text
+                            Text('Cart'),
+                          ],
+                        ),
+                ),
               ),
             ],
           ),
