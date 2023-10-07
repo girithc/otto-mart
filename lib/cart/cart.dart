@@ -165,7 +165,7 @@ class CartModel extends ChangeNotifier {
           final data = json.decode(response.body);
           Address address = Address.fromJson(data);
           // You can now use this `address` object as needed
-
+          _deliveryAddress = address;
           notifyListeners();
         } else {
           _logger.e('Empty response received from server');
