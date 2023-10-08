@@ -1,4 +1,4 @@
-package com.example.pronto
+package com.otto.pronto
 
 import io.flutter.embedding.android.FlutterActivity
 
