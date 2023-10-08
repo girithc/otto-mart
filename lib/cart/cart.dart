@@ -124,7 +124,7 @@ class CartModel extends ChangeNotifier {
     });
   }
 
-  void postDeliveryAddress(
+  Future<bool> postDeliveryAddress(
       String flatBuildingName,
       String lineOne,
       String lineTwo,
@@ -132,7 +132,7 @@ class CartModel extends ChangeNotifier {
       String? zipCode,
       String? state,
       double latitude,
-      double longitude) {
+      double longitude) async {
     final url = Uri.parse('$baseUrl/address');
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -142,10 +142,9 @@ class CartModel extends ChangeNotifier {
     try {
       parsedCustomerId = int.parse(customerId);
     } catch (e) {
-      _logger.e('Failed to parse customerId: $customerId, error: $e ');
+      _logger.e('Failed to parse customerId: $customerId, error: $e');
+      return false; // if we can't parse customerId, it makes sense to return early
     }
-
-    if (parsedCustomerId == null) return;
 
     final body = <String, dynamic>{
       'customer_id': parsedCustomerId,
@@ -159,24 +158,30 @@ class CartModel extends ChangeNotifier {
       'longitude': longitude
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+    try {
+      final response =
+          await http.post(url, headers: headers, body: jsonEncode(body));
+
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final data = json.decode(response.body);
           Address address = Address.fromJson(data);
-          // You can now use this `address` object as needed
           _deliveryAddress = address;
           notifyListeners();
+          return true;
         } else {
           _logger.e('Empty response received from server');
+          return false;
         }
       } else {
         _logger.e(
             'HTTP POST request failed with status code ${response.statusCode}');
+        return false;
       }
-    }).catchError((error) {
+    } catch (error) {
       _logger.e('(cart model (address)) HTTP POST request error: $error');
-    });
+      return false;
+    }
   }
 
   List<CartItem> get items => _items;

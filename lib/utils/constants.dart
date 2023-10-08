@@ -1,4 +1,4 @@
-const String baseUrl = prodUrl;
+const String baseUrl = devUrl;
 
 const String apiKey = "AIzaSyAgKUuHhHLRUuC8c_IiuNtwSeqIH5ClRkE";
 const String modapikey = "AIzaSyARoMzt-tHvh--HVMyRArfxEsoFnZR9VtQ";

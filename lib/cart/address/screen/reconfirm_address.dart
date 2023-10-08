@@ -98,7 +98,7 @@ class _ReconfirmAddressState extends State<ReconfirmAddress> {
           width: MediaQuery.of(context).size.width * 0.8,
           height: MediaQuery.of(context).size.height * 0.1,
           child: FloatingActionButton(
-            onPressed: () {
+            onPressed: () async {
               if (_formKey.currentState!.saveAndValidate()) {
                 var formData = _formKey.currentState!.value;
                 if (formData['flatBuildingName'].isEmpty) {
@@ -111,7 +111,7 @@ class _ReconfirmAddressState extends State<ReconfirmAddress> {
                   );
                   return;
                 }
-                cartModel.postDeliveryAddress(
+                bool isSuccess = await cartModel.postDeliveryAddress(
                     formData['flatBuildingName'],
                     formData['lineOneAddress'],
                     formData['lineTwoAddress'],
@@ -120,6 +120,17 @@ class _ReconfirmAddressState extends State<ReconfirmAddress> {
                     formData['stateName'],
                     widget.coordinates.latitude,
                     widget.coordinates.longitude);
+
+                if (isSuccess) {
+                  for (int i = 0; i < 3; i++) {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    } else {
+                      // If you cannot pop any more, break the loop
+                      break;
+                    }
+                  }
+                }
               }
             },
             child: const Text(
