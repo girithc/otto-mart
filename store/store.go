@@ -45,9 +45,20 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 		dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
 		db, err := sql.Open("cloudsql-postgres", dsn)
 		if err != nil {
-			log.Fatalf("(prod) Error on sql.Open: %v", err)
+			log.Fatalf("Error on sql.Open: %v", err)
 		}
 
+		/*
+				connStr := "host=host.docker.internal user=postgres dbname=prontodb password=g190201 sslmode=disable"
+				db, err := sql.Open("postgres", connStr)
+				if err != nil {
+					log.Fatalf("Error on sql.Open: %v", err)
+				}
+
+			if err := db.Ping(); err != nil {
+				log.Fatalf("Error on db.Ping(). Db connection error: %v", err)
+			}
+		*/
 		return &PostgresStore{
 			db:          db,
 			cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
