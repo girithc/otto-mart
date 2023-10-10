@@ -27,23 +27,37 @@ func (s *PostgresStore) CreateHigherLevelCategoryTable() error {
 }
 
 func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Category) (*types.Higher_Level_Category, error) {
-	query := `insert into higher_level_category
-	(name, created_by) 
-	values ($1, $2) returning id, name, created_at, created_by
-	`
-	rows, err := s.db.Query(
-		query,
-		hlc.Name,
-		hlc.Created_By)
-	// fmt.Println("CheckPoint 1")
+	// 1. Check if a higher_level_category with the same name already exists
+	checkQuery := `SELECT id, name, created_at, created_by FROM higher_level_category WHERE name = $1`
+	rows, err := s.db.Query(checkQuery, hlc.Name)
 	if err != nil {
 		return nil, err
 	}
 
-	// fmt.Println("CheckPoint 2")
+	existingHLCs := []*types.Higher_Level_Category{}
+	for rows.Next() {
+		existingHLC, err := scan_Into_Higher_Level_Category(rows)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		existingHLCs = append(existingHLCs, existingHLC)
+	}
+
+	// 2. Return the existing higher_level_category if found
+	if len(existingHLCs) > 0 {
+		return existingHLCs[0], nil
+	}
+
+	query := `INSERT INTO higher_level_category
+        (name, created_by) 
+        VALUES ($1, $2) RETURNING id, name, created_at, created_by`
+
+	rows, err = s.db.Query(query, hlc.Name, hlc.Created_By)
+	if err != nil {
+		return nil, err
+	}
 
 	higher_level_categories := []*types.Higher_Level_Category{}
-
 	for rows.Next() {
 		higher_level_category, err := scan_Into_Higher_Level_Category(rows)
 		if err != nil {
@@ -51,8 +65,6 @@ func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Cat
 		}
 		higher_level_categories = append(higher_level_categories, higher_level_category)
 	}
-
-	// fmt.Println("CheckPoint 3")
 
 	return higher_level_categories[0], nil
 }

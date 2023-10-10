@@ -28,11 +28,33 @@ func (s *PostgresStore) Create_Category_Table() error {
 }
 
 func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, error) {
+	// 1. Check if a category with the same name already exists
+	checkQuery := `SELECT id, name, created_at, created_by FROM category WHERE name = $1`
+	rows, err := s.db.Query(checkQuery, hlc.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	existingCats := []*types.Category{}
+
+	for rows.Next() {
+		existingCat, err := scan_Into_Category(rows)
+		if err != nil && err != sql.ErrNoRows {
+			return nil, err
+		}
+		existingCats = append(existingCats, existingCat)
+	}
+
+	// 2. Return the existing category if found
+	if len(existingCats) > 0 {
+		return existingCats[0], nil
+	}
+
 	query := `insert into category
 	(name, created_by) 
 	values ($1, $2) returning id, name, created_at, created_by
 	`
-	rows, err := s.db.Query(
+	rows, err = s.db.Query(
 		query,
 		hlc.Name,
 		hlc.Created_By)
