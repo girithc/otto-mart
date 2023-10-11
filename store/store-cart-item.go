@@ -173,10 +173,16 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 		newTotalQuantity := currentQuantity + quantity
 		if newTotalQuantity > stockQuantity {
 			tx.Rollback()
-			// nil, fmt.Errorf("not enough stock for item id %d. current item quantity {%d} in cart and the new addition exceeds available stock {%d}.", item_id, newTotalQuantity, )
 			return nil, fmt.Errorf("not enough stock for item id %d. need total quantity %d. item stock quantity %d. requested quantity %d", item_id, newTotalQuantity, currentQuantity, quantity)
 		}
-		err = tx.QueryRow("UPDATE cart_item SET quantity=quantity+$1 WHERE cart_id=$2 AND item_id=$3 RETURNING id, cart_id, item_id, quantity", quantity, cart_id, item_id).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
+		if newTotalQuantity < 0 {
+			tx.Rollback()
+			return nil, fmt.Errorf("quantity cannot be negative for cart item id %d", item_id)
+		} else if newTotalQuantity == 0 {
+			_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, item_id)
+		} else {
+			err = tx.QueryRow("UPDATE cart_item SET quantity=quantity+$1 WHERE cart_id=$2 AND item_id=$3 RETURNING id, cart_id, item_id, quantity", quantity, cart_id, item_id).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
+		}
 	} else {
 		tx.Rollback()
 		return nil, err
