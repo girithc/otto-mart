@@ -794,8 +794,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
-  final SearchItemApiClient apiClient =
-      SearchItemApiClient('https://localhost:3000');
+  final SearchItemApiClient apiClient = SearchItemApiClient();
   final Logger _logger = Logger();
 
   List<Item> resultSearchItems = [];

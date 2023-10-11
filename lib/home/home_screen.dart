@@ -115,69 +115,74 @@ class _MyHomePageState extends State<MyHomePage> {
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Your other body content goes here
-              Container(
-                //color: Theme.of(context).colorScheme.primary,
-                padding: const EdgeInsets.all(2),
-                height: 60,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("assets/images/store.png"),
-                    opacity: 0.9,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    'Delivery in 10 minutes',
-                    style: GoogleFonts.cantoraOne(
-                        fontSize: 25,
-                        fontStyle: FontStyle.normal,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-              Highlights(
-                  customerId: customerId,
-                  phone: phone), // Pass retrieved values
-              Container(
-                alignment: Alignment.centerLeft, // Align text to the left
-                padding: const EdgeInsets.only(left: 16, top: 8.0, bottom: 2.0),
-                child: const Text(
-                  'Explore By Categories',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 650,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: GridView.builder(
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 4,
-                      crossAxisSpacing: 5,
-                      mainAxisSpacing: 5,
-                      childAspectRatio: 0.8,
+        child: CustomScrollView(
+          // <-- Using CustomScrollView
+          slivers: <Widget>[
+            SliverToBoxAdapter(
+              child: Column(
+                children: [
+                  // Your other body content
+                  Container(
+                    //color: Theme.of(context).colorScheme.primary,
+                    padding: const EdgeInsets.all(2),
+                    height: 60,
+                    decoration: const BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage("assets/images/store.png"),
+                        opacity: 0.9,
+                        fit: BoxFit.cover,
+                      ),
                     ),
-                    itemCount: categories.length, // Number of grid items
-                    itemBuilder: (context, index) {
-                      return _buildCategoryContainer(context,
-                          categories[index].id, categories[index].name);
-                    },
+                    child: Center(
+                      child: Text(
+                        'Delivery in 10 minutes',
+                        style: GoogleFonts.cantoraOne(
+                            fontSize: 25,
+                            fontStyle: FontStyle.normal,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
                   ),
+                  Highlights(
+                      customerId: customerId,
+                      phone: phone), // Pass retrieved values
+                  Container(
+                    alignment: Alignment.centerLeft, // Align text to the left
+                    padding:
+                        const EdgeInsets.only(left: 16, top: 8.0, bottom: 2.0),
+                    child: const Text(
+                      'Explore By Categories',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // This is the GridView, wrapped inside a SliverPadding
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 5,
+                  mainAxisSpacing: 5,
+                  childAspectRatio: 0.8,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    return _buildCategoryContainer(
+                        context, categories[index].id, categories[index].name);
+                  },
+                  childCount: categories.length,
                 ),
               ),
-              //const HorizontalScrollItems(),
-            ],
-          ),
+            ),
+            // Add other content here if needed
+          ],
         ),
       ),
     );
@@ -400,7 +405,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => SettingScreen()));
+                            builder: (context) => const SettingScreen()));
                   },
                 ),
               ],

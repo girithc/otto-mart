@@ -1,11 +1,10 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:pronto/utils/constants.dart';
 
 class SearchItemApiClient {
-  final String baseUrl;
-
-  SearchItemApiClient(this.baseUrl);
+  SearchItemApiClient();
 
   Future<List<Item>> fetchSearchItems(String queryString) async {
     var url = Uri.parse('$baseUrl/search-item');
