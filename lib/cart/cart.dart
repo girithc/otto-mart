@@ -247,8 +247,7 @@ class CartModel extends ChangeNotifier {
 
   void addItemToCart(CartItem item) {
     //print("Add Item To Cart: $cartId");
-    final url = Uri.parse(
-        'http://localhost:3000/cart-item'); // Replace with your server URL
+    final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
     final headers = <String, String>{
       'Content-Type': 'application/json',
       // Add any other headers you need
@@ -282,8 +281,7 @@ class CartModel extends ChangeNotifier {
 
   void removeItem({required String itemId}) {
     //print("Remove Item From Cart");
-    final url = Uri.parse(
-        'http://localhost:3000/cart-item'); // Replace with your server URL
+    final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
     final headers = <String, String>{
       'Content-Type': 'application/json',
       // Add any other headers you need

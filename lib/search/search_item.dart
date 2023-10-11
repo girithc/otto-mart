@@ -8,7 +8,7 @@ class SearchItemApiClient {
   SearchItemApiClient(this.baseUrl);
 
   Future<List<Item>> fetchSearchItems(String queryString) async {
-    var url = Uri.parse('http://localhost:3000/search-item');
+    var url = Uri.parse('$baseUrl/search-item');
 
     if (queryString.isEmpty) {
       throw Exception('(SearchItemApiClient) Parameters are not valid');

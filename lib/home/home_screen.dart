@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
@@ -389,6 +390,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         MaterialPageRoute(
                             builder: (context) => const CartPage()));
                     */
+                  },
+                ),
+                IconButton(
+                  color: Colors.black,
+                  padding: const EdgeInsets.only(right: 15.0),
+                  icon: const Icon(Icons.settings_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SettingScreen()));
                   },
                 ),
               ],
