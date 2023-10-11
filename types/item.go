@@ -9,8 +9,8 @@ type Item struct {
 	ID              int       `json:"id"`
 	Name            string    `json:"name"`
 	Price           float64   `json:"price"`
-	Store_ID        int       `json:"store_id"`
-	Category_ID     int       `json:"category_id"`
+	Store           string    `json:"store"`
+	Category        string    `json:"category"`
 	Stock_Quantity  int       `json:"stock_quantity"`
 	Locked_Quantity int       `json:"locked_quantity"`
 	Image           string    `json:"image"`
@@ -34,8 +34,8 @@ type Get_Item struct {
 type Create_Item struct {
 	Name           string  `json:"name"`
 	Price          float64 `json:"price"`
-	Store_ID       int     `json:"store_id"`
-	Category_ID    int     `json:"category_id"`
+	Store          string  `json:"store"`
+	Category       string  `json:"category"`
 	Image          string  `json:"image"`
 	Stock_Quantity int     `json:"stock_quantity"`
 }
@@ -64,12 +64,12 @@ type Get_Items_By_CategoryID_And_StoreID struct {
 	Stock_Quantity int     `json:"stock_quantity"`
 }
 
-func New_Item(name string, price float64, category_id int, store_id int, stock_quantity int, image string) (*Item, error) {
+func New_Item(name string, price float64, category string, store string, stock_quantity int, image string) (*Item, error) {
 	return &Item{
 		Name:           name,
 		Price:          price,
-		Category_ID:    category_id,
-		Store_ID:       store_id,
+		Category:       category,
+		Store:          store,
 		Stock_Quantity: stock_quantity,
 		Image:          image,
 		Created_By:     1,

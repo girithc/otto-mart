@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) Search_Items(query string) ([]*types.Item, error) {
+func (s *PostgresStore) Search_Items(query string) ([]*types.Search_Item_Result, error) {
 	fmt.Println("Entered Search_Items")
 
 	// Join with item_category, item_image, and item_store tables to get all the required details
@@ -38,9 +38,9 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Item, error) {
 
 	defer rows.Close()
 
-	items := []*types.Item{}
+	items := []*types.Search_Item_Result{}
 	for rows.Next() {
-		item := &types.Item{}
+		item := &types.Search_Item_Result{}
 		var imageURL sql.NullString
 		err := rows.Scan(
 			&item.ID,

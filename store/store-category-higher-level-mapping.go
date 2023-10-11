@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/girithc/pronto-go/types"
@@ -29,37 +30,68 @@ func (s *PostgresStore) Create_Category_Higher_Level_Mapping_Table() error {
 }
 
 func (s *PostgresStore) Create_Category_Higher_Level_Mapping(chlm *types.Category_Higher_Level_Mapping) (*types.Category_Higher_Level_Mapping, error) {
-	query := `insert into category_higher_level_mapping
-	(higher_level_category_id, category_id, created_by) 
-	values ($1, $2, $3) returning id, higher_level_category_id, category_id, created_by
-	`
-	rows, err := s.db.Query(
+	// Start a new transaction.
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // Rollback the transaction in case of failure.
+
+	// Try inserting the new record.
+	query := `
+        INSERT INTO category_higher_level_mapping
+        (higher_level_category_id, category_id, created_by) 
+        VALUES ($1, $2, $3) 
+        ON CONFLICT (higher_level_category_id, category_id) DO NOTHING 
+        RETURNING id, higher_level_category_id, category_id, created_by;
+    `
+	rows, err := tx.Query(
 		query,
 		chlm.Higher_Level_Category_ID,
 		chlm.Category_ID,
-		chlm.Created_By)
-
-	fmt.Println("CheckPoint 1")
-
+		chlm.Created_By,
+	)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("CheckPoint 2")
-
-	category_higher_level_mappings := []*types.Category_Higher_Level_Mapping{}
-
-	for rows.Next() {
+	// If we have results from the INSERT query, then the insertion was successful.
+	if rows.Next() {
 		category_higher_level_mapping, err := scan_Into_Category_Higher_Level_Mapping(rows)
 		if err != nil {
 			return nil, err
 		}
-		category_higher_level_mappings = append(category_higher_level_mappings, category_higher_level_mapping)
+		err = tx.Commit() // Commit the transaction.
+		if err != nil {
+			return nil, err
+		}
+		return category_higher_level_mapping, nil
 	}
 
-	fmt.Println("CheckPoint 3")
+	// If we reached here, it means the record already exists. Fetch and return the existing record.
+	existingQuery := `
+        SELECT id, higher_level_category_id, category_id, created_by 
+        FROM category_higher_level_mapping 
+        WHERE higher_level_category_id = $1 AND category_id = $2;
+    `
+	existingRows, err := tx.Query(existingQuery, chlm.Higher_Level_Category_ID, chlm.Category_ID)
+	if err != nil {
+		return nil, err
+	}
 
-	return category_higher_level_mappings[0], nil
+	if existingRows.Next() {
+		existingMapping, err := scan_Into_Category_Higher_Level_Mapping(existingRows)
+		if err != nil {
+			return nil, err
+		}
+		err = tx.Commit() // Commit the transaction.
+		if err != nil {
+			return nil, err
+		}
+		return existingMapping, nil
+	}
+
+	return nil, errors.New("expected to find an existing record, but none found")
 }
 
 func (s *PostgresStore) Get_Category_Higher_Level_Mappings() ([]*types.Category_Higher_Level_Mapping, error) {

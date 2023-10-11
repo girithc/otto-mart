@@ -21,7 +21,7 @@ func (s *Server) Handle_Create_Item(res http.ResponseWriter, req *http.Request) 
 		return err
 	}
 
-	new_item, err := types.New_Item(new_req.Name, new_req.Price, new_req.Category_ID, new_req.Store_ID, new_req.Stock_Quantity, new_req.Image)
+	new_item, err := types.New_Item(new_req.Name, new_req.Price, new_req.Category, new_req.Store, new_req.Stock_Quantity, new_req.Image)
 	if err != nil {
 		return err
 	}
