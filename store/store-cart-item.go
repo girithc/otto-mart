@@ -254,13 +254,24 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
 }
 
 func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_id int) ([]*types.Cart_Item_Item_List, error) {
-	rows, err := s.db.Query(`
-        SELECT i.id, i.name, i.price::numeric::float8, i.image, i.stock_quantity, ci.quantity
+	query := `
+        WITH item_images AS (
+            SELECT item_id, MIN(image_url) as main_image
+            FROM item_image
+            GROUP BY item_id
+        )
+
+        SELECT 
+            i.id, i.name, istore.price::numeric::float8, ii.main_image, istore.stock_quantity, ci.quantity
         FROM shopping_cart sc
         JOIN cart_item ci ON ci.cart_id = sc.id
         JOIN item i ON ci.item_id = i.id
-        WHERE sc.active = $1 AND sc.customer_id = $2;
-    `, true, customer_id)
+        JOIN item_store istore ON i.id = istore.item_id
+        LEFT JOIN item_images ii ON i.id = ii.item_id
+        WHERE sc.active = true AND sc.customer_id = $1;
+    `
+
+	rows, err := s.db.Query(query, customer_id)
 	if err != nil {
 		return nil, err
 	}
