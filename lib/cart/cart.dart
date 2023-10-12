@@ -44,7 +44,7 @@ class CartModel extends ChangeNotifier {
   int _deliveryPartnerTip = 0;
   int _packagingFee = 15;
   int _deliveryFee = 35;
-  final String customerId;
+  late String customerId;
 
   // Initialize storage
   final storage = const FlutterSecureStorage();
@@ -74,6 +74,7 @@ class CartModel extends ChangeNotifier {
 
   Future<void> _fetchCartId() async {
     cartId = await storage.read(key: 'cartId');
+    print("cart Id $cartId");
     // You should handle cases where cartId is null!
     if (cartId == null) {
       // Handle it according to your requirements.
@@ -88,12 +89,16 @@ class CartModel extends ChangeNotifier {
       'Content-Type': 'application/json',
     };
 
+    print("customer Id $customerId");
+
     int? parsedCustomerId;
     try {
       parsedCustomerId = int.parse(customerId);
     } catch (e) {
       _logger.e('Failed to parse customerId: $customerId, error: $e ');
     }
+
+    print("customer Id $parsedCustomerId");
 
     if (parsedCustomerId == null) return;
 

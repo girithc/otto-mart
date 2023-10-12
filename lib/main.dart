@@ -9,12 +9,17 @@ import 'package:provider/provider.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  const storage = FlutterSecureStorage();
+  String? initialCustomerId = await storage.read(key: 'customerId');
+  runApp(MyApp(initialCustomerId: initialCustomerId));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final String? initialCustomerId;
+
+  const MyApp({required this.initialCustomerId, Key? key}) : super(key: key);
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -22,21 +27,11 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool? isLoggedIn;
-  String? customerId; // <-- Add this to store the customerId
 
   @override
   void initState() {
     super.initState();
-    checkLoginStatus();
-  }
-
-  Future<void> checkLoginStatus() async {
-    const storage = FlutterSecureStorage();
-    customerId = await storage.read(key: 'customerId'); // <-- Update this line
-
-    setState(() {
-      isLoggedIn = customerId != null;
-    });
+    isLoggedIn = widget.initialCustomerId != null;
   }
 
   @override
@@ -45,9 +40,10 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (context) => LoginStatusProvider()),
-        ChangeNotifierProvider(create: (context) => AddressModel(customerId!)),
+        ChangeNotifierProvider(
+            create: (context) => AddressModel(widget.initialCustomerId!)),
         ChangeNotifierProxyProvider<LoginStatusProvider, CartModel>(
-          create: (context) => CartModel(""),
+          create: (context) => CartModel(widget.initialCustomerId ?? ""),
           update: (context, loginProvider, cartModel) =>
               CartModel(loginProvider.customerId ?? ""),
         ),
@@ -58,7 +54,6 @@ class _MyAppState extends State<MyApp> {
             return MaterialApp(
               home: NoInternetPage(
                 onRetry: () {
-                  // Call checkInternetConnection method of ConnectivityProvider
                   connectivityProvider.checkInternetConnection();
                 },
               ),
@@ -72,7 +67,7 @@ class _MyAppState extends State<MyApp> {
               useMaterial3: true,
             ),
             home: (isLoggedIn == null)
-                ? const CircularProgressIndicator() // Loading indicator while checking login status
+                ? const CircularProgressIndicator()
                 : OpeningPageAnimation(isLoggedIn: isLoggedIn!),
           );
         },

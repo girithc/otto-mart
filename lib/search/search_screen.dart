@@ -42,6 +42,7 @@ class SearchPage extends StatelessWidget {
     searchFocusNode.requestFocus();
     final searchData = context.watch<SearchData>();
     final searchQuery = searchData.searchQuery;
+    var cart = context.watch<CartModel>();
 
     return Scaffold(
       appBar: CustomAppBar(
@@ -102,7 +103,7 @@ class SearchPage extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
+              Flexible(
                 flex: 4,
                 child: ElevatedButton(
                   onPressed: () {
@@ -124,17 +125,39 @@ class SearchPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4.0),
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons
-                          .shopping_cart_outlined), // Add your desired icon here
-                      SizedBox(
-                          width:
-                              10), // Add some spacing between the icon and text
-                      Text('Cart'),
-                    ],
-                  ),
+                  child: cart.numberOfItems > 0
+                      ? (cart.numberOfItems > 1
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shopping_cart_outlined),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('${cart.numberOfItems.toString()} Items'),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shopping_cart_outlined),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('${cart.numberOfItems.toString()} Item'),
+                              ],
+                            ))
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.shopping_cart_outlined),
+                            SizedBox(
+                              width: 10,
+                            ), // Add your desired icon here
+                            // Add some spacing between the icon and text
+                            Text('Cart'),
+                          ],
+                        ),
                 ),
               ),
             ],

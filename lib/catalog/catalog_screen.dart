@@ -573,14 +573,15 @@ class ListItem extends StatelessWidget {
                                       },
                                       child: const Icon(
                                         Icons.horizontal_rule,
+                                        size: 20,
                                         color: Colors.white,
                                       ),
                                     ),
                                     Text(
                                       cart.items[itemIndexInCart].quantity
                                           .toString(),
-                                      style:
-                                          const TextStyle(color: Colors.white),
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 15),
                                     ),
                                     InkWell(
                                       onTap: () {
@@ -594,6 +595,7 @@ class ListItem extends StatelessWidget {
                                       },
                                       child: const Icon(
                                         Icons.add,
+                                        size: 22,
                                         color: Colors.white,
                                       ),
                                     ),

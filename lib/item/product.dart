@@ -31,202 +31,209 @@ class Product extends StatelessWidget {
         categoryName: 'Pronto',
       ),
       body: SingleChildScrollView(
-          child: Column(
-        children: [
-          Container(
-            height: MediaQuery.of(context).size.height * 0.30,
-            padding: const EdgeInsets.all(5),
-            child: Image.network(image),
-          ),
-          Container(
-            height: 190,
-            color: Colors.white,
-            width: MediaQuery.of(context).size.width * 0.97,
-            margin: const EdgeInsets.only(
-                //left: MediaQuery.of(context).size.width * 0.015),
-                ),
-            child: Column(children: [
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: Column(
+          children: [
+            //Image
+            Container(
+              height: MediaQuery.of(context).size.height * 0.30,
+              padding: const EdgeInsets.all(5),
+              child: Image.network(image),
+            ),
+            //Add To Cart Button
+            Container(
+              color: Colors.white,
+              width: MediaQuery.of(context).size.width * 0.97,
+              child: Column(
+                mainAxisSize: MainAxisSize.min, // Add this to prevent overflow.
                 children: [
-                  ElevatedButton(
-                      onPressed: () {
-                        final cartItem = CartItem(
-                            productId: productId.toString(),
-                            productName: productName,
-                            price: price,
-                            quantity: 1,
-                            stockQuantity: stockQuantity,
-                            image: image);
-                        cart.addItemToCart(cartItem);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          surfaceTintColor: Colors.white,
-                          backgroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 5),
-                          side: const BorderSide(
-                            width: 1.0,
-                            color: Colors.pinkAccent,
-                          ),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(8),
-                              bottomLeft: Radius.circular(8),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ElevatedButton(
+                          onPressed: () {
+                            final cartItem = CartItem(
+                                productId: productId.toString(),
+                                productName: productName,
+                                price: price,
+                                quantity: 1,
+                                stockQuantity: stockQuantity,
+                                image: image);
+                            cart.addItemToCart(cartItem);
+                          },
+                          style: ElevatedButton.styleFrom(
+                              surfaceTintColor: Colors.white,
+                              backgroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              side: const BorderSide(
+                                width: 1.0,
+                                color: Colors.pinkAccent,
+                              ),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topLeft: Radius.circular(8),
+                                  bottomLeft: Radius.circular(8),
+                                ),
+                              )),
+                          child: const Text(
+                            'Add To Cart +',
+                            style: TextStyle(
+                                color: Colors.pinkAccent, fontSize: 18),
+                          )),
+                      ElevatedButton(
+                          onPressed: () {
+                            final cartItem = CartItem(
+                                productId: productId.toString(),
+                                productName: productName,
+                                price: price,
+                                quantity: 1,
+                                stockQuantity: stockQuantity,
+                                image: image);
+                            cart.addItemToCart(cartItem);
+                          },
+                          style: ElevatedButton.styleFrom(
+                              surfaceTintColor: Colors.white,
+                              backgroundColor: Colors.pinkAccent,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 2, vertical: 5),
+                              side: const BorderSide(
+                                width: 1.0,
+                                color: Colors.pinkAccent,
+                              ),
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(
+                                  topRight: Radius.circular(8),
+                                  bottomRight: Radius.circular(8),
+                                ),
+                              )),
+                          child: Text(
+                            '\u{20B9}$price',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
                             ),
                           )),
-                      child: const Text(
-                        'Add To Cart +',
-                        style:
-                            TextStyle(color: Colors.pinkAccent, fontSize: 18),
-                      )),
-                  ElevatedButton(
-                      onPressed: () {
-                        final cartItem = CartItem(
-                            productId: productId.toString(),
-                            productName: productName,
-                            price: price,
-                            quantity: 1,
-                            stockQuantity: stockQuantity,
-                            image: image);
-                        cart.addItemToCart(cartItem);
-                      },
-                      style: ElevatedButton.styleFrom(
-                          surfaceTintColor: Colors.white,
-                          backgroundColor: Colors.pinkAccent,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 2, vertical: 5),
-                          side: const BorderSide(
-                            width: 1.0,
-                            color: Colors.pinkAccent,
-                          ),
-                          shape: const RoundedRectangleBorder(
-                            borderRadius: BorderRadius.only(
-                              topRight: Radius.circular(8),
-                              bottomRight: Radius.circular(8),
-                            ),
-                          )),
-                      child: Text(
-                        '\u{20B9}$price',
-                        style: const TextStyle(
-                          color: Colors.white,
+                    ],
+                  ),
+                  Container(
+                    padding:
+                        const EdgeInsets.only(left: 12.0, top: 10, bottom: 0.0),
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      'Bhagirathi',
+                      style: TextStyle(
                           fontSize: 14,
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    alignment: Alignment.centerLeft,
+                    child:
+                        Text(productName, style: const TextStyle(fontSize: 18)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.only(left: 10.0),
+                    alignment: Alignment.centerLeft,
+                    child: const Text('100g',
+                        style: TextStyle(fontSize: 13, color: Colors.black54)),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.only(left: 10.0, top: 8),
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        Text(
+                          '\u{20B9}$price',
+                          style: const TextStyle(
+                            fontSize: 18,
+                          ),
                         ),
-                      )),
+                        const SizedBox(width: 10),
+                        Text(
+                          '\u{20B9}${price * 1.2}',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4.0, vertical: 3.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(5),
+                            color: Colors.deepPurpleAccent,
+                          ),
+                          child: Text(
+                            '\u{20B9}${price * 0.2} Off',
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 15),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 15), // Use this for minimal spacing
+                  const Divider(
+                    height: 0,
+                  ),
+                  const ExpansionTile(
+                    title: Text("About This Product",
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    children: <Widget>[
+                      Padding(
+                        padding: EdgeInsets.zero,
+                        child: Text("Info"),
+                      )
+                    ],
+                  ),
+                  const Divider(
+                    height: 0,
+                  ),
+                  const SizedBox(
+                    height: 5,
+                  )
                 ],
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.5),
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'Brand',
-                  style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.deepPurple,
-                      fontWeight: FontWeight.bold),
+            ),
+            //Related Products
+            Container(
+              height: 200,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                gradient: const LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.center,
+                  colors: [Colors.white, Color.fromARGB(255, 251, 226, 255)],
                 ),
               ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.5),
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  productName,
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 2.5),
-                alignment: Alignment.centerLeft,
-                child: const Text(
-                  'Quantity',
-                  style: TextStyle(fontSize: 16, color: Colors.black54),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10.0,
-                  vertical: 2.5,
-                ),
-                alignment: Alignment.centerLeft,
-                child: Row(
-                  children: [
-                    const Text(
-                      'Price:',
-                      style: TextStyle(
-                        fontSize: 16,
-                      ),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.only(
+                        left: 19.0, top: 8.0, bottom: 8.0),
+                    alignment: Alignment.centerLeft,
+                    child: const Text(
+                      "You might also like",
+                      style:
+                          TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(width: 10),
-                    Text(
-                      '\u{20B9}$price',
-                      style: const TextStyle(
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(
-                        width: 5), // Add some spacing between the prices
-                    Text(
-                      '\u{20B9}${price * 1.2}', // Replace XXX with your original price
-                      style: const TextStyle(
-                        fontSize: 16,
-                        decoration: TextDecoration
-                            .lineThrough, // Add the strikethrough decoration
-                        decorationColor: Colors
-                            .pinkAccent, // Customize the strikethrough color
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ]),
-          ),
-          Container(
-            height: 250,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(5),
-              //border: Border.all(color: Colors.deepPurpleAccent, width: 2.0),
-              //color: const Color.fromARGB(255, 247, 227, 255)
-              // Add this line to set the blue border
-              gradient: const LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.center,
-                colors: [Colors.white, Color.fromARGB(255, 251, 226, 255)],
+                  ),
+                  const HorizontalScrollItems(),
+                ],
               ),
             ),
-          )
-          /*
-          Expanded(
-            child: ListView.builder(
-              itemCount: itemDescription.length,
-              itemExtent: 30,
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  padding: const EdgeInsets.symmetric(vertical: 0),
-                  margin: EdgeInsets.zero, // Adjust the vertical spacing here
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Container(
-                          alignment: Alignment.topLeft,
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 5, horizontal: 10),
-                          child: Text(
-                            itemDescription[index],
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        )
-                      ]),
-                );
-              },
-            ),
-          ),
-          */
-        ],
-      )),
+          ],
+        ),
+      ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shadowColor: Colors.white,
@@ -280,7 +287,7 @@ class Product extends StatelessWidget {
                   ],
                 ),
               ),
-              Expanded(
+              Flexible(
                 flex: 4,
                 child: ElevatedButton(
                   onPressed: () {
@@ -302,17 +309,39 @@ class Product extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4.0),
                     ),
                   ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons
-                          .shopping_cart_outlined), // Add your desired icon here
-                      SizedBox(
-                          width:
-                              10), // Add some spacing between the icon and text
-                      Text('Cart'),
-                    ],
-                  ),
+                  child: cart.numberOfItems > 0
+                      ? (cart.numberOfItems > 1
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shopping_cart_outlined),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('${cart.numberOfItems.toString()} Items'),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(Icons.shopping_cart_outlined),
+                                const SizedBox(
+                                  width: 10,
+                                ),
+                                Text('${cart.numberOfItems.toString()} Item'),
+                              ],
+                            ))
+                      : const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.shopping_cart_outlined),
+                            SizedBox(
+                              width: 10,
+                            ), // Add your desired icon here
+                            // Add some spacing between the icon and text
+                            Text('Cart'),
+                          ],
+                        ),
                 ),
               ),
             ],
@@ -410,6 +439,61 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         toolbarHeight: 130,
         // Add any other actions or widgets to the AppBar if needed.
         // For example, you can use actions to add buttons or icons.
+      ),
+    );
+  }
+}
+
+class TabBarApp extends StatelessWidget {
+  const TabBarApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      theme: ThemeData(useMaterial3: true),
+      home: const TabBarExample(),
+    );
+  }
+}
+
+class TabBarExample extends StatelessWidget {
+  const TabBarExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      initialIndex: 1,
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('TabBar Sample'),
+          bottom: const TabBar(
+            tabs: <Widget>[
+              Tab(
+                icon: Icon(Icons.cloud_outlined),
+              ),
+              Tab(
+                icon: Icon(Icons.beach_access_sharp),
+              ),
+              Tab(
+                icon: Icon(Icons.brightness_5_sharp),
+              ),
+            ],
+          ),
+        ),
+        body: const TabBarView(
+          children: <Widget>[
+            Center(
+              child: Text("It's cloudy here"),
+            ),
+            Center(
+              child: Text("It's rainy here"),
+            ),
+            Center(
+              child: Text("It's sunny here"),
+            ),
+          ],
+        ),
       ),
     );
   }
