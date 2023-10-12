@@ -115,11 +115,11 @@ func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	}
 
 	// Check if item with the same name already exists
-	existingItemQuery := `SELECT i.id, i.name, is.price, s.name, c.name, is.stock_quantity, 
-                          is.locked_quantity, ii.image_url, i.created_at, i.created_by 
+	existingItemQuery := `SELECT i.id, i.name, istore.price, s.name, c.name, istore.stock_quantity, 
+                          istore.locked_quantity, ii.image_url, i.created_at, i.created_by 
                           FROM item i 
-                          JOIN item_store is ON i.id = is.item_id 
-                          JOIN store s ON is.store_id = s.id 
+                          JOIN item_store istore ON i.id = istore.item_id 
+                          JOIN store s ON istore.store_id = s.id 
                           JOIN item_category ic ON i.id = ic.item_id 
                           JOIN category c ON ic.category_id = c.id 
                           JOIN item_image ii ON i.id = ii.item_id 
