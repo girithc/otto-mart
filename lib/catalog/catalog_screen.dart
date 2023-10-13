@@ -256,6 +256,7 @@ class _ListOfItemsState extends State<ListOfItems> {
                     return CategoryItem(
                       categoryID: widget.categories[index].id,
                       categoryName: widget.categories[index].name,
+                      categoryImage: widget.categories[index].image,
                       isSelected: widget.categories[index].id == categoryId
                           ? true
                           : false,
@@ -359,30 +360,46 @@ class _ItemCatalogState extends State<ItemCatalog> {
 class CategoryItem extends StatelessWidget {
   final int categoryID;
   final String categoryName;
+  final String categoryImage;
   final bool isSelected;
 
   const CategoryItem(
       {required this.categoryID,
       required this.categoryName,
+      required this.categoryImage,
       required this.isSelected,
       super.key});
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      splashColor: Colors.white,
+      splashColor: const Color.fromRGBO(206, 157, 255, 1),
       selected: isSelected ? true : false,
-      selectedTileColor: Colors.purpleAccent,
-      selectedColor: Colors.white,
+      textColor: Colors.black,
+      selectedColor: Colors.black,
       contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
       title: Center(
-          child: Text(
-        categoryName,
-        textAlign: TextAlign.center,
-        style: isSelected
-            ? const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)
-            : const TextStyle(fontSize: 12),
-      )),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              categoryName,
+              textAlign: TextAlign.center,
+              style: isSelected
+                  ? const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)
+                  : const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(
+                height:
+                    3.0), // Optional: to provide some space between the text and image
+            Image.network(
+              categoryImage,
+              fit: BoxFit.cover,
+              height: 50.0,
+            ) // Replace 'categoryImage' with your image URL variable
+          ],
+        ),
+      ),
       onTap: () {
         final catalogProvider = context.read<CatalogProvider>();
         catalogProvider.setCatalog(Catalog(

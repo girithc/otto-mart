@@ -175,7 +175,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 delegate: SliverChildBuilderDelegate(
                   (BuildContext context, int index) {
                     return _buildCategoryContainer(
-                        context, categories[index].id, categories[index].name);
+                        context,
+                        categories[index].id,
+                        categories[index].name,
+                        categories[index].image);
                   },
                   childCount: categories.length,
                 ),
@@ -189,7 +192,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildCategoryContainer(
-      BuildContext context, int categoryID, String categoryName) {
+      BuildContext context, int categoryID, String categoryName, String image) {
     return GestureDetector(
       onTap: () => {
         Navigator.push(
@@ -215,12 +218,23 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         padding: const EdgeInsets.all(8),
-        child: Text(
-          categoryName,
-          style: GoogleFonts.cantoraOne(
-            fontSize: 13,
-            fontStyle: FontStyle.normal,
-            color: Colors.black,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                categoryName,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(
+                  height:
+                      3.0), // Optional: to provide some space between the text and image
+              Image.network(
+                image,
+                fit: BoxFit.cover,
+                height: 40.0,
+              ) // Replace 'categoryImage' with your image URL variable
+            ],
           ),
         ),
       ),
