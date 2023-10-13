@@ -17,7 +17,7 @@ func (s *Server) Handle_Create_Category(res http.ResponseWriter, req *http.Reque
 		return err
 	}
 
-	new_category, err := types.New_Category(new_req.Name)
+	new_category, err := types.New_Category(new_req.Name, new_req.Image, new_req.Promotion)
 	if err != nil {
 		return err
 	}

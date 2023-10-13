@@ -15,7 +15,8 @@ func (s *PostgresStore) Create_Category_Table() error {
 
 	query := `create table if not exists category (
 		id SERIAL PRIMARY KEY,
-    	name VARCHAR(100) NOT NULL UNIQUE,
+    	name VARCHAR(100) NOT NULL UNIQUE,      
+		promotion BOOLEAN DEFAULT FALSE,        
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		created_by INT
 	)`
@@ -27,16 +28,39 @@ func (s *PostgresStore) Create_Category_Table() error {
 	return err
 }
 
+func (s *PostgresStore) Create_Category_Image_Table() error {
+	query := `
+	create table if not exists category_image (
+		category_id INT REFERENCES category(id),
+		image TEXT NOT NULL,
+		position INT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		created_by INT,
+		PRIMARY KEY (category_id, position)
+	)`
+
+	_, err := s.db.Exec(query)
+	return err
+}
+
 func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, error) {
+	tx, err := s.db.Begin()
+
+	var result *types.Category
+
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// 1. Check if a category with the same name already exists
 	checkQuery := `SELECT id, name, created_at, created_by FROM category WHERE name = $1`
-	rows, err := s.db.Query(checkQuery, hlc.Name)
+	rows, err := tx.Query(checkQuery, hlc.Name)
 	if err != nil {
 		return nil, err
 	}
 
 	existingCats := []*types.Category{}
-
 	for rows.Next() {
 		existingCat, err := scan_Into_Category(rows)
 		if err != nil && err != sql.ErrNoRows {
@@ -50,47 +74,64 @@ func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, e
 		return existingCats[0], nil
 	}
 
-	query := `insert into category
-	(name, created_by) 
-	values ($1, $2) returning id, name, created_at, created_by
-	`
-	rows, err = s.db.Query(
-		query,
-		hlc.Name,
-		hlc.Created_By)
+	categoryInsertQuery := `
+    INSERT INTO category (name, promotion, created_by) 
+    VALUES ($1, $2, $3) 
+    RETURNING id, name, created_at, created_by`
 
-	fmt.Println("CheckPoint 1")
-
+	// var categoryID int
+	err = tx.QueryRow(categoryInsertQuery, hlc.Name, hlc.Promotion, hlc.Created_By).Scan(&result.ID, &result.Name, &result.Created_At, &result.Created_By)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("CheckPoint 2")
+	// hlc.ID = categoryID
 
-	categories := []*types.Category{}
+	// Inserting default image at position 1 in category_image and returning the fields
+	imageInsertQuery := `
+    INSERT INTO category_image (category_id, image, position, created_by)
+    VALUES ($1, $2, $3, $4)
+    RETURNING category_id, image, position`
 
-	for rows.Next() {
-		category, err := scan_Into_Category(rows)
-		if err != nil {
-			return nil, err
-		}
-		categories = append(categories, category)
+	err = tx.QueryRow(imageInsertQuery, hlc.ID, hlc.Image, 1, hlc.Created_By).Scan(&result.Image, &result.Position)
+	if err != nil {
+		return nil, err
 	}
 
-	fmt.Println("CheckPoint 3")
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
 
-	return categories[0], nil
+	return result, nil
 }
 
 func (s *PostgresStore) Get_Categories() ([]*types.Category, error) {
-	rows, err := s.db.Query("select * from category")
+	query := `
+	SELECT c.id, c.name, c.promotion, ci.image, ci.position, c.created_at, c.created_by 
+	FROM category c
+	LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
+	`
+
+	rows, err := s.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	categories := []*types.Category{}
 	for rows.Next() {
-		category, err := scan_Into_Category(rows)
+		category := &types.Category{}
+		err := rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.Promotion,
+			&category.Image,
+			&category.Position,
+			&category.Created_At,
+			&category.Created_By,
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +162,11 @@ func (s *PostgresStore) Get_Category_By_Parent_ID(id int) ([]*types.Update_Categ
 		log.Fatal(err)
 	}
 
-	categoryQuery := "select name, id from category where id = ANY($1::integer[])"
+	categoryQuery := `
+	SELECT c.name, c.id, ci.image 
+	FROM category c 
+	LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1 
+	WHERE c.id = ANY($1::integer[])`
 
 	rows, err = s.db.Query(categoryQuery, pq.Array(childIDs))
 	if err != nil {
@@ -133,7 +178,8 @@ func (s *PostgresStore) Get_Category_By_Parent_ID(id int) ([]*types.Update_Categ
 	categories := []*types.Update_Category{}
 
 	for rows.Next() {
-		category, err := scan_Into_Update_Category(rows)
+		category := &types.Update_Category{}
+		err := rows.Scan(&category.Name, &category.ID, &category.Image)
 		if err != nil {
 			return nil, err
 		}
