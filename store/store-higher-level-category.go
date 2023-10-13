@@ -26,65 +26,108 @@ func (s *PostgresStore) CreateHigherLevelCategoryTable() error {
 	return err
 }
 
+func (s *PostgresStore) CreateHigherLevelCategoryImageTable() error {
+	query := `
+	create table if not exists higher_level_category_image (
+		higher_level_category_id INT REFERENCES higher_level_category(id),
+		image TEXT NOT NULL,
+		position INT NOT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		created_by INT,
+		PRIMARY KEY (higher_level_category_id, position)
+	)`
+
+	_, err := s.db.Exec(query)
+	return err
+}
+
 func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Category) (*types.Higher_Level_Category, error) {
-	// 1. Check if a higher_level_category with the same name already exists
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// 1. Check if a category with the same name already exists
 	checkQuery := `SELECT id, name, created_at, created_by FROM higher_level_category WHERE name = $1`
-	rows, err := s.db.Query(checkQuery, hlc.Name)
-	if err != nil {
-		return nil, err
-	}
+	existingCat := &types.Higher_Level_Category{}
+	err = tx.QueryRow(checkQuery, hlc.Name).Scan(&existingCat.ID, &existingCat.Name, &existingCat.Created_At, &existingCat.Created_By)
 
-	existingHLCs := []*types.Higher_Level_Category{}
-	for rows.Next() {
-		existingHLC, err := scan_Into_Higher_Level_Category(rows)
-		if err != nil && err != sql.ErrNoRows {
-			return nil, err
-		}
-		existingHLCs = append(existingHLCs, existingHLC)
-	}
-
-	// 2. Return the existing higher_level_category if found
-	if len(existingHLCs) > 0 {
-		return existingHLCs[0], nil
-	}
-
-	query := `INSERT INTO higher_level_category
-        (name, created_by) 
-        VALUES ($1, $2) RETURNING id, name, created_at, created_by`
-
-	rows, err = s.db.Query(query, hlc.Name, hlc.Created_By)
-	if err != nil {
-		return nil, err
-	}
-
-	higher_level_categories := []*types.Higher_Level_Category{}
-	for rows.Next() {
-		higher_level_category, err := scan_Into_Higher_Level_Category(rows)
+	// If category is found, then also fetch the image info
+	if err == nil {
+		imageQuery := `SELECT image, position FROM higher_level_category_image WHERE higher_level_category_id = $1`
+		err = tx.QueryRow(imageQuery, existingCat.ID).Scan(&existingCat.Image, &existingCat.Position)
 		if err != nil {
 			return nil, err
 		}
-		higher_level_categories = append(higher_level_categories, higher_level_category)
+		return existingCat, nil
+	} else if err != sql.ErrNoRows {
+		return nil, err
 	}
 
-	return higher_level_categories[0], nil
+	// 2. If no existing category is found, then insert new category
+	categoryInsertQuery := `
+	INSERT INTO higher_level_category (name, created_by) 
+	VALUES ($1, $2) 
+	RETURNING id, name, created_at, created_by`
+
+	result := &types.Higher_Level_Category{}
+	err = tx.QueryRow(categoryInsertQuery, hlc.Name, hlc.Created_By).Scan(&result.ID, &result.Name, &result.Created_At, &result.Created_By)
+	if err != nil {
+		return nil, err
+	}
+
+	// Inserting default image at position 1 in category_image and returning the fields
+	imageInsertQuery := `
+	INSERT INTO higher_level_category_image (higher_level_category_id, image, position, created_by)
+	VALUES ($1, $2, $3, $4)
+	RETURNING image, position`
+
+	err = tx.QueryRow(imageInsertQuery, result.ID, hlc.Image, 1, hlc.Created_By).Scan(&result.Image, &result.Position)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (s *PostgresStore) Get_Higher_Level_Categories() ([]*types.Higher_Level_Category, error) {
-	rows, err := s.db.Query("select * from higher_level_category")
+	query := `
+	SELECT c.id, c.name, ci.image, ci.position, c.created_at, c.created_by 
+	FROM higher_level_category c
+	LEFT JOIN higher_level_category_image ci ON c.id = ci.higher_level_category_id AND ci.position = 1
+	`
+
+	rows, err := s.db.Query(query)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
-	higher_level_categories := []*types.Higher_Level_Category{}
+	categories := []*types.Higher_Level_Category{}
 	for rows.Next() {
-		higher_level_category, err := scan_Into_Higher_Level_Category(rows)
+		category := &types.Higher_Level_Category{}
+		err := rows.Scan(
+			&category.ID,
+			&category.Name,
+			&category.Image,
+			&category.Position,
+			&category.Created_At,
+			&category.Created_By,
+		)
 		if err != nil {
 			return nil, err
 		}
-		higher_level_categories = append(higher_level_categories, higher_level_category)
+		categories = append(categories, category)
 	}
 
-	return higher_level_categories, nil
+	return categories, nil
 }
 
 func (s *PostgresStore) Get_Higher_Level_Category_By_ID(id int) (*types.Higher_Level_Category, error) {

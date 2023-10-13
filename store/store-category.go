@@ -45,55 +45,47 @@ func (s *PostgresStore) Create_Category_Image_Table() error {
 
 func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, error) {
 	tx, err := s.db.Begin()
-
-	var result *types.Category
-
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
 	// 1. Check if a category with the same name already exists
-	checkQuery := `SELECT id, name, created_at, created_by FROM category WHERE name = $1`
-	rows, err := tx.Query(checkQuery, hlc.Name)
-	if err != nil {
-		return nil, err
-	}
+	checkQuery := `SELECT id, name, promotion, created_at, created_by FROM category WHERE name = $1`
+	existingCat := &types.Category{}
+	err = tx.QueryRow(checkQuery, hlc.Name).Scan(&existingCat.ID, &existingCat.Name, &existingCat.Promotion, &existingCat.Created_At, &existingCat.Created_By)
 
-	existingCats := []*types.Category{}
-	for rows.Next() {
-		existingCat, err := scan_Into_Category(rows)
-		if err != nil && err != sql.ErrNoRows {
+	// If category is found, then also fetch the image info
+	if err == nil {
+		imageQuery := `SELECT image, position FROM category_image WHERE category_id = $1`
+		err = tx.QueryRow(imageQuery, existingCat.ID).Scan(&existingCat.Image, &existingCat.Position)
+		if err != nil {
 			return nil, err
 		}
-		existingCats = append(existingCats, existingCat)
-	}
-
-	// 2. Return the existing category if found
-	if len(existingCats) > 0 {
-		return existingCats[0], nil
-	}
-
-	categoryInsertQuery := `
-    INSERT INTO category (name, promotion, created_by) 
-    VALUES ($1, $2, $3) 
-    RETURNING id, name, created_at, created_by`
-
-	// var categoryID int
-	err = tx.QueryRow(categoryInsertQuery, hlc.Name, hlc.Promotion, hlc.Created_By).Scan(&result.ID, &result.Name, &result.Created_At, &result.Created_By)
-	if err != nil {
+		return existingCat, nil
+	} else if err != sql.ErrNoRows {
 		return nil, err
 	}
 
-	// hlc.ID = categoryID
+	// 2. If no existing category is found, then insert new category
+	categoryInsertQuery := `
+	INSERT INTO category (name, promotion, created_by) 
+	VALUES ($1, $2, $3) 
+	RETURNING id, name, promotion, created_at, created_by`
+
+	result := &types.Category{}
+	err = tx.QueryRow(categoryInsertQuery, hlc.Name, hlc.Promotion, hlc.Created_By).Scan(&result.ID, &result.Name, &result.Promotion, &result.Created_At, &result.Created_By)
+	if err != nil {
+		return nil, err
+	}
 
 	// Inserting default image at position 1 in category_image and returning the fields
 	imageInsertQuery := `
-    INSERT INTO category_image (category_id, image, position, created_by)
-    VALUES ($1, $2, $3, $4)
-    RETURNING category_id, image, position`
+	INSERT INTO category_image (category_id, image, position, created_by)
+	VALUES ($1, $2, $3, $4)
+	RETURNING image, position`
 
-	err = tx.QueryRow(imageInsertQuery, hlc.ID, hlc.Image, 1, hlc.Created_By).Scan(&result.Image, &result.Position)
+	err = tx.QueryRow(imageInsertQuery, result.ID, hlc.Image, 1, hlc.Created_By).Scan(&result.Image, &result.Position)
 	if err != nil {
 		return nil, err
 	}

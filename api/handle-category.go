@@ -11,6 +11,7 @@ import (
 
 func (s *Server) Handle_Create_Category(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.Create_Category)
+	print("Entered Create Category")
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in CreateCategory()")

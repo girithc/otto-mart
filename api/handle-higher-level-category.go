@@ -16,7 +16,7 @@ func (s *Server) Handle_Create_Higher_Level_Category(res http.ResponseWriter, re
 		return err
 	}
 
-	new_higher_level_category, err := types.New_Higher_Level_Category(new_req.Name)
+	new_higher_level_category, err := types.New_Higher_Level_Category(new_req.Name, new_req.Image)
 	if err != nil {
 		return err
 	}

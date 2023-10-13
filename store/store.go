@@ -76,6 +76,13 @@ func (s *PostgresStore) Init() error {
 		fmt.Println("Success - Created Category Table")
 	}
 
+	errCategoryImage := s.Create_Category_Image_Table()
+	if errCategoryImage != nil {
+		return errCategoryImage
+	} else {
+		fmt.Println("Success - Created Category_Image Table")
+	}
+
 	errStore := s.CreateStoreTable()
 	if errStore != nil {
 		return errStore
@@ -137,6 +144,13 @@ func (s *PostgresStore) Init() error {
 		return errHigherLevelCategory
 	} else {
 		fmt.Println("Success - Created Higher Level Category Table")
+	}
+
+	errHigherLevelCategoryImage := s.CreateHigherLevelCategoryImageTable()
+	if errHigherLevelCategoryImage != nil {
+		return errHigherLevelCategoryImage
+	} else {
+		fmt.Println("Success - Created Higher Level Category Image Table")
 	}
 
 	errCategoryHigherLevelMapping := s.Create_Category_Higher_Level_Mapping_Table()
