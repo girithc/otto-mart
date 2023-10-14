@@ -69,18 +69,21 @@ func (s *PostgresStore) CreateItemImageTable() error {
 }
 
 func (s *PostgresStore) CreateItemStoreTable() error {
-	// fmt.Println("Entered CreateItemTable")
-
-	query := `create table if not exists item_store(
-		item_id INT REFERENCES item(id) ON DELETE CASCADE,
-		price DECIMAL(10, 2) NOT NULL,
-		store_id INT REFERENCES store(id) ON DELETE CASCADE,
-		stock_quantity INT NOT NULL,
-		locked_quantity INT DEFAULT 0,
-		PRIMARY KEY(item_id, store_id),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		created_by INT
-	)`
+	query := `
+		CREATE TABLE IF NOT EXISTS item_store (
+			item_id INT REFERENCES item(id) ON DELETE CASCADE,
+			mrp_price DECIMAL(10, 2) NOT NULL,
+			store_price DECIMAL(10, 2) NOT NULL,
+			discount DECIMAL(10, 2) NOT NULL,
+			store_id INT REFERENCES store(id) ON DELETE CASCADE,
+			stock_quantity INT NOT NULL,
+			locked_quantity INT DEFAULT 0,
+			PRIMARY KEY (item_id, store_id),
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			created_by INT,
+			CHECK (mrp_price = store_price + discount) -- Constraint to enforce the equality
+		)
+	`
 
 	_, err := s.db.Exec(query)
 	if err != nil {
@@ -89,6 +92,7 @@ func (s *PostgresStore) CreateItemStoreTable() error {
 
 	return err
 }
+
 
 func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	tx, err := s.db.Begin()
