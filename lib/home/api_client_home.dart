@@ -24,19 +24,17 @@ class HomeApiClient {
     }
   }
 
-  Future<List<Category>> fetchPromotions(int id) async {
+  Future<List<Category>> fetchPromotions() async {
     var url = Uri.parse('$baseUrl/category');
 
-    if (id == 0) {
-      throw Exception('(CatalogApiClient) Parameters are not valid');
-    }
-
-    var queryParams = {'promotion': true};
+    var queryParams = {'promotion': "true"};
     url = url.replace(queryParameters: queryParams);
 
     http.Response response = await http.get(url);
+    //print("Response200 ${response.body}");
 
     if (response.statusCode == 200) {
+      print("Response200 ${response.body}");
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Category> categories =
           jsonData.map((item) => Category.fromJson(item)).toList();
