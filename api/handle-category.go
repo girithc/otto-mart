@@ -33,10 +33,19 @@ func (s *Server) Handle_Create_Category(res http.ResponseWriter, req *http.Reque
 func (s *Server) Handle_Get_Categories(res http.ResponseWriter, req *http.Request) error {
 	// check if req has empty url param
 	hlc_id := req.URL.Query().Get("id")
+	hlc_promotion := req.URL.Query().Get("promotion")
 
 	// Check if URL Param is empty or 0
 	if hlc_id == "" || hlc_id == "0" {
-		categories, err := s.store.Get_Categories()
+		if hlc_promotion == "true" {
+			categories, err := s.store.Get_Categories(true)
+			if err != nil {
+				return err
+			}
+
+			return WriteJSON(res, http.StatusOK, categories)
+		}
+		categories, err := s.store.Get_Categories(false)
 		if err != nil {
 			return err
 		}

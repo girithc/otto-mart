@@ -99,14 +99,15 @@ func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, e
 	return result, nil
 }
 
-func (s *PostgresStore) Get_Categories() ([]*types.Category, error) {
+func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error) {
 	query := `
 	SELECT c.id, c.name, c.promotion, ci.image, ci.position, c.created_at, c.created_by 
 	FROM category c
 	LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
+	WHERE c.promotion = $1
 	`
 
-	rows, err := s.db.Query(query)
+	rows, err := s.db.Query(query, promotion)
 	if err != nil {
 		return nil, err
 	}
