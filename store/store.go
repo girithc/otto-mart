@@ -97,6 +97,11 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Store Table")
 
+	if err := s.CreateBrandTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Brand Table")
+
 	if err := s.CreateItemTable(tx); err != nil {
 		return err
 	}

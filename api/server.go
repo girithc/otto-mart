@@ -48,6 +48,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
 
 	http.HandleFunc("/address", makeHTTPHandleFunc(s.handleAddress))
+	http.HandleFunc("/brand", makeHTTPHandleFunc(s.handleBrand))
 
 	fmt.Println("Listening PORT", s.listen_address)
 

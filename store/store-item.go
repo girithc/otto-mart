@@ -15,13 +15,14 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	query := `create table if not exists item(
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
+		brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		created_by INT
 	)`
 
 	_, err := tx.Exec(query)
 	if err != nil {
-		return fmt.Errorf("error creating item table: %w", err)
+		return fmt.Errorf("error creating brand table: %w", err)
 	}
 
 	return err
@@ -57,7 +58,7 @@ func (s *PostgresStore) CreateItemImageTable(tx *sql.Tx) error {
 			order_position INT NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 			created_by INT,
-			UNIQUE (item_id, order_position)   -- Ensure each image has a distinct order for each item
+			UNIQUE (item_id, order_position)  
 		)`
 
 	_, err := tx.Exec(query)
@@ -119,7 +120,7 @@ func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	}
 
 	// Check if item with the same name already exists
-	existingItemQuery := `SELECT i.id, i.name, istore.price, s.name, c.name, istore.stock_quantity, 
+	existingItemQuery := `SELECT i.id, i.name, istore.mrp_price, s.name, c.name, istore.stock_quantity, 
                           istore.locked_quantity, ii.image_url, i.created_at, i.created_by 
                           FROM item i 
                           JOIN item_store istore ON i.id = istore.item_id 
@@ -206,14 +207,14 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
 
 	query := `
 	SELECT 
-	i.id, i.name, istore.price, istore.store_id, istore.stock_quantity, istore.locked_quantity, i.created_at, i.created_by,
+	i.id, i.name, istore.mrp_price, istore.store_id, istore.stock_quantity, istore.locked_quantity, i.created_at, i.created_by,
 	array_agg(ic.category_id) as category_ids,
 	array_agg(ii.image_url) as images
 	FROM item i
 	LEFT JOIN item_store istore ON i.id = istore.item_id
 	LEFT JOIN item_category ic ON i.id = ic.item_id
 	LEFT JOIN item_image ii ON i.id = ii.item_id
-	GROUP BY i.id, istore.price, istore.store_id, istore.stock_quantity, istore.locked_quantity
+	GROUP BY i.id, istore.mrp_price, istore.store_id, istore.stock_quantity, istore.locked_quantity
 	ORDER BY i.id
 
 	`
@@ -281,7 +282,7 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 	}
 
 	query := `
-	SELECT i.id, i.name, istore.price, istore.store_id, ic.category_id, ii.image_url, istore.stock_quantity
+	SELECT i.id, i.name, istore.mrp_price, istore.store_id, ic.category_id, ii.image_url, istore.stock_quantity
 	FROM item i
 	JOIN item_category ic ON i.id = ic.item_id
 	JOIN item_store istore ON i.id = istore.item_id
