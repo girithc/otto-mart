@@ -69,29 +69,31 @@ func (s *PostgresStore) CreateItemImageTable() error {
 }
 
 func (s *PostgresStore) CreateItemStoreTable() error {
-	query := `
-		CREATE TABLE IF NOT EXISTS item_store (
-			item_id INT REFERENCES item(id) ON DELETE CASCADE,
-			mrp_price DECIMAL(10, 2) NOT NULL,
-			store_price DECIMAL(10, 2) NOT NULL,
-			discount DECIMAL(10, 2) NOT NULL,
-			store_id INT REFERENCES store(id) ON DELETE CASCADE,
-			stock_quantity INT NOT NULL,
-			locked_quantity INT DEFAULT 0,
-			PRIMARY KEY (item_id, store_id),
-			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-			created_by INT,
-			CHECK (mrp_price = store_price + discount) -- Constraint to enforce the equality
-		)
-	`
+    query := `
+        CREATE TABLE IF NOT EXISTS item_store (
+            id SERIAL PRIMARY KEY,
+            item_id INT REFERENCES item(id) ON DELETE CASCADE,
+            mrp_price DECIMAL(10, 2) NOT NULL,
+            store_price DECIMAL(10, 2) NOT NULL,
+            discount DECIMAL(10, 2) NOT NULL,
+            store_id INT REFERENCES store(id) ON DELETE CASCADE,
+            stock_quantity INT NOT NULL,
+            locked_quantity INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_by INT,
+            CHECK (mrp_price = store_price + discount),
+            UNIQUE (item_id, store_id) 
+        )
+    `
 
-	_, err := s.db.Exec(query)
-	if err != nil {
-		return fmt.Errorf("error creating item_store table: %w", err)
-	}
+    _, err := s.db.Exec(query)
+    if err != nil {
+        return fmt.Errorf("error creating item_store table: %w", err)
+    }
 
-	return err
+    return err
 }
+
 
 
 func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {

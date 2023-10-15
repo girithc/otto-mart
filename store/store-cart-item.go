@@ -10,7 +10,7 @@ import (
 )
 
 func (s *PostgresStore) CreateCartItemTable() error {
-	// fmt.Println("Entered CreateCartItemTable")
+	fmt.Println("Entered CreateCartItemTable")
 
 	query := `create table if not exists cart_item (
 		id SERIAL PRIMARY KEY,
