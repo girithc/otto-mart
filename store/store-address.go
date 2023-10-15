@@ -1,8 +1,12 @@
 package store
 
-import "github.com/girithc/pronto-go/types"
+import (
+	"database/sql"
 
-func (s *PostgresStore) CreateAddressTable() error {
+	"github.com/girithc/pronto-go/types"
+)
+
+func (s *PostgresStore) CreateAddressTable(tx *sql.Tx) error {
 	// Create the address table without the partial unique constraint
 	tableQuery := `
     CREATE TABLE IF NOT EXISTS address (
@@ -32,7 +36,7 @@ func (s *PostgresStore) CreateAddressTable() error {
     ON address (customer_id) WHERE (is_default IS TRUE)
     `
 
-	_, err = s.db.Exec(indexQuery)
+	_, err = tx.Exec(indexQuery)
 	if err != nil {
 		return err
 	}

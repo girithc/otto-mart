@@ -10,10 +10,10 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateCustomerTable() error {
+func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateCustomerTable")
 
-	query := `create table if not exists customer (
+	query := `create table if not exists customer(
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
 		phone VARCHAR(10) UNIQUE NOT NULL, 
@@ -21,7 +21,7 @@ func (s *PostgresStore) CreateCustomerTable() error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateCustomerTable")
 
@@ -35,8 +35,10 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 		return nil, err
 	}
 	defer func() {
-		if r := recover(); r != nil { // This catches panics along with Rollback in case of an error.
+		if err != nil {
 			tx.Rollback()
+		} else {
+			tx.Commit()
 		}
 	}()
 

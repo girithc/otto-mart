@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateCartItemTable() error {
+func (s *PostgresStore) CreateCartItemTable(tx *sql.Tx) error {
 	fmt.Println("Entered CreateCartItemTable")
 
 	query := `create table if not exists cart_item (
@@ -19,14 +19,14 @@ func (s *PostgresStore) CreateCartItemTable() error {
 		quantity INT NOT NULL 
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateCartItemTable")
 
 	return err
 }
 
-func (s *PostgresStore) SetCartItemForeignKeys() error {
+func (s *PostgresStore) SetCartItemForeignKeys(tx *sql.Tx) error {
 	// Add foreign key constraint to the already created table
 	query := `
 	DO $$
@@ -44,7 +44,7 @@ func (s *PostgresStore) SetCartItemForeignKeys() error {
 	$$;
 	`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 	return err
 }
 

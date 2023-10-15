@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateHigherLevelCategoryTable() error {
+func (s *PostgresStore) CreateHigherLevelCategoryTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateHigherLevelCategoryTable")
 
 	query := `create table if not exists higher_level_category (
@@ -19,14 +19,14 @@ func (s *PostgresStore) CreateHigherLevelCategoryTable() error {
 		created_by INT
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateHigherLevelCategoryTable")
 
 	return err
 }
 
-func (s *PostgresStore) CreateHigherLevelCategoryImageTable() error {
+func (s *PostgresStore) CreateHigherLevelCategoryImageTable(tx *sql.Tx) error {
 	query := `
 	create table if not exists higher_level_category_image (
 		higher_level_category_id INT REFERENCES higher_level_category(id),
@@ -37,7 +37,7 @@ func (s *PostgresStore) CreateHigherLevelCategoryImageTable() error {
 		PRIMARY KEY (higher_level_category_id, position)
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 	return err
 }
 

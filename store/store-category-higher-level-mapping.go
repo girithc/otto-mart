@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) Create_Category_Higher_Level_Mapping_Table() error {
+func (s *PostgresStore) Create_Category_Higher_Level_Mapping_Table(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateCategoryHigherLevelMappingTable")
 
 	query := `create table if not exists category_higher_level_mapping (
@@ -22,7 +22,7 @@ func (s *PostgresStore) Create_Category_Higher_Level_Mapping_Table() error {
 		UNIQUE(higher_level_category_id, category_id)
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateCategoryHigherLevelMappingTable")
 

@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateSalesOrderTable() error {
+func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists sales_order (
@@ -21,7 +21,7 @@ func (s *PostgresStore) CreateSalesOrderTable() error {
 		order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateItemTable")
 

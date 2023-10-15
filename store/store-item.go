@@ -9,7 +9,7 @@ import (
 	"github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateItemTable() error {
+func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists item(
@@ -19,7 +19,7 @@ func (s *PostgresStore) CreateItemTable() error {
 		created_by INT
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating item table: %w", err)
 	}
@@ -27,7 +27,7 @@ func (s *PostgresStore) CreateItemTable() error {
 	return err
 }
 
-func (s *PostgresStore) CreateItemCategoryTable() error {
+func (s *PostgresStore) CreateItemCategoryTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists item_category(
@@ -38,7 +38,7 @@ func (s *PostgresStore) CreateItemCategoryTable() error {
 		created_by INT
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating item_category table: %w", err)
 	}
@@ -46,7 +46,7 @@ func (s *PostgresStore) CreateItemCategoryTable() error {
 	return err
 }
 
-func (s *PostgresStore) CreateItemImageTable() error {
+func (s *PostgresStore) CreateItemImageTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateItemTable")
 
 	query := `
@@ -60,7 +60,7 @@ func (s *PostgresStore) CreateItemImageTable() error {
 			UNIQUE (item_id, order_position)   -- Ensure each image has a distinct order for each item
 		)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 	if err != nil {
 		return fmt.Errorf("error creating item_image table: %w", err)
 	}
@@ -68,8 +68,8 @@ func (s *PostgresStore) CreateItemImageTable() error {
 	return err
 }
 
-func (s *PostgresStore) CreateItemStoreTable() error {
-    query := `
+func (s *PostgresStore) CreateItemStoreTable(tx *sql.Tx) error {
+	query := `
         CREATE TABLE IF NOT EXISTS item_store (
             id SERIAL PRIMARY KEY,
             item_id INT REFERENCES item(id) ON DELETE CASCADE,
@@ -86,15 +86,13 @@ func (s *PostgresStore) CreateItemStoreTable() error {
         )
     `
 
-    _, err := s.db.Exec(query)
-    if err != nil {
-        return fmt.Errorf("error creating item_store table: %w", err)
-    }
+	_, err := tx.Exec(query)
+	if err != nil {
+		return fmt.Errorf("error creating item_store table: %w", err)
+	}
 
-    return err
+	return err
 }
-
-
 
 func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	tx, err := s.db.Begin()

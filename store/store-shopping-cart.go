@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateShoppingCartTable() error {
+func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
 	query := `create table if not exists shopping_cart (
 		id SERIAL PRIMARY KEY,
     	customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
@@ -19,7 +19,7 @@ func (s *PostgresStore) CreateShoppingCartTable() error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     	CONSTRAINT unique_active_cart_per_user UNIQUE (customer_id, active)
 	)`
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 	return err
 }
 

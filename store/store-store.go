@@ -9,7 +9,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateStoreTable() error {
+func (s *PostgresStore) CreateStoreTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateStoreTable")
 
 	query := `create table if not exists store (
@@ -20,7 +20,7 @@ func (s *PostgresStore) CreateStoreTable() error {
 		created_by INT	
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateStoreTable")
 

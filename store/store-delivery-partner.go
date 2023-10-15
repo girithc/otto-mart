@@ -8,7 +8,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func (s *PostgresStore) CreateDeliveryPartnerTable() error {
+func (s *PostgresStore) CreateDeliveryPartnerTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateItemTable")
 
 	query := `create table if not exists delivery_partner(
@@ -21,7 +21,7 @@ func (s *PostgresStore) CreateDeliveryPartnerTable() error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
-	_, err := s.db.Exec(query)
+	_, err := tx.Exec(query)
 
 	// fmt.Println("Exiting CreateItemTable")
 

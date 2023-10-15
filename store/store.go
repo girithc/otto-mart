@@ -67,126 +67,105 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 }
 
 func (s *PostgresStore) Init() error {
-	// fmt.Println("Entered Init() -- db.go")
-
-	errCategory := s.Create_Category_Table()
-	if errCategory != nil {
-		return errCategory
-	} else {
-		fmt.Println("Success - Created Category Table")
+	// Start a new transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
 	}
 
-	errCategoryImage := s.Create_Category_Image_Table()
-	if errCategoryImage != nil {
-		return errCategoryImage
-	} else {
-		fmt.Println("Success - Created Category_Image Table")
+	// Define a deferred function to handle the transaction's commit or rollback
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	if err := s.Create_Category_Table(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Category Table")
+
+	if err := s.Create_Category_Image_Table(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Category_Image Table")
+
+	if err := s.CreateStoreTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Store Table")
+
+	if err := s.CreateItemTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Table")
+
+	if err := s.CreateItemCategoryTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Category Table")
+
+	if err := s.CreateItemImageTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Image Table")
+
+	if err := s.CreateItemStoreTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Store Table")
+
+	if err := s.CreateCustomerTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Customer Table")
+
+	if err := s.CreateAddressTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Address Table")
+
+	if err := s.CreateCartItemTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Cart Item Table")
+
+	if err := s.CreateHigherLevelCategoryTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Higher Level Category Table")
+
+	if err := s.CreateHigherLevelCategoryImageTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Higher Level Category Image Table")
+
+	if err := s.Create_Category_Higher_Level_Mapping_Table(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Category Higher Level Mapping Table")
+
+	if err := s.CreateDeliveryPartnerTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Delivery Partner Table")
+
+	if err := s.CreateShoppingCartTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Shopping Cart Table")
+
+	if err := s.SetCartItemForeignKeys(tx); err != nil {
+		return err
 	}
 
-	errStore := s.CreateStoreTable()
-	if errStore != nil {
-		return errStore
-	} else {
-		fmt.Println("Success - Created Store Table")
+	if err := s.CreateSalesOrderTable(tx); err != nil {
+		return err
 	}
+	fmt.Println("Success - Created Sales Order Table")
 
-	errItem := s.CreateItemTable()
-	if errItem != nil {
-		return errItem
-	} else {
-		fmt.Println("Success - Created Item Table")
-	}
-
-	errItemCategory := s.CreateItemCategoryTable()
-	if errItemCategory != nil {
-		return errItemCategory
-	} else {
-		fmt.Println("Success - Created Item Category Table")
-	}
-
-	errItemImage := s.CreateItemImageTable()
-	if errItemImage != nil {
-		return errItemImage
-	} else {
-		fmt.Println("Success - Created Item Image Table")
-	}
-
-	errItemStore := s.CreateItemStoreTable()
-	if errItemStore != nil {
-		return errItemStore
-	} else {
-		fmt.Println("Success - Created Item Store Table")
-	}
-
-	errCustomer := s.CreateCustomerTable()
-	if errCustomer != nil {
-		return errCustomer
-	} else {
-		fmt.Println("Success - Created Customer Table")
-	}
-
-	errAddressTable := s.CreateAddressTable()
-	if errAddressTable != nil {
-		return errAddressTable
-	} else {
-		fmt.Println("Success - Created Address Table")
-	}
-
-	errCartItem := s.CreateCartItemTable()
-	if errCartItem != nil {
-		return errCartItem
-	} else {
-		fmt.Println("Success - Created Cart Item Table")
-	}
-
-	errHigherLevelCategory := s.CreateHigherLevelCategoryTable()
-	if errHigherLevelCategory != nil {
-		return errHigherLevelCategory
-	} else {
-		fmt.Println("Success - Created Higher Level Category Table")
-	}
-
-	errHigherLevelCategoryImage := s.CreateHigherLevelCategoryImageTable()
-	if errHigherLevelCategoryImage != nil {
-		return errHigherLevelCategoryImage
-	} else {
-		fmt.Println("Success - Created Higher Level Category Image Table")
-	}
-
-	errCategoryHigherLevelMapping := s.Create_Category_Higher_Level_Mapping_Table()
-	if errCategoryHigherLevelMapping != nil {
-		return errCategoryHigherLevelMapping
-	} else {
-		fmt.Println("Success - Created Category Higher Level Mapping Table")
-	}
-
-	errDeliveryPartner := s.CreateDeliveryPartnerTable()
-	if errDeliveryPartner != nil {
-		return errDeliveryPartner
-	} else {
-		fmt.Println("Success - Created Delivery Partner Table")
-	}
-
-	errShoppingCart := s.CreateShoppingCartTable()
-	if errShoppingCart != nil {
-		return errShoppingCart
-	} else {
-		fmt.Println("Success - Created Shopping Cart Table")
-	}
-
-	errSetCartItemFKs := s.SetCartItemForeignKeys()
-	if errSetCartItemFKs != nil {
-		return errSetCartItemFKs
-	}
-
-	errSalesOrder := s.CreateSalesOrderTable()
-	if errSalesOrder != nil {
-		return errSalesOrder
-	} else {
-		fmt.Println("Success  - Created Sales Order Table")
-	}
-
-	// Check and add the constraint only if it doesn't exist
 	constraintQuery := `
     DO $$
     BEGIN
@@ -200,12 +179,9 @@ func (s *PostgresStore) Init() error {
     END
     $$;
     `
-
-	if _, err := s.db.Exec(constraintQuery); err != nil {
+	if _, err := tx.Exec(constraintQuery); err != nil {
 		return fmt.Errorf("failed to add constraint to shopping_cart: %w", err)
 	}
-
-	// ... [your other code, if any]
 
 	return nil
 }
