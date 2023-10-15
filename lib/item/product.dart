@@ -6,38 +6,55 @@ import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
 class Product extends StatelessWidget {
-  final String productName; // Add this variable to store the product name
+  final String productName;
   final int productId;
   final int price;
   final int stockQuantity;
   final String image;
 
-  const Product(
-      {Key? key,
-      required this.productName,
-      required this.productId,
-      required this.price,
-      required this.stockQuantity,
-      required this.image})
-      : super(key: key);
+  const Product({
+    Key? key,
+    required this.productName,
+    required this.productId,
+    required this.price,
+    required this.stockQuantity,
+    required this.image,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>(); // Access the CartModel instance
+    var cart = context.watch<CartModel>();
 
     return Scaffold(
-      //resizeToAvoidBottomInset: false,
       appBar: const CustomAppBar(
         categoryName: 'Pronto',
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            //Image
-            Container(
+            // Carousel
+            SizedBox(
               height: MediaQuery.of(context).size.height * 0.30,
-              padding: const EdgeInsets.all(5),
-              child: Image.network(image),
+              child: CarouselSlider.builder(
+                itemCount: 3, // Display the image 3 times, adjust as needed
+                itemBuilder:
+                    (BuildContext context, int itemIndex, int pageViewIndex) {
+                  return Image.network(image, fit: BoxFit.cover);
+                },
+                options: CarouselOptions(
+                  height: MediaQuery.of(context).size.height * 0.30,
+                  enlargeCenterPage: true,
+                  autoPlay: true,
+                  aspectRatio: 16 / 9,
+                  autoPlayCurve: Curves.fastOutSlowIn,
+                  enableInfiniteScroll: true,
+                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                  viewportFraction: 0.8,
+                  onPageChanged: (index, reason) {
+                    // Handle change if needed
+                  },
+                ),
+              ),
             ),
             //Add To Cart Button
             Container(

@@ -159,7 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   Highlights(
                       customerId: customerId,
                       phone: phone,
-                      image: promotions[0].image), // Pass retrieved values
+                      promos: promotions), // Pass retrieved values
                   Container(
                     alignment: Alignment.centerLeft, // Align text to the left
                     padding:
@@ -256,15 +256,16 @@ class _MyHomePageState extends State<MyHomePage> {
 }
 
 class Highlights extends StatelessWidget {
-  const Highlights(
-      {required this.customerId,
-      required this.phone,
-      required this.image,
-      super.key});
+  const Highlights({
+    required this.customerId,
+    required this.phone,
+    required this.promos,
+    super.key,
+  });
 
   final String customerId;
   final String phone;
-  final String image;
+  final List<Category> promos;
 
   @override
   Widget build(BuildContext context) {
@@ -273,49 +274,42 @@ class Highlights extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       children: [
         CarouselSlider(
-          items: [
-            GestureDetector(
+          items: promos.map((promo) {
+            // Use promos list here
+            return GestureDetector(
               onTap: () {},
               child: Card(
                 elevation: 1,
                 shadowColor: Colors.grey,
-                surfaceTintColor: Colors.white,
                 color: const Color.fromARGB(255, 230, 88, 255),
                 shape: RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.circular(8.0), // Adjust the radius as needed
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
                 child: SizedBox(
-                    width: 300,
-                    height: 500,
-                    child: Container(
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.all(20),
-                        child: Image.network(image, fit: BoxFit.cover)
-
-                        /*
-                      Text('Hi $phone',
-                          style: GoogleFonts.lobster(
-                            textStyle: const TextStyle(
-                                color: Colors.white, fontSize: 24),
-                          )*/
-
-                        )),
+                  width: 300,
+                  height: 500,
+                  child: Container(
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.all(20),
+                    child: Image.network(promo.image,
+                        fit: BoxFit.cover), // Use promo.image here
+                  ),
+                ),
               ),
-            ),
-          ],
+            );
+          }).toList(),
 
           // Slider Container properties
           options: CarouselOptions(
             height: 125.0,
             enlargeCenterPage: false,
             autoPlay: true,
-            aspectRatio: 4 / 9,
+            aspectRatio: 7 / 9,
             autoPlayCurve: Curves.fastOutSlowIn,
             autoPlayInterval: const Duration(seconds: 4),
             enableInfiniteScroll: true,
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
-            viewportFraction: 0.85,
+            viewportFraction: 0.95,
           ),
         ),
       ],
