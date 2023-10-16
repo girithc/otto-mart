@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -58,4 +59,48 @@ func (s *PostgresStore) CreateBrand(br *types.Brand) (*types.Brand, error) {
 	}
 
 	return result, nil
+}
+
+func (s *PostgresStore) GetBrands() ([]*types.Brand, error) {
+	print("Entered GetBrands")
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	query := `
+	SELECT id, name, created_by, created_at 
+	FROM brand
+	ORDER BY name
+	`
+
+	rows, err := tx.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying getbrands: %w", err)
+	}
+
+	print("Query executed: ")
+
+	defer rows.Close()
+
+	var brands []*types.Brand
+
+	for rows.Next() {
+		brand := &types.Brand{}
+
+		err := rows.Scan(
+			&brand.ID,
+			&brand.Name,
+			&brand.Created_By,
+			&brand.Created_At,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row into brand in getbrands: %w", err)
+		}
+		print(brand.Name)
+		brands = append(brands, brand)
+	}
+
+	return brands, nil
 }

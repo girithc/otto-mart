@@ -25,7 +25,7 @@ func (s *PostgresStore) CreateAddressTable(tx *sql.Tx) error {
 	)
     `
 
-	_, err := s.db.Exec(tableQuery)
+	_, err := tx.Exec(tableQuery)
 	if err != nil {
 		return err
 	}

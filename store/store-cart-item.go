@@ -168,6 +168,11 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 
 	cartItem := &types.Cart_Item{}
 	if err == sql.ErrNoRows {
+		// Check if quantity is less than or equal to 1
+		if quantity <= 1 {
+			tx.Rollback()
+			return nil, fmt.Errorf("quantity must be at least 1")
+		}
 		err = tx.QueryRow("INSERT INTO cart_item (cart_id, item_id, quantity) VALUES ($1, $2, $3) RETURNING id, cart_id, item_id, quantity", cart_id, item_id, quantity).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
 	} else if err == nil {
 		newTotalQuantity := currentQuantity + quantity
@@ -226,7 +231,7 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
         SELECT 
             i.id, 
             i.name, 
-            istore.price::numeric::float8, 
+            istore.mrp_price::numeric::float8, 
             ii.image_url,  -- Assumes that we are getting image from item_image table
             istore.stock_quantity, 
             ci.quantity
@@ -262,7 +267,7 @@ func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_
         )
 
         SELECT 
-            i.id, i.name, istore.price::numeric::float8, ii.main_image, istore.stock_quantity, ci.quantity
+            i.id, i.name, istore.mrp_price::numeric::float8, ii.main_image, istore.stock_quantity, ci.quantity
         FROM shopping_cart sc
         JOIN cart_item ci ON ci.cart_id = sc.id
         JOIN item i ON ci.item_id = i.id

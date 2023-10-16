@@ -10,22 +10,36 @@ import (
 )
 
 func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
-	// fmt.Println("Entered CreateItemTable")
-
-	query := `create table if not exists item(
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL,
-		brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		created_by INT
-	)`
-
-	_, err := tx.Exec(query)
+	// First, let's define the ENUM type for unit
+	unitEnumQuery := `DO $$ BEGIN
+						CREATE TYPE unit_enum AS ENUM ('g', 'mg', 'ml', 'l', 'kg', 'ct');
+					EXCEPTION
+						WHEN duplicate_object THEN null;
+					END $$;`
+	_, err := tx.Exec(unitEnumQuery)
 	if err != nil {
-		return fmt.Errorf("error creating brand table: %w", err)
+		return fmt.Errorf("error creating unit_enum type: %w", err)
 	}
 
-	return err
+	// Now, create the item table with quantity, unit, and description fields
+	query := `CREATE TABLE IF NOT EXISTS item(
+		id SERIAL PRIMARY KEY,
+		name VARCHAR(100) NOT NULL UNIQUE,
+		brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
+		quantity INT NOT NULL,
+		unit_of_quantity unit_enum,
+		description TEXT DEFAULT 'description',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		created_by INT
+	)
+	`
+
+	_, err = tx.Exec(query)
+	if err != nil {
+		return fmt.Errorf("error creating item table: %w", err)
+	}
+
+	return nil
 }
 
 func (s *PostgresStore) CreateItemCategoryTable(tx *sql.Tx) error {
@@ -102,70 +116,71 @@ func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	}
 
 	// Derive store_id using store name
-	storeIDQuery := `SELECT id FROM store WHERE name = $1`
 	var storeID int
+	storeIDQuery := `SELECT id FROM store WHERE name = $1`
 	err = tx.QueryRow(storeIDQuery, p.Store).Scan(&storeID)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error deriving store id: %w", err)
 	}
 
+	// Derive brand_id using brand name
+	var brandID int
+	brandIDQuery := `SELECT id FROM brand WHERE name = $1`
+	err = tx.QueryRow(brandIDQuery, p.Brand).Scan(&brandID)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error deriving brand id: %w", err)
+	}
+
 	// Derive category_id using category name
-	categoryIDQuery := `SELECT id FROM category WHERE name = $1`
 	var categoryID int
+	categoryIDQuery := `SELECT id FROM category WHERE name = $1`
 	err = tx.QueryRow(categoryIDQuery, p.Category).Scan(&categoryID)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error deriving category id: %w", err)
 	}
 
-	// Check if item with the same name already exists
-	existingItemQuery := `SELECT i.id, i.name, istore.mrp_price, s.name, c.name, istore.stock_quantity, 
-                          istore.locked_quantity, ii.image_url, i.created_at, i.created_by 
-                          FROM item i 
-                          JOIN item_store istore ON i.id = istore.item_id 
-                          JOIN store s ON istore.store_id = s.id 
-                          JOIN item_category ic ON i.id = ic.item_id 
-                          JOIN category c ON ic.category_id = c.id 
-                          JOIN item_image ii ON i.id = ii.item_id 
-                          WHERE i.name = $1`
-	existingItem := &types.Item{}
-	err = tx.QueryRow(existingItemQuery, p.Name).Scan(&existingItem.ID, &existingItem.Name, &existingItem.Price, &existingItem.Store,
-		&existingItem.Category, &existingItem.Stock_Quantity, &existingItem.Locked_Quantity, &existingItem.Image,
-		&existingItem.Created_At, &existingItem.Created_By)
-	if err == nil { // Item exists
-		tx.Rollback()
-		return existingItem, nil
-	} else if err != sql.ErrNoRows {
-		tx.Rollback()
-		return nil, fmt.Errorf("error querying item: %w", err)
+	// Calculate store price
+	storePrice := p.MRP_Price - p.Discount
+
+	// Set description to name if not provided
+	description := p.Name
+	if p.Description != "" {
+		description = p.Description
 	}
 
 	newItem := &types.Item{
-		Name:            p.Name,
-		Price:           p.Price,
-		Store:           p.Store,
-		Category:        p.Category,
-		Stock_Quantity:  p.Stock_Quantity,
-		Locked_Quantity: p.Locked_Quantity,
-		Image:           p.Image,
-		Created_By:      p.Created_By,
+		Name:             p.Name,
+		MRP_Price:        p.MRP_Price,
+		Discount:         p.Discount,
+		Store_Price:      storePrice,
+		Description:      description,
+		Store:            p.Store,
+		Category:         p.Category,
+		Brand:            p.Brand,
+		Stock_Quantity:   p.Stock_Quantity,
+		Quantity:         p.Quantity,
+		Unit_Of_Quantity: p.Unit_Of_Quantity,
+		Image:            p.Image,
+		Created_By:       1, // Assuming a default user ID for creation
 	}
 
 	// Insert into item table
-	query := `INSERT INTO item (name, created_by) 
-              VALUES ($1, $2) 
+	query := `INSERT INTO item (name, brand_id, description, quantity, unit_of_quantity, created_by) 
+              VALUES ($1, $2, $3, $4, $5, $6) 
               RETURNING id, created_at`
-	err = tx.QueryRow(query, newItem.Name, newItem.Created_By).Scan(&newItem.ID, &newItem.Created_At)
+	err = tx.QueryRow(query, newItem.Name, brandID, newItem.Description, newItem.Quantity, newItem.Unit_Of_Quantity, newItem.Created_By).Scan(&newItem.ID, &newItem.Created_At)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error inserting into item: %w", err)
 	}
 
 	// Insert into item_store table
-	query = `INSERT INTO item_store (item_id, price, store_id, stock_quantity, locked_quantity, created_by) 
-             VALUES ($1, $2, $3, $4, $5, $6)`
-	_, err = tx.Exec(query, newItem.ID, newItem.Price, storeID, newItem.Stock_Quantity, newItem.Locked_Quantity, newItem.Created_By)
+	query = `INSERT INTO item_store (item_id, mrp_price, store_price, discount, store_id, stock_quantity, locked_quantity, created_by) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err = tx.Exec(query, newItem.ID, newItem.MRP_Price, storePrice, newItem.Discount, storeID, newItem.Stock_Quantity, 0, newItem.Created_By)
 	if err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error inserting into item_store: %w", err)
@@ -206,18 +221,20 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
 	defer tx.Rollback()
 
 	query := `
-	SELECT 
-	i.id, i.name, istore.mrp_price, istore.store_id, istore.stock_quantity, istore.locked_quantity, i.created_at, i.created_by,
-	array_agg(ic.category_id) as category_ids,
-	array_agg(ii.image_url) as images
-	FROM item i
-	LEFT JOIN item_store istore ON i.id = istore.item_id
-	LEFT JOIN item_category ic ON i.id = ic.item_id
-	LEFT JOIN item_image ii ON i.id = ii.item_id
-	GROUP BY i.id, istore.mrp_price, istore.store_id, istore.stock_quantity, istore.locked_quantity
-	ORDER BY i.id
-
-	`
+    SELECT 
+    i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity,
+    array_agg(c.name) as categories,
+    array_agg(ii.image_url) as images
+    FROM item i
+    LEFT JOIN brand b ON i.brand_id = b.id
+    LEFT JOIN item_store istore ON i.id = istore.item_id
+    LEFT JOIN store s ON istore.store_id = s.id
+    LEFT JOIN item_category ic ON i.id = ic.item_id
+    LEFT JOIN category c ON ic.category_id = c.id
+    LEFT JOIN item_image ii ON i.id = ii.item_id
+    GROUP BY i.id, i.description, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity
+    ORDER BY i.id
+    `
 
 	rows, err := tx.Query(query)
 	if err != nil {
@@ -229,34 +246,38 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
 
 	for rows.Next() {
 		item := &types.Get_Item{}
-		var categoryIDs pq.Int64Array
+		var store string
+		var categories pq.StringArray
 		var images pq.StringArray
 
 		err := rows.Scan(
 			&item.ID,
 			&item.Name,
-			&item.Price,
-			&item.Store_ID,
+			&item.Description,
+			&item.Quantity,
+			&item.Unit_Of_Quantity,
+			&item.Brand,
+			&item.MRP_Price,
+			&item.Discount,
+			&item.Store_Price,
+			&store,
 			&item.Stock_Quantity,
 			&item.Locked_Quantity,
-			&item.Created_At,
-			&item.Created_By,
-			&categoryIDs,
+			&categories,
 			&images,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row into item: %w", err)
 		}
 
-		// Convert pq.Int64Array to []int
-		item.Category_IDs = make([]int, len(categoryIDs))
-		for i, v := range categoryIDs {
-			item.Category_IDs[i] = int(v)
-		}
-
 		// Convert pq.StringArray to []string
-		item.Image = make([]string, len(images))
-		copy(item.Image, images)
+		item.Categories = make([]string, len(categories))
+		copy(item.Categories, categories)
+
+		item.Images = make([]string, len(images))
+		copy(item.Images, images)
+
+		item.Stores = append(item.Stores, store)
 
 		items = append(items, item)
 	}
@@ -282,10 +303,28 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 	}
 
 	query := `
-	SELECT i.id, i.name, istore.mrp_price, istore.store_id, ic.category_id, ii.image_url, istore.stock_quantity
+	SELECT 
+		i.id, 
+		i.name, 
+		i.quantity,
+		i.unit_of_quantity,
+		b.name AS brand_name,
+		istore.mrp_price, 
+		istore.discount, 
+		istore.store_price,
+		s.name AS store_name,
+		c.name AS category_name,
+		istore.stock_quantity,
+		istore.locked_quantity,
+		ii.image_url, 
+		i.created_at,
+		i.created_by
 	FROM item i
 	JOIN item_category ic ON i.id = ic.item_id
 	JOIN item_store istore ON i.id = istore.item_id
+	JOIN brand b ON i.brand_id = b.id
+	JOIN store s ON istore.store_id = s.id
+	JOIN category c ON ic.category_id = c.id
 	LEFT JOIN item_image ii ON i.id = ii.item_id AND ii.order_position = 1
 	WHERE ic.category_id = $1 AND istore.store_id = $2
 	`
@@ -300,7 +339,23 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 	items := []*types.Get_Items_By_CategoryID_And_StoreID{}
 	for rows.Next() {
 		item := &types.Get_Items_By_CategoryID_And_StoreID{}
-		err := rows.Scan(&item.ID, &item.Name, &item.Price, &item.Store_ID, &item.Category_ID, &item.Image, &item.Stock_Quantity)
+		err := rows.Scan(
+			&item.ID,
+			&item.Name,
+			&item.Quantity,
+			&item.Unit_Of_Quantity,
+			&item.Brand,
+			&item.MRP_Price,
+			&item.Discount,
+			&item.Store_Price,
+			&item.Store,
+			&item.Category,
+			&item.Stock_Quantity,
+			&item.Locked_Quantity,
+			&item.Image,
+			&item.Created_At,
+			&item.Created_By,
+		)
 		if err != nil {
 			tx.Rollback()
 			return nil, fmt.Errorf("error scanning row: %w", err)
@@ -321,19 +376,23 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction: %w", err)
 	}
-	defer tx.Rollback() // if everything goes well, this will be a no-op
+	defer tx.Rollback()
 
 	item := &types.Get_Item{}
 
-	// Get basic item data
-	query := `SELECT id, name, created_at, created_by FROM item WHERE id = $1`
+	// Get basic item data, brand name, and description
+	query := `SELECT i.id, i.name, i.quantity, i.unit_of_quantity, b.name, i.description, i.created_at, i.created_by FROM item i
+              LEFT JOIN brand b ON i.brand_id = b.id
+              WHERE i.id = $1`
 	row := tx.QueryRow(query, id)
-	if err := row.Scan(&item.ID, &item.Name, &item.Created_At, &item.Created_By); err != nil {
+	if err := row.Scan(&item.ID, &item.Name, &item.Quantity, &item.Unit_Of_Quantity, &item.Brand, &item.Description, &item.Created_At, &item.Created_By); err != nil {
 		return nil, err
 	}
 
-	// Get category_ids
-	query = `SELECT category_id FROM item_category WHERE item_id = $1`
+	// Get categories
+	query = `SELECT c.name FROM item_category ic
+             JOIN category c ON ic.category_id = c.id
+             WHERE ic.item_id = $1`
 	rows, err := tx.Query(query, id)
 	if err != nil {
 		return nil, err
@@ -341,11 +400,11 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var categoryID int
-		if err := rows.Scan(&categoryID); err != nil {
+		var categoryName string
+		if err := rows.Scan(&categoryName); err != nil {
 			return nil, err
 		}
-		item.Category_IDs = append(item.Category_IDs, categoryID)
+		item.Categories = append(item.Categories, categoryName)
 	}
 
 	// Get images
@@ -361,12 +420,14 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item, error) {
 		if err := rows.Scan(&imageUrl); err != nil {
 			return nil, err
 		}
-		item.Image = append(item.Image, imageUrl)
+		item.Images = append(item.Images, imageUrl)
 	}
 
-	// Get store-related details. Assuming an item can be in multiple stores. Adjust if needed.
-	query = `SELECT store_id, price, stock_quantity, locked_quantity 
-             FROM item_store WHERE item_id = $1`
+	// Get store-related details. Assuming an item can be in multiple stores.
+	query = `SELECT s.name, is.mrp_price, is.discount, is.store_price, is.stock_quantity, is.locked_quantity 
+             FROM item_store is
+             JOIN store s ON is.store_id = s.id
+             WHERE is.item_id = $1`
 	rows, err = tx.Query(query, id)
 	if err != nil {
 		return nil, err
@@ -374,10 +435,19 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		// For simplicity, using the last record. If an item can be in multiple stores, you need more logic.
-		if err := rows.Scan(&item.Store_ID, &item.Price, &item.Stock_Quantity, &item.Locked_Quantity); err != nil {
+		var storeName string
+		var price, discount, storePrice float64
+		var stockQuantity, lockedQuantity int
+
+		if err := rows.Scan(&storeName, &price, &discount, &storePrice, &stockQuantity, &lockedQuantity); err != nil {
 			return nil, err
 		}
+		item.Stores = append(item.Stores, storeName)
+		item.MRP_Price = price
+		item.Discount = discount
+		item.Store_Price = storePrice
+		item.Stock_Quantity = stockQuantity
+		item.Locked_Quantity = lockedQuantity
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -394,34 +464,42 @@ func (s *PostgresStore) Update_Item(item *types.Update_Item) (*types.Update_Item
 	}
 
 	// Update item table
-	query := `UPDATE item SET name = $1 WHERE id = $2`
-	if _, err := tx.Exec(query, item.Name, item.ID); err != nil {
+	query := `UPDATE item SET name = $1, description = $2 WHERE id = $3`
+	if _, err := tx.Exec(query, item.Name, item.Description, item.ID); err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error updating item: %w", err)
 	}
 
 	// Update item_store table
-	query = `UPDATE item_store SET price = $1, stock_quantity = $2 WHERE item_id = $3`
-	if _, err := tx.Exec(query, item.Price, item.Stock_Quantity, item.ID); err != nil {
+	query = `UPDATE item_store SET mrp_price = $1, discount = $2, stock_quantity = $3 
+             WHERE item_id = $4 AND store_id = 
+             (SELECT id FROM store WHERE name = $5 LIMIT 1)`
+	if _, err := tx.Exec(query, item.MRP_Price, item.Discount, item.Stock_Quantity, item.ID, item.Store); err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error updating item_store: %w", err)
 	}
 
-	// Update item_image table. We assume the first image is being updated
-	query = `UPDATE item_image SET image_url = $1 WHERE item_id = $2 AND order_position = 1`
-	if _, err := tx.Exec(query, item.Image, item.ID); err != nil {
+	// Update item_image table. We use the Order_Position to determine which image to update
+	query = `UPDATE item_image SET image_url = $1 WHERE item_id = $2 AND order_position = $3`
+	if _, err := tx.Exec(query, item.Image, item.ID, item.Order_Position); err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error updating item_image: %w", err)
 	}
 
-	// Update item_category table. We assume that the item is only linked to one category for simplicity
-	query = `UPDATE item_category SET category_id = $1 WHERE item_id = $2`
-	if _, err := tx.Exec(query, item.Category_ID, item.ID); err != nil {
+	// Update item_category table. We link the item to the category by name
+	query = `UPDATE item_category SET category_id = 
+             (SELECT id FROM category WHERE name = $1 LIMIT 1) 
+             WHERE item_id = $2`
+	if _, err := tx.Exec(query, item.Category, item.ID); err != nil {
 		tx.Rollback()
 		return nil, fmt.Errorf("error updating item_category: %w", err)
 	}
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
 	return item, nil
 }
 

@@ -496,7 +496,24 @@ func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		task := func() worker.Result {
-			err := s.Handle_Create_Brand(res, req)
+			err := s.handleCreateBrand(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	} else if req.Method == "GET" {
+		print_path("GET", "brand")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handleGetBrands(res, req)
 			return worker.Result{Error: err}
 		}
 

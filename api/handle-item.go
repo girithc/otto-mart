@@ -10,73 +10,78 @@ import (
 )
 
 func (s *Server) Handle_Create_Item(res http.ResponseWriter, req *http.Request) error {
-	fmt.Println("Entered Handle_Get_Items")
-
-	new_req := new(types.Create_Item)
-
-	fmt.Println("Name : ", new_req.Name)
-
+	new_req := &types.Create_Item{}
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error in Decoding req.body in Handle_Create_Item()")
-		return err
+		return fmt.Errorf("error decoding request body in handle_create_Item: %w", err)
 	}
 
-	new_item, err := types.New_Item(new_req.Name, new_req.Price, new_req.Category, new_req.Store, new_req.Stock_Quantity, new_req.Image)
+	// Convert Create_Item structure to Item structure using New_Item function
+	itemStruct, err := types.New_Item(
+		new_req.Name,
+		new_req.MRP_Price,
+		new_req.Discount,
+		new_req.Store_Price,
+		new_req.Category,
+		new_req.Store, // Assuming a single store for simplicity
+		new_req.Brand,
+		new_req.Stock_Quantity,
+		new_req.Image,
+		new_req.Description,
+		new_req.Quantity,
+		new_req.Unit_Of_Quantity,
+	)
+	if err != nil {
+		return fmt.Errorf("error converting create_item to Item: %w", err)
+	}
+
+	// Create the new item using the provided CreateItem function
+	item, err := s.store.CreateItem(itemStruct)
 	if err != nil {
 		return err
 	}
-	item, err := s.store.CreateItem(new_item)
-	if err != nil {
-		return err
-	}
 
+	// Return the newly created item as a JSON response
 	return WriteJSON(res, http.StatusOK, item)
 }
 
 func (s *Server) Handle_Get_Items(res http.ResponseWriter, req *http.Request) error {
-	// check if req has empty body
 	category_id := req.URL.Query().Get("category_id")
 	store_id := req.URL.Query().Get("store_id")
 
-	// Check if the Content-Length header is empty or 0
-	if (category_id == "" || category_id == "0") && (store_id == "" || store_id == "0") {
-		fmt.Println("Entered No Category_id and Store_id")
+	if category_id == "" && store_id == "" {
 		item_id := req.URL.Query().Get("item_id")
-
-		if item_id == "" || item_id == "0" {
+		if item_id == "" {
 			items, err := s.store.GetItems()
 			if err != nil {
 				return err
 			}
-
 			return WriteJSON(res, http.StatusOK, items)
 		}
 
 		itemID, err := strconv.Atoi(item_id)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid item_id provided: %w", err)
 		}
 
-		items, err := s.store.Get_Item_By_ID(itemID)
+		item, err := s.store.Get_Item_By_ID(itemID)
 		if err != nil {
 			return err
 		}
-		return WriteJSON(res, http.StatusOK, items)
+		return WriteJSON(res, http.StatusOK, item)
 
-	} else if category_id == "" || category_id == "0" {
+	} else if category_id == "" {
 		return fmt.Errorf("category_id is empty. Please provide category_id value")
-	} else if store_id == "" || store_id == "0" {
+	} else if store_id == "" {
 		return fmt.Errorf("store_id is empty. Please provide store_id value")
 	} else {
-		fmt.Println("Category and Store ID present")
 		categoryID, err := strconv.Atoi(category_id)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid category_id provided: %w", err)
 		}
 
 		storeID, err := strconv.Atoi(store_id)
 		if err != nil {
-			return err
+			return fmt.Errorf("invalid store_id provided: %w", err)
 		}
 
 		items, err := s.store.Get_Items_By_CategoryID_And_StoreID(categoryID, storeID)
@@ -88,42 +93,30 @@ func (s *Server) Handle_Get_Items(res http.ResponseWriter, req *http.Request) er
 }
 
 func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.Update_Item)
-
+	new_req := &types.Update_Item{}
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error Decode Item()")
-		return err
+		return fmt.Errorf("error decoding request body in handle_update_item: %w", err)
 	}
 
-	fmt.Println("Updated Id: ", new_req.ID)
-	fmt.Println("Updated Name: ", new_req.Name)
-	fmt.Println("Updated Price: ", new_req.Price)
-	fmt.Println("Updated Stock Quantity: ", new_req.Stock_Quantity)
-	fmt.Println("Updated Category Id: ", new_req.Category_ID)
-
-	item, err := s.store.Get_Item_By_ID(new_req.ID)
+	existingItem, err := s.store.Get_Item_By_ID(new_req.ID)
 	if err != nil {
 		return err
 	}
 
-	fmt.Println("Valid Record Change Requested ", item)
-
-	if len(new_req.Name) == 0 {
-		new_req.Name = item.Name
+	if new_req.Name == "" {
+		new_req.Name = existingItem.Name
 	}
-	if new_req.Price == 0 {
-		new_req.Price = item.Price
+	if new_req.MRP_Price == 0 {
+		new_req.MRP_Price = existingItem.MRP_Price
 	}
 	if new_req.Stock_Quantity < 0 {
-		new_req.Stock_Quantity = item.Stock_Quantity
+		new_req.Stock_Quantity = existingItem.Stock_Quantity
 	}
 
 	updated_item, err := s.store.Update_Item(new_req)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println("Record Change Completed", item)
 
 	return WriteJSON(res, http.StatusOK, updated_item)
 }

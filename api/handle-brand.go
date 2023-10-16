@@ -8,7 +8,7 @@ import (
 	"github.com/girithc/pronto-go/types"
 )
 
-func (s *Server) Handle_Create_Brand(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) handleCreateBrand(res http.ResponseWriter, req *http.Request) error {
 	fmt.Println("Entered Handle_Create_Brand")
 
 	new_req := new(types.Create_Brand)
@@ -31,4 +31,12 @@ func (s *Server) Handle_Create_Brand(res http.ResponseWriter, req *http.Request)
 	}
 
 	return WriteJSON(res, http.StatusOK, brand)
+}
+
+func (s *Server) handleGetBrands(res http.ResponseWriter, req *http.Request) error {
+	brands, err := s.store.GetBrands()
+	if err != nil {
+		return err
+	}
+	return WriteJSON(res, http.StatusOK, brands)
 }
