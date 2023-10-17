@@ -134,12 +134,30 @@ func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	}
 
 	// Derive category_id using category name
-	var categoryID int
-	categoryIDQuery := `SELECT id FROM category WHERE name = $1`
-	err = tx.QueryRow(categoryIDQuery, p.Category).Scan(&categoryID)
+	var categoryIDs []int
+	categoryNames := p.Category
+
+	categoryIDQuery := `SELECT id FROM category WHERE name = ANY($1)`
+	rows, err := tx.Query(categoryIDQuery, pq.Array(categoryNames))
 	if err != nil {
 		tx.Rollback()
-		return nil, fmt.Errorf("error deriving category id: %w", err)
+		return nil, fmt.Errorf("error deriving category ids: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		err = rows.Scan(&id)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("error scanning category id: %w", err)
+		}
+		categoryIDs = append(categoryIDs, id)
+	}
+
+	if len(categoryIDs) != len(categoryNames) {
+		tx.Rollback()
+		return nil, fmt.Errorf("some category names did not have corresponding IDs")
 	}
 
 	// Calculate store price
@@ -187,12 +205,14 @@ func (s *PostgresStore) CreateItem(p *types.Item) (*types.Item, error) {
 	}
 
 	// Insert into item_category table
-	query = `INSERT INTO item_category (item_id, category_id, created_by) 
-             VALUES ($1, $2, $3)`
-	_, err = tx.Exec(query, newItem.ID, categoryID, newItem.Created_By)
-	if err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("error inserting into item_category: %w", err)
+	query = `INSERT INTO item_category (item_id, category_id, created_by) VALUES ($1, $2, $3)`
+
+	for _, categoryID := range categoryIDs {
+		_, err = tx.Exec(query, newItem.ID, categoryID, newItem.Created_By)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("error inserting into item_category: %w", err)
+		}
 	}
 
 	// Insert into item_image table
@@ -229,7 +249,7 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
     LEFT JOIN brand b ON i.brand_id = b.id
     LEFT JOIN item_store istore ON i.id = istore.item_id
     LEFT JOIN store s ON istore.store_id = s.id
-    LEFT JOIN item_category ic ON i.id = ic.item _id
+    LEFT JOIN item_category ic ON i.id = ic.item_id
     LEFT JOIN category c ON ic.category_id = c.id
     LEFT JOIN item_image ii ON i.id = ii.item_id
     GROUP BY i.id, i.description, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity

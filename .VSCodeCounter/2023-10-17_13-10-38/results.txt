@@ -1,0 +1,88 @@
+Date : 2023-10-17 13:10:38
+Directory : /Users/girithc/work/pronto-go
+Total : 55 files,  4530 codes, 218 comments, 1007 blanks, all 5755 lines
+
+Languages
++------------------+------------+------------+------------+------------+------------+
+| language         | files      | code       | comment    | blank      | total      |
++------------------+------------+------------+------------+------------+------------+
+| Go               |         51 |      4,152 |        218 |        993 |      5,363 |
+| Go Checksum File |          1 |        304 |          0 |          1 |        305 |
+| Markdown         |          1 |         36 |          0 |         10 |         46 |
+| Go Module File   |          1 |         35 |          0 |          3 |         38 |
+| Properties       |          1 |          3 |          0 |          0 |          3 |
++------------------+------------+------------+------------+------------+------------+
+
+Directories
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| path                                                                       | files      | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+| .                                                                          |         55 |      4,530 |        218 |      1,007 |      5,755 |
+| . (Files)                                                                  |          5 |        411 |          0 |         24 |        435 |
+| api                                                                        |         17 |      1,224 |         84 |        366 |      1,674 |
+| store                                                                      |         16 |      2,241 |        126 |        489 |      2,856 |
+| types                                                                      |         15 |        518 |          4 |        100 |        622 |
+| worker                                                                     |          2 |        136 |          4 |         28 |        168 |
++----------------------------------------------------------------------------+------------+------------+------------+------------+------------+
+
+Files
++----------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| filename                                                                   | language         | code       | comment    | blank      | total      |
++----------------------------------------------------------------------------+------------------+------------+------------+------------+------------+
+| /Users/girithc/work/pronto-go/.env                                         | Properties       |          3 |          0 |          0 |          3 |
+| /Users/girithc/work/pronto-go/api/handle-address.go                        | Go               |         31 |          0 |          9 |         40 |
+| /Users/girithc/work/pronto-go/api/handle-brand.go                          | Go               |         32 |          0 |         11 |         43 |
+| /Users/girithc/work/pronto-go/api/handle-cancel-checkout.go                | Go               |         28 |          0 |          9 |         37 |
+| /Users/girithc/work/pronto-go/api/handle-cart-item.go                      | Go               |         79 |          1 |         19 |         99 |
+| /Users/girithc/work/pronto-go/api/handle-category-higher-level-mapping.go  | Go               |         76 |          0 |         21 |         97 |
+| /Users/girithc/work/pronto-go/api/handle-category.go                       | Go               |         90 |          2 |         22 |        114 |
+| /Users/girithc/work/pronto-go/api/handle-checkout.go                       | Go               |         27 |          1 |          8 |         36 |
+| /Users/girithc/work/pronto-go/api/handle-customer.go                       | Go               |         79 |          9 |         26 |        114 |
+| /Users/girithc/work/pronto-go/api/handle-delivery-partner.go               | Go               |         78 |          8 |         22 |        108 |
+| /Users/girithc/work/pronto-go/api/handle-higher-level-category.go          | Go               |         60 |          0 |         17 |         77 |
+| /Users/girithc/work/pronto-go/api/handle-item.go                           | Go               |        112 |          3 |         22 |        137 |
+| /Users/girithc/work/pronto-go/api/handle-sales-order.go                    | Go               |          9 |          0 |          5 |         14 |
+| /Users/girithc/work/pronto-go/api/handle-search-items.go                   | Go               |         20 |          0 |          8 |         28 |
+| /Users/girithc/work/pronto-go/api/handle-shopping-cart.go                  | Go               |         26 |          0 |          9 |         35 |
+| /Users/girithc/work/pronto-go/api/handle-store.go                          | Go               |         63 |          0 |         17 |         80 |
+| /Users/girithc/work/pronto-go/api/handler.go                               | Go               |        357 |         59 |        119 |        535 |
+| /Users/girithc/work/pronto-go/api/server.go                                | Go               |         57 |          1 |         22 |         80 |
+| /Users/girithc/work/pronto-go/go.mod                                       | Go Module File   |         35 |          0 |          3 |         38 |
+| /Users/girithc/work/pronto-go/go.sum                                       | Go Checksum File |        304 |          0 |          1 |        305 |
+| /Users/girithc/work/pronto-go/main.go                                      | Go               |         33 |          0 |         10 |         43 |
+| /Users/girithc/work/pronto-go/readme.md                                    | Markdown         |         36 |          0 |         10 |         46 |
+| /Users/girithc/work/pronto-go/store/store-address.go                       | Go               |         91 |          8 |         20 |        119 |
+| /Users/girithc/work/pronto-go/store/store-brand.go                         | Go               |         85 |          1 |         21 |        107 |
+| /Users/girithc/work/pronto-go/store/store-cancel-checkout.go               | Go               |         12 |          0 |          5 |         17 |
+| /Users/girithc/work/pronto-go/store/store-cart-item.go                     | Go               |        258 |         17 |         52 |        327 |
+| /Users/girithc/work/pronto-go/store/store-category-higher-level-mapping.go | Go               |        149 |          6 |         30 |        185 |
+| /Users/girithc/work/pronto-go/store/store-category.go                      | Go               |        201 |          7 |         48 |        256 |
+| /Users/girithc/work/pronto-go/store/store-checkout.go                      | Go               |        135 |          3 |         27 |        165 |
+| /Users/girithc/work/pronto-go/store/store-customer.go                      | Go               |        114 |          7 |         31 |        152 |
+| /Users/girithc/work/pronto-go/store/store-delivery-partner.go              | Go               |        127 |         11 |         26 |        164 |
+| /Users/girithc/work/pronto-go/store/store-higher-level-category.go         | Go               |        156 |          7 |         37 |        200 |
+| /Users/girithc/work/pronto-go/store/store-item.go                          | Go               |        441 |         30 |         78 |        549 |
+| /Users/girithc/work/pronto-go/store/store-sales-order.go                   | Go               |         54 |          4 |         18 |         76 |
+| /Users/girithc/work/pronto-go/store/store-search-item.go                   | Go               |         56 |          1 |          9 |         66 |
+| /Users/girithc/work/pronto-go/store/store-shopping-cart.go                 | Go               |        101 |          4 |         23 |        128 |
+| /Users/girithc/work/pronto-go/store/store-store.go                         | Go               |        117 |          2 |         33 |        152 |
+| /Users/girithc/work/pronto-go/store/store.go                               | Go               |        144 |         18 |         31 |        193 |
+| /Users/girithc/work/pronto-go/types/address.go                             | Go               |         29 |          0 |          5 |         34 |
+| /Users/girithc/work/pronto-go/types/brand.go                               | Go               |         17 |          0 |          5 |         22 |
+| /Users/girithc/work/pronto-go/types/cart-item.go                           | Go               |         45 |          0 |         10 |         55 |
+| /Users/girithc/work/pronto-go/types/category-higher-level-mapping.go       | Go               |         35 |          0 |          8 |         43 |
+| /Users/girithc/work/pronto-go/types/category.go                            | Go               |         47 |          0 |         10 |         57 |
+| /Users/girithc/work/pronto-go/types/checkout.go                            | Go               |          9 |          0 |          2 |         11 |
+| /Users/girithc/work/pronto-go/types/customer.go                            | Go               |         46 |          1 |         10 |         57 |
+| /Users/girithc/work/pronto-go/types/delivery-partner.go                    | Go               |         45 |          1 |          9 |         55 |
+| /Users/girithc/work/pronto-go/types/error.go                               | Go               |          4 |          0 |          1 |          5 |
+| /Users/girithc/work/pronto-go/types/higher-level-category.go               | Go               |         36 |          0 |          8 |         44 |
+| /Users/girithc/work/pronto-go/types/item.go                                | Go               |        117 |          2 |         10 |        129 |
+| /Users/girithc/work/pronto-go/types/sales-order.go                         | Go               |         11 |          0 |          3 |         14 |
+| /Users/girithc/work/pronto-go/types/search-item.go                         | Go               |         17 |          0 |          4 |         21 |
+| /Users/girithc/work/pronto-go/types/shopping-cart.go                       | Go               |         23 |          0 |          6 |         29 |
+| /Users/girithc/work/pronto-go/types/store.go                               | Go               |         37 |          0 |          9 |         46 |
+| /Users/girithc/work/pronto-go/worker/http.go                               | Go               |         66 |          2 |         13 |         81 |
+| /Users/girithc/work/pronto-go/worker/worker-pool.go                        | Go               |         70 |          2 |         15 |         87 |
+| Total                                                                      |                  |      4,530 |        218 |      1,007 |      5,755 |
++----------------------------------------------------------------------------+------------------+------------+------------+------------+------------+

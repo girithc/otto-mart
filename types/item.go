@@ -13,7 +13,7 @@ type Item struct {
 	Store_Price      float64   `json:"store_price"`
 	Description      string    `json:"description"`
 	Store            string    `json:"store"`
-	Category         string    `json:"category"`
+	Category         []string  `json:"category"`
 	Stock_Quantity   int       `json:"stock_quantity"`
 	Locked_Quantity  int       `json:"locked_quantity"`
 	Image            string    `json:"image"`
@@ -44,18 +44,18 @@ type Get_Item struct {
 }
 
 type Create_Item struct {
-	Name             string  `json:"name"`
-	MRP_Price        float64 `json:"mrp_price"`
-	Discount         float64 `json:"discount"`
-	Store_Price      float64 `json:"store_price"`
-	Description      string  `json:"description"`
-	Store            string  `json:"store"`
-	Category         string  `json:"category"`
-	Brand            string  `json:"brand"`
-	Image            string  `json:"image"`
-	Quantity         int     `json:"quantity"`
-	Unit_Of_Quantity string  `json:"unit_of_quantity"`
-	Stock_Quantity   int     `json:"stock_quantity"`
+	Name             string   `json:"name"`
+	MRP_Price        float64  `json:"mrp_price"`
+	Discount         float64  `json:"discount"`
+	Store_Price      float64  `json:"store_price"`
+	Description      string   `json:"description"`
+	Store            string   `json:"store"`
+	Category         []string `json:"category"`
+	Brand            string   `json:"brand"`
+	Image            string   `json:"image"`
+	Quantity         int      `json:"quantity"`
+	Unit_Of_Quantity string   `json:"unit_of_quantity"`
+	Stock_Quantity   int      `json:"stock_quantity"`
 }
 
 type Update_Item struct {
@@ -95,7 +95,7 @@ type Get_Items_By_CategoryID_And_StoreID struct {
 	Created_By       int       `json:"created_by"`
 }
 
-func New_Item(name string, mrp_price float64, discount float64, store_price float64, category string, store string, brand string, stock_quantity int, image string, description string, quantity int, unit_of_quantity string) (*Item, error) {
+func New_Item(name string, mrp_price float64, discount float64, store_price float64, category []string, store string, brand string, stock_quantity int, image string, description string, quantity int, unit_of_quantity string) (*Item, error) {
 	return &Item{
 		Name:             name,
 		MRP_Price:        mrp_price,
