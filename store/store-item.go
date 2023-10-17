@@ -229,7 +229,7 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
     LEFT JOIN brand b ON i.brand_id = b.id
     LEFT JOIN item_store istore ON i.id = istore.item_id
     LEFT JOIN store s ON istore.store_id = s.id
-    LEFT JOIN item_category ic ON i.id = ic.item_id
+    LEFT JOIN item_category ic ON i.id = ic.item _id
     LEFT JOIN category c ON ic.category_id = c.id
     LEFT JOIN item_image ii ON i.id = ii.item_id
     GROUP BY i.id, i.description, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity
@@ -424,10 +424,10 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item, error) {
 	}
 
 	// Get store-related details. Assuming an item can be in multiple stores.
-	query = `SELECT s.name, is.mrp_price, is.discount, is.store_price, is.stock_quantity, is.locked_quantity 
-             FROM item_store is
-             JOIN store s ON is.store_id = s.id
-             WHERE is.item_id = $1`
+	query = `SELECT s.name, istore.mrp_price, istore.discount, istore.store_price, istore.stock_quantity, istore.locked_quantity 
+             FROM item_store istore
+             JOIN store s ON istore.store_id = s.id
+             WHERE istore.item_id = $1`
 	rows, err = tx.Query(query, id)
 	if err != nil {
 		return nil, err
