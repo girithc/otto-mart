@@ -169,7 +169,7 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 	cartItem := &types.Cart_Item{}
 	if err == sql.ErrNoRows {
 		// Check if quantity is less than or equal to 1
-		if quantity <= 1 {
+		if quantity < 1 {
 			tx.Rollback()
 			return nil, fmt.Errorf("quantity must be at least 1")
 		}
