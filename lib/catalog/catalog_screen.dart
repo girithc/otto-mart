@@ -344,12 +344,16 @@ class _ItemCatalogState extends State<ItemCatalog> {
             childAspectRatio: 0.638),
         itemCount: items.length,
         itemBuilder: (context, index) {
-          return ListItem(
+          return ListItem2(
               name: items[index].name,
               id: items[index].id,
-              price: items[index].price,
+              mrpPrice: items[index].mrpPrice,
+              discount: items[index].discount,
+              storePrice: items[index].storePrice,
               stockQuantity: items[index].stockQuantity,
               image: items[index].image,
+              quantity: items[index].quantity,
+              unitOfQuantity: items[index].unitOfQuantity,
               index: index % 2);
         },
       ),
@@ -377,7 +381,7 @@ class CategoryItem extends StatelessWidget {
       selected: isSelected ? true : false,
       textColor: Colors.black,
       selectedColor: Colors.black,
-      contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
+      //contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
       title: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -388,14 +392,11 @@ class CategoryItem extends StatelessWidget {
               style: isSelected
                   ? const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)
                   : const TextStyle(fontSize: 14),
-            ),
-            const SizedBox(
-                height:
-                    3.0), // Optional: to provide some space between the text and image
+            ), // Optional: to provide some space between the text and image
             Image.network(
               categoryImage,
               fit: BoxFit.cover,
-              height: 50.0,
+              height: 55.0,
             ) // Replace 'categoryImage' with your image URL variable
           ],
         ),
@@ -409,20 +410,29 @@ class CategoryItem extends StatelessWidget {
   }
 }
 
-class ListItem extends StatelessWidget {
+class ListItem2 extends StatelessWidget {
   final String name;
   final int id;
-  final int price;
+  final int mrpPrice;
+  final int discount;
+  final int storePrice;
   final int stockQuantity;
   final int index;
   final String image;
-  const ListItem(
+  final String unitOfQuantity;
+  final int quantity;
+
+  const ListItem2(
       {required this.name,
       required this.id,
-      required this.price,
+      required this.mrpPrice,
+      required this.discount,
+      required this.storePrice,
       required this.stockQuantity,
       required this.image,
       required this.index,
+      required this.unitOfQuantity,
+      required this.quantity,
       super.key});
 
   @override
@@ -438,7 +448,7 @@ class ListItem extends StatelessWidget {
             builder: (context) => Product(
               productName: name,
               productId: id,
-              price: price,
+              price: mrpPrice,
               stockQuantity: stockQuantity,
               image: image,
             ),
@@ -508,9 +518,9 @@ class ListItem extends StatelessWidget {
                       borderRadius: BorderRadius.circular(1.0),
                       border: Border.all(color: borderColor),
                     ),
-                    child: const Text(
-                      '100g',
-                      style: TextStyle(
+                    child: Text(
+                      '$quantity $unitOfQuantity',
+                      style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w500,
                           height: 1.2),
@@ -554,7 +564,7 @@ class ListItem extends StatelessWidget {
                 ),
                 const Spacer(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  padding: const EdgeInsets.only(left: 8.0),
                   child: Container(
                     height: 37,
                     margin: const EdgeInsets.only(top: 0),
@@ -567,7 +577,19 @@ class ListItem extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '\u{20B9}$price',
+                          '\u{20B9}$storePrice',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                        Text(
+                          '$mrpPrice',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            decoration: TextDecoration.lineThrough,
+                            decorationColor: Colors.black54,
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 2,
                         ),
                         itemIndexInCart != -1
                             ? Container(
@@ -590,7 +612,7 @@ class ListItem extends StatelessWidget {
                                       },
                                       child: const Icon(
                                         Icons.horizontal_rule,
-                                        size: 20,
+                                        size: 21,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -598,21 +620,21 @@ class ListItem extends StatelessWidget {
                                       cart.items[itemIndexInCart].quantity
                                           .toString(),
                                       style: const TextStyle(
-                                          color: Colors.white, fontSize: 15),
+                                          color: Colors.white, fontSize: 16),
                                     ),
                                     InkWell(
                                       onTap: () {
                                         cart.addItemToCart(CartItem(
                                             productId: id.toString(),
                                             productName: name,
-                                            price: price,
+                                            price: mrpPrice,
                                             quantity: 1,
                                             stockQuantity: stockQuantity,
                                             image: image));
                                       },
                                       child: const Icon(
                                         Icons.add,
-                                        size: 22,
+                                        size: 24,
                                         color: Colors.white,
                                       ),
                                     ),
@@ -628,7 +650,7 @@ class ListItem extends StatelessWidget {
                                       final cartItem = CartItem(
                                           productId: id.toString(),
                                           productName: name,
-                                          price: price,
+                                          price: mrpPrice,
                                           quantity: 1,
                                           stockQuantity: stockQuantity,
                                           image: image);
@@ -637,7 +659,7 @@ class ListItem extends StatelessWidget {
                                     style: ElevatedButton.styleFrom(
                                         surfaceTintColor: Colors.white,
                                         backgroundColor: Colors.white,
-                                        padding: const EdgeInsets.all(0),
+                                        padding: const EdgeInsets.all(2),
                                         side: const BorderSide(
                                           width: 1.0,
                                           color: Colors.pinkAccent,
@@ -650,7 +672,7 @@ class ListItem extends StatelessWidget {
                                       'Add+',
                                       style: TextStyle(
                                           color: Colors.pinkAccent,
-                                          fontSize: 13),
+                                          fontSize: 13.5),
                                     )),
                               )
                       ],
@@ -669,11 +691,11 @@ class ListItem extends StatelessWidget {
                 color: Colors.pinkAccent,
                 borderRadius: BorderRadius.circular(3),
               ),
-              child: const Text(
-                '5% OFF',
-                style: TextStyle(
+              child: Text(
+                '\u{20B9}$discount OFF',
+                style: const TextStyle(
                   color: Colors.white,
-                  fontSize: 11,
+                  fontSize: 12,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -708,8 +730,9 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
         child: Row(
-          mainAxisAlignment:
-              MainAxisAlignment.spaceBetween, // Aligns children to the edges
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment:
+              CrossAxisAlignment.end, // Aligns children to the edges
           children: [
             Container(
               decoration: BoxDecoration(
@@ -730,6 +753,8 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
             Container(
+              alignment: Alignment.bottomCenter,
+              padding: const EdgeInsets.only(bottom: 10),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: Colors.white,
@@ -737,14 +762,12 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
               width: MediaQuery.of(context).size.width * 0.69,
-              child: Center(
-                child: Text(
-                  categoryName,
-                  style: const TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
+              child: Text(
+                categoryName,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
                 ),
               ),
             ),

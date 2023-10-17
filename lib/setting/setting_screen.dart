@@ -106,15 +106,7 @@ class _SettingScreenState extends State<SettingScreen> {
               Navigator.pop(context); // close the drawer
             },
           ),
-          ListTile(
-            title: const Text('Support'),
-            onTap: () {
-              setState(() {
-                _currentSection = DrawerSections.support;
-              });
-              Navigator.pop(context); // close the drawer
-            },
-          ),
+
           // ... add more list tiles as required
         ],
       ),
@@ -131,7 +123,7 @@ class _SettingScreenState extends State<SettingScreen> {
         return const Center(child: Text('Orders Section'));
       case DrawerSections.support:
         return const Center(child: Text('Support Section'));
-      // ... handle other sections as required
+
       default:
         return const Center(
             child: Text('Please select a section from the drawer.'));

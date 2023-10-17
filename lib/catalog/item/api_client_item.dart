@@ -41,23 +41,35 @@ class ItemApiClient {
 class Item {
   final int id;
   final String name;
-  final int price;
+  final int mrpPrice;
+  final int discount;
+  final int storePrice;
   final int stockQuantity;
   final String image;
+  final int quantity;
+  final String unitOfQuantity;
 
   Item(
       {required this.id,
       required this.name,
-      required this.price,
+      required this.mrpPrice,
+      required this.discount,
+      required this.storePrice,
       required this.stockQuantity,
-      required this.image});
+      required this.image,
+      required this.quantity,
+      required this.unitOfQuantity});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
         id: json['id'],
         name: json['name'],
-        price: json['price'],
+        mrpPrice: json['mrp_price'],
+        discount: json['discount'],
+        storePrice: json['store_price'],
         stockQuantity: json['stock_quantity'],
-        image: json['image']);
+        image: json['image'],
+        quantity: json['quantity'],
+        unitOfQuantity: json['unit_of_quantity']);
   }
 }

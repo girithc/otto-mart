@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
+import 'package:pronto/address/address_screen.dart';
+import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/category_items/category_items_screen.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
@@ -33,6 +36,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //final bool _isBottomSheetAddressOpen = false;
 
   bool isLoggedIn = false;
+  bool isAddress = false;
   String customerId = "0";
   String phone = "0";
   String cartId = "0";
@@ -55,12 +59,16 @@ class _MyHomePageState extends State<MyHomePage> {
     String? storedCartId =
         await storage.read(key: 'cartId'); // Get cartId from secure storage
 
+    CartModel cartModel = CartModel(storedCustomerId!);
+    Address deliveryAddress = cartModel.deliveryAddress;
+
     setState(() {
       customerId = storedCustomerId ?? "0";
       phone = storedPhone ?? "0";
       cartId = storedCartId ?? "0"; // Set the cartId
 
       isLoggedIn = customerId.isNotEmpty && customerId != "0";
+      isAddress = deliveryAddress.streetAddress.isNotEmpty;
     });
   }
 
@@ -80,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
       final fetchedPromotions = await apiClient.fetchPromotions();
       setState(() {
         promotions = fetchedPromotions;
-        print("Promotions: ${promotions[0].image}");
+        //print("Promotions: ${promotions[0].image}");
       });
     } catch (err) {
       _logger.e('(home)fetchPromotions error $err');
@@ -104,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Uri uri =
         Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
       "input": query,
-      "key": apiKey,
+      "key": modApikey,
     });
     String? response = await NetworkUtility.fetchUrl(uri);
 
@@ -122,8 +130,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showMyDialog(context));
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: const HomeScreenAppBar(),
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
@@ -230,27 +239,106 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
           ],
         ),
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.only(left: 2, right: 2, bottom: 1),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                categoryName,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(
-                  height:
-                      3.0), // Optional: to provide some space between the text and image
               Image.network(
                 image,
                 fit: BoxFit.cover,
-                height: 40.0,
-              ) // Replace 'categoryImage' with your image URL variable
+                height: 69.0,
+              ),
+              Text(
+                categoryName,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    height: 1.1), // Adjusting the line spacing here
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  Future<void> _showMyDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Center(
+          child: Container(
+            width:
+                MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+            padding: const EdgeInsets.all(20.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15.0),
+              border: Border.all(
+                color: Colors.deepPurple,
+                width: 2.0,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: const Offset(
+                      3, 3), // 3D effect by adjusting shadow position
+                ),
+              ],
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.white, Colors.white.withOpacity(0.85)],
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Otto Mart',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Enter Delivery Address.',
+                  style: TextStyle(fontSize: 20),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                      builder: (context) => const AddressScreen(),
+                    ));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 12.0,
+                    ),
+                  ),
+                  child: const Text(
+                    'Add Address',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -277,7 +365,15 @@ class Highlights extends StatelessWidget {
           items: promos.map((promo) {
             // Use promos list here
             return GestureDetector(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => CategoryItemsPage(
+                              categoryID: promo.id,
+                              categoryName: promo.name,
+                            )));
+              },
               child: Card(
                 elevation: 1,
                 shadowColor: Colors.grey,
@@ -317,11 +413,11 @@ class Highlights extends StatelessWidget {
   }
 }
 
-class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title; // Make the title parameter optional
   //final _MyHomePageState homePageState; // Add this line
 
-  const CustomAppBar({this.title, super.key});
+  const HomeScreenAppBar({this.title, super.key});
 
   Future<void> signOutUser(BuildContext context) async {
     // Clear the data in "customerId" key

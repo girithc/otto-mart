@@ -13,7 +13,10 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const storage = FlutterSecureStorage();
   String? initialCustomerId = await storage.read(key: 'customerId');
-  runApp(MyApp(initialCustomerId: initialCustomerId));
+
+  runApp(MyApp(
+    initialCustomerId: initialCustomerId,
+  ));
 }
 
 class MyApp extends StatefulWidget {
@@ -68,7 +71,9 @@ class _MyAppState extends State<MyApp> {
             ),
             home: (isLoggedIn == null)
                 ? const CircularProgressIndicator()
-                : OpeningPageAnimation(isLoggedIn: isLoggedIn!),
+                : OpeningPageAnimation(
+                    isLoggedIn: isLoggedIn!,
+                  ),
           );
         },
       ),

@@ -32,8 +32,10 @@ class _AddressScreenState extends State<AddressScreen> {
     Uri uri =
         Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
       "input": query,
-      "key": apiKey,
+      "key": modApikey,
     });
+
+    print('Api Key: $modApikey');
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -43,8 +45,8 @@ class _AddressScreenState extends State<AddressScreen> {
       PlaceAutoCompleteResponse result =
           PlaceAutoCompleteResponse.parseAutocompleteResult(response);
 
-      //String? predictions = result.predictions?[0].description;
-      //print("Prediction[0].description  $predictions");
+      String? predictions = result.predictions?[0].description;
+      print("Prediction[0].description  $predictions");
 
       if (result.predictions != null) {
         setState(() {

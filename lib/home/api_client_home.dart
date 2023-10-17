@@ -34,7 +34,7 @@ class HomeApiClient {
     //print("Response200 ${response.body}");
 
     if (response.statusCode == 200) {
-      print("Response200 ${response.body}");
+      //print("Response200 ${response.body}");
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Category> categories =
           jsonData.map((item) => Category.fromJson(item)).toList();

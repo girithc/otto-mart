@@ -26,6 +26,8 @@ class PlaceAutoCompleteResponse {
     // print("(PlaceAutoCompleteResponse) Response Body: $responseBody");
     final parsed = json.decode(responseBody).cast<String, dynamic>();
 
+    print("Parsed: $parsed");
+
     return PlaceAutoCompleteResponse.fromJson(parsed);
   }
 }

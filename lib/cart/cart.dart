@@ -89,7 +89,7 @@ class CartModel extends ChangeNotifier {
       'Content-Type': 'application/json',
     };
 
-    print("customer Id $customerId");
+    //print("customer Id $customerId");
 
     int? parsedCustomerId;
     try {
@@ -257,6 +257,9 @@ class CartModel extends ChangeNotifier {
       'Content-Type': 'application/json',
       // Add any other headers you need
     };
+
+    print('CartId $cartId');
+    print('ProductId ${item.productId}');
     final body = <String, dynamic>{
       'cart_id': int.parse(cartId!),
       'item_id': int.parse(item.productId),
