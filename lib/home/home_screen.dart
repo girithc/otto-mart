@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
-import 'package:pronto/address/address_screen.dart';
+import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
@@ -28,12 +28,15 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
   List<Category> promotions = [];
   //final bool _isBottomSheetOpen = false;
   //final bool _isBottomSheetAddressOpen = false;
+  late AnimationController _buttonController;
+  late Animation<Color?> _colorAnim;
 
   bool isLoggedIn = false;
   bool isAddress = false;
@@ -49,6 +52,16 @@ class _MyHomePageState extends State<MyHomePage> {
     fetchCategories();
     fetchPromotions();
     retrieveCustomerInfo();
+
+    _buttonController = AnimationController(
+      duration: const Duration(milliseconds: 2100),
+      vsync: this,
+    )..repeat(reverse: true);
+
+    _colorAnim = ColorTween(
+      begin: Colors.deepPurpleAccent,
+      end: Colors.pinkAccent,
+    ).animate(_buttonController);
   }
 
   Future<void> retrieveCustomerInfo() async {
@@ -63,7 +76,7 @@ class _MyHomePageState extends State<MyHomePage> {
     Address deliveryAddress = cartModel.deliveryAddress;
 
     setState(() {
-      customerId = storedCustomerId ?? "0";
+      customerId = storedCustomerId;
       phone = storedPhone ?? "0";
       cartId = storedCartId ?? "0"; // Set the cartId
 
@@ -282,11 +295,11 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.5),
-                  spreadRadius: 5,
-                  blurRadius: 7,
+                  color: Colors.grey.withOpacity(0.25),
+                  spreadRadius: 2,
+                  blurRadius: 4,
                   offset: const Offset(
-                      3, 3), // 3D effect by adjusting shadow position
+                      1, 1), // 3D effect by adjusting shadow position
                 ),
               ],
               gradient: LinearGradient(
@@ -301,38 +314,60 @@ class _MyHomePageState extends State<MyHomePage> {
                 const Text(
                   'Otto Mart',
                   style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color:
+                        Colors.deepPurpleAccent, // Changed to a shade of pink
+                    decoration: TextDecoration.underline,
+                    decorationColor: Colors.pink, // Changed to a shade of pink
+                    decorationThickness: 0.0,
                   ),
                 ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Enter Delivery Address.',
-                  style: TextStyle(fontSize: 20),
+                const Divider(),
+                const SizedBox(height: 10),
+                RichText(
                   textAlign: TextAlign.center,
+                  text: const TextSpan(
+                    text: 'Enter Delivery Address',
+                    style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.black, // Changed to a shade of pink
+                      decoration: TextDecoration.underline,
+                      decorationColor:
+                          Colors.pink, // Changed to a shade of pink
+                      decorationThickness: 0.0,
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const AddressScreen(),
-                    ));
+                AnimatedBuilder(
+                  animation: _buttonController,
+                  builder: (context, child) {
+                    return ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(MaterialPageRoute(
+                          builder: (context) => const AddressScreen(),
+                        ));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            _colorAnim.value, // <-- Use the animated color here
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 12.0,
+                        ),
+                      ),
+                      child: const Text(
+                        'Add Address+',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18),
+                      ),
+                    );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurple,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20.0,
-                      vertical: 12.0,
-                    ),
-                  ),
-                  child: const Text(
-                    'Add Address',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
                 ),
               ],
             ),
@@ -340,6 +375,12 @@ class _MyHomePageState extends State<MyHomePage> {
         );
       },
     );
+  }
+
+  @override
+  void dispose() {
+    _buttonController.dispose();
+    super.dispose();
   }
 }
 

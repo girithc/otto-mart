@@ -5,6 +5,7 @@ import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/utils/constants.dart';
 
 import 'package:pronto/home/models/place_auto_complete_response.dart';
@@ -22,8 +23,7 @@ class _AddressScreenState extends State<AddressScreen> {
   List<PredictionAutoComplete> placePredictions = [];
   //final Logger _logger = Logger();
 
-  final _debouncer =
-      Debouncer(milliseconds: 1000); // Adjust the delay as needed
+  final _debouncer = Debouncer(milliseconds: 500); // Adjust the delay as needed
 
   void placeAutocomplete(String query) async {
     //print("Entered placeAutocomplete");
@@ -128,9 +128,8 @@ class _AddressScreenState extends State<AddressScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ConfirmAddress(
-                                placeId: placePredictions[index].placeId!,
-                              ),
+                              builder: (context) => ConfirmAddressInit(
+                                  placeId: placePredictions[index].placeId!),
                             ),
                           );
                         },
