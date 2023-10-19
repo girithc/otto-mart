@@ -37,3 +37,18 @@ func (s *Server) Handle_Get_Address_By_Customer_Id(res http.ResponseWriter, req 
 
 	return WriteJSON(res, http.StatusOK, addrs)
 }
+
+func (s *Server) handleDeleteAddress(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.Delete_Address)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleDeleteAddress()")
+		return err
+	}
+
+	addrs, err := s.store.Delete_Address(new_req.Customer_Id, new_req.Address_Id)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, addrs)
+}

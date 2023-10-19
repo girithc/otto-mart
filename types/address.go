@@ -11,6 +11,7 @@ type Address struct {
 	City             string    `json:"city"`
 	State            string    `json:"state"`
 	Zipcode          string    `json:"zip"`
+	Is_Default       bool      `json:"is_default"`
 	Latitude         float64   `json:"latitude"`
 	Longitude        float64   `json:"longitude"`
 	Created_At       time.Time `json:"created_at"`
@@ -30,4 +31,9 @@ type Create_Address struct {
 
 type Address_Customer_Id struct {
 	Customer_Id int `json:"customer_id"`
+}
+
+type Delete_Address struct {
+	Customer_Id int `json:"customer_id"`
+	Address_Id  int `json:"address_id"`
 }

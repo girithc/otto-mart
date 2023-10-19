@@ -67,11 +67,11 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 	// Insert the new address and set is_default=true
 	query := `INSERT INTO address (customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default) 
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,  true) 
-        RETURNING id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, created_at`
+        RETURNING id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
 	row := tx.QueryRow(query, addr.Customer_Id, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude)
 
 	address := &types.Address{}
-	err = row.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Latitude, &address.Longitude, &address.Created_At)
+	err = row.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Is_Default, &address.Latitude, &address.Longitude, &address.Created_At)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -87,7 +87,7 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 
 func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int) ([]*types.Address, error) {
 	// Include place_id, latitude, and longitude in the SELECT statement
-	query := `SELECT id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode,  latitude, longitude, created_at
+	query := `SELECT id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at
 		FROM address
 		WHERE customer_id = $1`
 
@@ -101,7 +101,7 @@ func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int) ([]*types.
 	for rows.Next() {
 		address := &types.Address{}
 		// Include place_id, latitude, and longitude in the Scan method call
-		err := rows.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Latitude, &address.Longitude, &address.Created_At)
+		err := rows.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Is_Default, &address.Latitude, &address.Longitude, &address.Created_At)
 		if err != nil {
 			return nil, err
 		}
@@ -115,4 +115,44 @@ func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int) ([]*types.
 	}
 
 	return addresses, nil
+}
+
+func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.Address, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback() // Rollback in case of panic
+		}
+	}()
+
+	// Fetch the address details before deleting it
+	selectQuery := `SELECT id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at FROM address WHERE id=$1 AND customer_id=$2`
+	row := tx.QueryRow(selectQuery, address_id, customer_id)
+
+	address := &types.Address{}
+	err = row.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Is_Default, &address.Latitude, &address.Longitude, &address.Created_At)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Delete the address
+	deleteQuery := `DELETE FROM address WHERE id=$1 AND customer_id=$2`
+	_, err = tx.Exec(deleteQuery, address_id, customer_id)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Commit the transaction if everything was successful
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return address, nil
 }

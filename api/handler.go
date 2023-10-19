@@ -228,7 +228,6 @@ func (s *Server) handleCategory(res http.ResponseWriter, req *http.Request) erro
 }
 
 // Category Higher Level Mapping
-
 func (s *Server) handleCategoryHigherLevelMapping(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
 
@@ -439,6 +438,7 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 
+	// add address or get address by customer id
 	if req.Method == "POST" {
 		print_path("POST", "address")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
@@ -484,6 +484,23 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 
 		// Wait for the result and return it
 		return <-resultChan
+	} else if req.Method == "DELETE" {
+		print_path("GET", "brand")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handleDeleteAddress(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
 	}
 	return nil
 }
