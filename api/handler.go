@@ -465,10 +465,17 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 		var task func() worker.Result
 
 		// Check if only 'customer_id' is present in the request body
-		if _, exists := requestBody["customer_id"]; exists && len(requestBody) == 1 {
-			task = func() worker.Result {
-				err := s.Handle_Get_Address_By_Customer_Id(res, newReq)
-				return worker.Result{Error: err}
+		if _, exists := requestBody["customer_id"]; exists {
+			if len(requestBody) == 1 {
+				task = func() worker.Result {
+					err := s.Handle_Get_Address_By_Customer_Id(res, newReq)
+					return worker.Result{Error: err}
+				}
+			} else if _, existDefault := requestBody["is_default"]; existDefault {
+				task = func() worker.Result {
+					err := s.handleGetDefaultAddress(res, newReq)
+					return worker.Result{Error: err}
+				}
 			}
 		} else {
 			task = func() worker.Result {
@@ -485,7 +492,7 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 		// Wait for the result and return it
 		return <-resultChan
 	} else if req.Method == "DELETE" {
-		print_path("GET", "brand")
+		print_path("DELETE", "address")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		task := func() worker.Result {

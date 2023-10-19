@@ -85,13 +85,13 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 	return address, nil
 }
 
-func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int) ([]*types.Address, error) {
+func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int, is_default bool) ([]*types.Address, error) {
 	// Include place_id, latitude, and longitude in the SELECT statement
 	query := `SELECT id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at
 		FROM address
-		WHERE customer_id = $1`
+		WHERE customer_id = $1 AND is_default = $2`
 
-	rows, err := s.db.Query(query, customer_id)
+	rows, err := s.db.Query(query, customer_id, is_default)
 	if err != nil {
 		return nil, err
 	}
@@ -152,6 +152,33 @@ func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
+	}
+
+	// Start a new transaction to set another address as is_default = true
+	tx, err = s.db.Begin()
+	if err != nil {
+		return address, err
+	}
+
+	// Check if there is another address for the same customer_id
+	selectDefaultQuery := `SELECT id FROM address WHERE customer_id=$1 AND is_default = false LIMIT 1`
+	row = tx.QueryRow(selectDefaultQuery, customer_id)
+
+	var newDefaultAddressID int
+	if err := row.Scan(&newDefaultAddressID); err == nil {
+		// Set the is_default value for the new default address to true
+		updateDefaultQuery := `UPDATE address SET is_default=true WHERE id=$1`
+		_, err = tx.Exec(updateDefaultQuery, newDefaultAddressID)
+		if err != nil {
+			tx.Rollback()
+			return address, err
+		}
+	}
+
+	// Commit the transaction for setting is_default = true
+	err = tx.Commit()
+	if err != nil {
+		return address, err
 	}
 
 	return address, nil
