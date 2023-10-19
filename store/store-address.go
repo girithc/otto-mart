@@ -56,6 +56,7 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 		}
 	}()
 
+	print("Befopre update")
 	// First, set all other addresses for this customer to is_default=false
 	updateQuery := `UPDATE address SET is_default=false WHERE customer_id=$1 AND is_default=true`
 	_, err = tx.Exec(updateQuery, addr.Customer_Id)
@@ -63,6 +64,7 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 		tx.Rollback()
 		return nil, err
 	}
+	print("After update")
 
 	// Insert the new address and set is_default=true
 	query := `INSERT INTO address (customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default) 
@@ -112,6 +114,11 @@ func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int, is_default
 	err = rows.Err()
 	if err != nil {
 		return nil, err
+	}
+
+	if len(addresses) == 0 {
+		// No results found, return an empty slice
+		return []*types.Address{}, nil
 	}
 
 	return addresses, nil

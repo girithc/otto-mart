@@ -478,6 +478,7 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 				}
 			}
 		} else {
+			print("Create Address")
 			task = func() worker.Result {
 				err := s.Handle_Create_Address(res, newReq)
 				return worker.Result{Error: err}
