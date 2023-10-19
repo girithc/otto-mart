@@ -67,9 +67,9 @@ class CartModel extends ChangeNotifier {
       latitude: 0.0);
 
   CartModel(this.customerId) {
+    _fetchDefaultAddress();
     _fetchCartId().then((_) {
       _fetchCartItems(); // Then fetch cart items from the server
-      _fetchDefaultAddress();
     });
   }
 
@@ -130,7 +130,7 @@ class CartModel extends ChangeNotifier {
     });
   }
 
-  void _fetchDefaultAddress() {
+  Future<void> _fetchDefaultAddress() async {
     final url = Uri.parse('$baseUrl/address');
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -147,8 +147,6 @@ class CartModel extends ChangeNotifier {
 
     print("customer Id $parsedCustomerId");
 
-    if (parsedCustomerId == null) return;
-
     final body = <String, dynamic>{
       'customer_id': parsedCustomerId,
       "is_default": true,
@@ -157,23 +155,31 @@ class CartModel extends ChangeNotifier {
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
       //_logger.e('Response: $response');
       if (response.statusCode == 200) {
-        if (response.body.isNotEmpty) {
+        if (response.body.isNotEmpty && response.contentLength! > 3) {
+          print("Response Not Empty ${response.contentLength}");
           final List<dynamic> jsonData = json.decode(response.body);
           final List<Address> items =
               jsonData.map((item) => Address.fromJson(item)).toList();
 
-          //_items.clear();
           deliveryAddress = items[0];
           notifyListeners();
         } else {
-          _logger.e('Empty response received from server');
+          print("Response  Empty");
+          deliveryAddress.id = -1;
+          notifyListeners();
         }
       } else {
         _logger.e(
             'HTTP POST request failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      _logger.e('(cart model) HTTP POST request error: $error');
+      if (error != null && error is http.ClientException) {
+        // Handle the case where the response is null
+        deliveryAddress.id = -1;
+        _logger.e('null response');
+      } else {
+        _logger.e('(cart model) HTTP POST request error: $error');
+      }
     });
   }
 
@@ -282,7 +288,7 @@ class CartModel extends ChangeNotifier {
     };
 
     final http.Response response = await http.post(
-      Uri.parse('$baseUrl/customer'),
+      Uri.parse('$baseUrl/address'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -382,7 +388,7 @@ class CartModel extends ChangeNotifier {
 }
 
 class Address {
-  final int id;
+  int id;
   final int customerId;
   final String streetAddress;
   final String lineOne;

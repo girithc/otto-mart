@@ -298,13 +298,6 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     print("Placemarks: $placemarks");
     print("Address: $address");
 
-    List<String> addressComponents = [
-      address.street ?? "",
-      address.locality ?? "",
-      address.administrativeArea ?? "",
-      address.country ?? ""
-    ];
-
     setState(() {
       //_draggedAddress = addressStr;
       _draggedAddress_one = address.street!;

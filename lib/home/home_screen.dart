@@ -37,12 +37,15 @@ class _MyHomePageState extends State<MyHomePage>
   //final bool _isBottomSheetAddressOpen = false;
   late AnimationController _buttonController;
   late Animation<Color?> _colorAnim;
+  CartModel? cartModel; // Declare a reference to the CartModel
 
   bool isLoggedIn = false;
   bool isAddress = false;
   String customerId = "0";
   String phone = "0";
   String cartId = "0";
+  String streetAddress = "";
+  bool showDialogVisible = false;
 
   final Logger _logger = Logger();
 
@@ -142,13 +145,14 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    /*
     var cart = context.watch<CartModel>();
-    String streetAddress = cart.deliveryAddress.streetAddress;
-    if (cart.deliveryAddress.streetAddress.trim() == "") {
-      print("Empty ${cart.deliveryAddress.streetAddress}");
+    print("Address : ${cart.deliveryAddress.streetAddress}");
+    if (cart.deliveryAddress.streetAddress == "") {
       WidgetsBinding.instance
           .addPostFrameCallback((_) => _showMyDialog(context));
     }
+    */
     return Scaffold(
       appBar: const HomeScreenAppBar(),
       body: RefreshIndicator(
@@ -158,48 +162,64 @@ class _MyHomePageState extends State<MyHomePage>
           // <-- Using CustomScrollView
           slivers: <Widget>[
             SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  // Your other body content
-                  Container(
-                    //color: Theme.of(context).colorScheme.primary,
-                    padding: const EdgeInsets.all(2),
-                    height: 60,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage("assets/images/store.png"),
-                        opacity: 0.9,
-                        fit: BoxFit.cover,
+              child: Consumer<CartModel>(
+                builder: (context, cart, child) {
+                  print("Address : ${cart.deliveryAddress.streetAddress}");
+                  if (cart.deliveryAddress.id < 0) {
+                    // Set showDialogVisible to false when streetAddress is populated
+                    showDialogVisible = true;
+                  }
+
+                  if (showDialogVisible) {
+                    // Show the dialog only when showDialogVisible is true
+                    WidgetsBinding.instance
+                        .addPostFrameCallback((_) => _showMyDialog(context));
+                  }
+                  return Column(
+                    children: [
+                      // Your other body content
+                      Container(
+                        //color: Theme.of(context).colorScheme.primary,
+                        padding: const EdgeInsets.all(2),
+                        height: 60,
+                        decoration: const BoxDecoration(
+                          image: DecorationImage(
+                            image: AssetImage("assets/images/store.png"),
+                            opacity: 0.9,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            cart.deliveryAddress.streetAddress,
+                            style: GoogleFonts.cantoraOne(
+                                fontSize: 25,
+                                fontStyle: FontStyle.normal,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        cart.deliveryAddress.streetAddress,
-                        style: GoogleFonts.cantoraOne(
-                            fontSize: 25,
-                            fontStyle: FontStyle.normal,
+                      Highlights(
+                          customerId: customerId,
+                          phone: phone,
+                          promos: promotions), // Pass retrieved values
+                      Container(
+                        alignment:
+                            Alignment.centerLeft, // Align text to the left
+                        padding: const EdgeInsets.only(
+                            left: 16, top: 8.0, bottom: 2.0),
+                        child: const Text(
+                          'Explore By Categories',
+                          style: TextStyle(
+                            fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  Highlights(
-                      customerId: customerId,
-                      phone: phone,
-                      promos: promotions), // Pass retrieved values
-                  Container(
-                    alignment: Alignment.centerLeft, // Align text to the left
-                    padding:
-                        const EdgeInsets.only(left: 16, top: 8.0, bottom: 2.0),
-                    child: const Text(
-                      'Explore By Categories',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
             // This is the GridView, wrapped inside a SliverPadding
@@ -281,105 +301,106 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> _showMyDialog(BuildContext context) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.transparent,
-      builder: (BuildContext context) {
-        return Center(
-          child: Container(
-            width:
-                MediaQuery.of(context).size.width * 0.8, // 80% of screen width
-            padding: const EdgeInsets.all(20.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15.0),
-              border: Border.all(
-                color: Colors.deepPurple,
-                width: 2.0,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.25),
-                  spreadRadius: 2,
-                  blurRadius: 4,
-                  offset: const Offset(
-                      1, 1), // 3D effect by adjusting shadow position
+    if (showDialogVisible) {
+      return showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        barrierColor: Colors.transparent,
+        builder: (BuildContext context) {
+          return Center(
+            child: Container(
+              width: MediaQuery.of(context).size.width *
+                  0.8, // 80% of screen width
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15.0),
+                border: Border.all(
+                  color: Colors.deepPurple,
+                  width: 2.0,
                 ),
-              ],
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Colors.white, Colors.white.withOpacity(0.85)],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Otto Mart',
-                  style: TextStyle(
-                    fontSize: 20,
-                    color:
-                        Colors.deepPurpleAccent, // Changed to a shade of pink
-                    decoration: TextDecoration.underline,
-                    decorationColor: Colors.pink, // Changed to a shade of pink
-                    decorationThickness: 0.0,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.25),
+                    spreadRadius: 2,
+                    blurRadius: 4,
+                    offset: const Offset(
+                        1, 1), // 3D effect by adjusting shadow position
                   ),
+                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Colors.white, Colors.white.withOpacity(0.85)],
                 ),
-                const Divider(),
-                const SizedBox(height: 10),
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: const TextSpan(
-                    text: 'Enter Delivery Address',
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Otto Mart',
                     style: TextStyle(
                       fontSize: 20,
-                      color: Colors.black, // Changed to a shade of pink
+                      color: Colors.deepPurpleAccent,
                       decoration: TextDecoration.underline,
-                      decorationColor:
-                          Colors.pink, // Changed to a shade of pink
+                      decorationColor: Colors.pink,
                       decorationThickness: 0.0,
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                AnimatedBuilder(
-                  animation: _buttonController,
-                  builder: (context, child) {
-                    return ElevatedButton(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(MaterialPageRoute(
-                          builder: (context) => const AddressScreen(),
-                        ));
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            _colorAnim.value, // <-- Use the animated color here
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20.0,
-                          vertical: 12.0,
-                        ),
+                  const Divider(),
+                  const SizedBox(height: 10),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: const TextSpan(
+                      text: 'Enter Delivery Address',
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        decoration: TextDecoration.underline,
+                        decorationColor: Colors.pink,
+                        decorationThickness: 0.0,
                       ),
-                      child: const Text(
-                        'Add Address+',
-                        style: TextStyle(
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  AnimatedBuilder(
+                    animation: _buttonController,
+                    builder: (context, child) {
+                      return ElevatedButton(
+                        onPressed: () {
+                          Navigator.of(context)
+                              .pushReplacement(MaterialPageRoute(
+                            builder: (context) => const AddressScreen(),
+                          ));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _colorAnim.value,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20.0,
+                            vertical: 12.0,
+                          ),
+                        ),
+                        child: const Text(
+                          'Add Address+',
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 18),
-                      ),
-                    );
-                  },
-                ),
-              ],
+                            fontSize: 18,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    }
   }
 
   @override

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pronto/cart/address/screen/confirm_address.dart';
 import 'package:pronto/cart/address/worker/debouncer.dart';
 import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
@@ -59,7 +58,7 @@ class _AddressScreenState extends State<AddressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>();
+    //var cart = context.watch<CartModel>();
     return Scaffold(
       appBar: AppBar(
         title: const Text("Delivery Address"),
