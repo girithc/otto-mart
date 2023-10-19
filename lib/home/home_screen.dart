@@ -72,16 +72,15 @@ class _MyHomePageState extends State<MyHomePage>
     String? storedCartId =
         await storage.read(key: 'cartId'); // Get cartId from secure storage
 
-    CartModel cartModel = CartModel(storedCustomerId!);
-    Address deliveryAddress = cartModel.deliveryAddress;
+    //CartModel cartModel = CartModel(storedCustomerId!);
+    //Address? deliveryAddress = cartModel.deliveryAddress;
 
     setState(() {
-      customerId = storedCustomerId;
+      customerId = storedCustomerId!;
       phone = storedPhone ?? "0";
       cartId = storedCartId ?? "0"; // Set the cartId
 
       isLoggedIn = customerId.isNotEmpty && customerId != "0";
-      isAddress = deliveryAddress.streetAddress.isNotEmpty;
     });
   }
 
@@ -143,7 +142,13 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    WidgetsBinding.instance.addPostFrameCallback((_) => _showMyDialog(context));
+    var cart = context.watch<CartModel>();
+    String streetAddress = cart.deliveryAddress.streetAddress;
+    if (cart.deliveryAddress.streetAddress.trim() == "") {
+      print("Empty ${cart.deliveryAddress.streetAddress}");
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _showMyDialog(context));
+    }
     return Scaffold(
       appBar: const HomeScreenAppBar(),
       body: RefreshIndicator(
@@ -169,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage>
                     ),
                     child: Center(
                       child: Text(
-                        'Delivery in 10 minutes',
+                        cart.deliveryAddress.streetAddress,
                         style: GoogleFonts.cantoraOne(
                             fontSize: 25,
                             fontStyle: FontStyle.normal,

@@ -4,22 +4,22 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:provider/provider.dart';
 
-class ReconfirmAddress extends StatefulWidget {
+class ReconfirmAddressInit extends StatefulWidget {
   final LatLng coordinates;
   final String lineOneAddress;
   final String lineTwoAddress;
 
-  const ReconfirmAddress({
+  const ReconfirmAddressInit({
     Key? key,
     required this.coordinates,
     required this.lineOneAddress,
     required this.lineTwoAddress,
   }) : super(key: key);
   @override
-  State<ReconfirmAddress> createState() => _ReconfirmAddressState();
+  State<ReconfirmAddressInit> createState() => _ReconfirmAddressInitState();
 }
 
-class _ReconfirmAddressState extends State<ReconfirmAddress> {
+class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
   final _formKey = GlobalKey<FormBuilderState>();
   final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
       GlobalKey<ScaffoldMessengerState>();

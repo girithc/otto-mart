@@ -59,7 +59,7 @@ class CartModel extends ChangeNotifier {
       lineTwo: "",
       city: '',
       state: '',
-      streetAddress: '',
+      streetAddress: "",
       zip: '',
       createdAt: DateTime(2020),
       customerId: 0,
@@ -69,6 +69,7 @@ class CartModel extends ChangeNotifier {
   CartModel(this.customerId) {
     _fetchCartId().then((_) {
       _fetchCartItems(); // Then fetch cart items from the server
+      _fetchDefaultAddress();
     });
   }
 
@@ -116,6 +117,53 @@ class CartModel extends ChangeNotifier {
 
           _items.clear();
           _items.addAll(items);
+          notifyListeners();
+        } else {
+          _logger.e('Empty response received from server');
+        }
+      } else {
+        _logger.e(
+            'HTTP POST request failed with status code ${response.statusCode}');
+      }
+    }).catchError((error) {
+      _logger.e('(cart model) HTTP POST request error: $error');
+    });
+  }
+
+  void _fetchDefaultAddress() {
+    final url = Uri.parse('$baseUrl/address');
+    final headers = <String, String>{
+      'Content-Type': 'application/json',
+    };
+
+    //print("customer Id $customerId");
+
+    int? parsedCustomerId;
+    try {
+      parsedCustomerId = int.parse(customerId);
+    } catch (e) {
+      _logger.e('Failed to parse customerId: $customerId, error: $e ');
+    }
+
+    print("customer Id $parsedCustomerId");
+
+    if (parsedCustomerId == null) return;
+
+    final body = <String, dynamic>{
+      'customer_id': parsedCustomerId,
+      "is_default": true,
+    };
+
+    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+      //_logger.e('Response: $response');
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final List<dynamic> jsonData = json.decode(response.body);
+          final List<Address> items =
+              jsonData.map((item) => Address.fromJson(item)).toList();
+
+          //_items.clear();
+          deliveryAddress = items[0];
           notifyListeners();
         } else {
           _logger.e('Empty response received from server');
@@ -370,8 +418,8 @@ class Address {
       city: json['city'],
       state: json['state'],
       zip: json['zip'],
-      latitude: json['latitude'],
-      longitude: json['longitude'],
+      latitude: json['latitude'].toDouble(),
+      longitude: json['longitude'].toDouble(),
       createdAt: DateTime.parse(json['created_at']),
     );
   }

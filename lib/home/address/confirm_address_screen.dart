@@ -6,7 +6,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
-import 'package:pronto/cart/address/screen/reconfirm_address.dart';
+import 'package:pronto/home/address/reconfirm_address_init.dart';
 import 'package:pronto/utils/constants.dart';
 
 class ConfirmAddressInit extends StatefulWidget {
@@ -63,6 +63,72 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
         title: const Text("Confirm Address"),
       ),
       body: _buildBody(),
+      bottomNavigationBar: BottomAppBar(
+          height: 150,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              ListTile(
+                contentPadding: const EdgeInsets.all(0),
+                minVerticalPadding: 0,
+                title: Text(
+                  _draggedAddress_one + _draggedAddress_two,
+                  style: const TextStyle(height: 1.2),
+                ),
+                leading: GestureDetector(
+                  onTap: () {
+                    // Action to perform when leading is pressed
+                    _gotoUserCurrentPosition();
+                  },
+                  child: const CircleAvatar(
+                    child: Icon(Icons.location_city_outlined),
+                  ),
+                ),
+                trailing: GestureDetector(
+                  onTap: () {
+                    // Action to perform when trailing is pressed
+                    _gotoUserCurrentPosition();
+                  },
+                  child: const CircleAvatar(
+                    child: Icon(
+                      Icons.check,
+                      size: 25,
+                    ),
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ReconfirmAddressInit(
+                        coordinates: _defaultLatLng,
+                        lineOneAddress: _draggedAddress_one,
+                        lineTwoAddress: _draggedAddress_two,
+                      ),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF6200EE),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 65, vertical: 10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Confirm Address",
+                  style: TextStyle(
+                      fontSize: 20,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
+              )
+            ],
+          )),
+      /*
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
@@ -169,11 +235,12 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
           ),
         ],
       ),
+      */
     );
   }
 
   Widget _buildBody() {
-    return Stack(children: [_getMap(), _getCustomPin(), _showDraggedAddress()]);
+    return Stack(children: [_getMap(), _getCustomPin()]);
   }
 
   Widget _showDraggedAddress() {
