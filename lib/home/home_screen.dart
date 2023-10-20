@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -33,19 +35,20 @@ class _MyHomePageState extends State<MyHomePage>
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
   List<Category> promotions = [];
-  //final bool _isBottomSheetOpen = false;
-  //final bool _isBottomSheetAddressOpen = false;
+
   late AnimationController _buttonController;
   late Animation<Color?> _colorAnim;
-  CartModel? cartModel; // Declare a reference to the CartModel
+  late AnimationController _textSwitchController;
 
   bool isLoggedIn = false;
   bool isAddress = false;
+  bool _isMounted = false;
+  bool showDialogVisible = false;
+
   String customerId = "0";
   String phone = "0";
   String cartId = "0";
   String streetAddress = "";
-  bool showDialogVisible = false;
 
   final Logger _logger = Logger();
 
@@ -145,14 +148,15 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    /*
     var cart = context.watch<CartModel>();
-    print("Address : ${cart.deliveryAddress.streetAddress}");
-    if (cart.deliveryAddress.streetAddress == "") {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _showMyDialog(context));
+    print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
+    print("Customer Id: $customerId");
+    if (cart.deliveryAddress.id < 0) {
+      // Set showDialogVisible to false when streetAddress is populated
+      showDialogVisible = true;
+    } else {
+      showDialogVisible = false;
     }
-    */
     return Scaffold(
       appBar: const HomeScreenAppBar(),
       body: RefreshIndicator(
@@ -164,42 +168,135 @@ class _MyHomePageState extends State<MyHomePage>
             SliverToBoxAdapter(
               child: Consumer<CartModel>(
                 builder: (context, cart, child) {
-                  print("Address : ${cart.deliveryAddress.streetAddress}");
+                  //print("Address : ${cart.deliveryAddress.streetAddress}");
                   if (cart.deliveryAddress.id < 0) {
                     // Set showDialogVisible to false when streetAddress is populated
                     showDialogVisible = true;
                   }
-
                   if (showDialogVisible) {
                     // Show the dialog only when showDialogVisible is true
-                    WidgetsBinding.instance
-                        .addPostFrameCallback((_) => _showMyDialog(context));
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (_isMounted) {
+                        // Check if state is still mounted
+                        _showMyDialog(context);
+                      }
+                    });
                   }
                   return Column(
                     children: [
                       // Your other body content
                       Container(
-                        //color: Theme.of(context).colorScheme.primary,
                         padding: const EdgeInsets.all(2),
                         height: 60,
-                        decoration: const BoxDecoration(
-                          image: DecorationImage(
-                            image: AssetImage("assets/images/store.png"),
-                            opacity: 0.9,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            cart.deliveryAddress.streetAddress,
-                            style: GoogleFonts.cantoraOne(
-                                fontSize: 25,
-                                fontStyle: FontStyle.normal,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 15, // Flex 3 for the address
+                              child: GestureDetector(
+                                onTap: () {
+                                  showModalBottomSheet(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return Container(
+                                        padding: const EdgeInsets.all(10),
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.45,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.95,
+                                        child: const Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              "Change Address",
+                                              style: TextStyle(fontSize: 24),
+                                            ),
+                                            Divider(),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  );
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(4.0),
+                                    border: Border.all(
+                                        color: Colors.deepPurpleAccent),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color:
+                                            Color.fromARGB(255, 248, 219, 253),
+                                        spreadRadius: 1,
+                                        blurRadius: 3,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
+                                  ), // No background color for the first child
+                                  child: Center(
+                                    child: Text(
+                                      cart.deliveryAddress.streetAddress,
+                                      style: GoogleFonts.cantoraOne(
+                                          fontSize: 15,
+                                          fontStyle: FontStyle.normal,
+                                          color: Colors.black),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                      softWrap: false,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Container(),
+                            ),
+                            Expanded(
+                              flex: 42, // Flex 7 for the main content
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  image: const DecorationImage(
+                                    image:
+                                        AssetImage("assets/images/store.png"),
+                                    opacity: 0.9,
+                                    fit: BoxFit.cover,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4.0),
+                                  border: Border.all(
+                                      color: Colors.deepPurpleAccent),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color.fromARGB(255, 248, 219, 253),
+                                      spreadRadius: 1,
+                                      blurRadius: 3,
+                                      offset: Offset(0, 3),
+                                    ),
+                                  ],
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    "Delivery in 10 minutes",
+                                    style: GoogleFonts.cantoraOne(
+                                        fontSize: 24,
+                                        fontStyle: FontStyle.italic,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+
                       Highlights(
                           customerId: customerId,
                           phone: phone,
@@ -404,8 +501,16 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isMounted = true;
+  }
+
+  @override
   void dispose() {
     _buttonController.dispose();
+    _textSwitchController.dispose();
+    _isMounted = false;
     super.dispose();
   }
 }
@@ -573,32 +678,15 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                 IconButton(
                   color: Colors.black,
                   padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.person),
+                  icon: const Icon(Icons.person_outline),
                   onPressed: () {
-                    signOutUser(context).then(
-                      (value) => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyPhone())),
-                    );
-
-                    /*
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const CartPage()));
-                    */
-                  },
-                ),
-                IconButton(
-                  color: Colors.black,
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.settings_outlined),
-                  onPressed: () {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                             builder: (context) => const SettingScreen()));
+                    /*
+                    
+                    */
                   },
                 ),
               ],

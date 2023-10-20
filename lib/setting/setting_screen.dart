@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pronto/home/home_screen.dart';
+import 'package:pronto/login/login_status_provider.dart';
+import 'package:pronto/login/phone_screen.dart';
+import 'package:provider/provider.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({Key? key}) : super(key: key);
@@ -11,44 +16,74 @@ class _SettingScreenState extends State<SettingScreen> {
   DrawerSections _currentSection = DrawerSections.profile;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  Future<void> signOutUser(BuildContext context) async {
+    // Clear the data in "customerId" key
+    if (ModalRoute.of(context)?.isActive == true) {
+      //print("Signing Out User");
+      const storage = FlutterSecureStorage();
+      await storage.delete(key: 'customerId');
+      await storage.delete(key: 'cartId');
+      await storage.delete(key: 'phone');
+    }
+    // ignore: use_build_context_synchronously
+    Provider.of<LoginStatusProvider>(context, listen: false)
+        .updateLoginStatus(false, null);
+
+    // Perform any additional sign-out logic if needed
+    // For example, you might want to navigate to the login screen
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.deepPurpleAccent,
-        title: InkWell(
-          child: ShaderMask(
-            shaderCallback: (bounds) => const RadialGradient(
-              center: Alignment.topLeft,
-              radius: 1.0,
-              colors: [Colors.white, Colors.white70],
-              tileMode: TileMode.mirror,
-            ).createShader(bounds),
-            child: const Text(
-              'Pronto',
-              style: TextStyle(
-                fontSize: 25,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+        title: Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const MyHomePage(
+                              title: 'Pronto',
+                            )));
+              },
+            ),
+            const Text(
+              "O",
+              style: TextStyle(color: Colors.white, fontSize: 20.0),
+            ),
+            const Spacer(), // This will push the remaining content to take up the available space
+            Align(
+              alignment: Alignment.center,
+              child: InkWell(
+                child: ShaderMask(
+                  shaderCallback: (bounds) => const RadialGradient(
+                    center: Alignment.topLeft,
+                    radius: 1.0,
+                    colors: [Colors.white, Colors.white70],
+                    tileMode: TileMode.mirror,
+                  ).createShader(bounds),
+                  child: const Text(
+                    'Pronto',
+                    style: TextStyle(
+                      fontSize: 25,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                },
               ),
             ),
-          ),
-          onTap: () {
-            // Navigate to home screen
-            Navigator.pop(
-                context); // Assuming home screen is the previous screen
-          },
-        ),
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.white,
-          ),
-          onPressed: () {
-            // Go back to the previous screen
-            Navigator.pop(context);
-          },
+            const Spacer(), // Another Spacer to push the menu icon to the right
+          ],
         ),
         actions: [
           IconButton(
@@ -116,7 +151,29 @@ class _SettingScreenState extends State<SettingScreen> {
   Widget _buildBodySection() {
     switch (_currentSection) {
       case DrawerSections.profile:
-        return const Center(child: Text('Profile Section'));
+        return Center(
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _currentSection = DrawerSections.orders;
+                  });
+                },
+                child: const Text('Orders')),
+            ElevatedButton(
+                onPressed: () {
+                  signOutUser(context).then(
+                    (value) => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyPhone())),
+                  );
+                },
+                child: const Text('Log Out')),
+          ],
+        ));
       case DrawerSections.wallet:
         return const Center(child: Text('Wallet Section'));
       case DrawerSections.orders:

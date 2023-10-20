@@ -24,6 +24,7 @@ class _MyPhoneState extends State<MyPhone> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.deepPurpleAccent,
         title: ShaderMask(
           shaderCallback: (bounds) => const RadialGradient(
@@ -39,15 +40,6 @@ class _MyPhoneState extends State<MyPhone> {
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
-          ),
-        ),
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.black,
           ),
         ),
         elevation: 4.0,
