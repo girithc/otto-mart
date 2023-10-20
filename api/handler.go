@@ -471,17 +471,17 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 					err := s.Handle_Get_Address_By_Customer_Id(res, newReq)
 					return worker.Result{Error: err}
 				}
-			} else if _, existDefault := requestBody["is_default"]; existDefault {
+			} else if len(requestBody) == 2 { // is default
 				task = func() worker.Result {
 					err := s.handleGetDefaultAddress(res, newReq)
 					return worker.Result{Error: err}
 				}
-			}
-		} else {
-			print("Create Address")
-			task = func() worker.Result {
-				err := s.Handle_Create_Address(res, newReq)
-				return worker.Result{Error: err}
+			} else {
+				print("Create Address")
+				task = func() worker.Result {
+					err := s.Handle_Create_Address(res, newReq)
+					return worker.Result{Error: err}
+				}
 			}
 		}
 
