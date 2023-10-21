@@ -476,6 +476,11 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 					err := s.handleGetDefaultAddress(res, newReq)
 					return worker.Result{Error: err}
 				}
+			} else if len(requestBody) == 3 {
+				task = func() worker.Result {
+					err := s.handleMakeDefaultAddress(res, newReq)
+					return worker.Result{Error: err}
+				}
 			} else {
 				print("Create Address")
 				task = func() worker.Result {

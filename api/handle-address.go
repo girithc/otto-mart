@@ -53,6 +53,21 @@ func (s *Server) handleGetDefaultAddress(res http.ResponseWriter, req *http.Requ
 	return WriteJSON(res, http.StatusOK, addrs)
 }
 
+func (s *Server) handleMakeDefaultAddress(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.MakeDefaultAddress)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in Handle_Get_Address_By_Customer_Id()")
+		return err
+	}
+
+	addrs, err := s.store.MakeDefaultAddress(new_req.Customer_Id, new_req.Address_Id , true)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, addrs)
+}
+
 func (s *Server) handleDeleteAddress(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.Delete_Address)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

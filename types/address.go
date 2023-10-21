@@ -33,6 +33,12 @@ type Address_Customer_Id struct {
 	Customer_Id int `json:"customer_id"`
 }
 
+type MakeDefaultAddress struct {
+	Address_Id	int `json:"address_id"`
+	Customer_Id int `json:"customer_id"`
+	Is_Default     bool `json:"is_default"`
+}
+
 type Delete_Address struct {
 	Customer_Id int `json:"customer_id"`
 	Address_Id  int `json:"address_id"`

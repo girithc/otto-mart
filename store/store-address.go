@@ -124,6 +124,46 @@ func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int, is_default
 	return addresses, nil
 }
 
+func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_default bool) (*types.Address, error) {
+	// Begin a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // Rollback the transaction if anything goes wrong
+
+	// Set the current default address for the customer to false
+	_, err = tx.Exec(`UPDATE address SET is_default = false WHERE customer_id = $1 AND is_default = true`, customer_id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the provided address_id for the customer to true
+	_, err = tx.Exec(`UPDATE address SET is_default = true WHERE customer_id = $1 AND id = $2`, customer_id, address_id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Query the updated default address for the customer
+	var addr types.Address
+	err = tx.QueryRow(`SELECT * FROM address WHERE customer_id = $1 AND is_default = true`, customer_id).Scan(
+		&addr.Id, &addr.Customer_Id, &addr.Latitude, &addr.Longitude, &addr.Street_Address,
+		&addr.Line_One_Address, &addr.Line_Two_Address, &addr.City, &addr.State, &addr.Zipcode, &addr.Is_Default, &addr.Created_At,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// If everything has proceeded without errors, commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return &addr, nil
+}
+
+
 func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.Address, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
