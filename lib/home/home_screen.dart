@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
@@ -35,6 +37,7 @@ class _MyHomePageState extends State<MyHomePage>
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   List<Category> categories = [];
   List<Category> promotions = [];
+  List<Address> addresses = [];
 
   late AnimationController _buttonController;
   late Animation<Color?> _colorAnim;
@@ -44,12 +47,13 @@ class _MyHomePageState extends State<MyHomePage>
   bool isAddress = false;
   bool _isMounted = false;
   bool showDialogVisible = false;
+  bool isLoadingGetAddress = true;
 
   String customerId = "0";
   String phone = "0";
   String cartId = "0";
   String streetAddress = "";
-
+  int? selectedAddressIndex;
   final Logger _logger = Logger();
 
   @override
@@ -146,6 +150,46 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  Future<void> getAllAddresses() async {
+    final Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    };
+
+    final Map<String, dynamic> body = {
+      "customer_id":
+          int.parse(customerId) // Replace with the actual customer_id value
+    };
+
+    // Send the HTTP POST request
+    final http.Response response = await http.post(
+      Uri.parse("$baseUrl/address"),
+      headers: headers,
+      body: jsonEncode(body), // Convert the Map to a JSON string
+    );
+
+    // Check the response
+    if (response.statusCode == 200) {
+      if (response.body.isNotEmpty && response.contentLength! > 3) {
+        print("address Response Not Empty ${response.contentLength}");
+        final List<dynamic> jsonData = json.decode(response.body);
+        final List<Address> items =
+            jsonData.map((item) => Address.fromJson(item)).toList();
+        setState(() {
+          print("Success");
+          addresses = items;
+          isLoadingGetAddress = false;
+        });
+      } else {
+        setState(() {
+          print("Empty Response");
+          isLoadingGetAddress = false;
+        });
+        print("Error: ${response.reasonPhrase}");
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -194,33 +238,141 @@ class _MyHomePageState extends State<MyHomePage>
                               flex: 15, // Flex 3 for the address
                               child: GestureDetector(
                                 onTap: () {
-                                  showModalBottomSheet(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return Container(
-                                        padding: const EdgeInsets.all(10),
-                                        height:
-                                            MediaQuery.of(context).size.height *
-                                                0.45,
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.95,
-                                        child: const Column(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Text(
-                                              "Change Address",
-                                              style: TextStyle(fontSize: 24),
-                                            ),
-                                            Divider(),
-                                          ],
-                                        ),
-                                      );
-                                    },
-                                  );
+                                  getAllAddresses().then((_) {
+                                    // When getAllAddresses completes execution
+                                    showModalBottomSheet(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return Container(
+                                          padding: const EdgeInsets.all(10),
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.45,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.95,
+                                          child: Column(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              const Text(
+                                                "Change Address",
+                                                style: TextStyle(fontSize: 24),
+                                              ),
+                                              const Divider(),
+                                              Expanded(
+                                                child: isLoadingGetAddress
+                                                    ? ListView.builder(
+                                                        itemCount:
+                                                            5, // Display 5 skeleton items for example
+                                                        itemBuilder:
+                                                            (BuildContext
+                                                                    context,
+                                                                int index) {
+                                                          return Padding(
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                                    vertical:
+                                                                        10.0,
+                                                                    horizontal:
+                                                                        15.0),
+                                                            child: Container(
+                                                              height:
+                                                                  20.0, // Height of the skeleton item
+                                                              width: double
+                                                                  .infinity,
+                                                              color: Colors
+                                                                      .grey[
+                                                                  300], // Light grey color for the skeleton
+                                                            ),
+                                                          );
+                                                        },
+                                                      )
+                                                    : ListView.builder(
+                                                        itemCount: addresses
+                                                                .length +
+                                                            2, // Two more than the addresses for the 'add' option and the current address
+                                                        itemBuilder:
+                                                            (BuildContext
+                                                                    context,
+                                                                int index) {
+                                                          if (index == 1) {
+                                                            // Display the current address
+                                                            return ListTile(
+                                                              title: Text(
+                                                                cart.deliveryAddress
+                                                                    .streetAddress,
+                                                                style: const TextStyle(
+                                                                    color: Colors
+                                                                        .black),
+                                                              ),
+                                                            );
+                                                          } else if (index ==
+                                                              0) {
+                                                            return ListTile(
+                                                              // <-- You missed the return here
+                                                              leading: const Icon(
+                                                                  Icons
+                                                                      .add), // An add icon
+                                                              title: const Text(
+                                                                  "Add New Address"),
+                                                              onTap: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pushReplacement(
+                                                                        MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          const AddressScreen(),
+                                                                ));
+                                                              },
+                                                            );
+                                                          } else {
+                                                            return RadioListTile<
+                                                                int>(
+                                                              value: index - 2,
+                                                              groupValue:
+                                                                  selectedAddressIndex,
+                                                              onChanged:
+                                                                  (int? value) {
+                                                                setState(() {
+                                                                  selectedAddressIndex =
+                                                                      value;
+                                                                });
+                                                              },
+                                                              title: Text(addresses[
+                                                                      index - 2]
+                                                                  .streetAddress),
+                                                            );
+                                                          }
+                                                        },
+                                                      ),
+                                              ),
+                                              ElevatedButton(
+                                                onPressed: () async {
+                                                  if (selectedAddressIndex !=
+                                                      null) {
+                                                    // TODO: Send the HTTP POST request to make the selected address the default address.
+                                                    Address selectedAddress =
+                                                        addresses[
+                                                            selectedAddressIndex!];
+                                                    // Make sure to serialize 'selectedAddress' accordingly before sending.
+                                                  }
+                                                },
+                                                child: const Text(
+                                                    "Make Default Address"),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  });
                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
