@@ -238,137 +238,156 @@ class _MyHomePageState extends State<MyHomePage>
                               flex: 15, // Flex 3 for the address
                               child: GestureDetector(
                                 onTap: () {
+                                  // Reset selectedAddressIndex before opening the bottom sheet
+                                  selectedAddressIndex = null;
+
                                   getAllAddresses().then((_) {
                                     // When getAllAddresses completes execution
                                     showModalBottomSheet(
                                       context: context,
+                                      isDismissible: true,
                                       builder: (BuildContext context) {
-                                        return Container(
-                                          padding: const EdgeInsets.all(10),
-                                          height: MediaQuery.of(context)
-                                                  .size
-                                                  .height *
-                                              0.45,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.95,
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              const Text(
-                                                "Change Address",
-                                                style: TextStyle(fontSize: 24),
-                                              ),
-                                              const Divider(),
-                                              Expanded(
-                                                child: isLoadingGetAddress
-                                                    ? ListView.builder(
-                                                        itemCount:
-                                                            5, // Display 5 skeleton items for example
-                                                        itemBuilder:
-                                                            (BuildContext
-                                                                    context,
-                                                                int index) {
-                                                          return Padding(
-                                                            padding:
-                                                                const EdgeInsets
+                                        return StatefulBuilder(
+                                          builder: (BuildContext context,
+                                              StateSetter modalSetState) {
+                                            return Container(
+                                              padding: const EdgeInsets.all(10),
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height *
+                                                  0.65,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.95,
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.center,
+                                                children: [
+                                                  const Text(
+                                                    "Change Address",
+                                                    style:
+                                                        TextStyle(fontSize: 24),
+                                                  ),
+                                                  const Divider(),
+                                                  Expanded(
+                                                    child: isLoadingGetAddress
+                                                        ? ListView.builder(
+                                                            itemCount:
+                                                                5, // Display 5 skeleton items for example
+                                                            itemBuilder:
+                                                                (BuildContext
+                                                                        context,
+                                                                    int index) {
+                                                              return Padding(
+                                                                padding: const EdgeInsets
                                                                     .symmetric(
                                                                     vertical:
                                                                         10.0,
                                                                     horizontal:
                                                                         15.0),
-                                                            child: Container(
-                                                              height:
-                                                                  20.0, // Height of the skeleton item
-                                                              width: double
-                                                                  .infinity,
-                                                              color: Colors
-                                                                      .grey[
-                                                                  300], // Light grey color for the skeleton
-                                                            ),
-                                                          );
-                                                        },
-                                                      )
-                                                    : ListView.builder(
-                                                        itemCount: addresses
-                                                                .length +
-                                                            2, // Two more than the addresses for the 'add' option and the current address
-                                                        itemBuilder:
-                                                            (BuildContext
-                                                                    context,
-                                                                int index) {
-                                                          if (index == 1) {
-                                                            // Display the current address
-                                                            return ListTile(
-                                                              title: Text(
-                                                                cart.deliveryAddress
-                                                                    .streetAddress,
-                                                                style: const TextStyle(
-                                                                    color: Colors
-                                                                        .black),
-                                                              ),
-                                                            );
-                                                          } else if (index ==
-                                                              0) {
-                                                            return ListTile(
-                                                              // <-- You missed the return here
-                                                              leading: const Icon(
-                                                                  Icons
-                                                                      .add), // An add icon
-                                                              title: const Text(
-                                                                  "Add New Address"),
-                                                              onTap: () {
-                                                                Navigator.of(
-                                                                        context)
-                                                                    .pushReplacement(
-                                                                        MaterialPageRoute(
-                                                                  builder:
-                                                                      (context) =>
-                                                                          const AddressScreen(),
-                                                                ));
-                                                              },
-                                                            );
-                                                          } else {
-                                                            return RadioListTile<
-                                                                int>(
-                                                              value: index - 2,
-                                                              groupValue:
-                                                                  selectedAddressIndex,
-                                                              onChanged:
-                                                                  (int? value) {
-                                                                setState(() {
-                                                                  selectedAddressIndex =
-                                                                      value;
-                                                                });
-                                                              },
-                                                              title: Text(addresses[
-                                                                      index - 2]
-                                                                  .streetAddress),
-                                                            );
-                                                          }
-                                                        },
-                                                      ),
+                                                                child:
+                                                                    Container(
+                                                                  height:
+                                                                      20.0, // Height of the skeleton item
+                                                                  width: double
+                                                                      .infinity,
+                                                                  color: Colors
+                                                                          .grey[
+                                                                      300], // Light grey color for the skeleton
+                                                                ),
+                                                              );
+                                                            },
+                                                          )
+                                                        : ListView.builder(
+                                                            itemCount: addresses
+                                                                    .length +
+                                                                2, // Two more than the addresses for the 'add' option and the current address
+                                                            itemBuilder:
+                                                                (BuildContext
+                                                                        context,
+                                                                    int index) {
+                                                              if (index == 0) {
+                                                                return ListTile(
+                                                                  // <-- You missed the return here
+                                                                  leading:
+                                                                      const Icon(
+                                                                          Icons
+                                                                              .add), // An add icon
+                                                                  title: const Text(
+                                                                      "Add New Address"),
+                                                                  onTap: () {
+                                                                    Navigator.of(
+                                                                            context)
+                                                                        .pushReplacement(
+                                                                            MaterialPageRoute(
+                                                                      builder:
+                                                                          (context) =>
+                                                                              const AddressScreen(),
+                                                                    ));
+                                                                  },
+                                                                );
+                                                              } else if (index ==
+                                                                  1) {
+                                                                // Display the current address
+                                                                return ListTile(
+                                                                  leading:
+                                                                      const Text(
+                                                                          "Current"),
+                                                                  title: Text(
+                                                                    cart.deliveryAddress
+                                                                        .streetAddress,
+                                                                    style: const TextStyle(
+                                                                        color: Colors
+                                                                            .black),
+                                                                  ),
+                                                                );
+                                                              } else {
+                                                                return RadioListTile<
+                                                                    int>(
+                                                                  value:
+                                                                      index - 2,
+                                                                  groupValue:
+                                                                      selectedAddressIndex,
+                                                                  onChanged: (int?
+                                                                      value) {
+                                                                    modalSetState(
+                                                                        () {
+                                                                      selectedAddressIndex =
+                                                                          value;
+                                                                    });
+                                                                  },
+                                                                  title: Text(addresses[
+                                                                          index -
+                                                                              2]
+                                                                      .streetAddress),
+                                                                );
+                                                              }
+                                                            },
+                                                          ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () async {
+                                                      if (selectedAddressIndex !=
+                                                          null) {
+                                                        // TODO: Send the HTTP POST request to make the selected address the default address.
+                                                        Address
+                                                            selectedAddress =
+                                                            addresses[
+                                                                selectedAddressIndex!];
+
+                                                        // Make sure to serialize 'selectedAddress' accordingly before sending.
+                                                      }
+                                                    },
+                                                    child: const Text(
+                                                        "Make Default Address"),
+                                                  ),
+                                                ],
                                               ),
-                                              ElevatedButton(
-                                                onPressed: () async {
-                                                  if (selectedAddressIndex !=
-                                                      null) {
-                                                    // TODO: Send the HTTP POST request to make the selected address the default address.
-                                                    Address selectedAddress =
-                                                        addresses[
-                                                            selectedAddressIndex!];
-                                                    // Make sure to serialize 'selectedAddress' accordingly before sending.
-                                                  }
-                                                },
-                                                child: const Text(
-                                                    "Make Default Address"),
-                                              ),
-                                            ],
-                                          ),
+                                            );
+                                          },
                                         );
                                       },
                                     );
