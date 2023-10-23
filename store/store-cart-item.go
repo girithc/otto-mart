@@ -49,8 +49,15 @@ func (s *PostgresStore) SetCartItemForeignKeys(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) DoesItemExist(cart_id int, item_id int) (bool, error) {
+	var itemStoreId int
+
+	err := s.db.QueryRow("SELECT id FROM item_store WHERE item_id=$1 AND store_id=1", item_id).Scan(&itemStoreId)
+	if err != nil {
+		return false, err
+	}
+
 	var count int
-	err := s.db.QueryRow("SELECT COUNT(*) FROM cart_item WHERE cart_id = $1 AND item_id = $2", cart_id, item_id).Scan(&count)
+	err = s.db.QueryRow("SELECT COUNT(*) FROM cart_item WHERE cart_id = $1 AND item_id = $2", cart_id, itemStoreId).Scan(&count)
 	if err != nil {
 		return false, err
 	}
@@ -163,8 +170,15 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 	}
 
 	// Check if item is already in the cart
+
+	var itemStoreId int
+	err = tx.QueryRow("SELECT id FROM item_store WHERE item_id=$1 AND store_id=1", item_id).Scan(&itemStoreId)
+	if err != nil {
+		return nil, err
+	}
+
 	var currentQuantity int
-	err = tx.QueryRow("SELECT quantity FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, item_id).Scan(&currentQuantity)
+	err = tx.QueryRow("SELECT quantity FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, itemStoreId).Scan(&currentQuantity)
 
 	cartItem := &types.Cart_Item{}
 	if err == sql.ErrNoRows {
@@ -173,7 +187,8 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 			tx.Rollback()
 			return nil, fmt.Errorf("quantity must be at least 1")
 		}
-		err = tx.QueryRow("INSERT INTO cart_item (cart_id, item_id, quantity) VALUES ($1, $2, $3) RETURNING id, cart_id, item_id, quantity", cart_id, item_id, quantity).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
+
+		err = tx.QueryRow("INSERT INTO cart_item (cart_id, item_id, quantity) VALUES ($1, $2, $3) RETURNING id, cart_id, item_id, quantity", cart_id, itemStoreId, quantity).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
 	} else if err == nil {
 		newTotalQuantity := currentQuantity + quantity
 		if newTotalQuantity > stockQuantity {
@@ -182,11 +197,11 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 		}
 		if newTotalQuantity < 0 {
 			tx.Rollback()
-			return nil, fmt.Errorf("quantity cannot be negative for cart item id %d", item_id)
+			return nil, fmt.Errorf("quantity cannot be negative for cart: item id %d", itemStoreId)
 		} else if newTotalQuantity == 0 {
-			_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, item_id)
+			_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, itemStoreId)
 		} else {
-			err = tx.QueryRow("UPDATE cart_item SET quantity=quantity+$1 WHERE cart_id=$2 AND item_id=$3 RETURNING id, cart_id, item_id, quantity", quantity, cart_id, item_id).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
+			err = tx.QueryRow("UPDATE cart_item SET quantity=quantity+$1 WHERE cart_id=$2 AND item_id=$3 RETURNING id, cart_id, item_id, quantity", quantity, cart_id, itemStoreId).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
 		}
 	} else {
 		tx.Rollback()
@@ -227,6 +242,7 @@ func (s *PostgresStore) Get_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_It
 }
 
 func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_Item_Item_List, error) {
+	print("Entered Get_Items_List_From_Cart_Items_By_Cart_Id")
 	rows, err := s.db.Query(`
         SELECT 
             i.id, 
@@ -236,8 +252,8 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
             istore.stock_quantity, 
             ci.quantity
         FROM cart_item ci
-        JOIN item i ON ci.item_id = i.id
-        JOIN item_store istore ON i.id = istore.item_id
+		JOIN item_store istore ON ci.item_id = istore.id
+        JOIN item i ON istore.item_id = i.id
         LEFT JOIN item_image ii ON i.id = ii.item_id
         WHERE ci.cart_id = $1;
     `, cart_id)
@@ -259,6 +275,7 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
 }
 
 func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_id int) ([]*types.Cart_Item_Item_List, error) {
+	print("Entered Get_Items_List_From_Active_Cart_By_Customer_Id")
 	query := `
         WITH item_images AS (
             SELECT item_id, MIN(image_url) as main_image
@@ -270,9 +287,9 @@ func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_
             i.id, i.name, istore.mrp_price::numeric::float8, ii.main_image, istore.stock_quantity, ci.quantity
         FROM shopping_cart sc
         JOIN cart_item ci ON ci.cart_id = sc.id
-        JOIN item i ON ci.item_id = i.id
-        JOIN item_store istore ON i.id = istore.item_id
-        LEFT JOIN item_images ii ON i.id = ii.item_id
+		JOIN item_store istore ON ci.item_id = istore.id
+		JOIN item i on istore.item_id = i.id
+		LEFT JOIN item_images ii ON i.id = ii.item_id
         WHERE sc.active = true AND sc.customer_id = $1;
     `
 
