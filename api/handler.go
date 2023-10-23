@@ -254,6 +254,17 @@ func (s *Server) handleCategoryHigherLevelMapping(res http.ResponseWriter, req *
 	return nil
 }
 
+func (s *Server) handleItemStore(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+
+		print_path("POST", "ItemStore")
+		return s.handleRemoveLockedQuantities(res, req)
+
+	}
+
+	return nil
+}
+
 // Item
 func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
