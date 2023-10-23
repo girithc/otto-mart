@@ -8,7 +8,9 @@ import 'package:provider/provider.dart';
 class Product extends StatelessWidget {
   final String productName;
   final int productId;
-  final int price;
+  final int mrpPrice;
+  final int storePrice;
+  final int discount;
   final int stockQuantity;
   final String image;
 
@@ -16,7 +18,9 @@ class Product extends StatelessWidget {
     Key? key,
     required this.productName,
     required this.productId,
-    required this.price,
+    required this.mrpPrice,
+    required this.storePrice,
+    required this.discount,
     required this.stockQuantity,
     required this.image,
   }) : super(key: key);
@@ -72,7 +76,7 @@ class Product extends StatelessWidget {
                             final cartItem = CartItem(
                                 productId: productId.toString(),
                                 productName: productName,
-                                price: price,
+                                price: storePrice,
                                 quantity: 1,
                                 stockQuantity: stockQuantity,
                                 image: image);
@@ -103,7 +107,7 @@ class Product extends StatelessWidget {
                             final cartItem = CartItem(
                                 productId: productId.toString(),
                                 productName: productName,
-                                price: price,
+                                price: storePrice,
                                 quantity: 1,
                                 stockQuantity: stockQuantity,
                                 image: image);
@@ -125,7 +129,7 @@ class Product extends StatelessWidget {
                                 ),
                               )),
                           child: Text(
-                            '\u{20B9}$price',
+                            '\u{20B9}$storePrice',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 14,
@@ -163,14 +167,14 @@ class Product extends StatelessWidget {
                     child: Row(
                       children: [
                         Text(
-                          '\u{20B9}$price',
+                          '\u{20B9}$storePrice',
                           style: const TextStyle(
                             fontSize: 18,
                           ),
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          '\u{20B9}${price * 1.2}',
+                          '\u{20B9}$mrpPrice',
                           style: const TextStyle(
                             fontSize: 15,
                             decoration: TextDecoration.lineThrough,
@@ -186,7 +190,7 @@ class Product extends StatelessWidget {
                             color: Colors.deepPurpleAccent,
                           ),
                           child: Text(
-                            '\u{20B9}${price * 0.2} Off',
+                            '\u{20B9}$discount Off',
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,

@@ -75,7 +75,7 @@ class CartModel extends ChangeNotifier {
 
   Future<void> _fetchCartId() async {
     cartId = await storage.read(key: 'cartId');
-    print("cart Id $cartId");
+    //print("cart Id $cartId");
     // You should handle cases where cartId is null!
     if (cartId == null) {
       // Handle it according to your requirements.
@@ -99,7 +99,7 @@ class CartModel extends ChangeNotifier {
       _logger.e('Failed to parse customerId: $customerId, error: $e ');
     }
 
-    print("customer Id $parsedCustomerId");
+    //print("customer Id $parsedCustomerId");
 
     if (parsedCustomerId == null) return;
 
@@ -145,7 +145,7 @@ class CartModel extends ChangeNotifier {
       _logger.e('Failed to parse customerId: $customerId, error: $e ');
     }
 
-    print("customer Id $parsedCustomerId");
+    //print("customer Id $parsedCustomerId");
 
     final body = <String, dynamic>{
       'customer_id': parsedCustomerId,
@@ -156,7 +156,7 @@ class CartModel extends ChangeNotifier {
       //_logger.e('Response: $response');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
-          print("Response Not Empty ${response.contentLength}");
+          //print("Response Not Empty ${response.contentLength}");
           final List<dynamic> jsonData = json.decode(response.body);
           final List<Address> items =
               jsonData.map((item) => Address.fromJson(item)).toList();
@@ -164,7 +164,7 @@ class CartModel extends ChangeNotifier {
           deliveryAddress = items[0];
           notifyListeners();
         } else {
-          print("Response  Empty");
+          //print("Response  Empty");
           deliveryAddress.id = -1;
           notifyListeners();
         }
@@ -312,8 +312,8 @@ class CartModel extends ChangeNotifier {
       // Add any other headers you need
     };
 
-    print('CartId $cartId');
-    print('ProductId ${item.productId}');
+    //print('CartId $cartId');
+    //print('ProductId ${item.productId}');
     final body = <String, dynamic>{
       'cart_id': int.parse(cartId!),
       'item_id': int.parse(item.productId),
@@ -322,7 +322,7 @@ class CartModel extends ChangeNotifier {
     };
 
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
-      //print('HTTP POST response body: ${response.body}');
+      //('HTTP POST response body: ${response.body}');
       if (response.statusCode == 200) {
         //final responseData = jsonDecode(response.body);
         final List<dynamic> jsonData = json.decode(response.body);
@@ -334,7 +334,7 @@ class CartModel extends ChangeNotifier {
         notifyListeners();
       } else {
         _logger.e(
-            'HTTP POST request failed with status code ${response.statusCode}');
+            'HTTP POST request failed with status code ${response.statusCode} ${response.body}');
       }
     }).catchError((error) {
       _logger.e('HTTP POST request error: $error');

@@ -509,7 +509,7 @@ class SearchItemListState extends State<SearchItemList> {
                 return ListItem(
                   name: searchResults[index].name,
                   id: searchResults[index].id,
-                  price: searchResults[index].price,
+                  price: searchResults[index].mrpPrice,
                   stockQuantity: searchResults[index].stockQuantity,
                   image: searchResults[index].image,
                   index: index % 2,
@@ -552,7 +552,9 @@ class ListItem extends StatelessWidget {
             builder: (context) => Product(
               productName: name,
               productId: id,
-              price: price,
+              mrpPrice: price,
+              storePrice: price,
+              discount: 0,
               stockQuantity: stockQuantity,
               image: image,
             ),

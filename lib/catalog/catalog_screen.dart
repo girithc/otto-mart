@@ -448,7 +448,9 @@ class ListItem2 extends StatelessWidget {
             builder: (context) => Product(
               productName: name,
               productId: id,
-              price: mrpPrice,
+              mrpPrice: mrpPrice,
+              storePrice: storePrice,
+              discount: discount,
               stockQuantity: stockQuantity,
               image: image,
             ),

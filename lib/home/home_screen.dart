@@ -171,18 +171,18 @@ class _MyHomePageState extends State<MyHomePage>
     // Check the response
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
-        print("address Response Not Empty ${response.contentLength}");
+        //print("address Response Not Empty ${response.contentLength}");
         final List<dynamic> jsonData = json.decode(response.body);
         final List<Address> items =
             jsonData.map((item) => Address.fromJson(item)).toList();
         setState(() {
-          print("Success");
+          //print("Success");
           addresses = items;
           isLoadingGetAddress = false;
         });
       } else {
         setState(() {
-          print("Empty Response");
+          // print("Empty Response");
           isLoadingGetAddress = false;
         });
         print("Error: ${response.reasonPhrase}");
@@ -193,8 +193,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-    print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
-    print("Customer Id: $customerId");
+    //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
+    //print("Customer Id: $customerId");
     if (cart.deliveryAddress.id < 0) {
       // Set showDialogVisible to false when streetAddress is populated
       showDialogVisible = true;
