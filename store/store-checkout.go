@@ -30,6 +30,35 @@ func (s *PostgresStore) Checkout_Items(cart_id int, payment_done bool) error {
 	return nil
 }
 
+/*
+func (s *PostgresStore) tryCheckoutBeta(cart_id int, payment_done bool) error {
+	// First, lock and check stock
+	err := s.lockAndCheckStock(cart_id)
+	if err != nil {
+		return err
+	}
+
+	// Check if payment is done and process order
+	isPaid, err := s.IsPaymentDone(ctx, cart_id, payment_done)
+	if err != nil {
+		return err
+	}
+
+	if isPaid {
+		err := s.processOrderAfterPayment(cart_id)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := s.releaseLockedStock(cart_id)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+*/
+
 func (s *PostgresStore) tryCheckout(cart_id int, payment_done bool) error {
 	fmt.Println("Entered Checkout_Items")
 
@@ -133,6 +162,32 @@ func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart
 			if err != nil {
 				return fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
 			}
+
+			// Inside your MonitorLockedItems function, after creating the sales order
+			deliveryPartnerID, err := s.getNextDeliveryPartner()
+			if err != nil {
+				return fmt.Errorf("error fetching next available delivery partner: %s", err)
+			}
+
+			_, err = tx.ExecContext(ctx, `
+				UPDATE sales_order 
+				SET delivery_partner_id = $1 
+				WHERE cart_id = $2
+			`, deliveryPartnerID, cart_id)
+			if err != nil {
+				return fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
+			}
+
+			// Update the delivery partner's last_assigned_time or set their availability to false
+			_, err = tx.ExecContext(ctx, `
+				UPDATE delivery_partner 
+				SET last_assigned_time = NOW()
+				WHERE id = $1
+			`, deliveryPartnerID)
+			if err != nil {
+				return fmt.Errorf("error updating delivery partner details: %s", err)
+			}
+
 		} else {
 			fmt.Println("Payment was not successful. Resetting quantities...")
 			err := s.ResetLockedQuantities(tx, cart_id)

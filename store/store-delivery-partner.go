@@ -9,22 +9,22 @@ import (
 )
 
 func (s *PostgresStore) CreateDeliveryPartnerTable(tx *sql.Tx) error {
-	// fmt.Println("Entered CreateItemTable")
-
-	query := `create table if not exists delivery_partner(
+	query := `
+	create table if not exists delivery_partner(
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
-		fcm_token TEXT NOT NULL,
+		fcm_token TEXT NOT NULL,  
 		store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
 		phone VARCHAR(10) NOT NULL, 
 		address TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		available BOOLEAN DEFAULT true,
+		current_location TEXT, 
+		active_deliveries INT DEFAULT 0,
+		last_assigned_time TIMESTAMP DEFAULT NULL
 	)`
 
 	_, err := tx.Exec(query)
-
-	// fmt.Println("Exiting CreateItemTable")
-
 	return err
 }
 
@@ -160,4 +160,20 @@ func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error)
 		&partner.Created_At,
 	)
 	return partner, err
+}
+
+// updated
+func (s *PostgresStore) getNextDeliveryPartner() (int, error) {
+	var deliveryPartnerID int
+	err := s.db.QueryRow(`
+		SELECT id 
+		FROM delivery_partner 
+		WHERE available = true 
+		ORDER BY last_assigned_time ASC, active_deliveries ASC 
+		LIMIT 1
+	`).Scan(&deliveryPartnerID)
+	if err != nil {
+		return 0, err
+	}
+	return deliveryPartnerID, nil
 }
