@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -30,18 +31,20 @@ func (s *PostgresStore) CreateDeliveryPartnerTable(tx *sql.Tx) error {
 
 // 1. Create a function to insert a new delivery partner
 func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partner) (*types.Delivery_Partner, error) {
-	query := `insert into delivery_partner
-	(name, phone, address, fcm_token, store_id) 
-	values ($1, $2, $3, $4, $5) returning id, name, fcm_token, store_id, phone, address, created_at
+	query := `
+		INSERT INTO delivery_partner
+		(name, phone, address, fcm_token, store_id) 
+		VALUES ($1, $2, $3, $4, $5) 
+		RETURNING id, name, fcm_token, store_id, phone, address, created_at
 	`
 
 	rows, err := s.db.Query(
 		query,
-		"",
+		dp.Name,
 		dp.Phone,
-		"",
-		"",
-		1,
+		"", // empty address for this example
+		"", // empty fcm_token for this example
+		dp.Store_ID,
 	)
 	if err != nil {
 		return nil, err
@@ -56,7 +59,22 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 		}
 		partners = append(partners, partner)
 	}
+
+	if len(partners) == 0 {
+		return nil, fmt.Errorf("no delivery partner was created")
+	}
+
 	return partners[0], nil
+}
+
+// Assuming you have a scan_Into_Delivery_Partner function to scan row data into the Delivery_Partner type.
+func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error) {
+	partner := &types.Delivery_Partner{}
+	err := rows.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At)
+	if err != nil {
+		return nil, err
+	}
+	return partner, nil
 }
 
 func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone int, fcm_token string) (*types.Delivery_Partner, error) {
@@ -105,7 +123,7 @@ func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone int, fcm_token s
 
 // 2. Create a function to retrieve all delivery partners
 func (s *PostgresStore) Get_All_Delivery_Partners() ([]*types.Delivery_Partner, error) {
-	query := `select * from delivery_partner`
+	query := `SELECT id, name, fcm_token, store_id, phone, address, created_at FROM delivery_partner`
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -126,7 +144,7 @@ func (s *PostgresStore) Get_All_Delivery_Partners() ([]*types.Delivery_Partner, 
 
 // 3. Create a function to retrieve a delivery partner by phone
 func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone int) (*types.Delivery_Partner, error) {
-	rows, err := s.db.Query("select * from delivery_partner where phone = $1", phone)
+	rows, err := s.db.Query("SELECT id, name, fcm_token, store_id, phone, address, created_at FROM delivery_partner where phone = $1", phone)
 	if err != nil {
 		return nil, err
 	}
@@ -145,21 +163,6 @@ func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone int) (*types.Deliver
 		return nil, nil
 	}
 	return partners[0], nil
-}
-
-// 4. Helper function to scan rows into a delivery partner struct
-func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error) {
-	partner := new(types.Delivery_Partner)
-	err := rows.Scan(
-		&partner.ID,
-		&partner.Name,
-		&partner.FCM_Token,
-		&partner.Store_ID,
-		&partner.Phone,
-		&partner.Address,
-		&partner.Created_At,
-	)
-	return partner, err
 }
 
 // updated

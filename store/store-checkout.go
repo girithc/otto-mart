@@ -60,17 +60,12 @@ func (s *PostgresStore) tryCheckoutBeta(cart_id int, payment_done bool) error {
 */
 
 func (s *PostgresStore) tryCheckout(cart_id int, payment_done bool) error {
-	fmt.Println("Entered Checkout_Items")
+	fmt.Printf("Entered Checkout_Items. Payment: %t", payment_done)
 
 	// Start the database transaction
-	tx, err := s.db.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback() // Rollback the transaction in case of any error
 
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
-	rows, err := tx.Query(query, cart_id)
+	rows, err := s.db.Query(query, cart_id)
 	if err != nil {
 		return err
 	}
@@ -85,6 +80,11 @@ func (s *PostgresStore) tryCheckout(cart_id int, payment_done bool) error {
 		cartItems = append(cartItems, checkout_cart_item)
 	}
 	if err = rows.Err(); err != nil {
+		return err
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
 		return err
 	}
 
@@ -106,11 +106,22 @@ func (s *PostgresStore) tryCheckout(cart_id int, payment_done bool) error {
 		}
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
 	s.PrintItemStoreRecords("Updated Records ")
+
+	tx, err = s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback() // Rollback the transaction in case of any error
 
 	ctx := context.Background()
 
-	err = s.MonitorLockedItems(ctx, tx, cart_id, 20*time.Second, payment_done)
+	err = s.MonitorLockedItems(ctx, tx, cart_id, 15*time.Second, payment_done)
 	if err != nil {
 		return err
 	}
@@ -216,7 +227,7 @@ func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart
 func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int, payment_done bool) (bool, error) {
 	fmt.Println("Started Payment Delay")
 	select {
-	case <-time.After(25 * time.Second):
+	case <-time.After(10 * time.Second):
 		fmt.Println("End Payment Delay")
 		return payment_done, nil
 	case <-ctx.Done():
