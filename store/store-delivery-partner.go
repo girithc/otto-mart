@@ -67,17 +67,7 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 	return partners[0], nil
 }
 
-// Assuming you have a scan_Into_Delivery_Partner function to scan row data into the Delivery_Partner type.
-func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error) {
-	partner := &types.Delivery_Partner{}
-	err := rows.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At)
-	if err != nil {
-		return nil, err
-	}
-	return partner, nil
-}
-
-func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone int, fcm_token string) (*types.Delivery_Partner, error) {
+func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone string, fcm_token string) (*types.Delivery_Partner, error) {
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -143,7 +133,7 @@ func (s *PostgresStore) Get_All_Delivery_Partners() ([]*types.Delivery_Partner, 
 }
 
 // 3. Create a function to retrieve a delivery partner by phone
-func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone int) (*types.Delivery_Partner, error) {
+func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone string) (*types.Delivery_Partner, error) {
 	rows, err := s.db.Query("SELECT id, name, fcm_token, store_id, phone, address, created_at FROM delivery_partner where phone = $1", phone)
 	if err != nil {
 		return nil, err
@@ -179,4 +169,14 @@ func (s *PostgresStore) getNextDeliveryPartner() (int, error) {
 		return 0, err
 	}
 	return deliveryPartnerID, nil
+}
+
+// Assuming you have a scan_Into_Delivery_Partner function to scan row data into the Delivery_Partner type.
+func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error) {
+	partner := &types.Delivery_Partner{}
+	err := rows.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At)
+	if err != nil {
+		return nil, err
+	}
+	return partner, nil
 }

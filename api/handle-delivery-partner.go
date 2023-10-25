@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/girithc/pronto-go/types"
@@ -20,7 +19,7 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 		return err
 	}
 
-	new_user, err := types.New_Delivery_Partner(new_req.Phone)
+	new_user, err := types.New_Delivery_Partner(new_req.Phone, new_req.Name, new_req.Store_ID)
 	if err != nil {
 		return err
 	}
@@ -41,7 +40,7 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 		}
 
 		// Generate JWT token
-		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
+		tokenString, err := generateJWT(user.Phone)
 		if err != nil {
 			return err
 		}
@@ -59,7 +58,7 @@ func (s *Server) Handle_Delivery_Partner_Login(res http.ResponseWriter, req *htt
 		fmt.Println("Delivery Partner Exists")
 
 		// Generate JWT token
-		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
+		tokenString, err := generateJWT(user.Phone)
 		if err != nil {
 			return err
 		}

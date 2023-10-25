@@ -10,19 +10,19 @@ type Delivery_Partner struct {
 	Name       string    `json:"name"`
 	FCM_Token  string    `json:"fcm_token"`
 	Store_ID   int       `json:"store_id"`
-	Phone      int       `json:"phone"`
+	Phone      string    `json:"phone"`
 	Address    string    `json:"address"`
 	Created_At time.Time `json:"created_at"`
 }
 
 type Create_Delivery_Partner struct {
 	Name     string `json:"name"`
-	Phone    int    `json:"phone"`
+	Phone    string `json:"phone"`
 	Store_ID int    `json:"store_id"`
 }
 
 type FCM_Token_Delivery_Partner struct {
-	Phone     int    `json:"phone"`
+	Phone     string `json:"phone"`
 	Fcm_Token string `json:"fcm_token"`
 }
 
@@ -35,13 +35,15 @@ type Update_Delivery_Partner struct {
 }
 
 type Delete_Delivery_Partner struct {
-	ID    int `json:"id"`
-	Phone int `json:"phone"`
+	ID    int    `json:"id"`
+	Phone string `json:"phone"`
 }
 
-func New_Delivery_Partner(phone int) (*Create_Delivery_Partner, error) {
+func New_Delivery_Partner(phone string, name string, store_id int) (*Create_Delivery_Partner, error) {
 	return &Create_Delivery_Partner{
-		Phone: phone,
+		Phone:    phone,
+		Name:     name,
+		Store_ID: store_id,
 	}, nil
 }
 

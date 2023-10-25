@@ -121,9 +121,43 @@ func (s *PostgresStore) tryCheckout(cart_id int, payment_done bool) error {
 
 	ctx := context.Background()
 
-	err = s.MonitorLockedItems(ctx, tx, cart_id, 15*time.Second, payment_done)
+	err = s.MonitorLockedItems(ctx, tx, cart_id, 15*time.Second, payment_done, cartItems)
 	if err != nil {
 		return err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	tx, err = s.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	deliveryPartnerID, err := s.getNextDeliveryPartner()
+	if err != nil {
+		return fmt.Errorf("error fetching next available delivery partner: %s", err)
+	}
+
+	_, err = tx.ExecContext(ctx, `
+				UPDATE sales_order 
+				SET delivery_partner_id = $1 
+				WHERE cart_id = $2
+			`, deliveryPartnerID, cart_id)
+	if err != nil {
+		return fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
+	}
+
+	// Update the delivery partner's last_assigned_time or set their availability to false
+	_, err = tx.ExecContext(ctx, `
+				UPDATE delivery_partner 
+				SET last_assigned_time = NOW()
+				WHERE id = $1
+			`, deliveryPartnerID)
+	if err != nil {
+		return fmt.Errorf("error updating delivery partner details: %s", err)
 	}
 
 	// If all operations are successful, commit the transaction
@@ -136,7 +170,8 @@ func isDeadlockError(err error) bool {
 	return err.Error() == "deadlock detected"
 }
 
-func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart_id int, timeoutDuration time.Duration, payment_done bool) error {
+func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart_id int, timeoutDuration time.Duration, payment_done bool, cartItems []*types.Checkout_Cart_Item) error {
+	fmt.Printf("Entered MonitorLockedItems")
 	doneChan := make(chan bool)
 	var isPaid bool
 	var err error
@@ -153,6 +188,8 @@ func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart
 		}
 
 		if isPaid {
+			fmt.Printf("Payment Successful")
+
 			var customerID, storeID sql.NullInt64
 			var address sql.NullString
 
@@ -169,34 +206,40 @@ func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart
 				return fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
 			}
 
+			for _, checkout_cart_item := range cartItems {
+				fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
+
+				res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+				if err != nil {
+					return err
+				}
+
+				affectedRows, err := res.RowsAffected()
+				if err != nil {
+					return err
+				}
+
+				if affectedRows == 0 {
+					return fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
+				}
+			}
+
 			_, err = tx.ExecContext(ctx, `UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
 			if err != nil {
 				return fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
 			}
 
-			// Inside your MonitorLockedItems function, after creating the sales order
-			deliveryPartnerID, err := s.getNextDeliveryPartner()
+			query := `insert into shopping_cart
+					(customer_id, active) 
+					values ($1, $2) returning id, customer_id, active, created_at
+					`
+			_, err = tx.Query(
+				query,
+				customerID,
+				true,
+			)
 			if err != nil {
-				return fmt.Errorf("error fetching next available delivery partner: %s", err)
-			}
-
-			_, err = tx.ExecContext(ctx, `
-				UPDATE sales_order 
-				SET delivery_partner_id = $1 
-				WHERE cart_id = $2
-			`, deliveryPartnerID, cart_id)
-			if err != nil {
-				return fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
-			}
-
-			// Update the delivery partner's last_assigned_time or set their availability to false
-			_, err = tx.ExecContext(ctx, `
-				UPDATE delivery_partner 
-				SET last_assigned_time = NOW()
-				WHERE id = $1
-			`, deliveryPartnerID)
-			if err != nil {
-				return fmt.Errorf("error updating delivery partner details: %s", err)
+				return err
 			}
 
 		} else {
