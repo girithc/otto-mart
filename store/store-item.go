@@ -566,3 +566,73 @@ func (s *PostgresStore) Delete_Item(item_id int) error {
 
 	return nil
 }
+
+func (s *PostgresStore) AddStockToItem() ([]*types.Get_Item, error) {
+	// Start a new transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback() // This will rollback the transaction if it hasn't been committed at the end of the function
+
+	// Increment stock_quantity by 10 for all items in item_store table
+	_, err = tx.Exec(`UPDATE item_store SET stock_quantity = stock_quantity + 10`)
+	if err != nil {
+		return nil, fmt.Errorf("error updating stock quantities: %w", err)
+	}
+
+	// Query to fetch updated values
+	query := `
+        SELECT
+            i.id, i.name, 
+            istore.mrp_price, istore.discount, istore.store_price, 
+            i.description, 
+            ARRAY_AGG(s.name) AS stores,
+            ARRAY_AGG(c.name) AS categories,
+            istore.stock_quantity, istore.locked_quantity,
+            ARRAY_AGG(img.image_url) AS images,
+            b.name AS brand, 
+            i.quantity, i.unit_of_quantity, 
+            i.created_at, i.created_by
+        FROM item i
+        LEFT JOIN item_store istore ON i.id = istore.item_id
+        LEFT JOIN store s ON istore.store_id = s.id
+        LEFT JOIN item_category ic ON i.id = ic.item_id
+        LEFT JOIN category c ON ic.category_id = c.id
+        LEFT JOIN item_image img ON i.id = img.item_id
+        LEFT JOIN brand b ON i.brand_id = b.id
+        GROUP BY i.id, istore.mrp_price, istore.discount, istore.store_price, istore.stock_quantity, istore.locked_quantity, b.name
+    `
+
+	rows, err := tx.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching updated items: %w", err)
+	}
+	defer rows.Close()
+
+	var items []*types.Get_Item
+
+	for rows.Next() {
+		item := &types.Get_Item{}
+		var stores pq.StringArray
+		var categories pq.StringArray
+		var images pq.StringArray
+		err = rows.Scan(&item.ID, &item.Name, &item.MRP_Price, &item.Discount, &item.Store_Price, &item.Description, &stores, &categories, &item.Stock_Quantity, &item.Locked_Quantity, &images, &item.Brand, &item.Quantity, &item.Unit_Of_Quantity, &item.Created_At, &item.Created_By)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row into item: %w", err)
+		}
+
+		item.Stores = stores
+		item.Categories = categories
+		item.Images = images
+
+		items = append(items, item)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return items, nil
+}

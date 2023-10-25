@@ -92,6 +92,14 @@ func (s *Server) Handle_Get_Items(res http.ResponseWriter, req *http.Request) er
 	}
 }
 
+func (s *Server) HandleAddStockToItem(res http.ResponseWriter, req *http.Request) error {
+	items, err := s.store.AddStockToItem()
+	if err != nil {
+		return err
+	}
+	return WriteJSON(res, http.StatusOK, items)
+}
+
 func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) error {
 	new_req := &types.Update_Item{}
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
