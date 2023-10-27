@@ -515,6 +515,22 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 		// Wait for the result and return it
 		return <-resultChan
 
+	} else if req.Method == "POST" {
+		print_path("POST", "sales_order")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handleGetAssignedOrders(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
 	}
 
 	return nil

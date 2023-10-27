@@ -48,6 +48,54 @@ func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
 	return salesOrders, nil
 }
 
+func (s *PostgresStore) GetOrdersByDeliveryPartner(delivery_partner_id int) ([]*types.Sales_Order_Details, error) {
+	query := `
+        SELECT 
+            so.id,
+            so.delivery_partner_id,
+            so.cart_id,
+            so.store_id,
+            st.name AS store_name,
+            so.customer_id,
+            cu.name AS customer_name,
+            cu.phone AS customer_phone,
+            so.delivery_address,
+            so.order_date
+        FROM sales_order so
+        JOIN store st ON so.store_id = st.id
+        JOIN customer cu ON so.customer_id = cu.id
+        WHERE so.delivery_partner_id = $1
+    `
+
+	rows, err := s.db.Query(query, delivery_partner_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var orders []*types.Sales_Order_Details
+	for rows.Next() {
+		var order types.Sales_Order_Details
+		if err := rows.Scan(
+			&order.ID,
+			&order.DeliveryPartnerID,
+			&order.CartID,
+			&order.StoreID,
+			&order.StoreName,
+			&order.CustomerID,
+			&order.CustomerName,
+			&order.CustomerPhone,
+			&order.DeliveryAddress,
+			&order.OrderDate,
+		); err != nil {
+			return nil, err
+		}
+		orders = append(orders, &order)
+	}
+
+	return orders, nil
+}
+
 func scanIntoSalesOrder(rows *sql.Rows) (*types.Sales_Order, error) {
 	order := new(types.Sales_Order)
 
