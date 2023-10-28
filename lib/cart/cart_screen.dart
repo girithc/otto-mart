@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/order/place_order_screen.dart';
+import 'package:pronto/payments/payments_screen.dart';
 import 'package:provider/provider.dart';
 
 class MyCart extends StatefulWidget {
@@ -149,7 +150,7 @@ class _MyCartState extends State<MyCart> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PlaceOrder(),
+                            builder: (context) => const PaymentsPage(),
                           ),
                         );
                       },
