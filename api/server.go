@@ -42,7 +42,11 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/shopping-cart", makeHTTPHandleFunc(s.handleShoppingCart))
 	http.HandleFunc("/cart-item", makeHTTPHandleFunc(s.handleCartItem))
 
+	http.HandleFunc("/checkout-lock-items", makeHTTPHandleFunc(s.handleCheckoutLockItems))
+	http.HandleFunc("/checkout-payment", makeHTTPHandleFunc(s.handleCheckoutPayment))
+	http.HandleFunc("/checkout-cancel", makeHTTPHandleFunc(s.handleCancelCheckout))
 	http.HandleFunc("/checkout", makeHTTPHandleFunc(s.handleCheckout))
+
 	http.HandleFunc("/cancel-checkout", makeHTTPHandleFunc(s.handleCancelCheckout))
 
 	http.HandleFunc("/delivery-partner", makeHTTPHandleFunc(s.handleDeliveryPartner))

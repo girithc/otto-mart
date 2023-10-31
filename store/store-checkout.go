@@ -30,34 +30,187 @@ func (s *PostgresStore) Checkout_Items(cart_id int, payment_done bool) error {
 	return nil
 }
 
-/*
-func (s *PostgresStore) tryCheckoutBeta(cart_id int, payment_done bool) error {
-	// First, lock and check stock
-	err := s.lockAndCheckStock(cart_id)
+func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
+	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
+	rows, err := s.db.Query(query, cart_id)
 	if err != nil {
-		return err
+		return false, err
+	}
+	defer rows.Close()
+
+	var cartItems []*types.Checkout_Cart_Item
+	for rows.Next() {
+		checkout_cart_item := &types.Checkout_Cart_Item{}
+		if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
+			return false, err
+		}
+		cartItems = append(cartItems, checkout_cart_item)
+	}
+	if err = rows.Err(); err != nil {
+		return false, err
 	}
 
-	// Check if payment is done and process order
-	isPaid, err := s.IsPaymentDone(ctx, cart_id, payment_done)
+	tx, err := s.db.Begin()
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	if isPaid {
-		err := s.processOrderAfterPayment(cart_id)
+	for _, checkout_cart_item := range cartItems {
+		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
+
+		res, err := tx.Exec(`UPDATE item_store SET stock_quantity = stock_quantity - $1, locked_quantity = locked_quantity + $1 WHERE id = $2 AND stock_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
 		if err != nil {
-			return err
+			return false, err
 		}
-	} else {
-		err := s.releaseLockedStock(cart_id)
+
+		affectedRows, err := res.RowsAffected()
 		if err != nil {
-			return err
+			return false, err
+		}
+
+		if affectedRows == 0 {
+			return false, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
 		}
 	}
-	return nil
+
+	err = tx.Commit()
+	if err != nil {
+		return false, err
+	}
+
+	// Start a timer
+	ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second) // Set your desired timeout duration
+
+	// Store the cancel function
+	s.cancelFuncs[cart_id] = cancel
+
+	// Launch a goroutine to await the context's completion or timeout
+	go func() {
+		<-ctx.Done()
+		if ctx.Err() == context.DeadlineExceeded {
+			// Timeout exceeded, reset quantities
+			fmt.Println("Payment was not made in time. Resetting quantities...")
+			s.ResetLockedQuantities(cart_id)
+			delete(s.cancelFuncs, cart_id)
+
+		} else if _, exists := s.cancelFuncs[cart_id]; exists {
+			// Payment was attempted but was unsuccessful
+			fmt.Println("Payment In Process")
+			delete(s.cancelFuncs, cart_id)
+		} else {
+			// Unkown Error
+			fmt.Println("Unknown Error")
+			s.ResetLockedQuantities(cart_id)
+		}
+	}()
+
+	s.PrintItemStoreRecords("Updated Records ")
+
+	return true, nil
 }
-*/
+
+func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
+	if cancel, exists := s.cancelFuncs[cart_id]; exists {
+		cancel()
+	} else {
+		return false, fmt.Errorf("no active timer found for cart id %d", cart_id)
+	}
+
+	timeoutDuration := 10 * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration) // Set your desired timeout duration
+
+	// Store the cancel function
+	s.cancelFuncs[cart_id] = cancel
+
+	doneChan := make(chan bool)
+	var isPaymentSuccessful bool
+	var err error
+
+	go func() {
+		isPaymentSuccessful, err = s.processPayment(cart_id)
+		doneChan <- true
+	}()
+
+	select {
+	case <-doneChan:
+		if err != nil {
+			if cancel, exists := s.cancelFuncs[cart_id]; exists {
+				cancel()
+				delete(s.cancelFuncs, cart_id)
+			}
+
+			return false, fmt.Errorf("error checking payment status for cart %d: %s", cart_id, err)
+		}
+
+		if isPaymentSuccessful {
+
+			fmt.Println("Payment was successful!")
+			if cancel, exists := s.cancelFuncs[cart_id]; exists {
+				cancel()
+				delete(s.cancelFuncs, cart_id)
+			}
+			return true, nil
+		}
+	case <-time.After(timeoutDuration):
+		fmt.Println("Payment check timeout. Resetting quantities...")
+		err := s.ResetLockedQuantities(cart_id)
+		if cancel, exists := s.cancelFuncs[cart_id]; exists {
+			cancel()
+			delete(s.cancelFuncs, cart_id)
+		}
+
+		if err != nil {
+			return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
+		}
+	case <-ctx.Done():
+		if ctx.Err() == context.DeadlineExceeded {
+			// Timeout exceeded, reset quantities
+			fmt.Println("Payment was not made in time. Resetting quantities...")
+			err := s.ResetLockedQuantities(cart_id)
+			if cancel, exists := s.cancelFuncs[cart_id]; exists {
+				cancel()
+				delete(s.cancelFuncs, cart_id)
+			}
+
+			if err != nil {
+				return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
+			}
+		} else {
+			fmt.Println("Timeout. Unknown Error")
+			err := s.ResetLockedQuantities(cart_id)
+			if cancel, exists := s.cancelFuncs[cart_id]; exists {
+				cancel()
+				delete(s.cancelFuncs, cart_id)
+			}
+
+			if err != nil {
+				return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
+			}
+		}
+	}
+
+	return true, nil
+}
+
+func (s *PostgresStore) processPayment(cart_id int) (bool, error) {
+	time.Sleep(8 * time.Second)
+	return false, nil
+}
+
+func (s *PostgresStore) ResetLockedQuantities(cart_id int) error {
+	_, err := s.db.Exec(`WITH quantities AS (
+        SELECT item_id, quantity 
+        FROM cart_item 
+        WHERE cart_id = $1
+    )
+    UPDATE item_store 
+    SET stock_quantity = stock_quantity + quantities.quantity, 
+        locked_quantity = locked_quantity - quantities.quantity
+    FROM quantities 
+    WHERE item_store.id = quantities.item_id;
+    `, cart_id)
+	return err
+}
 
 func (s *PostgresStore) tryCheckout(cart_id int, payment_done bool) error {
 	fmt.Printf("Entered Checkout_Items. Payment: %t", payment_done)
@@ -244,7 +397,7 @@ func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart
 
 		} else {
 			fmt.Println("Payment was not successful. Resetting quantities...")
-			err := s.ResetLockedQuantities(tx, cart_id)
+			err := s.ResetLockedQuantities(cart_id)
 			if err != nil {
 				return fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
 			}
@@ -252,7 +405,7 @@ func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart
 
 	case <-time.After(timeoutDuration):
 		fmt.Println("Payment check timeout. Resetting quantities...")
-		err := s.ResetLockedQuantities(tx, cart_id)
+		err := s.ResetLockedQuantities(cart_id)
 		if err != nil {
 			return fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
 		}
@@ -277,21 +430,6 @@ func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int, payment_
 		fmt.Println("Payment check was aborted!")
 		return false, ctx.Err()
 	}
-}
-
-func (s *PostgresStore) ResetLockedQuantities(tx *sql.Tx, cart_id int) error {
-	_, err := tx.Exec(`WITH quantities AS (
-        SELECT item_id, quantity 
-        FROM cart_item 
-        WHERE cart_id = $1
-    )
-    UPDATE item_store 
-    SET stock_quantity = stock_quantity + quantities.quantity, 
-        locked_quantity = locked_quantity - quantities.quantity
-    FROM quantities 
-    WHERE item_store.id = quantities.item_id;
-    `, cart_id)
-	return err
 }
 
 func (s *PostgresStore) PrintItemStoreRecords(state string) error {

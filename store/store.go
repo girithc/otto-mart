@@ -13,8 +13,9 @@ import (
 )
 
 type PostgresStore struct {
-	db          *sql.DB
-	cancelFuncs map[int]context.CancelFunc
+	db            *sql.DB
+	cancelFuncs   map[int]context.CancelFunc
+	paymentStatus map[int]bool
 }
 
 func NewPostgresStore() (*PostgresStore, func() error) {
@@ -32,9 +33,11 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			log.Fatalf("(local) Error on sql.Open: %v", err)
 		}
 		return &PostgresStore{
-			db:          db,
-			cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
+			db:            db,
+			cancelFuncs:   make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
+			paymentStatus: make(map[int]bool),               // Initialize the paymentStatus map
 		}, nil
+
 	} else {
 		// Use Cloud SQL credentials
 		cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
@@ -60,9 +63,11 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			}
 		*/
 		return &PostgresStore{
-			db:          db,
-			cancelFuncs: make(map[int]context.CancelFunc), // Initialize the cancelFuncs map
+			db:            db,
+			cancelFuncs:   make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
+			paymentStatus: make(map[int]bool),               // Initialize the paymentStatus map
 		}, cleanup
+
 	}
 }
 
