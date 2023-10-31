@@ -127,6 +127,11 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 	var err error
 
 	go func() {
+		<-ctx.Done()
+
+	}
+
+	go func() {
 		isPaymentSuccessful, err = s.processPayment(cart_id)
 		doneChan <- true
 	}()
