@@ -108,42 +108,45 @@ class _MyCartState extends State<MyCart> {
               height: MediaQuery.of(context).size.height * 0.18,
               child: Column(
                 // Align children at the start
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
                   Container(
-                      margin: EdgeInsets.zero,
-                      padding: EdgeInsets.zero,
-                      height: MediaQuery.of(context).size.height * 0.065,
-                      decoration: BoxDecoration(
-                          border: Border.all(
-                              style: BorderStyle.solid, color: Colors.white)),
-                      child: Row(
-                        children: [
-                          Expanded(
-                              flex: 6,
-                              child: Text(
-                                  "Address: ${cart.deliveryAddress.lineOne}")),
-                          Expanded(
-                            flex: 4,
-                            child: TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const SavedAddressScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text("Change Address"),
-                            ),
+                    margin: EdgeInsets.zero,
+                    padding: EdgeInsets.zero,
+                    height: MediaQuery.of(context).size.height * 0.065,
+                    decoration: BoxDecoration(
+                        border: Border.all(
+                            style: BorderStyle.solid, color: Colors.white)),
+                    child: Row(
+                      children: [
+                        const Expanded(flex: 1, child: SizedBox()),
+                        Expanded(
+                            flex: 8,
+                            child: Text(
+                                "Address: ${cart.deliveryAddress.lineOne}")),
+                        Expanded(
+                          flex: 8,
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const SavedAddressScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text("Change Address"),
                           ),
-                        ],
-                      )),
+                        ),
+                      ],
+                    ),
+                  ),
                   Container(
-                    padding: const EdgeInsets.all(2),
+                    padding: const EdgeInsets.only(
+                        left: 12, right: 12, bottom: 8, top: 2),
                     height: MediaQuery.of(context).size.height * (0.18 - 0.065),
                     child: ElevatedButton(
                       onPressed: () {
