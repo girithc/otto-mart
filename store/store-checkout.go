@@ -31,9 +31,6 @@ func (s *PostgresStore) Checkout_Items(cart_id int, payment_done bool) error {
 }
 
 func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
-	if _, exists := s.cancelFuncs[cart_id]; exists {
-		return false, fmt.Errorf("checkout already in process")
-	}
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
 	rows, err := s.db.Query(query, cart_id)
 	if err != nil {
@@ -87,45 +84,29 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 	// Store the cancel function
 	s.cancelFuncs[cart_id] = cancel
 
-	errCh := make(chan error, 1)
-	doneCh := make(chan bool, 1)
-
 	// Launch a goroutine to await the context's completion or timeout
 	go func() {
 		<-ctx.Done()
 		if ctx.Err() == context.DeadlineExceeded {
 			// Timeout exceeded, reset quantities
 			fmt.Println("Payment was not made in time. Resetting quantities...")
-			err := s.ResetLockedQuantities(cart_id)
+			s.ResetLockedQuantities(cart_id)
 			delete(s.cancelFuncs, cart_id)
-			if err != nil {
-				errCh <- err
-				return
-			}
 
 		} else if _, exists := s.cancelFuncs[cart_id]; exists {
 			// Payment was attempted but was unsuccessful
 			fmt.Println("Payment In Process")
-			// delete(s.cancelFuncs, cart_id)
+			delete(s.cancelFuncs, cart_id)
 		} else {
 			// Unkown Error
 			fmt.Println("Unknown Error")
 			s.ResetLockedQuantities(cart_id)
-			errCh <- fmt.Errorf("unkown error")
-			return
 		}
-
-		doneCh <- true
 	}()
 
 	s.PrintItemStoreRecords("Updated Records ")
 
-	select {
-	case <-doneCh:
-		return true, nil
-	case err := <-errCh:
-		return false, err
-	}
+	return true, nil
 }
 
 func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
