@@ -24,6 +24,6 @@ func (s *Server) Handle_Cancel_Checkout_Cart(res http.ResponseWriter, req *http.
 	}
 
 	res.WriteHeader(http.StatusOK)
-	res.Write([]byte("Checkout canceled and quantities reset."))
+	res.Write([]byte("Success"))
 	return nil
 }

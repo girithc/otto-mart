@@ -79,7 +79,7 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 	}
 
 	// Start a timer
-	ctx, cancel := context.WithTimeout(context.Background(), 35*time.Second) // Set your desired timeout duration
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute) // Set your desired timeout duration
 
 	// Store the cancel function
 	s.cancelFuncs[cart_id] = cancel
