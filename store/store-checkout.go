@@ -96,7 +96,7 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 		} else if _, exists := s.cancelFuncs[cart_id]; exists {
 			// Payment was attempted but was unsuccessful
 			fmt.Println("Payment In Process")
-			delete(s.cancelFuncs, cart_id)
+			// delete(s.cancelFuncs, cart_id)
 		} else {
 			// Unkown Error
 			fmt.Println("Unknown Error")
