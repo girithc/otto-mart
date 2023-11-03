@@ -2,13 +2,16 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
-import 'package:pronto/order/place_order_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class MyCart extends StatefulWidget {
   const MyCart({super.key});
@@ -18,6 +21,34 @@ class MyCart extends StatefulWidget {
 }
 
 class _MyCartState extends State<MyCart> {
+  Future<bool> checkoutLockItems(int cartId) async {
+    const String apiUrl = '$baseUrl/checkout-lock-items';
+    final Map<String, dynamic> payload = {'cart_id': cartId};
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: json.encode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        // Assuming the server returns a simple true or false in the body
+        return true;
+      } else {
+        // Handle the case when the server does not respond with a success code
+        print('Request failed with status: ${response.statusCode}.');
+        return false;
+      }
+    } on Exception catch (e) {
+      // Handle any exceptions here
+      print('Caught exception: $e');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -150,12 +181,46 @@ class _MyCartState extends State<MyCart> {
                     height: MediaQuery.of(context).size.height * (0.18 - 0.065),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PaymentsPage(),
-                          ),
-                        );
+                        // Make sure to get the actual cart ID from your cart variable or state
+                        String? cartId = cart.cartId;
+                        if (cartId != null) {
+                          int cartIdInt = int.parse(cartId);
+                          checkoutLockItems(cartIdInt).then((success) {
+                            if (success) {
+                              // If the checkout lock is successful, navigate to the PaymentsPage
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const PaymentsPage(),
+                                ),
+                              );
+                            } else {
+                              // If the checkout lock is unsuccessful, you might want to show an error message
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Failed to lock items for checkout.'),
+                                  backgroundColor: Colors.redAccent,
+                                ),
+                              );
+                            }
+                          }).catchError((error) {
+                            // Handle any errors here
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Error: $error'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          });
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Error: Cart Id Not Found'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pinkAccent,
