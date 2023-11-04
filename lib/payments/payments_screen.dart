@@ -1,5 +1,6 @@
 import 'dart:convert';
-
+import 'dart:io';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/order/place_order_screen.dart';
@@ -15,6 +16,35 @@ class PaymentsPage extends StatefulWidget {
 }
 
 class _PaymentsPageState extends State<PaymentsPage> {
+  late final WebViewController controller;
+  var loadingPercentage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = WebViewController()
+      ..setNavigationDelegate(NavigationDelegate(
+        onPageStarted: (url) {
+          setState(() {
+            loadingPercentage = 0;
+          });
+        },
+        onProgress: (progress) {
+          setState(() {
+            loadingPercentage = progress;
+          });
+        },
+        onPageFinished: (url) {
+          setState(() {
+            loadingPercentage = 100;
+          });
+        },
+      ))
+      ..loadRequest(
+        Uri.parse('https://flutter.dev'),
+      );
+  }
+
   Future<bool> checkoutCancelItems(int cartId) async {
     const String apiUrl = '$baseUrl/checkout-cancel';
     final Map<String, dynamic> payload = {'cart_id': cartId};
@@ -68,6 +98,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       backgroundColor: Colors.redAccent,
                     ),
                   );
+                  Navigator.of(context).pop();
                 }
               }).catchError((error) {
                 // Handle any errors here
@@ -109,8 +140,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
         shadowColor: Colors.white,
         surfaceTintColor: Colors.white,
       ),
-      body: const Center(
-        child: Text("Payment Gateway"),
+      body: Stack(
+        children: [
+          WebViewWidget(
+            controller: controller,
+          ),
+          if (loadingPercentage < 100)
+            LinearProgressIndicator(
+              value: loadingPercentage / 100.0,
+            ),
+        ],
       ),
       floatingActionButton: BottomAppBar(
         height: MediaQuery.of(context).size.height * 0.15,
