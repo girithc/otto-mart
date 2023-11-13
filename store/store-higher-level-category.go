@@ -172,7 +172,16 @@ func (s *PostgresStore) Update_Higher_Level_Category(hlc *types.Update_Higher_Le
 }
 
 func (s *PostgresStore) Delete_Higher_Level_Category(id int) error {
-	_, err := s.db.Query("delete from higher_level_category where id = $1", id)
+	_, err := s.db.Exec("DELETE FROM category_higher_level_mapping WHERE higher_level_category_id = $1", id)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.db.Exec("DELETE FROM higher_level_category_image WHERE higher_level_category_id = $1", id)
+	if err != nil {
+		return err
+	}
+	_, err = s.db.Exec("DELETE FROM higher_level_category WHERE id = $1", id)
 	return err
 }
 

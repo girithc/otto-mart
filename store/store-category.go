@@ -228,8 +228,12 @@ func (s *PostgresStore) Update_Category(hlc *types.Update_Category) (*types.Upda
 }
 
 func (s *PostgresStore) Delete_Category(id int) error {
+	_, err := s.db.Exec("DELETE FROM category_higher_level_mapping WHERE category_id = $1", id)
+	if err != nil {
+		return err
+	}
 	// First, delete (or update) related rows in category_image
-	_, err := s.db.Exec("DELETE FROM category_image WHERE category_id = $1", id)
+	_, err = s.db.Exec("DELETE FROM category_image WHERE category_id = $1", id)
 	if err != nil {
 		return err
 	}

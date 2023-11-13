@@ -242,9 +242,9 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
 
 	query := `
     SELECT 
-    i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity,
-    array_agg(c.name) as categories,
-    array_agg(ii.image_url) as images
+        i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity,
+        array_agg(COALESCE(c.name, 'No Category')) as categories,
+        array_agg(ii.image_url) as images
     FROM item i
     LEFT JOIN brand b ON i.brand_id = b.id
     LEFT JOIN item_store istore ON i.id = istore.item_id
@@ -252,7 +252,7 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
     LEFT JOIN item_category ic ON i.id = ic.item_id
     LEFT JOIN category c ON ic.category_id = c.id
     LEFT JOIN item_image ii ON i.id = ii.item_id
-    GROUP BY i.id, i.description, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity
+    GROUP BY i.id, i.name, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity
     ORDER BY i.id
     `
 
