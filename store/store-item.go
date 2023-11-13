@@ -241,19 +241,37 @@ func (s *PostgresStore) GetItems() ([]*types.Get_Item, error) {
 	defer tx.Rollback()
 
 	query := `
-    SELECT 
-        i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity,
-        array_agg(COALESCE(c.name, 'No Category')) as categories,
-        array_agg(ii.image_url) as images
-    FROM item i
-    LEFT JOIN brand b ON i.brand_id = b.id
-    LEFT JOIN item_store istore ON i.id = istore.item_id
-    LEFT JOIN store s ON istore.store_id = s.id
-    LEFT JOIN item_category ic ON i.id = ic.item_id
-    LEFT JOIN category c ON ic.category_id = c.id
-    LEFT JOIN item_image ii ON i.id = ii.item_id
-    GROUP BY i.id, i.name, b.name, istore.mrp_price, istore.discount, istore.store_price, s.name, istore.stock_quantity, istore.locked_quantity
-    ORDER BY i.id
+    WITH category_agg AS (
+		SELECT 
+			ic.item_id,
+			array_agg(COALESCE(c.name, 'No Category')) AS categories
+		FROM item_category ic
+		LEFT JOIN category c ON ic.category_id = c.id
+		GROUP BY ic.item_id
+	), image_agg AS (
+		SELECT 
+			ii.item_id,
+			array_agg(ii.image_url) AS images
+		FROM item_image ii
+		GROUP BY ii.item_id
+	)
+	SELECT 
+		i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name, 
+		istore.mrp_price, istore.discount, istore.store_price, s.name, 
+		istore.stock_quantity, istore.locked_quantity,
+		COALESCE(ca.categories, ARRAY['No Category']::text[]) as categories,
+		COALESCE(ia.images, ARRAY[]::text[]) as images
+	FROM item i
+	LEFT JOIN brand b ON i.brand_id = b.id
+	LEFT JOIN item_store istore ON i.id = istore.item_id
+	LEFT JOIN store s ON istore.store_id = s.id
+	LEFT JOIN category_agg ca ON i.id = ca.item_id
+	LEFT JOIN image_agg ia ON i.id = ia.item_id
+	GROUP BY i.id, i.name, b.name, istore.mrp_price, istore.discount, 
+			 istore.store_price, s.name, istore.stock_quantity, 
+			 istore.locked_quantity, ca.categories, ia.images
+	ORDER BY i.id
+	
     `
 
 	rows, err := tx.Query(query)

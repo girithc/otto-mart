@@ -43,3 +43,16 @@ delivery_partner,
 shopping_cart,
 sales_order
 CASCADE;
+
+DROP TABLE IF EXISTS
+category,
+category_image,
+cart_item,
+category_higher_level_mapping,
+item,
+item_category,
+item_store,
+item_image,
+higher_level_category,
+higher_level_category_image,
+CASCADE;
