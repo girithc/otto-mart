@@ -140,22 +140,25 @@ class _PaymentsPageState extends State<PaymentsPage> {
         shadowColor: Colors.white,
         surfaceTintColor: Colors.white,
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(
-            controller: controller,
-          ),
-          if (loadingPercentage < 100)
-            LinearProgressIndicator(
-              value: loadingPercentage / 100.0,
-            ),
-        ],
+      body: ListTile(
+        title: const Text('Cash on Delivery'),
+        leading: Radio(
+          value: 'Cash on Delivery',
+          groupValue: 'Cash on Delivery',
+          onChanged: (String? value) {
+            // Handle the change if necessary
+          },
+        ),
+        onTap: () {
+          // Handle the tap if necessary
+        },
       ),
-      floatingActionButton: BottomAppBar(
-        height: MediaQuery.of(context).size.height * 0.15,
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        surfaceTintColor: Colors.white,
         child: Container(
-          padding: const EdgeInsets.only(left: 20),
-          alignment: Alignment.center,
+          color: Colors.white,
+          alignment: Alignment.bottomCenter,
           child: ElevatedButton(
             onPressed: () {
               Navigator.push(
