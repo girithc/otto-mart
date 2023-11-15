@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
@@ -70,6 +69,28 @@ class _PaymentsPageState extends State<PaymentsPage> {
       // Handle any exceptions here
       print('Caught exception: $e');
       return false;
+    }
+  }
+
+  Future<bool> processPayment(int cartId) async {
+    var headers = {'Content-Type': 'application/json'};
+    var request = http.Request('POST', Uri.parse('$baseUrl/checkout-payment'));
+    request.body = json.encode({"cart_id": cartId});
+    request.headers.addAll(headers);
+
+    try {
+      http.StreamedResponse response = await request.send();
+
+      if (response.statusCode == 200) {
+        print(await response.stream.bytesToString());
+        return true; // Payment is successful
+      } else {
+        print(response.reasonPhrase);
+        return false; // Payment failed
+      }
+    } catch (e) {
+      print('Error: $e');
+      return false; // Error occurred, treat as failed payment
     }
   }
 
@@ -161,12 +182,41 @@ class _PaymentsPageState extends State<PaymentsPage> {
           alignment: Alignment.bottomCenter,
           child: ElevatedButton(
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PlaceOrder(),
-                ),
-              );
+              String? cartId = cart.cartId;
+              if (cartId != null) {
+                int cartIdInt = int.parse(cartId);
+                processPayment(cartIdInt).then((isPaid) {
+                  if (isPaid) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PlaceOrder(),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Payment failed'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                }).catchError((error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $error'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                });
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Error: Cart Id Not Found'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pinkAccent,

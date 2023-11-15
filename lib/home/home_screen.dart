@@ -35,6 +35,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   List<Category> categories = [];
   List<Category> promotions = [];
   List<Address> addresses = [];
@@ -190,6 +192,49 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
+  Future<Address?> setDefaultAddress(int addressId) async {
+    final Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    };
+
+    final Map<String, dynamic> body = {
+      "customer_id": int.parse(customerId),
+      "address_id": addressId,
+      "is_default": true
+    };
+
+    try {
+      final http.Response response = await http.post(
+        Uri.parse("$baseUrl/address"),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.body.isNotEmpty) {
+          final decodedResponse = json.decode(response.body);
+          if (decodedResponse is Map) {
+            // Explicitly cast the response to Map<String, dynamic>
+            return Address.fromJson(Map<String, dynamic>.from(decodedResponse));
+          } else if (decodedResponse is List) {
+            // Handle the case where the response is a List
+            final List<Address> items = (decodedResponse)
+                .map(
+                    (item) => Address.fromJson(Map<String, dynamic>.from(item)))
+                .toList();
+            return items.isNotEmpty ? items[0] : null;
+          }
+        }
+      } else {
+        print("Error: ${response.reasonPhrase}");
+      }
+    } catch (e) {
+      print("Exception occurred: $e");
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -202,6 +247,7 @@ class _MyHomePageState extends State<MyHomePage>
       showDialogVisible = false;
     }
     return Scaffold(
+      key: _scaffoldKey,
       appBar: const HomeScreenAppBar(),
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
@@ -370,20 +416,62 @@ class _MyHomePageState extends State<MyHomePage>
                                                   ),
                                                   ElevatedButton(
                                                     onPressed: () async {
-                                                      if (selectedAddressIndex !=
-                                                          null) {
-                                                        // TODO: Send the HTTP POST request to make the selected address the default address.
-                                                        Address
-                                                            selectedAddress =
-                                                            addresses[
-                                                                selectedAddressIndex!];
+                                                      try {
+                                                        String snackBarMessage;
+                                                        if (selectedAddressIndex !=
+                                                                null &&
+                                                            selectedAddressIndex! <
+                                                                addresses
+                                                                    .length) {
+                                                          setDefaultAddress(
+                                                                  addresses[
+                                                                          selectedAddressIndex!]
+                                                                      .id)
+                                                              .then(
+                                                                  (address) => {
+                                                                        if (address !=
+                                                                            null)
+                                                                          {
+                                                                            cart.deliveryAddress =
+                                                                                address
+                                                                          }
+                                                                      });
+                                                          snackBarMessage =
+                                                              'Default address set to: ${addresses[selectedAddressIndex!].streetAddress}';
+                                                        } else {
+                                                          snackBarMessage =
+                                                              'No address selected';
+                                                        }
 
-                                                        // Make sure to serialize 'selectedAddress' accordingly before sending.
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                                snackBarMessage),
+                                                            backgroundColor:
+                                                                Colors.green,
+                                                          ),
+                                                        );
+
+                                                        Navigator.pop(
+                                                            context); // Close the bottom sheet
+                                                      } catch (error) {
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                                'Failed to set default address'),
+                                                            backgroundColor:
+                                                                Colors.red,
+                                                          ),
+                                                        );
                                                       }
                                                     },
                                                     child: const Text(
                                                         "Make Default Address"),
-                                                  ),
+                                                  )
                                                 ],
                                               ),
                                             );
@@ -492,13 +580,13 @@ class _MyHomePageState extends State<MyHomePage>
             ),
             // This is the GridView, wrapped inside a SliverPadding
             SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               sliver: SliverGrid(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 4,
                   crossAxisSpacing: 5,
                   mainAxisSpacing: 5,
-                  childAspectRatio: 0.8,
+                  childAspectRatio: 0.7,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (BuildContext context, int index) {

@@ -156,7 +156,7 @@ class _MyCartState extends State<MyCart> {
                         Expanded(
                             flex: 8,
                             child: Text(
-                                "Address: ${cart.deliveryAddress.lineOne}")),
+                                "Address: ${cart.deliveryAddress.streetAddress}")),
                         Expanded(
                           flex: 8,
                           child: TextButton(
