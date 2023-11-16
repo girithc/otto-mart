@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -9,40 +10,72 @@ import (
 )
 
 func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
-	// fmt.Println("Entered CreateItemTable")
+	// Define the ENUM type for payment_type
+	paymentTypeQuery := `DO $$ BEGIN
+        CREATE TYPE payment_method AS ENUM ('cash', 'credit card', 'debit card', 'upi');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`
 
+	_, err := tx.Exec(paymentTypeQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create the sales_order table
 	query := `create table if not exists sales_order (
-		id SERIAL PRIMARY KEY,
-		delivery_partner_id INT REFERENCES Delivery_Partner(id) ON DELETE CASCADE,
-		cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
-		store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
-		customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
-		delivery_address TEXT NOT NULL,
-		order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	)`
+        id SERIAL PRIMARY KEY,
+        delivery_partner_id INT REFERENCES Delivery_Partner(id) ON DELETE CASCADE,
+        cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
+        store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
+        customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
+        address_id INT REFERENCES Address(id) ON DELETE CASCADE NOT NULL,
+        paid BOOLEAN NOT NULL DEFAULT false,
+        payment_type payment_method DEFAULT 'cash',
+        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
 
-	_, err := tx.Exec(query)
-
-	// fmt.Println("Exiting CreateItemTable")
-
+	_, err = tx.Exec(query)
 	return err
 }
 
+func (s *PostgresStore) GetRecentSalesOrder(customerID, storeID, cartID int) (*types.Sales_Order, error) {
+	// SQL query to fetch the most recent sales order for specific customer, store, and cart
+	query := `SELECT id, delivery_partner_id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date
+              FROM sales_order
+              WHERE customer_id = $1 AND store_id = $2 AND cart_id = $3
+              ORDER BY order_date DESC
+              LIMIT 1`
+
+	// Execute the query
+	var so types.Sales_Order
+	err := s.db.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.DeliveryPartnerID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate)
+	if err != nil {
+		return nil, err
+	}
+
+	return &so, nil
+}
+
 func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
-	rows, err := s.db.Query("SELECT * FROM sales_order")
+	rows, err := s.db.Query("SELECT id, delivery_partner_id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date FROM sales_order")
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	salesOrders := []*types.Sales_Order{}
+	var salesOrders []*types.Sales_Order
 
 	for rows.Next() {
-		order, err := scanIntoSalesOrder(rows)
-		if err != nil {
-			return nil, err
+		var order types.Sales_Order
+		if err := rows.Scan(&order.ID, &order.DeliveryPartnerID, &order.CartID, &order.StoreID, &order.CustomerID, &order.AddressID, &order.Paid, &order.PaymentType, &order.OrderDate); err != nil {
+			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
-		salesOrders = append(salesOrders, order)
+		salesOrders = append(salesOrders, &order)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error reading rows: %v", err)
 	}
 
 	return salesOrders, nil
@@ -94,30 +127,4 @@ func (s *PostgresStore) GetOrdersByDeliveryPartner(delivery_partner_id int) ([]*
 	}
 
 	return orders, nil
-}
-
-func scanIntoSalesOrder(rows *sql.Rows) (*types.Sales_Order, error) {
-	order := new(types.Sales_Order)
-
-	// Use sql.NullInt64 for nullable integer columns.
-	var deliveryPartnerID sql.NullInt64
-
-	err := rows.Scan(
-		&order.ID,
-		&deliveryPartnerID,
-		&order.CartID,
-		&order.StoreID,
-		&order.CustomerID,
-		&order.DeliveryAddress,
-		&order.OrderDate,
-	)
-
-	// Assign the value from the sql.NullInt64 to the Sales_Order struct's field if it's valid (i.e., not NULL).
-	if deliveryPartnerID.Valid {
-		order.DeliveryPartnerID = int(deliveryPartnerID.Int64)
-	} else {
-		order.DeliveryPartnerID = 0 // Or whatever default or sentinel value you want for NULLs.
-	}
-
-	return order, err
 }

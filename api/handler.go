@@ -483,7 +483,7 @@ func (s *Server) handleCheckoutLockItems(res http.ResponseWriter, req *http.Requ
 
 func (s *Server) handleCheckoutPayment(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("POST", "checkout")
+		print_path("POST", "checkout-payment")
 
 		// Read and store the request body
 		bodyBytes, err := io.ReadAll(req.Body)

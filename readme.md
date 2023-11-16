@@ -55,4 +55,6 @@ item_store,
 item_image,
 higher_level_category,
 higher_level_category_image,
+shopping_cart,
+customer,
 CASCADE;

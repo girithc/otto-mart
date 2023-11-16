@@ -16,8 +16,7 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
 		store_id INT REFERENCES Store(id) ON DELETE CASCADE,
 		active BOOLEAN NOT NULL DEFAULT true,
 		address TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    	CONSTRAINT unique_active_cart_per_user UNIQUE (customer_id, active)
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 	_, err := tx.Exec(query)
 	return err
