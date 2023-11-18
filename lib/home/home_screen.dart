@@ -12,6 +12,7 @@ import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/category_items/category_items_screen.dart';
+import 'package:pronto/order/confirmed_order_screen.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
@@ -943,9 +944,17 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                         context,
                         MaterialPageRoute(
                             builder: (context) => const SettingScreen()));
-                    /*
-                    
-                    */
+                  },
+                ),
+                IconButton(
+                  color: Colors.black,
+                  padding: const EdgeInsets.only(right: 15.0),
+                  icon: const Icon(Icons.mobile_friendly_outlined),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const OrderConfirmed()));
                   },
                 ),
               ],

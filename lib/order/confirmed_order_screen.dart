@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -12,28 +13,61 @@ class OrderConfirmed extends StatefulWidget {
 }
 
 class _OrderConfirmedState extends State<OrderConfirmed> {
-  late Future<String> _orderDetails;
+  late String _orderDetails;
+  bool _isLoading = true;
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
-    _orderDetails = fetchOrderDetails();
+    //fetchOrderDetails();
   }
 
-  Future<String> fetchOrderDetails() async {
-    final response = await http.get(
-      Uri.parse(
-          '$baseUrl/sales-order'), // Replace with your API URL // Replace with your request body
+  Future<void> fetchOrderDetails() async {
+    // Retrieve customerId and cartId from secure storage
+    String? customerId = await _storage.read(key: 'customerId');
+    String? cartId = await _storage.read(key: 'cartId');
+
+    // Ensure both values are not null
+    if (cartId == null || customerId == null) {
+      throw Exception('Customer ID or Cart ID is missing');
+    }
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/sales-order'),
       headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'customer_id': int.parse(customerId),
+        'cart_id': int.parse(cartId),
+        // Add other necessary fields if any
+      }),
     );
 
+    print("CustomerId: $customerId, CartId: $cartId");
+
     if (response.statusCode == 200) {
-      // If server returns an OK response, parse the JSON
-      print(response.body);
-      return json.decode(response.body);
+      // Decode the JSON response
+      Map<String, dynamic> responseData = json.decode(response.body);
+
+      // Extract and print the 'payment_type' field
+      String paymentType = responseData['payment_type'];
+      print("Payment Type: $paymentType");
+
+      if (responseData.isNotEmpty) {
+        // Extracting the 'paid' field from the first object in the list
+        String newCartId = responseData["new_cart_id"].toString();
+        await _storage.write(key: 'cartId', value: newCartId);
+
+        setState(() {
+          _isLoading = false;
+          _orderDetails = paymentType;
+          print("Old Cart ID: $cartId");
+          print("New Cart ID: $newCartId");
+        });
+      } else {
+        throw Exception('Empty response data');
+      }
     } else {
-      // If the server did not return a 200 OK response,
-      // throw an exception.
       throw Exception('Failed to load order details');
     }
   }
@@ -41,84 +75,71 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (bounds) => const RadialGradient(
-                  center: Alignment.topLeft,
-                  radius: 1.0,
-                  colors: [Colors.deepPurple, Colors.deepPurpleAccent],
-                  tileMode: TileMode.mirror)
-              .createShader(bounds),
-          child: const Text(
-            'Pronto',
-            style: TextStyle(
-                fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ),
-        elevation: 4.0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurple,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
-      ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            width: double.infinity,
-            color: Colors.deepPurpleAccent,
-            padding: const EdgeInsets.all(6.0),
-            child: const Center(
-              child: Text(
-                "Order #12345",
+      body: CustomScrollView(
+        slivers: <Widget>[
+          SliverAppBar(
+            pinned: true,
+            bottom: PreferredSize(
+              preferredSize: const Size(0, 80),
+              child: Container(),
+            ),
+            expandedHeight: MediaQuery.of(context).size.height * 0.4,
+            title: ShaderMask(
+              shaderCallback: (bounds) => const RadialGradient(
+                      center: Alignment.topLeft,
+                      radius: 1.0,
+                      colors: [Colors.deepPurple, Colors.deepPurpleAccent],
+                      tileMode: TileMode.mirror)
+                  .createShader(bounds),
+              child: const Text(
+                'Pronto',
                 style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
             ),
+            backgroundColor: Colors.white,
+            flexibleSpace: Stack(
+              children: [
+                Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    child: Container(
+                      color: Colors.white,
+                    )),
+                Positioned(
+                  bottom: -1,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 30,
+                    decoration: const BoxDecoration(
+                      color: Colors.black12,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(50),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(
-            child: FutureBuilder<String>(
-              future: _orderDetails,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  // More user-friendly error message
-                  return Card(
-                    elevation: 4.0,
-                    margin: const EdgeInsets.all(2.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            snapshot.data ?? "ERROR",
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                } else {
-                  // Display data in the card
-                  return Card(
-                    elevation: 4.0,
-                    margin: const EdgeInsets.all(2.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        snapshot.data ?? 'No details available',
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
-                  );
-                }
+          SliverFixedExtentList(
+            itemExtent: 150.0, // Updated height of each item
+            delegate: SliverChildBuilderDelegate(
+              (BuildContext context, int index) {
+                // Condition to build only 4 items
+
+                return Container(
+                  alignment: Alignment.center,
+                  color: Colors.lightBlue[100 * (index + 1 % 9)],
+                  child: Text('List Item $index'),
+                ); // Return null for indices greater than 3
               },
+              childCount: 4, // Specify the total number of children as 4
             ),
           ),
         ],
