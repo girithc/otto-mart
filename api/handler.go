@@ -581,18 +581,58 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 		print_path("POST", "sales_order")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.handleGetAssignedOrders(res, req)
-			return worker.Result{Error: err}
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
 		}
 
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
+		// You can then create a new request body from bodyBytes to pass to your handler
+		newReq := &http.Request{
+			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
+			// ... copy other needed fields from the original request
+		}
 
-		// Wait for the result and return it
-		return <-resultChan
+		// Assuming that the request body is in JSON format, let's unmarshal it into a map
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+			return err
+		}
+
+		// Check if the body has exactly 2 keys
+		if len(requestBody) == 1 {
+			task := func() worker.Result {
+				var err error
+				// You might want to pass the decoded body to the handler function
+				// Adjust the handleGetAssignedOrders function accordingly
+				err = s.handleGetAssignedOrders(res, newReq)
+				return worker.Result{Error: err}
+			}
+
+			// Start the task in a worker and pass a callback to capture the result
+			workerPool.StartWorker(task, func(result worker.Result) {
+				resultChan <- result.Error // Send the result error to the channel
+			})
+
+			// Wait for the result and return it
+			return <-resultChan
+		} else if len(requestBody) == 2 {
+			task := func() worker.Result {
+				var err error
+				// You might want to pass the decoded body to the handler function
+				// Adjust the handleGetAssignedOrders function accordingly
+				err = s.handleOrdersByCartIdCustomerId(res, newReq)
+				return worker.Result{Error: err}
+			}
+
+			// Start the task in a worker and pass a callback to capture the result
+			workerPool.StartWorker(task, func(result worker.Result) {
+				resultChan <- result.Error // Send the result error to the channel
+			})
+
+			// Wait for the result and return it
+			return <-resultChan
+		}
+
 	}
 
 	return nil
