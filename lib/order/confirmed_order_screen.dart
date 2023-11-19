@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
+import 'package:pronto/home/home_screen.dart';
 import 'dart:convert';
 
 import 'package:pronto/utils/constants.dart';
@@ -45,6 +46,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
         transform: 1.9),
   };
 
+  String _deliveryPartnerName = '';
+  int _numberOfItems = 0;
+  String _customerAddress = '';
+  String _paymentType = '';
+  String _orderDate = '';
+
   void updateOrderStatus(String url) {
     setState(() {
       orderStatus = url;
@@ -56,7 +63,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   @override
   void initState() {
     super.initState();
-    //fetchOrderDetails();
+    fetchOrderDetails();
   }
 
   Future<void> fetchOrderDetails() async {
@@ -93,12 +100,20 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
         // Extracting the 'paid' field from the first object in the list
         String newCartId = responseData["new_cart_id"].toString();
         await _storage.write(key: 'cartId', value: newCartId);
+        await _storage.write(key: 'orderStatus', value: "Preparing Order");
 
         setState(() {
           _isLoading = false;
           _orderDetails = paymentType;
           print("Old Cart ID: $cartId");
           print("New Cart ID: $newCartId");
+
+          _deliveryPartnerName = responseData['delivery_partner']['name'];
+          _numberOfItems =
+              responseData['products'].length; // Assuming 'products' is a list
+          _customerAddress = responseData['address']['street_address'];
+          _paymentType = responseData['payment_type'];
+          _orderDate = responseData['order_date'];
         });
       } else {
         throw Exception('Empty response data');
@@ -114,12 +129,24 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       body: CustomScrollView(
         slivers: <Widget>[
           SliverAppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_outlined),
+              onPressed: () {
+                // Navigate to the HomeScreen, replacing the current route
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(
+                      builder: (context) => const MyHomePage(
+                            title: 'Otto',
+                          )),
+                );
+              },
+            ),
             pinned: true,
             bottom: PreferredSize(
               preferredSize: const Size(0, 110),
               child: Container(),
             ),
-            expandedHeight: MediaQuery.of(context).size.height * (0.375 + 0.08),
+            expandedHeight: MediaQuery.of(context).size.height * (0.46 + 0.1),
             title: ShaderMask(
               shaderCallback: (bounds) => const RadialGradient(
                       center: Alignment.topLeft,
@@ -162,10 +189,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                       child: Column(
                         children: [
                           Container(
-                            height: 120,
+                            height: MediaQuery.of(context).size.height * 0.26,
                             width: MediaQuery.of(context).size.width * 0.8,
                             margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 2),
+                                horizontal: 10, vertical: 4),
                             padding: const EdgeInsets.only(bottom: 10.0),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -187,7 +214,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             height: 60,
                             width: MediaQuery.of(context).size.width * 0.8,
                             margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 2),
+                                horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
                               color: Colors
                                   .white, // Uniform color for all containers
@@ -278,18 +305,30 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                 // Define a list of custom widgets for each child
                 List<Widget> customChildren = [
                   Container(
-                    // Custom styling for the first child
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    alignment: Alignment.center,
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white, // Uniform color for all containers
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: const Color.fromARGB(255, 13, 105, 197),
-                          width: 2), // Border color
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.indigoAccent.withOpacity(0.5),
+                          spreadRadius: 4,
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
                     ),
-                    child: const Text('Order'), // Different content
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Delivery Partner: $_deliveryPartnerName'),
+                        Text('Number of Items: $_numberOfItems'),
+                        Text('Address: $_customerAddress'),
+                        Text('Payment Type: $_paymentType'),
+                        Text('Order Date: $_orderDate'),
+                      ],
+                    ),
                   ),
                   Container(
                     // Custom styling for the second child

@@ -58,7 +58,7 @@ class _MyHomePageState extends State<MyHomePage>
   String streetAddress = "";
   int? selectedAddressIndex;
   final Logger _logger = Logger();
-
+  final storage = const FlutterSecureStorage();
   @override
   void initState() {
     super.initState();
@@ -78,8 +78,6 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> retrieveCustomerInfo() async {
-    const storage = FlutterSecureStorage();
-
     String? storedCustomerId = await storage.read(key: 'customerId');
     String? storedPhone = await storage.read(key: 'phone');
     String? storedCartId =
@@ -234,6 +232,15 @@ class _MyHomePageState extends State<MyHomePage>
       print("Exception occurred: $e");
     }
     return null;
+  }
+
+  Future<String?> getOrderStatus() async {
+    return await storage.read(key: 'orderStatus');
+  }
+
+  Future<void> deleteOrderStatus() async {
+    await storage.delete(key: 'orderStatus');
+    setState(() {}); // Trigger a rebuild if your widget is stateful
   }
 
   @override
@@ -605,6 +612,48 @@ class _MyHomePageState extends State<MyHomePage>
           ],
         ),
       ),
+      floatingActionButton: FutureBuilder<String?>(
+        future: getOrderStatus(),
+        builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Optionally, return a placeholder widget while waiting for the data
+            return const CircularProgressIndicator();
+          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+            // Check if the orderStatus is not null and not empty
+            return FloatingActionButton.extended(
+              onPressed: () {
+                // Define the action to be taken when the main part of the button is pressed
+              },
+              icon: const Icon(Icons.delivery_dining_outlined), // Delivery icon
+              label: Row(
+                mainAxisSize: MainAxisSize
+                    .min, // To keep the Row size only as big as its children
+                children: [
+                  Text(snapshot.data!), // Display the order status
+                  const SizedBox(
+                      width: 8), // Space between text and cancel icon
+                  IconButton(
+                    icon: const Icon(Icons.close_outlined), // Cancel icon
+                    onPressed: () {
+                      deleteOrderStatus();
+                      // Optionally, navigate away or perform other UI updates
+                    },
+                  ),
+                ],
+              ),
+              backgroundColor:
+                  Colors.white.withOpacity(0.9), // Customizable color
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30), // Rounded corners
+              ),
+            );
+          } else {
+            // Return an empty container if there's no orderStatus
+            return Container();
+          }
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 
