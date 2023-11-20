@@ -12,6 +12,7 @@ import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/category_items/category_items_screen.dart';
+import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/order/confirmed_order_screen.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
@@ -44,7 +45,6 @@ class _MyHomePageState extends State<MyHomePage>
 
   late AnimationController _buttonController;
   late Animation<Color?> _colorAnim;
-  late AnimationController _textSwitchController;
 
   bool isLoggedIn = false;
   bool isAddress = false;
@@ -622,7 +622,12 @@ class _MyHomePageState extends State<MyHomePage>
             // Check if the orderStatus is not null and not empty
             return FloatingActionButton.extended(
               onPressed: () {
-                // Define the action to be taken when the main part of the button is pressed
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                      builder: (context) => OrderConfirmed(
+                            newOrder: false,
+                          )),
+                );
               },
               icon: const Icon(Icons.delivery_dining_outlined), // Delivery icon
               label: Row(
@@ -818,7 +823,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void dispose() {
     _buttonController.dispose();
-    _textSwitchController.dispose();
     _isMounted = false;
     super.dispose();
   }
@@ -1001,9 +1005,13 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   icon: const Icon(Icons.mobile_friendly_outlined),
                   onPressed: () {
                     Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const OrderConfirmed()));
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ConfirmAddressInit(
+                          placeId: 'ChIJ3S-JXmauEmsRUcIaWtf4MzE',
+                        ),
+                      ),
+                    );
                   },
                 ),
               ],

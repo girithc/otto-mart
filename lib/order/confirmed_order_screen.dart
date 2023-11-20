@@ -8,7 +8,9 @@ import 'dart:convert';
 import 'package:pronto/utils/constants.dart';
 
 class OrderConfirmed extends StatefulWidget {
-  const OrderConfirmed({super.key});
+  OrderConfirmed({super.key, required this.newOrder});
+
+  bool newOrder;
 
   @override
   _OrderConfirmedState createState() => _OrderConfirmedState();
@@ -27,15 +29,15 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     'Preparing Order': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/ddddb99c-f46d-4ab1-a351-fe15819b4831/TrZJOISt7Y.json',
-        transform: 1.8),
+        transform: 1.4),
     'Order Packed': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/179d84ef-a18b-4b26-b03c-85d5e928fd14/HOR0cKFnFZ.json',
-        transform: 1.2),
+        transform: 1.0),
     'Order Picked by Delivery Executive': OrderStatusInfo(
         lottieUrl:
             'https://assets1.lottiefiles.com/packages/lf20_jmejybvu.json',
-        transform: 1.85),
+        transform: 1.5),
     'Arrived': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/af0a126c-e39f-42c0-897d-4885692650f3/IVv3ey2PJW.json',
@@ -69,7 +71,14 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   Future<void> fetchOrderDetails() async {
     // Retrieve customerId and cartId from secure storage
     String? customerId = await _storage.read(key: 'customerId');
-    String? cartId = await _storage.read(key: 'cartId');
+    String? cartId;
+    if (widget.newOrder) {
+      cartId = await _storage.read(key: 'cartId');
+      print("Cart ID: $cartId");
+    } else {
+      cartId = await _storage.read(key: 'placedCartId');
+      print("PlacedCart ID: $cartId");
+    }
 
     // Ensure both values are not null
     if (cartId == null || customerId == null) {
@@ -98,15 +107,24 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
       if (responseData.isNotEmpty) {
         // Extracting the 'paid' field from the first object in the list
-        String newCartId = responseData["new_cart_id"].toString();
-        await _storage.write(key: 'cartId', value: newCartId);
+        String? newCartId = await _storage.read(key: 'cartId');
+        print("placeCartID: $newCartId");
+        if (widget.newOrder) {
+          await _storage.write(key: 'placedCartId', value: newCartId);
+
+          newCartId = responseData["new_cart_id"].toString();
+          await _storage.write(key: 'cartId', value: newCartId);
+        }
+
         await _storage.write(key: 'orderStatus', value: "Preparing Order");
 
         setState(() {
           _isLoading = false;
           _orderDetails = paymentType;
-          print("Old Cart ID: $cartId");
-          print("New Cart ID: $newCartId");
+          if (widget.newOrder) {
+            print("Old Cart ID: $cartId");
+            print("New Cart ID: $newCartId");
+          }
 
           _deliveryPartnerName = responseData['delivery_partner']['name'];
           _numberOfItems =
@@ -143,10 +161,11 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
             ),
             pinned: true,
             bottom: PreferredSize(
-              preferredSize: const Size(0, 110),
+              preferredSize: Size(0, MediaQuery.of(context).size.height * 0.2),
               child: Container(),
             ),
-            expandedHeight: MediaQuery.of(context).size.height * (0.46 + 0.1),
+            expandedHeight: MediaQuery.of(context).size.height * (0.48),
+            centerTitle: true,
             title: ShaderMask(
               shaderCallback: (bounds) => const RadialGradient(
                       center: Alignment.topLeft,
@@ -178,7 +197,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                   ),
                 ),
                 Positioned(
-                  top: 65,
+                  top: MediaQuery.of(context).size.height * 0.1,
                   left: 0,
                   right: 0,
                   bottom: 0,
@@ -189,10 +208,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                       child: Column(
                         children: [
                           Container(
-                            height: MediaQuery.of(context).size.height * 0.26,
-                            width: MediaQuery.of(context).size.width * 0.8,
+                            height: MediaQuery.of(context).size.height * 0.24,
+                            width: MediaQuery.of(context).size.width * 0.85,
                             margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                                horizontal: 10, vertical: 2),
                             padding: const EdgeInsets.only(bottom: 10.0),
                             decoration: BoxDecoration(
                               color: Colors.white,
@@ -211,10 +230,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             ),
                           ),
                           Container(
-                            height: 60,
-                            width: MediaQuery.of(context).size.width * 0.8,
+                            height: MediaQuery.of(context).size.height * 0.07,
+                            width: MediaQuery.of(context).size.width * 0.85,
                             margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 4),
+                                horizontal: 10, vertical: 2),
                             decoration: BoxDecoration(
                               color: Colors
                                   .white, // Uniform color for all containers
@@ -234,45 +253,48 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               ),
                             ),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.zero,
-                                margin: EdgeInsets.zero,
-                                child: ElevatedButton(
-                                  onPressed: () {
-                                    updateOrderStatus('Preparing Order');
-                                  },
-                                  child: const Text('1'),
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.05,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.zero,
+                                  margin: EdgeInsets.zero,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      updateOrderStatus('Preparing Order');
+                                    },
+                                    child: const Text('1'),
+                                  ),
                                 ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  updateOrderStatus('Order Packed');
-                                },
-                                child: const Text('2'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  updateOrderStatus(
-                                      'Order Picked by Delivery Executive');
-                                },
-                                child: const Text('3'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  updateOrderStatus('Arrived');
-                                },
-                                child: const Text('4'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  updateOrderStatus('Order Completed');
-                                },
-                                child: const Text('5'),
-                              ),
-                            ],
+                                ElevatedButton(
+                                  onPressed: () {
+                                    updateOrderStatus('Order Packed');
+                                  },
+                                  child: const Text('2'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    updateOrderStatus(
+                                        'Order Picked by Delivery Executive');
+                                  },
+                                  child: const Text('3'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    updateOrderStatus('Arrived');
+                                  },
+                                  child: const Text('4'),
+                                ),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    updateOrderStatus('Order Completed');
+                                  },
+                                  child: const Text('5'),
+                                ),
+                              ],
+                            ),
                           ),
                           // Add more containers or widgets if needed
                         ],

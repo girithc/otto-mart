@@ -76,7 +76,10 @@ class _TextCyclerState extends State<TextCycler> {
         });
         if (currentIndex == textList.length - 1) {
           Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => const OrderConfirmed()),
+            MaterialPageRoute(
+                builder: (context) => OrderConfirmed(
+                      newOrder: true,
+                    )),
           );
         } else {
           startCycling();
