@@ -19,6 +19,8 @@ class OrderConfirmed extends StatefulWidget {
 class _OrderConfirmedState extends State<OrderConfirmed> {
   late String _orderDetails;
   bool _isLoading = true;
+  bool _isError = false;
+  late String _errorMsg;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   String orderStatus = 'Preparing Order';
@@ -134,9 +136,17 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
           _orderDate = responseData['order_date'];
         });
       } else {
+        setState(() {
+          _isError = true;
+          _errorMsg = 'No Order Found.';
+        });
         throw Exception('Empty response data');
       }
     } else {
+      setState(() {
+        _isError = true;
+        _errorMsg = 'Error loading order details.';
+      });
       throw Exception('Failed to load order details');
     }
   }
@@ -144,264 +154,293 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          SliverAppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_outlined),
-              onPressed: () {
-                // Navigate to the HomeScreen, replacing the current route
-                Navigator.of(context).pushReplacement(
-                  MaterialPageRoute(
-                      builder: (context) => const MyHomePage(
-                            title: 'Otto',
-                          )),
-                );
-              },
-            ),
-            pinned: true,
-            bottom: PreferredSize(
-              preferredSize: Size(0, MediaQuery.of(context).size.height * 0.2),
-              child: Container(),
-            ),
-            expandedHeight: MediaQuery.of(context).size.height * (0.48),
-            centerTitle: true,
-            title: ShaderMask(
-              shaderCallback: (bounds) => const RadialGradient(
-                      center: Alignment.topLeft,
-                      radius: 1.0,
-                      colors: [
-                        Colors.white,
-                        Color.fromARGB(255, 220, 239, 255)
-                      ],
-                      tileMode: TileMode.mirror)
-                  .createShader(bounds),
-              child: const Text(
-                'Otto Mart',
-                style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white),
-              ),
-            ),
-            backgroundColor: Colors.white,
-            flexibleSpace: Stack(
+      body: _isLoading
+          ? const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    color: const Color.fromARGB(255, 0, 170, 255),
-                  ),
-                ),
-                Positioned(
-                  top: MediaQuery.of(context).size.height * 0.1,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: SingleChildScrollView(
-                      // Enables scrolling
-                      child: Column(
+                  Center(child: CircularProgressIndicator()),
+                ])
+          : _isError
+              ? Center(child: Text(_errorMsg))
+              : CustomScrollView(
+                  slivers: <Widget>[
+                    SliverAppBar(
+                      leading: IconButton(
+                        icon: const Icon(Icons.arrow_back_ios_new_outlined),
+                        onPressed: () {
+                          // Navigate to the HomeScreen, replacing the current route
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                                builder: (context) => const MyHomePage(
+                                      title: 'Otto',
+                                    )),
+                          );
+                        },
+                      ),
+                      pinned: true,
+                      bottom: PreferredSize(
+                        preferredSize:
+                            Size(0, MediaQuery.of(context).size.height * 0.2),
+                        child: Container(),
+                      ),
+                      expandedHeight:
+                          MediaQuery.of(context).size.height * (0.48),
+                      centerTitle: true,
+                      title: ShaderMask(
+                        shaderCallback: (bounds) => const RadialGradient(
+                                center: Alignment.topLeft,
+                                radius: 1.0,
+                                colors: [
+                                  Colors.white,
+                                  Color.fromARGB(255, 220, 239, 255)
+                                ],
+                                tileMode: TileMode.mirror)
+                            .createShader(bounds),
+                        child: const Text(
+                          'Otto Mart',
+                          style: TextStyle(
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
+                        ),
+                      ),
+                      backgroundColor: Colors.white,
+                      flexibleSpace: Stack(
                         children: [
-                          Container(
-                            height: MediaQuery.of(context).size.height * 0.24,
-                            width: MediaQuery.of(context).size.width * 0.85,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 2),
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
+                          Positioned(
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              color: const Color.fromARGB(255, 0, 170, 255),
                             ),
-                            child: Center(
-                              // Center the Lottie animation within the container
-                              child: Transform.scale(
-                                scale:
-                                    orderLottieTransform, // Increase the size by 30%
-                                child: Lottie.network(
-                                  orderLottie,
-                                  fit: BoxFit.contain,
+                          ),
+                          Positioned(
+                            top: MediaQuery.of(context).size.height * 0.12,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              color: Colors.transparent,
+                              child: SingleChildScrollView(
+                                // Enables scrolling
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.24,
+                                      width: MediaQuery.of(context).size.width *
+                                          0.85,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 2),
+                                      padding:
+                                          const EdgeInsets.only(bottom: 10.0),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Center(
+                                        // Center the Lottie animation within the container
+                                        child: Transform.scale(
+                                          scale:
+                                              orderLottieTransform, // Increase the size by 30%
+                                          child: Lottie.network(
+                                            orderLottie,
+                                            fit: BoxFit.contain,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Container(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.07,
+                                      width: MediaQuery.of(context).size.width *
+                                          0.85,
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors
+                                            .white, // Uniform color for all containers
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Align(
+                                        alignment: Alignment.center,
+                                        child: Text(
+                                          orderStatus,
+                                          style: const TextStyle(
+                                            fontSize: 22, // Increased font size
+                                            fontWeight: FontWeight
+                                                .bold, // Bold font weight
+                                          ),
+                                          textAlign: TextAlign
+                                              .center, // Ensure text is centered horizontally
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.05,
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            padding: EdgeInsets.zero,
+                                            margin: EdgeInsets.zero,
+                                            child: ElevatedButton(
+                                              onPressed: () {
+                                                updateOrderStatus(
+                                                    'Preparing Order');
+                                              },
+                                              child: const Text('1'),
+                                            ),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              updateOrderStatus('Order Packed');
+                                            },
+                                            child: const Text('2'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              updateOrderStatus(
+                                                  'Order Picked by Delivery Executive');
+                                            },
+                                            child: const Text('3'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              updateOrderStatus('Arrived');
+                                            },
+                                            child: const Text('4'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              updateOrderStatus(
+                                                  'Order Completed');
+                                            },
+                                            child: const Text('5'),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Add more containers or widgets if needed
+                                  ],
                                 ),
                               ),
                             ),
                           ),
-                          Container(
-                            height: MediaQuery.of(context).size.height * 0.07,
-                            width: MediaQuery.of(context).size.width * 0.85,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: Colors
-                                  .white, // Uniform color for all containers
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Align(
-                              alignment: Alignment.center,
-                              child: Text(
-                                orderStatus,
-                                style: const TextStyle(
-                                  fontSize: 22, // Increased font size
-                                  fontWeight:
-                                      FontWeight.bold, // Bold font weight
-                                ),
-                                textAlign: TextAlign
-                                    .center, // Ensure text is centered horizontally
+                          Positioned(
+                            bottom: -1,
+                            left: 0,
+                            right: 0,
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(50)),
+                              child: Container(
+                                height: 25,
+                                decoration: const BoxDecoration(
+                                    // Define the linear gradient
+                                    color: Colors.white),
                               ),
                             ),
                           ),
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.05,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: EdgeInsets.zero,
-                                  margin: EdgeInsets.zero,
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      updateOrderStatus('Preparing Order');
-                                    },
-                                    child: const Text('1'),
-                                  ),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    updateOrderStatus('Order Packed');
-                                  },
-                                  child: const Text('2'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    updateOrderStatus(
-                                        'Order Picked by Delivery Executive');
-                                  },
-                                  child: const Text('3'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    updateOrderStatus('Arrived');
-                                  },
-                                  child: const Text('4'),
-                                ),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    updateOrderStatus('Order Completed');
-                                  },
-                                  child: const Text('5'),
-                                ),
-                              ],
-                            ),
-                          ),
-                          // Add more containers or widgets if needed
                         ],
                       ),
                     ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -1,
-                  left: 0,
-                  right: 0,
-                  child: ClipRRect(
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(50)),
-                    child: Container(
-                      height: 25,
-                      decoration: const BoxDecoration(
-                          // Define the linear gradient
-                          color: Colors.white),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SliverFixedExtentList(
-            itemExtent: 160.0, // Height of each item
-            delegate: SliverChildBuilderDelegate(
-              (BuildContext context, int index) {
-                // Define a list of custom widgets for each child
-                List<Widget> customChildren = [
-                  Container(
-                    margin: const EdgeInsets.all(10),
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.indigoAccent.withOpacity(0.5),
-                          spreadRadius: 4,
-                          blurRadius: 8,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Delivery Partner: $_deliveryPartnerName'),
-                        Text('Number of Items: $_numberOfItems'),
-                        Text('Address: $_customerAddress'),
-                        Text('Payment Type: $_paymentType'),
-                        Text('Order Date: $_orderDate'),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    // Custom styling for the second child
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white, // Uniform color
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.indigoAccent, width: 2), // Border color
-                    ),
-                    child: const Text('Wishlist'), // Different content
-                  ),
-                  Container(
-                    // Custom styling for the third child
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white, // Uniform color
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: const Color.fromARGB(255, 13, 105, 197),
-                          width: 2), // Border color
-                    ),
-                    child: const Text('Forgot Item'), // Different content
-                  ),
-                  Container(
-                    // Custom styling for the fourth child
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: Colors.white, // Uniform color
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.indigoAccent, width: 2), // Border color
-                    ),
-                    child: const Text('Promotion'), // Different content
-                  ),
-                ];
+                    SliverFixedExtentList(
+                      itemExtent: 160.0, // Height of each item
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          // Define a list of custom widgets for each child
+                          List<Widget> customChildren = [
+                            Container(
+                              margin: const EdgeInsets.all(10),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.indigoAccent.withOpacity(0.5),
+                                    spreadRadius: 4,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                      'Delivery Partner: $_deliveryPartnerName'),
+                                  Text('Number of Items: $_numberOfItems'),
+                                  Text('Address: $_customerAddress'),
+                                  Text('Payment Type: $_paymentType'),
+                                  Text('Order Date: $_orderDate'),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              // Custom styling for the second child
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white, // Uniform color
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: Colors.indigoAccent,
+                                    width: 2), // Border color
+                              ),
+                              child:
+                                  const Text('Wishlist'), // Different content
+                            ),
+                            Container(
+                              // Custom styling for the third child
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white, // Uniform color
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color:
+                                        const Color.fromARGB(255, 13, 105, 197),
+                                    width: 2), // Border color
+                              ),
+                              child: const Text(
+                                  'Forgot Item'), // Different content
+                            ),
+                            Container(
+                              // Custom styling for the fourth child
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: Colors.white, // Uniform color
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                    color: Colors.indigoAccent,
+                                    width: 2), // Border color
+                              ),
+                              child:
+                                  const Text('Promotion'), // Different content
+                            ),
+                          ];
 
-                // Return the custom child based on the index
-                return customChildren[index];
-              },
-              childCount: 4, // Total number of children
-            ),
-          ),
-        ],
-      ),
+                          // Return the custom child based on the index
+                          return customChildren[index];
+                        },
+                        childCount: 4, // Total number of children
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 }
