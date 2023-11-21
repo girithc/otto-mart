@@ -386,50 +386,64 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               ),
                             ),
                             Container(
-                              // Custom styling for the second child
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
-                              alignment: Alignment.center,
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white, // Uniform color
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.indigoAccent,
-                                    width: 2), // Border color
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.indigoAccent.withOpacity(0.5),
+                                    spreadRadius: 4,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              child:
-                                  const Text('Wishlist'), // Different content
+                              child: const Center(
+                                child: Text('Wishlist'),
+                              ),
                             ),
                             Container(
-                              // Custom styling for the third child
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
-                              alignment: Alignment.center,
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white, // Uniform color
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color:
-                                        const Color.fromARGB(255, 13, 105, 197),
-                                    width: 2), // Border color
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.indigoAccent.withOpacity(0.5),
+                                    spreadRadius: 4,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              child: const Text(
-                                  'Forgot Item'), // Different content
+                              child: const Center(
+                                child: Text('Wishlist'),
+                              ),
                             ),
                             Container(
-                              // Custom styling for the fourth child
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
-                              alignment: Alignment.center,
+                              padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: Colors.white, // Uniform color
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                    color: Colors.indigoAccent,
-                                    width: 2), // Border color
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.indigoAccent.withOpacity(0.5),
+                                    spreadRadius: 4,
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                              child:
-                                  const Text('Promotion'), // Different content
+                              child: const Center(
+                                child: Text('Wishlist'),
+                              ),
                             ),
                           ];
 

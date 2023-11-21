@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/setting/order.dart';
 import 'package:provider/provider.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -40,57 +42,45 @@ class _SettingScreenState extends State<SettingScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.deepPurpleAccent,
-        title: Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: () {
-                Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const MyHomePage(
-                              title: 'Pronto',
-                            )));
-              },
-            ),
-            const Text(
-              "O",
-              style: TextStyle(color: Colors.white, fontSize: 20.0),
-            ),
-            const Spacer(), // This will push the remaining content to take up the available space
-            Align(
-              alignment: Alignment.center,
-              child: InkWell(
-                child: ShaderMask(
-                  shaderCallback: (bounds) => const RadialGradient(
-                    center: Alignment.topLeft,
-                    radius: 1.0,
-                    colors: [Colors.white, Colors.white70],
-                    tileMode: TileMode.mirror,
-                  ).createShader(bounds),
-                  child: const Text(
-                    'Pronto',
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-                onTap: () {
-                  Navigator.pop(context);
-                },
+        title: InkWell(
+          child: ShaderMask(
+            shaderCallback: (bounds) => const RadialGradient(
+              center: Alignment.topLeft,
+              radius: 1.0,
+              colors: [Colors.white, Colors.white70],
+              tileMode: TileMode.mirror,
+            ).createShader(bounds),
+            child: const Text(
+              'Otto Mart',
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
-            const Spacer(), // Another Spacer to push the menu icon to the right
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, size: 30.0, color: Colors.white),
-            onPressed: () => _scaffoldKey.currentState?.openDrawer(),
           ),
-        ],
+          onTap: () {
+            Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const MyHomePage(
+                          title: 'Pronto',
+                        )));
+          },
+        ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const MyHomePage(
+                  title: 'Pronto',
+                ),
+              ),
+            );
+          },
+        ),
       ),
       drawer: _buildDrawer(),
       body: _buildBodySection(),
@@ -151,29 +141,143 @@ class _SettingScreenState extends State<SettingScreen> {
   Widget _buildBodySection() {
     switch (_currentSection) {
       case DrawerSections.profile:
-        return Center(
-            child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _currentSection = DrawerSections.orders;
-                  });
-                },
-                child: const Text('Orders')),
-            ElevatedButton(
-                onPressed: () {
-                  signOutUser(context).then(
-                    (value) => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyPhone())),
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              // ... your existing code for order details ...
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const MyOrdersPage()),
                   );
                 },
-                child: const Text('Log Out')),
-          ],
-        ));
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.14,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.indigoAccent.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 4,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Orders',
+                      style: GoogleFonts.robotoMono(fontSize: 18),
+                    ),
+                  ),
+                ),
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.14,
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.indigoAccent.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Profile',
+                    style: GoogleFonts.robotoMono(fontSize: 18),
+                  ),
+                ),
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.14,
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.indigoAccent.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Wallet',
+                    style: GoogleFonts.robotoMono(fontSize: 18),
+                  ),
+                ),
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.14,
+                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    'Support',
+                    style: GoogleFonts.robotoMono(fontSize: 18),
+                  ),
+                ),
+              ),
+              // Add more containers or widgets if needed
+            ],
+          ),
+        );
+
+      /*
+        Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ElevatedButton(
+                  onPressed: () {
+                    setState(() {
+                      _currentSection = DrawerSections.orders;
+                    });
+                  },
+                  child: const Text('Orders')),
+              ElevatedButton(
+                  onPressed: () {
+                    signOutUser(context).then(
+                      (value) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyPhone())),
+                    );
+                  },
+                  child: const Text('Log Out')),
+            ],
+          ),
+        );
+        */
       case DrawerSections.wallet:
         return const Center(child: Text('Wallet Section'));
       case DrawerSections.orders:
