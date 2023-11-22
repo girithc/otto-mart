@@ -30,6 +30,26 @@
 	<string>This app requires continuous access to your location to provide accurate deliveries.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app requires access to your location when in use to provide access to store.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>ppemerchantsdkv1</string>
+		<string>ppemerchantsdkv2</string>
+		<string>ppemerchantsdkv3</string>
+		<string>paytmmp</string>
+		<string>gpay</string>
+	</array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>iOSIntentIntegration</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.otto-mart</string> <!-- Replace with your URL Scheme -->
+			</array>
+		</dict>
+	</array>
+
 
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>

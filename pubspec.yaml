@@ -55,6 +55,7 @@ dependencies:
   connectivity_plus: ^4.0.2
   flutter_form_builder: ^9.1.1
   webview_flutter: ^4.4.2
+  phonepe_payment_sdk: ^1.0.4
 
 dev_dependencies:
   flutter_test:

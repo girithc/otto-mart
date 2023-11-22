@@ -1,8 +1,13 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pronto/utils/constants.dart';
 
 class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
@@ -13,7 +18,7 @@ class MyOrdersPage extends StatefulWidget {
 
 class _MyOrdersPageState extends State<MyOrdersPage> {
   List<Order> orders = [];
-
+  List<Order> orderSample = [];
   @override
   void initState() {
     super.initState();
@@ -26,42 +31,37 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     const storage = FlutterSecureStorage();
     String? customerId = await storage.read(key: 'customerId');
 
-    // Replace the following line with your actual logic to fetch orders
-    // For demonstration purposes, a simple list is used here.
-    orders = [
-      Order(
-          current: true,
-          date: '11/10/2023',
-          address: 'radha kunj',
-          paymentType: 'cash',
-          paid: false),
-      Order(
-          current: false,
-          date: '05/10/2023',
-          address: 'laxmi kunj',
-          paymentType: 'credit',
-          paid: true),
-      Order(
-          current: false,
-          date: '05/10/2023',
-          address: 'laxmi kunj',
-          paymentType: 'credit',
-          paid: true),
-      Order(
-          current: false,
-          date: '01/10/2023',
-          address: 'laxmi kunj',
-          paymentType: 'cash',
-          paid: true),
-      Order(
-          current: false,
-          date: '01/08/2023',
-          address: 'hira kunj',
-          paymentType: 'upi',
-          paid: true),
-    ];
+    if (customerId == null) {
+      print('Customer ID is null');
+      return;
+    }
 
-    setState(() {}); // Update the UI after fetching orders
+    try {
+      var headers = {'Content-Type': 'application/json'};
+      var body = json.encode({"customer_id": int.parse(customerId)});
+      var url = Uri.parse('$baseUrl/sales-order');
+
+      var response = await http.post(url, headers: headers, body: body);
+
+      if (response.statusCode == 200) {
+        print("FetchOrder Response: ${response.body}");
+        List<dynamic> data = json.decode(response.body);
+
+        if (data.isEmpty) {
+          print('No orders found');
+          return;
+        }
+
+        setState(() {
+          orders = data.map((orderData) => Order.fromJson(orderData)).toList();
+        });
+      } else {
+        print(
+            'Failed to fetch orders: ${response.statusCode} ${response.reasonPhrase}');
+      }
+    } catch (e) {
+      print('Error fetching orders: $e');
+    }
   }
 
   @override
@@ -79,7 +79,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               tileMode: TileMode.mirror,
             ).createShader(bounds),
             child: const Text(
-              'Otto Mart',
+              'Orders',
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.bold,
@@ -115,7 +115,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               itemCount: orders.length,
               itemBuilder: (context, index) {
                 return Container(
-                  height: MediaQuery.of(context).size.height * 0.16,
+                  height: MediaQuery.of(context).size.height * 0.20,
                   margin:
                       const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   padding: const EdgeInsets.all(10),
@@ -135,6 +135,9 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                   ),
                   child: Center(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment
+                          .center, // Centers the column content
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
                           'Paid: ${orders[index].paid.toString()}',
@@ -143,6 +146,9 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                         Text(
                           orders[index].address!,
                           style: GoogleFonts.robotoMono(fontSize: 18),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center, // Center-aligns the text
                         ),
                         Text(
                           orders[index].date!,
@@ -167,11 +173,26 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
 }
 
 class Order {
-  bool? current;
   String? date;
   String? address;
   String? paymentType;
+  String? deliveryPartnerName;
   bool? paid;
 
-  Order({this.current, this.date, this.address, this.paymentType, this.paid});
+  Order(
+      {this.date,
+      this.address,
+      this.paymentType,
+      this.deliveryPartnerName,
+      this.paid});
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    return Order(
+      date: json['order_date']?.toString() ?? 'N/A',
+      address: json['order_address']?.toString() ?? 'N/A',
+      paymentType: json['payment_type']?.toString() ?? 'N/A',
+      deliveryPartnerName: json['DeliveryPartnerName']?.toString() ?? 'N/A',
+      paid: json['paid_status'] ?? false,
+    );
+  }
 }

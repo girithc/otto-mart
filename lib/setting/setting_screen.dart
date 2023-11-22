@@ -5,6 +5,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/setting/order.dart';
+import 'package:pronto/setting/phonepe.dart';
 import 'package:provider/provider.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -174,6 +175,40 @@ class _SettingScreenState extends State<SettingScreen> {
                     child: Text(
                       'Orders',
                       style: GoogleFonts.robotoMono(fontSize: 18),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const MerchantApp()),
+                  );
+                },
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.14,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurpleAccent,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.indigoAccent.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 4,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Phonepe',
+                      style: GoogleFonts.robotoMono(
+                          fontSize: 18, color: Colors.white),
                     ),
                   ),
                 ),
