@@ -166,7 +166,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                   slivers: <Widget>[
                     SliverAppBar(
                       leading: IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_outlined),
+                        icon: const Icon(
+                          Icons.arrow_back_outlined,
+                          color: Colors.white,
+                        ),
                         onPressed: () {
                           // Navigate to the HomeScreen, replacing the current route
                           Navigator.of(context).pushReplacement(
@@ -213,7 +216,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             right: 0,
                             bottom: 0,
                             child: Container(
-                              color: const Color.fromARGB(255, 0, 170, 255),
+                              color: Colors.deepPurpleAccent,
                             ),
                           ),
                           Positioned(

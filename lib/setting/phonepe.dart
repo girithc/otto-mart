@@ -206,7 +206,17 @@ class MerchantScreen extends State<MerchantApp> {
     return MaterialApp(
       home: Scaffold(
           appBar: AppBar(
-            title: const Text('Flutter Merchant Demo App'),
+            title: const Text(
+              'Phonepe Demo App',
+            ),
+            centerTitle: true,
+            leading: IconButton(
+              icon:
+                  const Icon(Icons.arrow_back, color: Colors.deepPurpleAccent),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
           ),
           body: SingleChildScrollView(
             child: Container(
