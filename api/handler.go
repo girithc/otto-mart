@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -600,12 +601,27 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-			task := func() worker.Result {
-				var err error
-				// You might want to pass the decoded body to the handler function
-				// Adjust the handleGetAssignedOrders function accordingly
-				err = s.handleGetAssignedOrders(res, newReq)
-				return worker.Result{Error: err}
+			var task func() worker.Result
+
+			if _, ok := requestBody["delivery_partner_id"]; ok {
+				// If the key is delivery_partner_id
+				task = func() worker.Result {
+					var err error
+					// Adjust the handler function to handle requests with delivery_partner_id
+					err = s.handleGetOrdersByDeliveryPartnerId(res, newReq)
+					return worker.Result{Error: err}
+				}
+			} else if _, ok := requestBody["customer_id"]; ok {
+				// If the key is customer_id
+				task = func() worker.Result {
+					var err error
+					// Adjust the handler function to handle requests with customer_id
+					err = s.handleGetOrdersByCustomerId(res, newReq)
+					return worker.Result{Error: err}
+				}
+			} else {
+				// Handle the case where the key is neither delivery_partner_id nor customer_id
+				return errors.New("invalid parameter in request body")
 			}
 
 			// Start the task in a worker and pass a callback to capture the result

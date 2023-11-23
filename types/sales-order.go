@@ -31,7 +31,11 @@ type Sales_Order_Details struct {
 }
 
 type Sales_Order_Delivery_Partner struct {
-	ID int `json:"id"`
+	DeliveryPartnerId int `json:"delivery_partner_id"`
+}
+
+type Sales_Order_Customer struct {
+	CustomerId int `json:"customer_id"`
 }
 
 type SalesOrderRecent struct {

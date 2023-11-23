@@ -6,6 +6,7 @@ import (
 
 	"github.com/girithc/pronto-go/types"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -22,7 +23,19 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 		return err
 	}
 
-	// Create the sales_order table
+	// Define the ENUM type for order_status
+	orderStatusQuery := `DO $$ BEGIN
+        CREATE TYPE order_status AS ENUM ('received', 'accepted', 'packed', 'dispatched', 'arrived', 'completed');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`
+
+	_, err = tx.Exec(orderStatusQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create the sales_order table with order_status field
 	query := `create table if not exists sales_order (
         id SERIAL PRIMARY KEY,
         delivery_partner_id INT REFERENCES Delivery_Partner(id) ON DELETE CASCADE,
@@ -32,14 +45,15 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         address_id INT REFERENCES Address(id) ON DELETE CASCADE NOT NULL,
         paid BOOLEAN NOT NULL DEFAULT false,
         payment_type payment_method DEFAULT 'cash',
-        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        order_status order_status DEFAULT 'received'
     )`
 
 	_, err = tx.Exec(query)
 	return err
 }
 
-func (s *PostgresStore) GetRecentSalesOrder(customerID, storeID, cartID int) (*types.Sales_Order_Cart, error) {
+func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, cartID int) (*types.Sales_Order_Cart, error) {
 	// SQL query to fetch the most recent sales order for specific customer, store, and cart
 	query := `SELECT id, delivery_partner_id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date
               FROM sales_order
@@ -141,6 +155,51 @@ func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
 	return salesOrders, nil
 }
 
+type OrderDetails struct {
+	DeliveryPartnerName string `json:"delivery_partner_name"`
+	OrderDate           string `json:"order_date"`
+	OrderAddress        string `json:"order_address"`
+	PaymentType         string `json:"payment_type"`
+	PaidStatus          bool   `json:"paid_status"`
+}
+
+func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, error) {
+	var orders []OrderDetails
+
+	// SQL query to fetch the required details
+	query := `
+        SELECT dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
+        FROM sales_order so
+        JOIN address a ON so.address_id = a.id
+        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+        WHERE so.customer_id = $1
+    `
+
+	// Execute the query
+	rows, err := s.db.Query(query, customer_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Iterate through the result set
+	for rows.Next() {
+		var order OrderDetails
+		err := rows.Scan(&order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+
+	// Check for errors from iterating over rows
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
 func (s *PostgresStore) GetOrdersByDeliveryPartner(delivery_partner_id int) ([]*types.Sales_Order_Details, error) {
 	query := `
         SELECT 
@@ -187,4 +246,135 @@ func (s *PostgresStore) GetOrdersByDeliveryPartner(delivery_partner_id int) ([]*
 	}
 
 	return orders, nil
+}
+
+// needs to be implemented
+func (s *PostgresStore) GetOldestOrderForStore(store_id int) (OrderDetails, error) {
+	var order OrderDetails
+
+	// SQL query to fetch the oldest order details
+	query := `
+        SELECT dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
+        FROM sales_order so
+        JOIN address a ON so.address_id = a.id
+        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+        WHERE so.store_id = $1 AND so.order_status = 'received'
+        ORDER BY so.order_date ASC
+        LIMIT 1
+    `
+
+	// Execute the query
+	row := s.db.QueryRow(query, store_id)
+	err := row.Scan(&order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+	if err != nil {
+		return OrderDetails{}, err
+	}
+
+	return order, nil
+}
+
+// needs to be implemented
+func (s *PostgresStore) GetReceivedOrdersForStore(store_id int) ([]OrderDetails, error) {
+	var orders []OrderDetails
+
+	// SQL query to fetch the orders
+	query := `
+        SELECT dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
+        FROM sales_order so
+        JOIN address a ON so.address_id = a.id
+        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+        WHERE so.store_id = $1 AND so.order_status = 'received'
+        ORDER BY so.order_date ASC
+    `
+
+	// Execute the query
+	rows, err := s.db.Query(query, store_id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Iterate through the result set
+	for rows.Next() {
+		var order OrderDetails
+		err := rows.Scan(&order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+		if err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+
+	// Check for errors from iterating over rows
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
+
+// needs to be implemented
+func (s *PostgresStore) GetOrderItemsByStoreAndOrderId(orderId, storeId int) ([]ItemDetails, error) {
+	var items []ItemDetails
+
+	// SQL query to get the cart_id from the order
+	orderQuery := `
+        SELECT cart_id 
+        FROM sales_order 
+        WHERE id = $1 AND store_id = $2 AND order_status = 'accepted'
+    `
+	var cartId int
+	err := s.db.QueryRow(orderQuery, orderId, storeId).Scan(&cartId)
+	if err != nil {
+		return nil, err
+	}
+
+	// SQL query to fetch item details
+	itemQuery := `
+        SELECT i.name, b.name, i.unit_of_quantity, i.quantity, ci.quantity, istore.mrp_price, array_agg(ii.image_url)
+        FROM cart_item ci
+        JOIN item_store istore ON ci.item_id = istore.id
+        JOIN item i ON istore.item_id = i.id
+        JOIN brand b ON i.brand_id = b.id
+        LEFT JOIN item_image ii ON i.id = ii.item_id
+        WHERE ci.cart_id = $1
+        GROUP BY i.id, b.name, ci.quantity
+        ORDER BY i.name
+    `
+
+	// Execute the query
+	rows, err := s.db.Query(itemQuery, cartId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Iterate through the result set
+	for rows.Next() {
+		var item ItemDetails
+		var images []string
+		err := rows.Scan(&item.Name, &item.Brand, &item.UnitOfQuantity, &item.Quantity, &item.StockQuantity, &item.MrpPrice, pq.Array(&images))
+		if err != nil {
+			return nil, err
+		}
+		item.Images = images
+		items = append(items, item)
+	}
+
+	// Check for errors from iterating over rows
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return items, nil
+}
+
+// needs to be implemented
+type ItemDetails struct {
+	Name           string   `json:"name"`
+	Brand          string   `json:"brand"`
+	UnitOfQuantity string   `json:"unit_of_quantity"` // Unit of measure (e.g., "g", "kg", "l")
+	Quantity       int      `json:"quantity"`         // Numerical value of the unit (e.g., 100 in "100g")
+	StockQuantity  int      `json:"stock_quantity"`   // Quantity of the item available in the cart
+	MrpPrice       float64  `json:"mrp_price"`        // Maximum Retail Price of the item
+	Images         []string `json:"images"`           // URLs of item images
 }
