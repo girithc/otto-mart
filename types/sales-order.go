@@ -43,6 +43,15 @@ type SalesOrderRecent struct {
 	CustomerId int `json:"customer_id"`
 }
 
+type SalesOrderStore struct {
+	StoreId int `json:"store_id"`
+}
+
+type SalesOrderStoreAndOrder struct {
+	StoreId int `json:"store_id"`
+	OrderId int `json:"order_id"`
+}
+
 type Sales_Order_Cart struct {
 	ID                int               `json:"id"`
 	DeliveryPartnerID sql.NullInt64     `json:"delivery_partner_id"`
