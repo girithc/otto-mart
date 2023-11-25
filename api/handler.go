@@ -605,6 +605,7 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 
 			if _, ok := requestBody["delivery_partner_id"]; ok {
 				// If the key is delivery_partner_id
+				print_path("POST", "sales_order delivery_partner_id")
 				task = func() worker.Result {
 					var err error
 					// Adjust the handler function to handle requests with delivery_partner_id
@@ -613,6 +614,7 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 				}
 			} else if _, ok := requestBody["customer_id"]; ok {
 				// If the key is customer_id
+				print_path("POST", "sales_order customer_id")
 				task = func() worker.Result {
 					var err error
 					// Adjust the handler function to handle requests with customer_id
@@ -905,6 +907,31 @@ func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 		return <-resultChan
 
 	}
+	return nil
+}
+
+func (s *Server) handlePhonePe(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "brand")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handlePhonePePaymentInit(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	}
+
 	return nil
 }
 
