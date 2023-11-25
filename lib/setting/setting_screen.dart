@@ -5,7 +5,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/setting/order.dart';
-import 'package:pronto/setting/phonepe.dart';
+import 'package:pronto/payments/phonepe.dart';
 import 'package:provider/provider.dart';
 
 class SettingScreen extends StatefulWidget {
@@ -184,7 +184,10 @@ class _SettingScreenState extends State<SettingScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const MerchantApp()),
+                      builder: (context) => const PhonePeWebView(
+                          url:
+                              "https://mercury-uat.phonepe.com/transact/simulator?token=9E7mYEWviFlagB06K57DXxQpeHfDcRETOhbtSdZaS8"),
+                    ),
                   );
                 },
                 child: Container(
@@ -259,30 +262,42 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                 ),
               ),
-              Container(
-                height: MediaQuery.of(context).size.height * 0.14,
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 3),
+
+              GestureDetector(
+                onTap: () {
+                  signOutUser(context).then(
+                    (value) => Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyPhone()),
                     ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    'Support',
-                    style: GoogleFonts.robotoMono(fontSize: 18),
+                  );
+                },
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.14,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 4,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Sign Out',
+                      style: GoogleFonts.robotoMono(
+                          fontSize: 18, color: Colors.black),
+                    ),
                   ),
                 ),
               ),
-              // Add more containers or widgets if needed
             ],
           ),
         );
@@ -308,7 +323,7 @@ class _SettingScreenState extends State<SettingScreen> {
                               builder: (context) => const MyPhone())),
                     );
                   },
-                  child: const Text('Log Out')),
+                  child: const Text('Log Out'),),
             ],
           ),
         );

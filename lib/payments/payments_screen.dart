@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:pronto/payments/phonepe.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
@@ -17,6 +18,7 @@ class PaymentsPage extends StatefulWidget {
 class _PaymentsPageState extends State<PaymentsPage> {
   late final WebViewController controller;
   var loadingPercentage = 0;
+  String? _selectedPayment = 'PhonePe';
 
   @override
   void initState() {
@@ -94,6 +96,37 @@ class _PaymentsPageState extends State<PaymentsPage> {
     }
   }
 
+  Future<String> initiatePhonePePayment(int cartId) async {
+    var headers = {'Content-Type': 'application/json'};
+    var request =
+        http.Request('POST', Uri.parse('$baseUrl/phonepe-payment-init'));
+    // Replace with actual parameters
+    request.headers.addAll(headers);
+
+    try {
+      http.StreamedResponse response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseBody = await response.stream.bytesToString();
+        var decodedResponse = json.decode(responseBody);
+
+        // Correct path to extract the URL
+        return decodedResponse['data']['instrumentResponse']['redirectInfo']
+            ['url'];
+      } else {
+        // Handle non-200 responses
+        var errorResponse = await response.stream.bytesToString();
+        // Log the error response or handle it as per your application's requirement
+        print('Error response: $errorResponse');
+        return 'Error: Received status code ${response.statusCode}';
+      }
+    } catch (e) {
+      // Handle exceptions
+      print('Exception occurred: $e');
+      return 'Exception: $e';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -161,18 +194,43 @@ class _PaymentsPageState extends State<PaymentsPage> {
         shadowColor: Colors.white,
         surfaceTintColor: Colors.white,
       ),
-      body: ListTile(
-        title: const Text('Cash on Delivery'),
-        leading: Radio(
-          value: 'Cash on Delivery',
-          groupValue: 'Cash on Delivery',
-          onChanged: (String? value) {
-            // Handle the change if necessary
-          },
-        ),
-        onTap: () {
-          // Handle the tap if necessary
-        },
+      body: Column(
+        children: [
+          ListTile(
+            title: const Text('PhonePe'),
+            leading: Radio(
+              value: 'PhonePe',
+              groupValue: _selectedPayment,
+              onChanged: (String? value) {
+                setState(() {
+                  _selectedPayment = value;
+                });
+              },
+            ),
+            onTap: () {
+              setState(() {
+                _selectedPayment = 'PhonePe';
+              });
+            },
+          ),
+          ListTile(
+            title: const Text('Cash on Delivery'),
+            leading: Radio(
+              value: 'Cash on Delivery',
+              groupValue: _selectedPayment,
+              onChanged: (String? value) {
+                setState(() {
+                  _selectedPayment = value;
+                });
+              },
+            ),
+            onTap: () {
+              setState(() {
+                _selectedPayment = 'Cash on Delivery';
+              });
+            },
+          ),
+        ],
       ),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
@@ -183,37 +241,23 @@ class _PaymentsPageState extends State<PaymentsPage> {
           child: ElevatedButton(
             onPressed: () {
               String? cartId = cart.cartId;
-              if (cartId != null) {
+              if (_selectedPayment == 'PhonePe' && cartId != null) {
                 int cartIdInt = int.parse(cartId);
-                processPayment(cartIdInt).then((isPaid) {
-                  if (isPaid) {
+                initiatePhonePePayment(cartIdInt).then((url) {
+                  if (url.isNotEmpty) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PlaceOrder(),
+                        builder: (context) => PhonePeWebView(url: url),
                       ),
                     );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Payment failed'),
-                        backgroundColor: Colors.redAccent,
-                      ),
-                    );
-                  }
-                }).catchError((error) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $error'),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
+                  } else {}
                 });
               } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Error: Cart Id Not Found'),
-                    backgroundColor: Colors.redAccent,
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const PlaceOrder(),
                   ),
                 );
               }

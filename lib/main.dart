@@ -8,6 +8,7 @@ import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
+import 'package:uni_links/uni_links.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,6 +18,17 @@ void main() async {
   runApp(MyApp(
     initialCustomerId: initialCustomerId,
   ));
+  initUniLinks();
+}
+
+void initUniLinks() async {
+  // Attach a listener to the links stream
+  // ignore: deprecated_member_use
+  getLinksStream().listen((String? link) {
+    // Handle incoming link (e.g., extract parameters and navigate to a specific screen)
+  }, onError: (err) {
+    // Handle error situations
+  });
 }
 
 class MyApp extends StatefulWidget {
