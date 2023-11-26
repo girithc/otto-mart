@@ -182,7 +182,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   tileMode: TileMode.mirror)
               .createShader(bounds),
           child: const Text(
-            'Pronto Payments',
+            'Otto Pay',
             style: TextStyle(
                 fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
           ),

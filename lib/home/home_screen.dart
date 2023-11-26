@@ -14,6 +14,7 @@ import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/category_items/category_items_screen.dart';
 import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/order/confirmed_order_screen.dart';
+import 'package:pronto/payments/phonepe.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
@@ -921,12 +922,44 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
     // For example, you might want to navigate to the login screen
   }
 
+  Future<String> initiatePhonePePayment(int cartId) async {
+    var headers = {'Content-Type': 'application/json'};
+    var request =
+        http.Request('POST', Uri.parse('$baseUrl/phonepe-payment-init'));
+    // Replace with actual parameters
+    request.headers.addAll(headers);
+
+    try {
+      http.StreamedResponse response = await request.send();
+
+      if (response.statusCode == 200) {
+        var responseBody = await response.stream.bytesToString();
+        var decodedResponse = json.decode(responseBody);
+
+        // Correct path to extract the URL
+        return decodedResponse['data']['instrumentResponse']['redirectInfo']
+            ['url'];
+      } else {
+        // Handle non-200 responses
+        var errorResponse = await response.stream.bytesToString();
+        // Log the error response or handle it as per your application's requirement
+        print('Error response: $errorResponse');
+        return 'Error: Received status code ${response.statusCode}';
+      }
+    } catch (e) {
+      // Handle exceptions
+      print('Exception occurred: $e');
+      return 'Exception: $e';
+    }
+  }
+
   @override
   Size get preferredSize =>
       const Size.fromHeight(130); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>();
     return GestureDetector(
       // GestureDetector captures taps on the screen
       onTap: () {
@@ -1004,14 +1037,18 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   padding: const EdgeInsets.only(right: 15.0),
                   icon: const Icon(Icons.mobile_friendly_outlined),
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ConfirmAddressInit(
-                          placeId: 'ChIJ3S-JXmauEmsRUcIaWtf4MzE',
-                        ),
-                      ),
-                    );
+                    String? cartId = cart.cartId;
+                    int cartIdInt = int.parse(cartId!);
+                    initiatePhonePePayment(cartIdInt).then((url) {
+                      if (url.isNotEmpty) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PhonePeWebView(url: url),
+                          ),
+                        );
+                      } else {}
+                    });
                   },
                 ),
               ],

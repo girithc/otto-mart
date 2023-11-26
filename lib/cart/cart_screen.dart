@@ -64,7 +64,7 @@ class _MyCartState extends State<MyCart> {
                   tileMode: TileMode.mirror)
               .createShader(bounds),
           child: const Text(
-            'Pronto',
+            'Otto Cart',
             style: TextStyle(
                 fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
           ),
