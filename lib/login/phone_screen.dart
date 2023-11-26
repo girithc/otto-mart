@@ -1,5 +1,9 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:pronto/login/verify_screen.dart';
+import 'package:pronto/utils/constants.dart';
+import 'package:http/http.dart' as http;
 
 class MyPhone extends StatefulWidget {
   const MyPhone({Key? key}) : super(key: key);
@@ -18,6 +22,35 @@ class _MyPhoneState extends State<MyPhone> {
   void initState() {
     countryController.text = "+91";
     super.initState();
+  }
+
+  Future<String?> sendOTP(String phoneNumber) async {
+    try {
+      // Define
+      // Send the HTTP request to send OTP
+      var url = Uri.parse('$baseUrl/send-otp');
+      final Map<String, dynamic> requestData = {
+        "phone": int.parse(phoneNumber)
+      };
+      var response = await http.post(
+        url,
+        body: jsonEncode(requestData),
+      );
+      if (response.statusCode == 200) {
+        // Successfully sent OTP, parse the response
+        Map<String, dynamic> jsonResponse = json.decode(response.body);
+
+        // Check the 'type' field in the response
+        return jsonResponse['type'];
+      } else {
+        // Handle HTTP request error
+        return response.reasonPhrase;
+      }
+    } catch (error) {
+      // Handle other errors
+      print('Error(Send OTP): $error');
+    }
+    return null;
   }
 
   @override
@@ -146,12 +179,23 @@ class _MyPhoneState extends State<MyPhone> {
                       if (formKey.currentState!.validate()) {
                         // Phone number is valid, extract it and navigate to MyVerify
                         String phoneNumber = phoneNumberController.text;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MyVerify(number: phoneNumber),
-                          ),
-                        );
+                        sendOTP(phoneNumber).then((value) => {
+                              if (value == "success")
+                                {
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(const SnackBar(
+                                    content: Text('OTP sent'),
+                                    backgroundColor: Colors.green,
+                                  )),
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          MyVerify(number: phoneNumber),
+                                    ),
+                                  )
+                                }
+                            });
                       }
                     },
                     child: const Text(
