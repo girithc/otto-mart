@@ -39,16 +39,18 @@
 		<string>gpay</string>
 	</array>
 	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLName</key>
-			<string>iOSIntentIntegration</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.otto-mart</string> <!-- Replace with your URL Scheme -->
-			</array>
-		</dict>
-	</array>
+<array>
+  <dict>
+    <key>CFBundleTypeRole</key>
+    <string>Editor</string>
+    <key>CFBundleURLName</key>
+    <string>com.otto.pronto</string>
+    <key>CFBundleURLSchemes</key>
+    <array>
+      <string>pronto</string>
+    </array>
+  </dict>
+</array>
 
 
 	<key>UILaunchStoryboardName</key>

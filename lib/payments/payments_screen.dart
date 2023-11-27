@@ -216,7 +216,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
           ListTile(
             title: const Text('Cash on Delivery'),
             leading: Radio(
-              value: 'Cash on Delivery',
+              value: 'Cash',
               groupValue: _selectedPayment,
               onChanged: (String? value) {
                 setState(() {
@@ -241,6 +241,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
           child: ElevatedButton(
             onPressed: () {
               String? cartId = cart.cartId;
+
               if (_selectedPayment == 'PhonePe' && cartId != null) {
                 int cartIdInt = int.parse(cartId);
                 initiatePhonePePayment(cartIdInt).then((url) {
@@ -253,13 +254,32 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     );
                   } else {}
                 });
-              } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PlaceOrder(),
-                  ),
-                );
+              } else if (_selectedPayment == 'Cash' && cartId != null) {
+                int cartIdInt = int.parse(cartId);
+                processPayment(cartIdInt).then((isPaid) {
+                  if (isPaid) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PlaceOrder(),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Payment failed'),
+                        backgroundColor: Colors.redAccent,
+                      ),
+                    );
+                  }
+                }).catchError((error) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $error'),
+                      backgroundColor: Colors.redAccent,
+                    ),
+                  );
+                });
               }
             },
             style: ElevatedButton.styleFrom(
