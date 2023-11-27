@@ -935,6 +935,56 @@ func (s *Server) handlePhonePe(res http.ResponseWriter, req *http.Request) error
 	return nil
 }
 
+func (s *Server) handleSendOtp(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "send-otp")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handleSendOtpMSG91(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	}
+
+	return nil
+}
+
+func (s *Server) handleVerifyOtp(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "verify-otp")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handleVerifyOtpMSG91(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	}
+
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }

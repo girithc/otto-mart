@@ -15,6 +15,36 @@ import (
 // Define your secret key for JWT
 var jwtKey = []byte("my_secret_key")
 
+func (s *Server) handleSendOtpMSG91(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.Create_Customer)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleSendOtpMSG91")
+		return err
+	}
+
+	result, err := s.store.SendOtpMSG91(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
+func (s *Server) handleVerifyOtpMSG91(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.MobileOtp)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleVerifyOtpMSG91")
+		return err
+	}
+
+	result, err := s.store.VerifyOtpMSG91(new_req.Phone, new_req.Otp)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
 func (s *Server) Handle_Customer_Login(res http.ResponseWriter, req *http.Request) error {
 	// Preprocessing
 

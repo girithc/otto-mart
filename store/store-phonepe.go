@@ -19,7 +19,7 @@ func (s *PostgresStore) PhonePePaymentInit() (*types.PhonePeResponse, error) {
 		MerchantTransactionId: "MT7850590068188104",
 		MerchantUserId:        "MUID123",
 		Amount:                10000,
-		RedirectUrl:           "com.otto-mart://",
+		RedirectUrl:           "https://youtube.com/redirect-url",
 		RedirectMode:          "REDIRECT",
 		CallbackUrl:           "https://webhook.site/callback-url",
 		MobileNumber:          "9999999999",

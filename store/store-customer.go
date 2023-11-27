@@ -2,7 +2,9 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 
 	"github.com/girithc/pronto-go/types"
@@ -26,6 +28,66 @@ func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
 	// fmt.Println("Exiting CreateCustomerTable")
 
 	return err
+}
+
+func (s *PostgresStore) SendOtpMSG91(phone int) (*types.SendOTPResponse, error) {
+	// Prepare the URL and headers
+	url := "https://control.msg91.com/api/v5/otp?template_id=6562ddc2d6fc0517bc535382&mobile=91" + fmt.Sprintf("%d", phone)
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("authkey", "405982AVwwWkcR036562d3eaP1")
+	req.Header.Set("content-type", "application/json")
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Decode the response
+	var response types.SendOTPResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (s *PostgresStore) VerifyOtpMSG91(phone int, otp int) (*types.VerifyOTPResponse, error) {
+	// Construct the URL with query parameters
+	url := fmt.Sprintf("https://control.msg91.com/api/v5/otp/verify?mobile=91%d&otp=%d", phone, otp)
+
+	// Create a new request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set headers
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("authkey", "405982AVwwWkcR036562d3eaP1")
+
+	// Initialize HTTP client and send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Parse the JSON response
+	var response types.VerifyOTPResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
 }
 
 // Combined Create_Customer and Create_Shopping_Cart
