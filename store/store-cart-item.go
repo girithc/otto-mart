@@ -12,18 +12,23 @@ import (
 func (s *PostgresStore) CreateCartItemTable(tx *sql.Tx) error {
 	fmt.Println("Entered CreateCartItemTable")
 
-	query := `create table if not exists cart_item (
-		id SERIAL PRIMARY KEY,
-		cart_id INT,
-		item_id INT REFERENCES item_store(id) ON DELETE CASCADE,
-		quantity INT NOT NULL 
-	)`
+	query := `
+    CREATE TABLE IF NOT EXISTS cart_item (
+        id SERIAL PRIMARY KEY,
+        cart_id INT,
+        item_id INT REFERENCES item_store(id) ON DELETE CASCADE,
+        quantity INT NOT NULL CHECK (quantity >= 0),
+        sold_price DECIMAL(10, 2) NOT NULL CHECK (sold_price >= 0),
+        discount_applied DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (discount_applied >= 0)
+    )`
 
 	_, err := tx.Exec(query)
+	if err != nil {
+		return fmt.Errorf("error creating cart_item table: %w", err)
+	}
 
-	// fmt.Println("Exiting CreateCartItemTable")
-
-	return err
+	fmt.Println("Exiting CreateCartItemTable")
+	return nil
 }
 
 func (s *PostgresStore) SetCartItemForeignKeys(tx *sql.Tx) error {

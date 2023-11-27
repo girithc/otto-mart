@@ -12,6 +12,76 @@ import (
 	"github.com/girithc/pronto-go/types"
 )
 
+func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentCallbackResult, error) {
+	// Decode the base64 encoded response
+	decoded, err := base64.StdEncoding.DecodeString(response)
+	if err != nil {
+		fmt.Printf("Error decoding base64 string: %v\n", err)
+		return nil, err
+	}
+
+	// Unmarshal the JSON into the PaymentResponse struct
+	var paymentResponse types.PaymentResponse
+	err = json.Unmarshal(decoded, &paymentResponse)
+	if err != nil {
+		fmt.Printf("Error unmarshalling JSON: %v\n", err)
+		return nil, err
+	}
+
+	// Temporary struct to extract the instrument type
+	type TempInstrumentType struct {
+		Type string `json:"type"`
+	}
+	var tempInstrument TempInstrumentType
+	err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &tempInstrument)
+	if err != nil {
+		fmt.Printf("Error unmarshalling instrument type: %v\n", err)
+		return nil, err
+	}
+	instrumentType := tempInstrument.Type
+	fmt.Printf("InstrumentType: %s\n", instrumentType)
+
+	result := &types.PaymentCallbackResult{
+		PaymentResponse: paymentResponse,
+	}
+
+	// Determine the type of payment instrument and unmarshal accordingly
+	switch instrumentType {
+	case "UPI":
+		var upi types.UPIPaymentInstrument
+		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &upi)
+		if err != nil {
+			fmt.Printf("Error unmarshalling UPI payment instrument: %v\n", err)
+			return nil, err
+		}
+		result.PaymentInstrument = upi
+	case "CARD": // Assuming "CARD"  is the type for credit/debit cards
+		var card types.CardPaymentInstrument
+		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &card)
+		if err != nil {
+			fmt.Printf("Error unmarshalling CARD payment instrument: %v\n", err)
+			return nil, err
+		}
+		result.PaymentInstrument = card
+	case "NETBANKING": // Assuming "NETBANKING" is the type for net banking
+		var netBanking types.NetBankingPaymentInstrument
+		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &netBanking)
+		if err != nil {
+			fmt.Printf("Error unmarshalling NETBANKING payment instrument: %v\n", err)
+			return nil, err
+		}
+		result.PaymentInstrument = netBanking
+	default:
+		return nil, fmt.Errorf("unknown payment instrument type: %s", instrumentType)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func (s *PostgresStore) PhonePePaymentInit() (*types.PhonePeResponse, error) {
 	// Hardcoded values for PhonePeInit
 	phonepe := &types.PhonePeInit{
@@ -21,7 +91,7 @@ func (s *PostgresStore) PhonePePaymentInit() (*types.PhonePeResponse, error) {
 		Amount:                10000,
 		RedirectUrl:           "https://youtube.com/redirect-url",
 		RedirectMode:          "REDIRECT",
-		CallbackUrl:           "https://webhook.site/callback-url",
+		CallbackUrl:           "https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback",
 		MobileNumber:          "9999999999",
 		PaymentInstrument:     types.PaymentInstrument{Type: "PAY_PAGE"},
 	}

@@ -9,15 +9,30 @@ import (
 )
 
 func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
-	query := `create table if not exists shopping_cart (
-		id SERIAL PRIMARY KEY,
-    	customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
-		order_id INT, 
-		store_id INT REFERENCES Store(id) ON DELETE CASCADE,
-		active BOOLEAN NOT NULL DEFAULT true,
-		address TEXT,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	)`
+	query := `
+        CREATE TABLE IF NOT EXISTS shopping_cart (
+            id SERIAL PRIMARY KEY,
+            customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
+            order_id INT, 
+            store_id INT REFERENCES Store(id) ON DELETE CASCADE,
+            active BOOLEAN NOT NULL DEFAULT true,
+			address_id INT REFERENCES Address(id) ON DELETE SET NULL,
+            item_cost DECIMAL(10, 2) DEFAULT 0,
+            delivery_fee DECIMAL(10, 2) DEFAULT 0,
+            platform_fee DECIMAL(10, 2) DEFAULT 0,
+            small_order_fee DECIMAL(10, 2) DEFAULT 0,
+            rain_fee DECIMAL(10, 2) DEFAULT 0,
+            high_traffic_surcharge DECIMAL(10, 2) DEFAULT 0,
+            packaging_fee DECIMAL(10, 2) DEFAULT 0,
+            peak_time_surcharge DECIMAL(10, 2) DEFAULT 0,
+            subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (
+                item_cost + delivery_fee + platform_fee + small_order_fee + 
+                rain_fee + high_traffic_surcharge + peak_time_surcharge + packaging_fee
+            ) STORED,
+            discounts DECIMAL(10, 2) DEFAULT 0,
+            total DECIMAL(10, 2) GENERATED ALWAYS AS (subtotal - discounts) STORED,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
 	_, err := tx.Exec(query)
 	return err
 }

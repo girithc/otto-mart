@@ -7,7 +7,6 @@ import (
 	"github.com/girithc/pronto-go/types"
 
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {

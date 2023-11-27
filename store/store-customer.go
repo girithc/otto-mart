@@ -13,20 +13,20 @@ import (
 )
 
 func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
-	// fmt.Println("Entered CreateCustomerTable")
-
-	query := `create table if not exists customer(
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL,
-		phone VARCHAR(10) UNIQUE NOT NULL, 
-		address TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	)`
+	query := `
+        CREATE TABLE IF NOT EXISTS customer(
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100) NOT NULL,
+            phone VARCHAR(10) UNIQUE NOT NULL, 
+            address TEXT NOT NULL,
+            merchant_user_id VARCHAR(36) UNIQUE NULL CHECK (
+                merchant_user_id IS NULL OR 
+                (CHAR_LENGTH(merchant_user_id) <= 36 AND merchant_user_id ~ '^[A-Za-z0-9_-]*$')
+            ),
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )`
 
 	_, err := tx.Exec(query)
-
-	// fmt.Println("Exiting CreateCustomerTable")
-
 	return err
 }
 
