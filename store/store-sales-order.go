@@ -12,7 +12,7 @@ import (
 func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 	// Define the ENUM type for payment_type
 	paymentTypeQuery := `DO $$ BEGIN
-        CREATE TYPE payment_method AS ENUM ('cash', 'credit card', 'debit card', 'upi');
+        CREATE TYPE payment_method AS ENUM ('cash', 'credit card', 'debit card', 'upi', 'net banking');
     EXCEPTION
         WHEN duplicate_object THEN null;
     END $$;`
@@ -41,7 +41,12 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
         store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
         customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
-        address_id INT REFERENCES Address(id) ON DELETE CASCADE NOT NULL,
+		merchant_user_id VARCHAR(36) REFERENCES Customer(merchant_user_id) ON DELETE CASCADE,
+		merchant_transaction_id VARCHAR(35) NOT NULL CHECK (
+			CHAR_LENGTH(merchant_transaction_id) <= 35 AND 
+			merchant_transaction_id ~ '^[A-Za-z0-9_-]*$'
+		),
+		address_id INT REFERENCES Address(id) ON DELETE CASCADE NOT NULL,
         paid BOOLEAN NOT NULL DEFAULT false,
         payment_type payment_method DEFAULT 'cash',
         order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -83,6 +83,7 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 
 	// Store the cancel function
 	s.cancelFuncs[cart_id] = cancel
+	s.lockExtended[cart_id] = false
 
 	// Launch a goroutine to await the context's completion or timeout
 	go func() {
@@ -91,15 +92,18 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 			// Timeout exceeded, reset quantities
 			fmt.Println("Payment was not made in time. Resetting quantities...")
 			s.ResetLockedQuantities(cart_id)
-			delete(s.cancelFuncs, cart_id)
-
-		} else if _, exists := s.cancelFuncs[cart_id]; exists {
-			// Payment was attempted but was unsuccessful
-			fmt.Println("Payment In Process")
-			// delete(s.cancelFuncs, cart_id)
+		} else if extended, exists := s.lockExtended[cart_id]; exists {
+			if extended {
+				// Lock duration was extended
+				fmt.Println("Lock duration extended. Awaiting further action.")
+			} else {
+				// Lock duration was not extended, but context was cancelled
+				fmt.Println("Checkout process cancelled without extending lock duration.")
+				s.ResetLockedQuantities(cart_id)
+			}
 		} else {
-			// Unkown Error
-			fmt.Println("Unknown Error")
+			// No entry in s.lockExtended for cart_id, indicating an unknown error
+			fmt.Println("Unknown Error: Checkout-Cancel-Maybe")
 			s.ResetLockedQuantities(cart_id)
 		}
 	}()

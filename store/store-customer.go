@@ -23,6 +23,7 @@ func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
                 merchant_user_id IS NULL OR 
                 (CHAR_LENGTH(merchant_user_id) <= 36 AND merchant_user_id ~ '^[A-Za-z0-9_-]*$')
             ),
+			
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
 

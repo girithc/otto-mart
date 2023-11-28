@@ -13,9 +13,9 @@ import (
 )
 
 type PostgresStore struct {
-	db            *sql.DB
-	cancelFuncs   map[int]context.CancelFunc
-	paymentStatus map[int]bool
+	db           *sql.DB
+	cancelFuncs  map[int]context.CancelFunc
+	lockExtended map[int]bool
 }
 
 func NewPostgresStore() (*PostgresStore, func() error) {
@@ -33,9 +33,9 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			log.Fatalf("(local) Error on sql.Open: %v", err)
 		}
 		return &PostgresStore{
-			db:            db,
-			cancelFuncs:   make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
-			paymentStatus: make(map[int]bool),               // Initialize the paymentStatus map
+			db:           db,
+			cancelFuncs:  make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
+			lockExtended: make(map[int]bool),               // Initialize the paymentStatus map
 		}, nil
 
 	} else {
@@ -63,9 +63,9 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			}
 		*/
 		return &PostgresStore{
-			db:            db,
-			cancelFuncs:   make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
-			paymentStatus: make(map[int]bool),               // Initialize the paymentStatus map
+			db:           db,
+			cancelFuncs:  make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
+			lockExtended: make(map[int]bool),               // Initialize the paymentStatus map
 		}, cleanup
 
 	}

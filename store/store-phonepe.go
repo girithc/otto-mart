@@ -2,12 +2,14 @@ package store
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -147,6 +149,54 @@ func (s *PostgresStore) PhonePePaymentInit() (*types.PhonePeResponse, error) {
 	}
 
 	return &response, nil
+}
+
+func (s *PostgresStore) InitiatePayment(cart_id int) error {
+	// Cancel the existing context if it exists
+	if cancel, exists := s.cancelFuncs[cart_id]; exists {
+		s.lockExtended[cart_id] = true
+		cancel()
+		delete(s.cancelFuncs, cart_id)
+	} else {
+		// If no context exists, it might indicate an issue, handle it as needed
+		return fmt.Errorf("no active context for cart this might indicate a problem")
+	}
+
+	// Set a new timeout duration for the payment process
+	timeoutDuration := 9 * time.Minute
+	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
+
+	// Store the new cancel function
+	s.cancelFuncs[cart_id] = cancel
+
+	// Launch a new goroutine for the new context
+	go func() {
+		<-ctx.Done()
+		if ctx.Err() == context.DeadlineExceeded {
+			// Timeout exceeded, reset quantities
+			fmt.Println("Payment was not completed in time. Resetting quantities...")
+			s.ResetLockedQuantities(cart_id)
+
+			// Clean up
+			delete(s.cancelFuncs, cart_id)
+			delete(s.lockExtended, cart_id)
+
+			// Payment completed. S2S call completed.
+		} else if _, exists := s.lockExtended[cart_id]; exists {
+			fmt.Print("S2S Callback received.")
+
+			delete(s.cancelFuncs, cart_id)
+			delete(s.lockExtended, cart_id)
+		} else {
+			// Payment process has either moved forward or an error occurred
+			fmt.Println("Payment process in progress or encountered an error")
+			delete(s.cancelFuncs, cart_id)
+			delete(s.lockExtended, cart_id)
+		}
+		// Clean up the cancel function
+	}()
+
+	return nil
 }
 
 func (s *PostgresStore) CalculateCartTotal(cartId int) (int64, error) {
