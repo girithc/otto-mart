@@ -41,11 +41,7 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
         store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
         customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
-		merchant_user_id VARCHAR(36) REFERENCES Customer(merchant_user_id) ON DELETE CASCADE,
-		merchant_transaction_id VARCHAR(35) NOT NULL CHECK (
-			CHAR_LENGTH(merchant_transaction_id) <= 35 AND 
-			merchant_transaction_id ~ '^[A-Za-z0-9_-]*$'
-		),
+		transaction_id INT REFERENCES Transaction(id) ON DELETE CASCADE,
 		address_id INT REFERENCES Address(id) ON DELETE CASCADE NOT NULL,
         paid BOOLEAN NOT NULL DEFAULT false,
         payment_type payment_method DEFAULT 'cash',

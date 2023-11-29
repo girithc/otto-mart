@@ -6,6 +6,23 @@ type Cart_Item struct {
 	ItemId   int `json:"item_id"`
 	Quantity int `json:"quantity"`
 }
+type Cart_Item_Cart struct {
+	ID                   int     `json:"id"`
+	CartId               int     `json:"cart_id"`
+	ItemId               int     `json:"item_id"`
+	Quantity             int     `json:"quantity"`
+	ItemCost             float64 `json:"item_cost"`
+	DeliveryFee          float64 `json:"delivery_fee"`
+	PlatformFee          float64 `json:"platform_fee"`
+	SmallOrderFee        float64 `json:"small_order_fee"`
+	RainFee              float64 `json:"rain_fee"`
+	HighTrafficSurcharge float64 `json:"high_traffic_surcharge"`
+	PackagingFee         float64 `json:"packaging_fee"`
+	PeakTimeSurcharge    float64 `json:"peak_time_surcharge"`
+	Subtotal             float64 `json:"subtotal"`
+	Discounts            float64 `json:"discounts"`
+	Total                float64 `json:"total"`
+}
 
 type Create_Cart_Item struct {
 	CartId   int `json:"cart_id"`

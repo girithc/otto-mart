@@ -2,6 +2,10 @@ package types
 
 import "encoding/json"
 
+type PhonePeCartId struct {
+	CartId int `json:"cart_id"`
+}
+
 type PhonePeInit struct {
 	MerchantId            string            `json:"merchantId"`
 	MerchantTransactionId string            `json:"merchantTransactionId"`

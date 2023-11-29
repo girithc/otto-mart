@@ -78,6 +78,11 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 		return false, err
 	}
 
+	err = s.CreateTransaction(cart_id)
+	if err != nil {
+		return false, err
+	}
+
 	// Start a timer
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute) // Set your desired timeout duration
 
@@ -92,19 +97,32 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 			// Timeout exceeded, reset quantities
 			fmt.Println("Payment was not made in time. Resetting quantities...")
 			s.ResetLockedQuantities(cart_id)
+			delete(s.cancelFuncs, cart_id)
+			delete(s.lockExtended, cart_id)
 		} else if extended, exists := s.lockExtended[cart_id]; exists {
 			if extended {
 				// Lock duration was extended
 				fmt.Println("Lock duration extended. Awaiting further action.")
+			} else if paid, prepay := s.paymentStatus[cart_id]; prepay {
+				if paid {
+					fmt.Println("Cash On Delivery Checkout")
+					delete(s.paymentStatus, cart_id)
+					delete(s.cancelFuncs, cart_id)
+					delete(s.lockExtended, cart_id)
+				}
 			} else {
 				// Lock duration was not extended, but context was cancelled
 				fmt.Println("Checkout process cancelled without extending lock duration.")
 				s.ResetLockedQuantities(cart_id)
+				delete(s.cancelFuncs, cart_id)
+				delete(s.lockExtended, cart_id)
 			}
 		} else {
 			// No entry in s.lockExtended for cart_id, indicating an unknown error
 			fmt.Println("Unknown Error: Checkout-Cancel-Maybe")
 			s.ResetLockedQuantities(cart_id)
+			delete(s.cancelFuncs, cart_id)
+			delete(s.lockExtended, cart_id)
 		}
 	}()
 
@@ -114,226 +132,360 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 }
 
 func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
+	var credit bool
 	if cancel, exists := s.cancelFuncs[cart_id]; exists {
+		if _, prepay := s.cancelFuncs[cart_id]; prepay {
+			credit = true
+		}
+		s.paymentStatus[cart_id] = true
 		cancel()
 	} else {
 		// Timeout Try Locking Quantities again
-		isLocked, err := s.LockStock(cart_id)
-		if err != nil {
-			return false, fmt.Errorf("error locking quantities for cart id %d", cart_id)
+		// isLocked, err := s.LockStock(cart_id)
+		return false, fmt.Errorf("timeout no active timer found for cart id %d", cart_id)
+	}
+
+	fmt.Println("Payment is successful!")
+
+	var storeID sql.NullInt64
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, err
+	}
+
+	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
+	rows, err := tx.Query(query, cart_id)
+	if err != nil {
+		return true, err
+	}
+	defer rows.Close()
+
+	var cartItems []*types.Checkout_Cart_Item
+	for rows.Next() {
+		checkout_cart_item := &types.Checkout_Cart_Item{}
+		if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
+			return true, err
 		}
-		if !isLocked {
-			return false, fmt.Errorf("no active timer found for cart id %d", cart_id)
+		cartItems = append(cartItems, checkout_cart_item)
+	}
+	if err = rows.Err(); err != nil {
+		return true, err
+	}
+
+	// Existing query to fetch customer_id, store_id, and address from shopping_cart
+	var customerID sql.NullInt64
+	err = tx.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
+	if err != nil {
+		return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
+	}
+
+	// Check if customerID is valid
+	if !customerID.Valid {
+		// Handle the case where customerID is NULL or invalid
+		return true, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
+	}
+
+	// New query to get the default address ID for the customer
+	var defaultAddressID int
+	err = tx.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
+	if err != nil {
+		// Handle the error, for example, no default address found or query failed
+		return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
+	}
+
+	// Continue with your logic, now having defaultAddressID
+
+	var paymentType string
+	if credit {
+		paymentType = "credit card"
+	} else {
+		paymentType = "cash"
+	}
+	_, err = tx.Exec(`
+		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type)
+		VALUES ($1, $2, $3, $4, $5)
+	`, cart_id, 1, customerID, defaultAddressID, paymentType)
+	if err != nil {
+		return true, fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
+	}
+
+	for _, checkout_cart_item := range cartItems {
+		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
+
+		res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+		if err != nil {
+			return true, err
+		}
+
+		affectedRows, err := res.RowsAffected()
+		if err != nil {
+			return true, err
+		}
+
+		if affectedRows == 0 {
+			return true, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
 		}
 	}
 
-	print("Checkpoint Paystock")
-
-	timeoutDuration := 2 * time.Minute
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration) // Set your desired timeout duration
-
-	// Store the cancel function
-	s.cancelFuncs[cart_id] = cancel
-
-	defer func() {
-		if cancel, exists := s.cancelFuncs[cart_id]; exists {
-			cancel()
-			delete(s.cancelFuncs, cart_id)
-		}
-	}()
-
-	doneChan := make(chan bool)
-	var isPaymentSuccessful bool
-	var err error
-
-	go func() {
-		isPaymentSuccessful, err = s.processPayment(cart_id)
-		doneChan <- true
-	}()
-
-	select {
-	case <-doneChan:
-		if err != nil {
-			s.ResetLockedQuantities(cart_id)
-			if cancel, exists := s.cancelFuncs[cart_id]; exists {
-				cancel()
-				delete(s.cancelFuncs, cart_id)
-			}
-
-			return false, fmt.Errorf("error checking payment status for cart %d: %s", cart_id, err)
-		}
-
-		if isPaymentSuccessful {
-
-			fmt.Println("Payment was successful!")
-			if cancel, exists := s.cancelFuncs[cart_id]; exists {
-				cancel()
-				delete(s.cancelFuncs, cart_id)
-			}
-
-			var storeID sql.NullInt64
-
-			tx, err := s.db.Begin()
-			if err != nil {
-				return false, err
-			}
-
-			query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
-			rows, err := tx.Query(query, cart_id)
-			if err != nil {
-				return true, err
-			}
-			defer rows.Close()
-
-			var cartItems []*types.Checkout_Cart_Item
-			for rows.Next() {
-				checkout_cart_item := &types.Checkout_Cart_Item{}
-				if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
-					return true, err
-				}
-				cartItems = append(cartItems, checkout_cart_item)
-			}
-			if err = rows.Err(); err != nil {
-				return true, err
-			}
-
-			// Existing query to fetch customer_id, store_id, and address from shopping_cart
-			var customerID sql.NullInt64
-			err = tx.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
-			if err != nil {
-				return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
-			}
-
-			// Check if customerID is valid
-			if !customerID.Valid {
-				// Handle the case where customerID is NULL or invalid
-				return true, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
-			}
-
-			// New query to get the default address ID for the customer
-			var defaultAddressID int
-			err = tx.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
-			if err != nil {
-				// Handle the error, for example, no default address found or query failed
-				return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
-			}
-
-			// Continue with your logic, now having defaultAddressID
-
-			_, err = tx.Exec(`
-                INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id)
-                VALUES ($1, $2, $3, $4)
-            `, cart_id, 1, customerID, defaultAddressID)
-			if err != nil {
-				return true, fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
-			}
-
-			for _, checkout_cart_item := range cartItems {
-				fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
-
-				res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
-				if err != nil {
-					return true, err
-				}
-
-				affectedRows, err := res.RowsAffected()
-				if err != nil {
-					return true, err
-				}
-
-				if affectedRows == 0 {
-					return true, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
-				}
-			}
-
-			_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
-			if err != nil {
-				return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
-			}
-
-			err = tx.Commit()
-			if err != nil {
-				return true, err
-			}
-
-			query = `insert into shopping_cart
-					(customer_id, active) 
-					values ($1, $2) returning id, customer_id, active, created_at
-					`
-			_, err = s.db.Query(
-				query,
-				customerID,
-				true,
-			)
-			if err != nil {
-				return true, err
-			}
-
-			deliveryPartnerID, err := s.getNextDeliveryPartner()
-			if err != nil {
-				return true, fmt.Errorf("error fetching next available delivery partner: %s", err)
-			}
-
-			_, err = s.db.Exec(`
-				UPDATE sales_order 
-				SET delivery_partner_id = $1 
-				WHERE cart_id = $2
-			`, deliveryPartnerID, cart_id)
-			if err != nil {
-				return true, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
-			}
-
-			// Update the delivery partner's last_assigned_time or set their availability to false
-			_, err = s.db.Exec(`
-				UPDATE delivery_partner 
-				SET last_assigned_time = NOW()
-				WHERE id = $1
-			`, deliveryPartnerID)
-			if err != nil {
-				return true, fmt.Errorf("error updating delivery partner details: %s", err)
-			}
-
-			// If all operations are successful, commit the transaction
-			return true, nil
-
-		} else {
-			fmt.Println("Payment was not successful!")
-			err := s.ResetLockedQuantities(cart_id)
-			if cancel, exists := s.cancelFuncs[cart_id]; exists {
-				cancel()
-				delete(s.cancelFuncs, cart_id)
-			}
-			if err != nil {
-				return false, fmt.Errorf("error resetting quantities")
-			}
-			return false, nil
-		}
-	case <-ctx.Done():
-		if ctx.Err() == context.DeadlineExceeded {
-			// Timeout exceeded, reset quantities
-			fmt.Println("Payment was not made in time. Resetting quantities...")
-			err := s.ResetLockedQuantities(cart_id)
-			delete(s.cancelFuncs, cart_id)
-			if err != nil {
-				return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
-			}
-		} else {
-			fmt.Println("Timeout. Unknown Error")
-
-			delete(s.cancelFuncs, cart_id)
-			err := s.ResetLockedQuantities(cart_id)
-			if err != nil {
-				return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
-			}
-		}
+	_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
+	if err != nil {
+		return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
 	}
+
+	err = tx.Commit()
+	if err != nil {
+		return true, err
+	}
+
+	query = `insert into shopping_cart
+			(customer_id, active) 
+			values ($1, $2) returning id, customer_id, active, created_at
+			`
+	_, err = s.db.Query(
+		query,
+		customerID,
+		true,
+	)
+	if err != nil {
+		return true, err
+	}
+
+	deliveryPartnerID, err := s.getNextDeliveryPartner()
+	if err != nil {
+		return true, fmt.Errorf("error fetching next available delivery partner: %s", err)
+	}
+
+	_, err = s.db.Exec(`
+		UPDATE sales_order 
+		SET delivery_partner_id = $1 
+		WHERE cart_id = $2
+	`, deliveryPartnerID, cart_id)
+	if err != nil {
+		return true, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
+	}
+
+	// Update the delivery partner's last_assigned_time or set their availability to false
+	_, err = s.db.Exec(`
+		UPDATE delivery_partner 
+		SET last_assigned_time = NOW()
+		WHERE id = $1
+	`, deliveryPartnerID)
+	if err != nil {
+		return true, fmt.Errorf("error updating delivery partner details: %s", err)
+	}
+
+	// If all operations are successful, commit the transaction
 	return true, nil
+	/*
+			timeoutDuration := 2 * time.Minute
+			ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration) // Set your desired timeout duration
+
+			// Store the cancel function
+			s.cancelFuncs[cart_id] = cancel
+
+			defer func() {
+				if cancel, exists := s.cancelFuncs[cart_id]; exists {
+					cancel()
+					delete(s.cancelFuncs, cart_id)
+				}
+			}()
+
+			doneChan := make(chan bool)
+			var isPaymentSuccessful bool
+			var err error
+
+			go func() {
+				isPaymentSuccessful, err = s.processPayment(cart_id)
+				doneChan <- true
+			}()
+
+			select {
+			case <-doneChan:
+				if err != nil {
+					s.ResetLockedQuantities(cart_id)
+					if cancel, exists := s.cancelFuncs[cart_id]; exists {
+						cancel()
+						delete(s.cancelFuncs, cart_id)
+					}
+
+					return false, fmt.Errorf("error checking payment status for cart %d: %s", cart_id, err)
+				}
+
+				if isPaymentSuccessful {
+
+					fmt.Println("Payment was successful!")
+					if cancel, exists := s.cancelFuncs[cart_id]; exists {
+						cancel()
+						delete(s.cancelFuncs, cart_id)
+					}
+
+					var storeID sql.NullInt64
+
+					tx, err := s.db.Begin()
+					if err != nil {
+						return false, err
+					}
+
+					query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
+					rows, err := tx.Query(query, cart_id)
+					if err != nil {
+						return true, err
+					}
+					defer rows.Close()
+
+					var cartItems []*types.Checkout_Cart_Item
+					for rows.Next() {
+						checkout_cart_item := &types.Checkout_Cart_Item{}
+						if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
+							return true, err
+						}
+						cartItems = append(cartItems, checkout_cart_item)
+					}
+					if err = rows.Err(); err != nil {
+						return true, err
+					}
+
+					// Existing query to fetch customer_id, store_id, and address from shopping_cart
+					var customerID sql.NullInt64
+					err = tx.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
+					if err != nil {
+						return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
+					}
+
+					// Check if customerID is valid
+					if !customerID.Valid {
+						// Handle the case where customerID is NULL or invalid
+						return true, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
+					}
+
+					// New query to get the default address ID for the customer
+					var defaultAddressID int
+					err = tx.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
+					if err != nil {
+						// Handle the error, for example, no default address found or query failed
+						return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
+					}
+
+					// Continue with your logic, now having defaultAddressID
+
+					_, err = tx.Exec(`
+		                INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id)
+		                VALUES ($1, $2, $3, $4)
+		            `, cart_id, 1, customerID, defaultAddressID)
+					if err != nil {
+						return true, fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
+					}
+
+					for _, checkout_cart_item := range cartItems {
+						fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
+
+						res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+						if err != nil {
+							return true, err
+						}
+
+						affectedRows, err := res.RowsAffected()
+						if err != nil {
+							return true, err
+						}
+
+						if affectedRows == 0 {
+							return true, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
+						}
+					}
+
+					_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
+					if err != nil {
+						return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
+					}
+
+					err = tx.Commit()
+					if err != nil {
+						return true, err
+					}
+
+					query = `insert into shopping_cart
+							(customer_id, active)
+							values ($1, $2) returning id, customer_id, active, created_at
+							`
+					_, err = s.db.Query(
+						query,
+						customerID,
+						true,
+					)
+					if err != nil {
+						return true, err
+					}
+
+					deliveryPartnerID, err := s.getNextDeliveryPartner()
+					if err != nil {
+						return true, fmt.Errorf("error fetching next available delivery partner: %s", err)
+					}
+
+					_, err = s.db.Exec(`
+						UPDATE sales_order
+						SET delivery_partner_id = $1
+						WHERE cart_id = $2
+					`, deliveryPartnerID, cart_id)
+					if err != nil {
+						return true, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
+					}
+
+					// Update the delivery partner's last_assigned_time or set their availability to false
+					_, err = s.db.Exec(`
+						UPDATE delivery_partner
+						SET last_assigned_time = NOW()
+						WHERE id = $1
+					`, deliveryPartnerID)
+					if err != nil {
+						return true, fmt.Errorf("error updating delivery partner details: %s", err)
+					}
+
+					// If all operations are successful, commit the transaction
+					return true, nil
+
+				} else {
+					fmt.Println("Payment was not successful!")
+					err := s.ResetLockedQuantities(cart_id)
+					if cancel, exists := s.cancelFuncs[cart_id]; exists {
+						cancel()
+						delete(s.cancelFuncs, cart_id)
+					}
+					if err != nil {
+						return false, fmt.Errorf("error resetting quantities")
+					}
+					return false, nil
+				}
+			case <-ctx.Done():
+				if ctx.Err() == context.DeadlineExceeded {
+					// Timeout exceeded, reset quantities
+					fmt.Println("Payment was not made in time. Resetting quantities...")
+					err := s.ResetLockedQuantities(cart_id)
+					delete(s.cancelFuncs, cart_id)
+					if err != nil {
+						return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
+					}
+				} else {
+					fmt.Println("Timeout. Unknown Error")
+
+					delete(s.cancelFuncs, cart_id)
+					err := s.ResetLockedQuantities(cart_id)
+					if err != nil {
+						return false, fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
+					}
+				}
+			}
+	*/
+	//return true, nil
 }
 
+/*
 func (s *PostgresStore) processPayment(cart_id int) (bool, error) {
 	time.Sleep(1 * time.Second)
 	return true, nil
 }
+*/
 
 func (s *PostgresStore) ResetLockedQuantities(cart_id int) error {
 	_, err := s.db.Exec(`WITH quantities AS (
@@ -344,6 +496,20 @@ func (s *PostgresStore) ResetLockedQuantities(cart_id int) error {
     UPDATE item_store 
     SET stock_quantity = stock_quantity + quantities.quantity, 
         locked_quantity = locked_quantity - quantities.quantity
+    FROM quantities 
+    WHERE item_store.id = quantities.item_id;
+    `, cart_id)
+	return err
+}
+
+func (s *PostgresStore) MakeQuantitiesPermanent(cart_id int) error {
+	_, err := s.db.Exec(`WITH quantities AS (
+        SELECT item_id, quantity 
+        FROM cart_item 
+        WHERE cart_id = $1
+    )
+    UPDATE item_store 
+    SET locked_quantity = locked_quantity - quantities.quantity
     FROM quantities 
     WHERE item_store.id = quantities.item_id;
     `, cart_id)

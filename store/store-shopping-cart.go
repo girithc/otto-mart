@@ -64,6 +64,73 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 	return shopping_carts[0], nil
 }
 
+func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
+	var itemCost, discounts, deliveryFee, smallOrderFee, platformFee, packagingFee float64
+
+	// Calculate total item cost and discounts from cart_item and item_store
+	query := `
+    SELECT SUM(ci.sold_price * ci.quantity), SUM((istore.mrp_price - ci.sold_price) * ci.quantity)
+    FROM cart_item ci
+    JOIN item_store istore ON ci.item_id = is.id
+    WHERE ci.cart_id = $1`
+	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &discounts)
+	if err != nil {
+		return err
+	}
+
+	// Calculate delivery fee based on item cost
+	switch {
+	case itemCost <= 99:
+		deliveryFee = 29
+	case itemCost <= 199:
+		deliveryFee = 19
+	case itemCost <= 299:
+		deliveryFee = 9
+	default:
+		deliveryFee = 0
+	}
+
+	// Calculate small order fee based on item cost
+	switch {
+	case itemCost <= 99:
+		smallOrderFee = 29
+	case itemCost <= 199:
+		smallOrderFee = 19
+	case itemCost <= 299:
+		smallOrderFee = 9
+	default:
+		smallOrderFee = 0
+	}
+
+	switch {
+	case itemCost > 999:
+		platformFee = 9
+	case itemCost > 299:
+		platformFee = 5
+	default:
+		platformFee = 3
+	}
+
+	// Calculate packaging fee based on item cost
+	switch {
+	case itemCost > 999:
+		packagingFee = 9
+	case itemCost > 399:
+		packagingFee = 5
+	default:
+		packagingFee = 2
+	}
+
+	// Update shopping_cart record
+	updateQuery := `
+    UPDATE shopping_cart
+    SET item_cost = $2, delivery_fee = $3, platform_fee = $4, small_order_fee = $5, 
+        packaging_fee = $6, discounts = $7
+    WHERE id = $1`
+	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, platformFee, smallOrderFee, packagingFee, discounts)
+	return err
+}
+
 func (s *PostgresStore) Get_All_Active_Shopping_Carts() ([]*types.Shopping_Cart, error) {
 	rows, err := s.db.Query("select * from shopping_cart where active = $1", true)
 	if err != nil {

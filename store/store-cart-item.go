@@ -145,7 +145,7 @@ func (s *PostgresStore) Update_Cart_Item_Quantity(cart_id int, item_id int, quan
 	return cart_items[0], nil
 }
 
-func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*types.Cart_Item, error) {
+func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*types.Cart_Item_Cart, error) {
 	// Begin a new transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -185,7 +185,7 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 	var currentQuantity int
 	err = tx.QueryRow("SELECT quantity FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, itemStoreId).Scan(&currentQuantity)
 
-	cartItem := &types.Cart_Item{}
+	cartItem := &types.Cart_Item_Cart{}
 	if err == sql.ErrNoRows {
 		// Check if quantity is less than or equal to 1
 		if quantity < 1 {
@@ -220,6 +220,26 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	err = s.CalculateCartTotal(cart_id)
+	if err != nil {
+		fmt.Print("Error in CalculateCartTotal() inside Add-Cart-Item()")
+	}
+
+	// Query the updated shopping cart
+	cartQuery := `
+SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, 
+       high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal, 
+       discounts, total
+FROM shopping_cart
+WHERE id = $1`
+	err = s.db.QueryRow(cartQuery, cart_id).Scan(&cartItem.ItemCost, &cartItem.DeliveryFee, &cartItem.PlatformFee,
+		&cartItem.SmallOrderFee, &cartItem.RainFee, &cartItem.HighTrafficSurcharge,
+		&cartItem.PackagingFee, &cartItem.PeakTimeSurcharge, &cartItem.Subtotal,
+		&cartItem.Discounts, &cartItem.Total)
+	if err != nil {
 		return nil, err
 	}
 

@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/girithc/pronto-go/types"
+	"github.com/google/uuid"
 
 	_ "github.com/lib/pq"
 )
@@ -29,6 +30,45 @@ func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
 
 	_, err := tx.Exec(query)
 	return err
+}
+
+func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
+	// Check if merchant_user_id already exists
+	var merchantUserId string
+	checkQuery := `SELECT merchant_user_id FROM customer 
+                   INNER JOIN shopping_cart ON customer.id = shopping_cart.customer_id 
+                   WHERE shopping_cart.id = $1`
+	err := s.db.QueryRow(checkQuery, cart_id).Scan(&merchantUserId)
+
+	if err == sql.ErrNoRows {
+		// cart_id not found, handle accordingly
+		return false, err
+	}
+
+	if err != nil {
+		// An error occurred during query execution
+		return false, err
+	}
+
+	if merchantUserId != "" {
+		// Merchant User ID already exists
+		return true, nil
+	}
+
+	// Generate a new UUID for merchant_user_id
+	newMerchantUserId := uuid.New().String()
+
+	// Update the customer record with the new merchant_user_id
+	updateQuery := `UPDATE customer SET merchant_user_id = $1 
+                    FROM shopping_cart 
+                    WHERE customer.id = shopping_cart.customer_id 
+                    AND shopping_cart.id = $2`
+	_, updateErr := s.db.Exec(updateQuery, newMerchantUserId, cart_id)
+	if updateErr != nil {
+		return false, updateErr
+	}
+
+	return true, nil
 }
 
 func (s *PostgresStore) SendOtpMSG91(phone int) (*types.SendOTPResponse, error) {

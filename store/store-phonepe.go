@@ -84,7 +84,11 @@ func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentC
 	return result, nil
 }
 
-func (s *PostgresStore) PhonePePaymentInit() (*types.PhonePeResponse, error) {
+func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
+	return nil
+}
+
+func (s *PostgresStore) PhonePePaymentInit(cart_id int) (*types.PhonePeResponse, error) {
 	// Hardcoded values for PhonePeInit
 	phonepe := &types.PhonePeInit{
 		MerchantId:            "PGTESTPAYUAT",
@@ -148,6 +152,15 @@ func (s *PostgresStore) PhonePePaymentInit() (*types.PhonePeResponse, error) {
 		return nil, err
 	}
 
+	// successful in initiating PhonePe Payment
+	// generated response url
+
+	// reset timer
+	err = s.InitiatePayment(cart_id)
+	if err != nil {
+		return nil, err
+	}
+
 	return &response, nil
 }
 
@@ -168,6 +181,7 @@ func (s *PostgresStore) InitiatePayment(cart_id int) error {
 
 	// Store the new cancel function
 	s.cancelFuncs[cart_id] = cancel
+	s.paymentStatus[cart_id] = false
 
 	// Launch a new goroutine for the new context
 	go func() {
@@ -180,39 +194,35 @@ func (s *PostgresStore) InitiatePayment(cart_id int) error {
 			// Clean up
 			delete(s.cancelFuncs, cart_id)
 			delete(s.lockExtended, cart_id)
+			delete(s.paymentStatus, cart_id)
 
-			// Payment completed. S2S call completed.
-		} else if _, exists := s.lockExtended[cart_id]; exists {
-			fmt.Print("S2S Callback received.")
+			// Context Cancelled. Payment completed. S2S call completed.
+		} else if paymentMade, exists := s.paymentStatus[cart_id]; exists {
 
+			if paymentMade {
+				fmt.Print("S2S Callback received.")
+				// s.MakeQuantitiesPermanent(cart_id)
+			} else {
+				fmt.Print("Payment not made. Or. Payment was not successful.")
+				s.ResetLockedQuantities(cart_id)
+			}
+
+			// Clean up
 			delete(s.cancelFuncs, cart_id)
 			delete(s.lockExtended, cart_id)
+			delete(s.paymentStatus, cart_id)
 		} else {
 			// Payment process has either moved forward or an error occurred
-			fmt.Println("Payment process in progress or encountered an error")
+			fmt.Println("Cancelled-PhonePe-Checkout")
+			s.ResetLockedQuantities(cart_id)
+
 			delete(s.cancelFuncs, cart_id)
 			delete(s.lockExtended, cart_id)
+			delete(s.paymentStatus, cart_id)
+
 		}
 		// Clean up the cancel function
 	}()
 
 	return nil
-}
-
-func (s *PostgresStore) CalculateCartTotal(cartId int) (int64, error) {
-	// SQL query to calculate the total amount
-	query := `
-	SELECT SUM(i.store_price * c.quantity) as total
-	FROM cart_item c
-	JOIN item_store i ON c.item_id = i.id
-	WHERE c.cart_id = $1
-	`
-
-	var total int64
-	err := s.db.QueryRow(query, cartId).Scan(&total)
-	if err != nil {
-		return 0, err
-	}
-
-	return total, nil
 }
