@@ -148,19 +148,33 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 	phoneNumberStr := strconv.Itoa(user.Phone)
 
 	// Create the customer
-	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at`
+	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at, merchant_user_id`
 	row := tx.QueryRow(query, "", phoneNumberStr, "")
 
 	customer := &types.Customer_With_Cart{}
-	err = row.Scan(&customer.ID, &customer.Name, &customer.Phone, &customer.Address, &customer.Created_At)
-	if err != nil {
-		return nil, err
+	var merchantUserID sql.NullString
+
+	err = row.Scan(
+		&customer.ID,
+		&customer.Name,
+		&customer.Phone,
+		&customer.Address,
+		&customer.Created_At,
+		&merchantUserID,
+	)
+
+	fmt.Println("II Row Scan Successful")
+
+	if merchantUserID.Valid {
+		customer.MerchantUserID = merchantUserID.String
+	} else {
+		customer.MerchantUserID = "" // or keep as a default value if needed
 	}
 
 	// Create the shopping cart
-	query = `INSERT INTO shopping_cart (customer_id, active) VALUES ($1, $2) RETURNING id`
+	query = `INSERT INTO shopping_cart (customer_id, active, store_id) VALUES ($1, $2, $3) RETURNING id, store_id`
 	var cartId int
-	err = tx.QueryRow(query, customer.ID, true).Scan(&cartId)
+	err = tx.QueryRow(query, customer.ID, true, 1).Scan(&customer.Cart_Id, &customer.Store_Id)
 	if err != nil {
 		return nil, err
 	}
@@ -213,17 +227,26 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_C
 	var customer types.Customer_With_Cart
 	var storeID sql.NullInt64 // using NullInt64 for store_id
 
+	var merchantUserID sql.NullString
+
 	err := row.Scan(
 		&customer.ID,
 		&customer.Name,
 		&customer.Phone,
 		&customer.Address,
+		&merchantUserID,
 		&customer.Created_At,
 		&customer.Cart_Id,
 		&storeID,
 	)
 
 	fmt.Println("II Row Scan Successful")
+
+	if merchantUserID.Valid {
+		customer.MerchantUserID = merchantUserID.String
+	} else {
+		customer.MerchantUserID = "" // or keep as a default value if needed
+	}
 
 	if storeID.Valid {
 		customer.Store_Id = int(storeID.Int64) // If not null, assign to customer.Store_Id
@@ -239,16 +262,25 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_C
 	return &customer, nil
 }
 
-// Helper
 func scan_Into_Customer(rows *sql.Rows) (*types.Customer, error) {
 	customer := new(types.Customer)
+	var merchantUserID sql.NullString // Use sql.NullString to handle NULL values
+
 	err := rows.Scan(
 		&customer.ID,
 		&customer.Name,
 		&customer.Phone,
 		&customer.Address,
+		&merchantUserID, // Scan into sql.NullString
 		&customer.Created_At,
 	)
+
+	// Check if merchantUserID is valid, then assign its String value to customer.MerchantUserID
+	if merchantUserID.Valid {
+		customer.MerchantUserID = merchantUserID.String
+	} else {
+		customer.MerchantUserID = "" // or keep as a default value if needed
+	}
 
 	return customer, err
 }

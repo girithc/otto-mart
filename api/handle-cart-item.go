@@ -17,17 +17,22 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 		return err
 	}
 
-	_, err := s.store.Add_Cart_Item(new_req.CartId, new_req.ItemId, new_req.Quantity)
+	cart, err := s.store.Add_Cart_Item(new_req.CartId, new_req.ItemId, new_req.Quantity)
 	if err != nil {
 		return err
 	}
 
-	cart_item_list, err := s.store.Get_Items_List_From_Cart_Items_By_Cart_Id(new_req.CartId)
+	cartItemList, err := s.store.Get_Items_List_From_Cart_Items_By_Cart_Id(new_req.CartId)
 	if err != nil {
 		return err
 	}
 
-	return WriteJSON(res, http.StatusOK, cart_item_list)
+	cartResponse := types.CartItemResponse{
+		CartDetails:   cart,
+		CartItemsList: cartItemList,
+	}
+
+	return WriteJSON(res, http.StatusOK, cartResponse)
 }
 
 func (s *Server) Handle_Delete_Cart_item(res http.ResponseWriter, req *http.Request) error {

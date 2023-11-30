@@ -18,8 +18,8 @@ func (s *PostgresStore) CreateCartItemTable(tx *sql.Tx) error {
         cart_id INT,
         item_id INT REFERENCES item_store(id) ON DELETE CASCADE,
         quantity INT NOT NULL CHECK (quantity >= 0),
-        sold_price DECIMAL(10, 2) NOT NULL CHECK (sold_price >= 0),
-        discount_applied DECIMAL(10, 2) NOT NULL DEFAULT 0 CHECK (discount_applied >= 0)
+        sold_price INT NOT NULL CHECK (sold_price >= 0),
+        discount_applied INT NOT NULL DEFAULT 0 CHECK (discount_applied >= 0)
     )`
 
 	_, err := tx.Exec(query)
@@ -31,7 +31,7 @@ func (s *PostgresStore) CreateCartItemTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) SetCartItemForeignKeys(tx *sql.Tx) error {
+func (s *PostgresStore) SetCartItemForeignKey(tx *sql.Tx) error {
 	// Add foreign key constraint to the already created table
 	query := `
 	DO $$
@@ -177,7 +177,8 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 	// Check if item is already in the cart
 
 	var itemStoreId int
-	err = tx.QueryRow("SELECT id FROM item_store WHERE item_id=$1 AND store_id=1", item_id).Scan(&itemStoreId)
+	var itemStorePrice int
+	err = tx.QueryRow("SELECT id, store_price FROM item_store WHERE item_id=$1 AND store_id=1", item_id).Scan(&itemStoreId, &itemStorePrice)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +194,7 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 			return nil, fmt.Errorf("quantity must be at least 1")
 		}
 
-		err = tx.QueryRow("INSERT INTO cart_item (cart_id, item_id, quantity) VALUES ($1, $2, $3) RETURNING id, cart_id, item_id, quantity", cart_id, itemStoreId, quantity).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
+		err = tx.QueryRow("INSERT INTO cart_item (cart_id, item_id, quantity, sold_price) VALUES ($1, $2, $3, $4) RETURNING id, cart_id, item_id, quantity", cart_id, itemStoreId, quantity, itemStorePrice).Scan(&cartItem.CartItemID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
 	} else if err == nil {
 		newTotalQuantity := currentQuantity + quantity
 		if newTotalQuantity > stockQuantity {
@@ -206,7 +207,7 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 		} else if newTotalQuantity == 0 {
 			_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cart_id, itemStoreId)
 		} else {
-			err = tx.QueryRow("UPDATE cart_item SET quantity=quantity+$1 WHERE cart_id=$2 AND item_id=$3 RETURNING id, cart_id, item_id, quantity", quantity, cart_id, itemStoreId).Scan(&cartItem.ID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
+			err = tx.QueryRow("UPDATE cart_item SET quantity=quantity+$1 WHERE cart_id=$2 AND item_id=$3 RETURNING id, cart_id, item_id, quantity", quantity, cart_id, itemStoreId).Scan(&cartItem.CartItemID, &cartItem.CartId, &cartItem.ItemId, &cartItem.Quantity)
 		}
 	} else {
 		tx.Rollback()
@@ -225,20 +226,21 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 
 	err = s.CalculateCartTotal(cart_id)
 	if err != nil {
-		fmt.Print("Error in CalculateCartTotal() inside Add-Cart-Item()")
+		fmt.Print("Error in CalculateCartTotal() inside Add-Cart-Item()", err)
 	}
 
 	// Query the updated shopping cart
 	cartQuery := `
 SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, 
        high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal, 
-       discounts, total
+       discounts
 FROM shopping_cart
 WHERE id = $1`
+
 	err = s.db.QueryRow(cartQuery, cart_id).Scan(&cartItem.ItemCost, &cartItem.DeliveryFee, &cartItem.PlatformFee,
 		&cartItem.SmallOrderFee, &cartItem.RainFee, &cartItem.HighTrafficSurcharge,
 		&cartItem.PackagingFee, &cartItem.PeakTimeSurcharge, &cartItem.Subtotal,
-		&cartItem.Discounts, &cartItem.Total)
+		&cartItem.Discounts)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +277,8 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
             istore.mrp_price::numeric::float8, 
             ii.image_url,  -- Assumes that we are getting image from item_image table
             istore.stock_quantity, 
-            ci.quantity
+            ci.quantity, 
+			ci.sold_price
         FROM cart_item ci
 		JOIN item_store istore ON ci.item_id = istore.id
         JOIN item i ON istore.item_id = i.id
@@ -290,7 +293,7 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
 	cart_items := []*types.Cart_Item_Item_List{}
 	for rows.Next() {
 		cart_item := &types.Cart_Item_Item_List{}
-		if err := rows.Scan(&cart_item.Id, &cart_item.Name, &cart_item.Price, &cart_item.Image, &cart_item.Stock_Quantity, &cart_item.Quantity); err != nil {
+		if err := rows.Scan(&cart_item.Id, &cart_item.Name, &cart_item.Price, &cart_item.Image, &cart_item.Stock_Quantity, &cart_item.Quantity, &cart_item.SoldPrice); err != nil {
 			return nil, err
 		}
 		cart_items = append(cart_items, cart_item)
@@ -299,7 +302,7 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
 	return cart_items, nil
 }
 
-func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_id int) ([]*types.Cart_Item_Item_List, error) {
+func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_id int) (*types.CartItemResponse, error) {
 	print("Entered Get_Items_List_From_Active_Cart_By_Customer_Id")
 	query := `
         WITH item_images AS (
@@ -309,7 +312,7 @@ func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_
         )
 
         SELECT 
-            i.id, i.name, istore.mrp_price::numeric::float8, ii.main_image, istore.stock_quantity, ci.quantity
+            i.id, i.name, istore.mrp_price::numeric::float8, ii.main_image, istore.stock_quantity, ci.quantity, ci.sold_price
         FROM shopping_cart sc
         JOIN cart_item ci ON ci.cart_id = sc.id
 		JOIN item_store istore ON ci.item_id = istore.id
@@ -338,7 +341,39 @@ func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_
 		return nil, err
 	}
 
-	return cart_items, nil
+	cartItem := &types.Cart_Item_Cart{}
+
+	// First, fetch the active shopping cart ID for the customer
+	var cartID int
+	cartIDQuery := "SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = TRUE"
+	err = s.db.QueryRow(cartIDQuery, customer_id).Scan(&cartID)
+	if err != nil {
+		// Handle the error, e.g., if no active cart is found
+		return nil, err
+	}
+
+	// Query the updated shopping cart
+	cartQuery := `
+SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, 
+       high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal, 
+       discounts
+FROM shopping_cart
+WHERE id = $1`
+
+	err = s.db.QueryRow(cartQuery, cartID).Scan(&cartItem.ItemCost, &cartItem.DeliveryFee, &cartItem.PlatformFee,
+		&cartItem.SmallOrderFee, &cartItem.RainFee, &cartItem.HighTrafficSurcharge,
+		&cartItem.PackagingFee, &cartItem.PeakTimeSurcharge, &cartItem.Subtotal,
+		&cartItem.Discounts)
+	if err != nil {
+		return nil, err
+	}
+
+	cartResponse := types.CartItemResponse{
+		CartItemsList: cart_items,
+		CartDetails:   cartItem,
+	}
+
+	return &cartResponse, nil
 }
 
 func scan_Into_Cart_Item(rows *sql.Rows) (*types.Cart_Item, error) {
@@ -362,6 +397,7 @@ func scan_Into_Cart_Item_Item_List(rows *sql.Rows) (*types.Cart_Item_Item_List, 
 		&cart_item_item_list.Image,
 		&cart_item_item_list.Stock_Quantity,
 		&cart_item_item_list.Quantity,
+		&cart_item_item_list.SoldPrice,
 	)
 
 	return cart_item_item_list, err

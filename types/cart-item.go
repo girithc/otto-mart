@@ -7,21 +7,25 @@ type Cart_Item struct {
 	Quantity int `json:"quantity"`
 }
 type Cart_Item_Cart struct {
-	ID                   int     `json:"id"`
-	CartId               int     `json:"cart_id"`
-	ItemId               int     `json:"item_id"`
-	Quantity             int     `json:"quantity"`
-	ItemCost             float64 `json:"item_cost"`
-	DeliveryFee          float64 `json:"delivery_fee"`
-	PlatformFee          float64 `json:"platform_fee"`
-	SmallOrderFee        float64 `json:"small_order_fee"`
-	RainFee              float64 `json:"rain_fee"`
-	HighTrafficSurcharge float64 `json:"high_traffic_surcharge"`
-	PackagingFee         float64 `json:"packaging_fee"`
-	PeakTimeSurcharge    float64 `json:"peak_time_surcharge"`
-	Subtotal             float64 `json:"subtotal"`
-	Discounts            float64 `json:"discounts"`
-	Total                float64 `json:"total"`
+	CartItemID           int `json:"cart_item_id"`
+	CartId               int `json:"cart_id"`
+	ItemId               int `json:"item_id"`
+	Quantity             int `json:"quantity"`
+	ItemCost             int `json:"item_cost"`
+	DeliveryFee          int `json:"delivery_fee"`
+	PlatformFee          int `json:"platform_fee"`
+	SmallOrderFee        int `json:"small_order_fee"`
+	RainFee              int `json:"rain_fee"`
+	HighTrafficSurcharge int `json:"high_traffic_surcharge"`
+	PackagingFee         int `json:"packaging_fee"`
+	PeakTimeSurcharge    int `json:"peak_time_surcharge"`
+	Subtotal             int `json:"subtotal"`
+	Discounts            int `json:"discounts"`
+}
+
+type CartItemResponse struct {
+	CartDetails   *Cart_Item_Cart        `json:"cart_details"`
+	CartItemsList []*Cart_Item_Item_List `json:"cart_items_list"`
 }
 
 type Create_Cart_Item struct {
@@ -44,6 +48,7 @@ type Cart_Item_Item_List struct {
 	Id             int    `json:"id"`
 	Name           string `json:"name"`
 	Price          int    `json:"price"`
+	SoldPrice      int    `json:"sold_price"`
 	Quantity       int    `json:"quantity"`
 	Image          string `json:"image"`
 	Stock_Quantity int    `json:"stock_quantity"`

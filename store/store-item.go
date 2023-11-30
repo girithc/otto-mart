@@ -88,9 +88,9 @@ func (s *PostgresStore) CreateItemStoreTable(tx *sql.Tx) error {
         CREATE TABLE IF NOT EXISTS item_store (
             id SERIAL PRIMARY KEY,
             item_id INT REFERENCES item(id) ON DELETE CASCADE,
-            mrp_price DECIMAL(10, 2) NOT NULL,
-            store_price DECIMAL(10, 2) NOT NULL,
-            discount DECIMAL(10, 2) NOT NULL,
+            mrp_price INT NOT NULL,
+            store_price INT NOT NULL,
+            discount INT NOT NULL,
             store_id INT REFERENCES store(id) ON DELETE CASCADE,
             stock_quantity INT NOT NULL,
             locked_quantity INT DEFAULT 0,

@@ -14,12 +14,66 @@ import (
 // Store
 
 func (s *Server) handleCustomer(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
 	if req.Method == "POST" {
-		fmt.Println("Login Initiated")
-		return s.Handle_Customer_Login(res, req)
+		print_path("POST", "customer")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.HandleVerifyCustomerLogin(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
 	} else if req.Method == "GET" {
-		print_path("[GET]", "customer")
-		return s.Handle_Get_Customers(res, req)
+		print_path("POST", "login-customer")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.HandleGetCustomers(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	}
+	return nil
+}
+
+func (s *Server) handleLoginCustomer(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "login-customer")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.HandleCustomerLogin(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
 	}
 	return nil
 }
@@ -48,26 +102,14 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
 			return err
 		}
 
-		// Check if the desired field exists in the request body
-		if cartId, cartOk := requestBody["cart_id"].(float64); cartOk {
-			// Field exists, you can take further action
-			cartID := int(cartId) // Convert to int if it's a valid integer
-			fmt.Printf("Field 'cart_id' found with value (numeric): %d\n", cartID)
-			// Redirect or perform other actions based on the field's value
-			if itemId, itemOk := requestBody["item_id"].(float64); itemOk {
-				// Field exists, you can take further action
-				itemID := int(itemId) // Convert to int if it's a valid integer
-				fmt.Printf("Field 'item_id' found with value (numeric): %d\n", itemID)
-				// Redirect or perform other actions based on the field's value
-
-				// Create a new reader from the decoded data
+		if _, cartOk := requestBody["cart_id"].(float64); cartOk {
+			if _, itemOk := requestBody["item_id"].(float64); itemOk {
 				requestBodyBytes, _ := json.Marshal(requestBody)
 				requestBodyReader := bytes.NewReader(requestBodyBytes)
 
-				// Pass the new reader to Handle_Add_Cart_Item
 				return s.Handle_Add_Cart_Item(res, req, requestBodyReader)
 			} else if itemList, itemListOk := requestBody["items"].(bool); itemListOk {
-				// Create a new reader from the decoded data
+
 				requestBodyBytes, _ := json.Marshal(requestBody)
 				requestBodyReader := bytes.NewReader(requestBodyBytes)
 
@@ -78,9 +120,7 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
 				}
 
 			}
-		} else if customerId_float, customerOk := requestBody["customer_id"].(float64); customerOk {
-			customerId_int := int(customerId_float) // Convert to int if it's a valid integer
-			fmt.Printf("Field 'cart_id' found with value (numeric): %d\n", customerId_int)
+		} else if _, customerOk := requestBody["customer_id"].(float64); customerOk {
 
 			// Create a new reader from the decoded data
 			requestBodyBytes, _ := json.Marshal(requestBody)

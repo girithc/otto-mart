@@ -41,7 +41,7 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
         store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
         customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
-		transaction_id INT REFERENCES Transaction(id) ON DELETE CASCADE,
+		transaction_id INT,
 		address_id INT REFERENCES Address(id) ON DELETE CASCADE NOT NULL,
         paid BOOLEAN NOT NULL DEFAULT false,
         payment_type payment_method DEFAULT 'cash',
@@ -50,6 +50,28 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
     )`
 
 	_, err = tx.Exec(query)
+	return err
+}
+
+func (s *PostgresStore) SetSalesOrderForeignKey(tx *sql.Tx) error {
+	// Add foreign key constraint to the already created table
+	query := `
+	DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT constraint_name 
+			FROM information_schema.table_constraints 
+			WHERE table_name = 'sales_order' AND constraint_name = 'sales_order_transaction_id_fkey'
+		) THEN
+			ALTER TABLE sales_order 
+			ADD CONSTRAINT sales_order_transaction_id_fkey 
+			FOREIGN KEY (transaction_id) REFERENCES Transaction(id) ON DELETE CASCADE;
+		END IF;
+	END
+	$$;
+	`
+
+	_, err := tx.Exec(query)
 	return err
 }
 

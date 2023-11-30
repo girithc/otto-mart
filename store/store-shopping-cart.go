@@ -9,30 +9,55 @@ import (
 )
 
 func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
-	query := `
+	// Create the shopping_cart table
+	createTableQuery := `
         CREATE TABLE IF NOT EXISTS shopping_cart (
             id SERIAL PRIMARY KEY,
             customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
             order_id INT, 
             store_id INT REFERENCES Store(id) ON DELETE CASCADE,
             active BOOLEAN NOT NULL DEFAULT true,
-			address_id INT REFERENCES Address(id) ON DELETE SET NULL,
-            item_cost DECIMAL(10, 2) DEFAULT 0,
-            delivery_fee DECIMAL(10, 2) DEFAULT 0,
-            platform_fee DECIMAL(10, 2) DEFAULT 0,
-            small_order_fee DECIMAL(10, 2) DEFAULT 0,
-            rain_fee DECIMAL(10, 2) DEFAULT 0,
-            high_traffic_surcharge DECIMAL(10, 2) DEFAULT 0,
-            packaging_fee DECIMAL(10, 2) DEFAULT 0,
-            peak_time_surcharge DECIMAL(10, 2) DEFAULT 0,
-            subtotal DECIMAL(10, 2) GENERATED ALWAYS AS (
+            address_id INT REFERENCES Address(id) ON DELETE SET NULL,
+            item_cost INT DEFAULT 0,
+            delivery_fee INT DEFAULT 0,
+            platform_fee INT DEFAULT 0,
+            small_order_fee INT DEFAULT 0,
+            rain_fee INT DEFAULT 0,
+            high_traffic_surcharge INT DEFAULT 0,
+            packaging_fee INT DEFAULT 0,
+            peak_time_surcharge INT DEFAULT 0,
+            subtotal INT GENERATED ALWAYS AS (
                 item_cost + delivery_fee + platform_fee + small_order_fee + 
                 rain_fee + high_traffic_surcharge + peak_time_surcharge + packaging_fee
             ) STORED,
-            discounts DECIMAL(10, 2) DEFAULT 0,
-            total DECIMAL(10, 2) GENERATED ALWAYS AS (subtotal - discounts) STORED,
+            discounts INT DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
+
+	_, err := tx.Exec(createTableQuery)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) SetShoppingCartForeignKey(tx *sql.Tx) error {
+	// Add foreign key constraint to the already created table
+	query := `
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT constraint_name 
+            FROM information_schema.table_constraints 
+            WHERE table_name = 'shopping_cart' AND constraint_name = 'shopping_cart_order_id_fkey'
+        ) THEN
+            ALTER TABLE shopping_cart ADD CONSTRAINT shopping_cart_order_id_fkey FOREIGN KEY (order_id) REFERENCES sales_order(id) ON DELETE CASCADE;
+        END IF;
+    END
+    $$;
+    `
+
 	_, err := tx.Exec(query)
 	return err
 }
@@ -65,13 +90,15 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 }
 
 func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
-	var itemCost, discounts, deliveryFee, smallOrderFee, platformFee, packagingFee float64
+	var itemCost, discounts, deliveryFee, smallOrderFee, platformFee, packagingFee int
 
 	// Calculate total item cost and discounts from cart_item and item_store
 	query := `
-    SELECT SUM(ci.sold_price * ci.quantity), SUM((istore.mrp_price - ci.sold_price) * ci.quantity)
+    SELECT 
+        COALESCE(SUM(ci.sold_price * ci.quantity), 0), 
+        COALESCE(SUM((istore.mrp_price - ci.sold_price) * ci.quantity), 0)
     FROM cart_item ci
-    JOIN item_store istore ON ci.item_id = is.id
+    JOIN item_store istore ON ci.item_id = istore.id
     WHERE ci.cart_id = $1`
 	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &discounts)
 	if err != nil {
@@ -81,22 +108,22 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	// Calculate delivery fee based on item cost
 	switch {
 	case itemCost <= 99:
+		deliveryFee = 39
+	case itemCost <= 249:
 		deliveryFee = 29
-	case itemCost <= 199:
+	case itemCost <= 399:
 		deliveryFee = 19
-	case itemCost <= 299:
-		deliveryFee = 9
 	default:
-		deliveryFee = 0
+		deliveryFee = 9
 	}
 
 	// Calculate small order fee based on item cost
 	switch {
 	case itemCost <= 99:
 		smallOrderFee = 29
-	case itemCost <= 199:
+	case itemCost <= 249:
 		smallOrderFee = 19
-	case itemCost <= 299:
+	case itemCost <= 399:
 		smallOrderFee = 9
 	default:
 		smallOrderFee = 0
@@ -105,7 +132,7 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	switch {
 	case itemCost > 999:
 		platformFee = 9
-	case itemCost > 299:
+	case itemCost > 399:
 		platformFee = 5
 	default:
 		platformFee = 3

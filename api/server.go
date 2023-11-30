@@ -39,6 +39,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/search-item", makeHTTPHandleFunc(s.handleSearchItem))
 
 	http.HandleFunc("/customer", makeHTTPHandleFunc(s.handleCustomer))
+	http.HandleFunc("/login-customer", makeHTTPHandleFunc(s.handleLoginCustomer))
 	http.HandleFunc("/shopping-cart", makeHTTPHandleFunc(s.handleShoppingCart))
 	http.HandleFunc("/cart-item", makeHTTPHandleFunc(s.handleCartItem))
 

@@ -170,14 +170,24 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Shopping Cart Table")
 
-	if err := s.SetCartItemForeignKeys(tx); err != nil {
-		return err
-	}
-
 	if err := s.CreateSalesOrderTable(tx); err != nil {
 		return err
 	}
 	fmt.Println("Success - Created Sales Order Table")
+
+	if err := s.CreateTransactionTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Transaction Table")
+
+	if err := s.SetCartItemForeignKey(tx); err != nil {
+		return err
+	}
+
+	if err := s.SetSalesOrderForeignKey(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Cart Item Foreign Key")
 
 	constraintQuery := `
     DO $$
@@ -195,6 +205,5 @@ func (s *PostgresStore) Init() error {
 	if _, err := tx.Exec(constraintQuery); err != nil {
 		return fmt.Errorf("failed to add constraint to shopping_cart: %w", err)
 	}
-
 	return nil
 }

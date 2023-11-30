@@ -45,13 +45,13 @@ func (s *Server) handleVerifyOtpMSG91(res http.ResponseWriter, req *http.Request
 	return WriteJSON(res, http.StatusOK, result)
 }
 
-func (s *Server) Handle_Customer_Login(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request) error {
 	// Preprocessing
 
 	new_req := new(types.Create_Customer)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error in Decoding req.body in Handle_User_Login()")
+		fmt.Println("Error in Decoding req.body in HandleCustomerLogin()")
 		return err
 	}
 
@@ -116,7 +116,31 @@ func (s *Server) Handle_Customer_Login(res http.ResponseWriter, req *http.Reques
 	}
 }
 
-func (s *Server) Handle_Get_Customers(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) HandleVerifyCustomerLogin(res http.ResponseWriter, req *http.Request) error {
+	// Preprocessing
+
+	new_req := new(types.Create_Customer)
+
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in HandleVerifyCustomerLogin()")
+		return err
+	}
+
+	// Check if User Exists
+	user, err := s.store.Get_Customer_By_Phone(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	// User Does Not Exist
+	if user == nil {
+		return WriteJSON(res, http.StatusNotFound, "")
+	} else { // User Exists
+		return WriteJSON(res, http.StatusOK, user)
+	}
+}
+
+func (s *Server) HandleGetCustomers(res http.ResponseWriter, req *http.Request) error {
 	customers, err := s.store.Get_All_Customers()
 	if err != nil {
 		return err
