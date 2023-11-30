@@ -57,12 +57,16 @@ class _MyHomePageState extends State<MyHomePage>
   String phone = "0";
   String cartId = "0";
   String streetAddress = "";
+  int addressId = 0;
   int? selectedAddressIndex;
   final Logger _logger = Logger();
   final storage = const FlutterSecureStorage();
+
+  bool isLoading = true;
   @override
   void initState() {
     super.initState();
+    _checkAddressAndLoginStatus();
     fetchCategories();
     fetchPromotions();
     retrieveCustomerInfo();
@@ -84,16 +88,18 @@ class _MyHomePageState extends State<MyHomePage>
     String? storedCartId =
         await storage.read(key: 'cartId'); // Get cartId from secure storage
 
-    //CartModel cartModel = CartModel(storedCustomerId!);
-    //Address? deliveryAddress = cartModel.deliveryAddress;
+    CartModel cartModel = CartModel(storedCustomerId!);
+    Address? deliveryAddress = cartModel.deliveryAddress;
 
     setState(() {
-      customerId = storedCustomerId!;
+      customerId = storedCustomerId;
       phone = storedPhone ?? "0";
       cartId = storedCartId ?? "0"; // Set the cartId
-
+      //addressId = deliveryAddress.id;
       isLoggedIn = customerId.isNotEmpty && customerId != "0";
     });
+
+    //print("AddressId: $addressId");
   }
 
   Future<void> fetchCategories() async {
@@ -244,375 +250,399 @@ class _MyHomePageState extends State<MyHomePage>
     setState(() {}); // Trigger a rebuild if your widget is stateful
   }
 
+  Future<void> _checkAddressAndLoginStatus() async {
+    // Your HTTP request logic here
+    var headers = {
+      'Content-Type': 'application/json',
+      'Cookie': 'token=your_token'
+    };
+    var request = http.Request('POST', Uri.parse('$baseUrl/address'));
+    String? storedCustomerId = await storage.read(key: 'customerId');
+
+    request.body = json.encode(
+        {"customer_id": int.parse(storedCustomerId!), "is_default": true});
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      print(await response.stream.bytesToString());
+      setState(() {
+        isLoading = false;
+        print("Address Fetched");
+        showDialogVisible = false;
+      });
+    } else {
+      setState(() {
+        isLoading = false;
+        showDialogVisible = true;
+      });
+      print(response.reasonPhrase);
+    }
+
+    // Update the state to indicate loading is complete
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
     //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
-    //print("Customer Id: $customerId");
-    if (cart.deliveryAddress.id < 0) {
-      // Set showDialogVisible to false when streetAddress is populated
-      showDialogVisible = true;
-    } else {
-      showDialogVisible = false;
-    }
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: const HomeScreenAppBar(),
-      body: RefreshIndicator(
-        key: _refreshIndicatorKey,
-        onRefresh: _onRefresh,
-        child: CustomScrollView(
-          // <-- Using CustomScrollView
-          slivers: <Widget>[
-            SliverToBoxAdapter(
-              child: Consumer<CartModel>(
-                builder: (context, cart, child) {
-                  //print("Address : ${cart.deliveryAddress.streetAddress}");
-                  if (cart.deliveryAddress.id < 0) {
-                    // Set showDialogVisible to false when streetAddress is populated
-                    showDialogVisible = true;
-                  }
-                  if (showDialogVisible) {
-                    // Show the dialog only when showDialogVisible is true
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      if (_isMounted) {
-                        // Check if state is still mounted
-                        _showMyDialog(context);
-                      }
-                    });
-                  }
-                  return Column(
-                    children: [
-                      // Your other body content
-                      Container(
-                        padding: const EdgeInsets.all(2),
-                        height: 60,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 15, // Flex 3 for the address
-                              child: GestureDetector(
-                                onTap: () {
-                                  // Reset selectedAddressIndex before opening the bottom sheet
-                                  selectedAddressIndex = null;
+      body: isLoading
+          ? const CircularProgressIndicator()
+          : RefreshIndicator(
+              key: _refreshIndicatorKey,
+              onRefresh: _onRefresh,
+              child: CustomScrollView(
+                // <-- Using CustomScrollView
+                slivers: <Widget>[
+                  SliverToBoxAdapter(
+                    child: Consumer<CartModel>(
+                      builder: (context, cart, child) {
+                        //print("Address : ${cart.deliveryAddress.streetAddress}");
+                        //print("Cart (in scaffold) : ${cart.deliveryAddress}");
 
-                                  getAllAddresses().then((_) {
-                                    // When getAllAddresses completes execution
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isDismissible: true,
-                                      builder: (BuildContext context) {
-                                        return StatefulBuilder(
-                                          builder: (BuildContext context,
-                                              StateSetter modalSetState) {
-                                            return Container(
-                                              padding: const EdgeInsets.all(10),
-                                              height: MediaQuery.of(context)
-                                                      .size
-                                                      .height *
-                                                  0.65,
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.95,
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.start,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.center,
-                                                children: [
-                                                  const Text(
-                                                    "Change Address",
-                                                    style:
-                                                        TextStyle(fontSize: 24),
-                                                  ),
-                                                  const Divider(),
-                                                  Expanded(
-                                                    child: isLoadingGetAddress
-                                                        ? ListView.builder(
-                                                            itemCount:
-                                                                5, // Display 5 skeleton items for example
-                                                            itemBuilder:
-                                                                (BuildContext
-                                                                        context,
-                                                                    int index) {
-                                                              return Padding(
-                                                                padding: const EdgeInsets
-                                                                    .symmetric(
-                                                                    vertical:
-                                                                        10.0,
-                                                                    horizontal:
-                                                                        15.0),
-                                                                child:
-                                                                    Container(
-                                                                  height:
-                                                                      20.0, // Height of the skeleton item
-                                                                  width: double
-                                                                      .infinity,
-                                                                  color: Colors
-                                                                          .grey[
-                                                                      300], // Light grey color for the skeleton
+                        if (showDialogVisible) {
+                          // Show the dialog only when showDialogVisible is true
+                          WidgetsBinding.instance.addPostFrameCallback((_) {
+                            if (_isMounted) {
+                              // Check if state is still mounted
+                              _showMyDialog(context);
+                            }
+                          });
+                        }
+                        return Column(
+                          children: [
+                            // Your other body content
+                            Container(
+                              padding: const EdgeInsets.all(2),
+                              height: 60,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 15, // Flex 3 for the address
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        // Reset selectedAddressIndex before opening the bottom sheet
+                                        selectedAddressIndex = null;
+
+                                        getAllAddresses().then((_) {
+                                          // When getAllAddresses completes execution
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isDismissible: true,
+                                            builder: (BuildContext context) {
+                                              return StatefulBuilder(
+                                                builder: (BuildContext context,
+                                                    StateSetter modalSetState) {
+                                                  return Container(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                            10),
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            0.65,
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.95,
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .start,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        const Text(
+                                                          "Change Address",
+                                                          style: TextStyle(
+                                                              fontSize: 24),
+                                                        ),
+                                                        const Divider(),
+                                                        Expanded(
+                                                          child:
+                                                              isLoadingGetAddress
+                                                                  ? ListView
+                                                                      .builder(
+                                                                      itemCount:
+                                                                          5, // Display 5 skeleton items for example
+                                                                      itemBuilder:
+                                                                          (BuildContext context,
+                                                                              int index) {
+                                                                        return Padding(
+                                                                          padding: const EdgeInsets
+                                                                              .symmetric(
+                                                                              vertical: 10.0,
+                                                                              horizontal: 15.0),
+                                                                          child:
+                                                                              Container(
+                                                                            height:
+                                                                                20.0, // Height of the skeleton item
+                                                                            width:
+                                                                                double.infinity,
+                                                                            color:
+                                                                                Colors.grey[300], // Light grey color for the skeleton
+                                                                          ),
+                                                                        );
+                                                                      },
+                                                                    )
+                                                                  : ListView
+                                                                      .builder(
+                                                                      itemCount:
+                                                                          addresses.length +
+                                                                              2, // Two more than the addresses for the 'add' option and the current address
+                                                                      itemBuilder:
+                                                                          (BuildContext context,
+                                                                              int index) {
+                                                                        if (index ==
+                                                                            0) {
+                                                                          return ListTile(
+                                                                            // <-- You missed the return here
+                                                                            leading:
+                                                                                const Icon(Icons.add), // An add icon
+                                                                            title:
+                                                                                const Text("Add New Address"),
+                                                                            onTap:
+                                                                                () {
+                                                                              Navigator.of(context).pushReplacement(MaterialPageRoute(
+                                                                                builder: (context) => const AddressScreen(),
+                                                                              ));
+                                                                            },
+                                                                          );
+                                                                        } else if (index ==
+                                                                            1) {
+                                                                          // Display the current address
+                                                                          return ListTile(
+                                                                            leading:
+                                                                                const Text("Current"),
+                                                                            title:
+                                                                                Text(
+                                                                              cart.deliveryAddress.streetAddress,
+                                                                              style: const TextStyle(color: Colors.black),
+                                                                            ),
+                                                                          );
+                                                                        } else {
+                                                                          return RadioListTile<
+                                                                              int>(
+                                                                            value:
+                                                                                index - 2,
+                                                                            groupValue:
+                                                                                selectedAddressIndex,
+                                                                            onChanged:
+                                                                                (int? value) {
+                                                                              modalSetState(() {
+                                                                                selectedAddressIndex = value;
+                                                                              });
+                                                                            },
+                                                                            title:
+                                                                                Text(addresses[index - 2].streetAddress),
+                                                                          );
+                                                                        }
+                                                                      },
+                                                                    ),
+                                                        ),
+                                                        ElevatedButton(
+                                                          onPressed: () async {
+                                                            try {
+                                                              String
+                                                                  snackBarMessage;
+                                                              if (selectedAddressIndex !=
+                                                                      null &&
+                                                                  selectedAddressIndex! <
+                                                                      addresses
+                                                                          .length) {
+                                                                setDefaultAddress(
+                                                                        addresses[selectedAddressIndex!]
+                                                                            .id)
+                                                                    .then(
+                                                                        (address) =>
+                                                                            {
+                                                                              if (address != null)
+                                                                                {
+                                                                                  cart.deliveryAddress = address
+                                                                                }
+                                                                            });
+                                                                snackBarMessage =
+                                                                    'Default address set to: ${addresses[selectedAddressIndex!].streetAddress}';
+                                                              } else {
+                                                                snackBarMessage =
+                                                                    'No address selected';
+                                                              }
+
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                SnackBar(
+                                                                  content: Text(
+                                                                      snackBarMessage),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .green,
                                                                 ),
                                                               );
-                                                            },
-                                                          )
-                                                        : ListView.builder(
-                                                            itemCount: addresses
-                                                                    .length +
-                                                                2, // Two more than the addresses for the 'add' option and the current address
-                                                            itemBuilder:
-                                                                (BuildContext
-                                                                        context,
-                                                                    int index) {
-                                                              if (index == 0) {
-                                                                return ListTile(
-                                                                  // <-- You missed the return here
-                                                                  leading:
-                                                                      const Icon(
-                                                                          Icons
-                                                                              .add), // An add icon
-                                                                  title: const Text(
-                                                                      "Add New Address"),
-                                                                  onTap: () {
-                                                                    Navigator.of(
-                                                                            context)
-                                                                        .pushReplacement(
-                                                                            MaterialPageRoute(
-                                                                      builder:
-                                                                          (context) =>
-                                                                              const AddressScreen(),
-                                                                    ));
-                                                                  },
-                                                                );
-                                                              } else if (index ==
-                                                                  1) {
-                                                                // Display the current address
-                                                                return ListTile(
-                                                                  leading:
-                                                                      const Text(
-                                                                          "Current"),
-                                                                  title: Text(
-                                                                    cart.deliveryAddress
-                                                                        .streetAddress,
-                                                                    style: const TextStyle(
-                                                                        color: Colors
-                                                                            .black),
-                                                                  ),
-                                                                );
-                                                              } else {
-                                                                return RadioListTile<
-                                                                    int>(
-                                                                  value:
-                                                                      index - 2,
-                                                                  groupValue:
-                                                                      selectedAddressIndex,
-                                                                  onChanged: (int?
-                                                                      value) {
-                                                                    modalSetState(
-                                                                        () {
-                                                                      selectedAddressIndex =
-                                                                          value;
-                                                                    });
-                                                                  },
-                                                                  title: Text(addresses[
-                                                                          index -
-                                                                              2]
-                                                                      .streetAddress),
-                                                                );
-                                                              }
-                                                            },
-                                                          ),
-                                                  ),
-                                                  ElevatedButton(
-                                                    onPressed: () async {
-                                                      try {
-                                                        String snackBarMessage;
-                                                        if (selectedAddressIndex !=
-                                                                null &&
-                                                            selectedAddressIndex! <
-                                                                addresses
-                                                                    .length) {
-                                                          setDefaultAddress(
-                                                                  addresses[
-                                                                          selectedAddressIndex!]
-                                                                      .id)
-                                                              .then(
-                                                                  (address) => {
-                                                                        if (address !=
-                                                                            null)
-                                                                          {
-                                                                            cart.deliveryAddress =
-                                                                                address
-                                                                          }
-                                                                      });
-                                                          snackBarMessage =
-                                                              'Default address set to: ${addresses[selectedAddressIndex!].streetAddress}';
-                                                        } else {
-                                                          snackBarMessage =
-                                                              'No address selected';
-                                                        }
 
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          SnackBar(
-                                                            content: Text(
-                                                                snackBarMessage),
-                                                            backgroundColor:
-                                                                Colors.green,
-                                                          ),
-                                                        );
-
-                                                        Navigator.pop(
-                                                            context); // Close the bottom sheet
-                                                      } catch (error) {
-                                                        ScaffoldMessenger.of(
-                                                                context)
-                                                            .showSnackBar(
-                                                          const SnackBar(
-                                                            content: Text(
-                                                                'Failed to set default address'),
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                          ),
-                                                        );
-                                                      }
-                                                    },
-                                                    child: const Text(
-                                                        "Make Default Address"),
-                                                  )
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        );
+                                                              Navigator.pop(
+                                                                  context); // Close the bottom sheet
+                                                            } catch (error) {
+                                                              ScaffoldMessenger
+                                                                      .of(context)
+                                                                  .showSnackBar(
+                                                                const SnackBar(
+                                                                  content: Text(
+                                                                      'Failed to set default address'),
+                                                                  backgroundColor:
+                                                                      Colors
+                                                                          .red,
+                                                                ),
+                                                              );
+                                                            }
+                                                          },
+                                                          child: const Text(
+                                                              "Make Default Address"),
+                                                        )
+                                                      ],
+                                                    ),
+                                                  );
+                                                },
+                                              );
+                                            },
+                                          );
+                                        });
                                       },
-                                    );
-                                  });
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 5, vertical: 0),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(4.0),
-                                    border: Border.all(
-                                        color: Colors.deepPurpleAccent),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color:
-                                            Color.fromARGB(255, 248, 219, 253),
-                                        spreadRadius: 1,
-                                        blurRadius: 3,
-                                        offset: Offset(0, 3),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 0),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(4.0),
+                                          border: Border.all(
+                                              color: Colors.deepPurpleAccent),
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: Color.fromARGB(
+                                                  255, 248, 219, 253),
+                                              spreadRadius: 1,
+                                              blurRadius: 3,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
+                                        ), // No background color for the first child
+                                        child: Center(
+                                          child: Text(
+                                            cart.deliveryAddress.streetAddress,
+                                            style: GoogleFonts.cantoraOne(
+                                                fontSize: 15,
+                                                fontStyle: FontStyle.normal,
+                                                color: Colors.black),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 2,
+                                            softWrap: false,
+                                          ),
+                                        ),
                                       ),
-                                    ],
-                                  ), // No background color for the first child
-                                  child: Center(
-                                    child: Text(
-                                      cart.deliveryAddress.streetAddress,
-                                      style: GoogleFonts.cantoraOne(
-                                          fontSize: 15,
-                                          fontStyle: FontStyle.normal,
-                                          color: Colors.black),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 2,
-                                      softWrap: false,
                                     ),
                                   ),
-                                ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Container(),
+                                  ),
+                                  Expanded(
+                                    flex: 42, // Flex 7 for the main content
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        image: const DecorationImage(
+                                          image: AssetImage(
+                                              "assets/images/store.png"),
+                                          opacity: 0.9,
+                                          fit: BoxFit.cover,
+                                        ),
+                                        borderRadius:
+                                            BorderRadius.circular(4.0),
+                                        border: Border.all(
+                                            color: Colors.deepPurpleAccent),
+                                        boxShadow: const [
+                                          BoxShadow(
+                                            color: Color.fromARGB(
+                                                255, 248, 219, 253),
+                                            spreadRadius: 1,
+                                            blurRadius: 3,
+                                            offset: Offset(0, 3),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          "Delivery in 10 minutes",
+                                          style: GoogleFonts.cantoraOne(
+                                              fontSize: 24,
+                                              fontStyle: FontStyle.italic,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            Expanded(
-                              flex: 1,
-                              child: Container(),
-                            ),
-                            Expanded(
-                              flex: 42, // Flex 7 for the main content
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  image: const DecorationImage(
-                                    image:
-                                        AssetImage("assets/images/store.png"),
-                                    opacity: 0.9,
-                                    fit: BoxFit.cover,
-                                  ),
-                                  borderRadius: BorderRadius.circular(4.0),
-                                  border: Border.all(
-                                      color: Colors.deepPurpleAccent),
-                                  boxShadow: const [
-                                    BoxShadow(
-                                      color: Color.fromARGB(255, 248, 219, 253),
-                                      spreadRadius: 1,
-                                      blurRadius: 3,
-                                      offset: Offset(0, 3),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    "Delivery in 10 minutes",
-                                    style: GoogleFonts.cantoraOne(
-                                        fontSize: 24,
-                                        fontStyle: FontStyle.italic,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.white),
-                                  ),
+
+                            Highlights(
+                                customerId: customerId,
+                                phone: phone,
+                                promos: promotions), // Pass retrieved values
+                            Container(
+                              alignment: Alignment
+                                  .centerLeft, // Align text to the left
+                              padding: const EdgeInsets.only(
+                                  left: 16, top: 8.0, bottom: 2.0),
+                              child: const Text(
+                                'Explore By Categories',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
                               ),
                             ),
                           ],
-                        ),
+                        );
+                      },
+                    ),
+                  ),
+                  // This is the GridView, wrapped inside a SliverPadding
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    sliver: SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 5,
+                        mainAxisSpacing: 5,
+                        childAspectRatio: 0.7,
                       ),
-
-                      Highlights(
-                          customerId: customerId,
-                          phone: phone,
-                          promos: promotions), // Pass retrieved values
-                      Container(
-                        alignment:
-                            Alignment.centerLeft, // Align text to the left
-                        padding: const EdgeInsets.only(
-                            left: 16, top: 8.0, bottom: 2.0),
-                        child: const Text(
-                          'Explore By Categories',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          return _buildCategoryContainer(
+                              context,
+                              categories[index].id,
+                              categories[index].name,
+                              categories[index].image);
+                        },
+                        childCount: categories.length,
                       ),
-                    ],
-                  );
-                },
+                    ),
+                  ),
+                  // Add other content here if needed
+                ],
               ),
             ),
-            // This is the GridView, wrapped inside a SliverPadding
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              sliver: SliverGrid(
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  crossAxisSpacing: 5,
-                  mainAxisSpacing: 5,
-                  childAspectRatio: 0.7,
-                ),
-                delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int index) {
-                    return _buildCategoryContainer(
-                        context,
-                        categories[index].id,
-                        categories[index].name,
-                        categories[index].image);
-                  },
-                  childCount: categories.length,
-                ),
-              ),
-            ),
-            // Add other content here if needed
-          ],
-        ),
-      ),
       floatingActionButton: FutureBuilder<String?>(
         future: getOrderStatus(),
         builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {

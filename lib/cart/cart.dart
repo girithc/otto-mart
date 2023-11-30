@@ -9,6 +9,7 @@ class CartItem {
   final String productId;
   final String productName;
   final int price;
+  final int soldPrice;
   int quantity;
   int stockQuantity;
   final String image;
@@ -17,6 +18,7 @@ class CartItem {
       {required this.productId,
       required this.productName,
       required this.price,
+      required this.soldPrice,
       required this.quantity,
       required this.stockQuantity,
       required this.image});
@@ -26,9 +28,63 @@ class CartItem {
         productId: json['id'].toString(),
         productName: json['name'],
         price: json['price'],
+        soldPrice: json['sold_price'],
         quantity: json['quantity'],
         stockQuantity: json['stock_quantity'],
         image: json['image']);
+  }
+}
+
+class CartDetails {
+  final int cartItemId;
+  final int cartId;
+  final int itemId;
+  final int quantity;
+  final int itemCost;
+  final int deliveryFee;
+  final int platformFee;
+  final int smallOrderFee;
+  final int rainFee;
+  final int highTrafficSurcharge;
+  final int packagingFee;
+  final int peakTimeSurcharge;
+  final int subtotal;
+  final int discounts;
+
+  CartDetails({
+    required this.cartItemId,
+    required this.cartId,
+    required this.itemId,
+    required this.quantity,
+    required this.itemCost,
+    required this.deliveryFee,
+    required this.platformFee,
+    required this.smallOrderFee,
+    required this.rainFee,
+    required this.highTrafficSurcharge,
+    required this.packagingFee,
+    required this.peakTimeSurcharge,
+    required this.subtotal,
+    required this.discounts,
+  });
+
+  factory CartDetails.fromJson(Map<String, dynamic> json) {
+    return CartDetails(
+      cartItemId: json['cart_item_id'],
+      cartId: json['cart_id'],
+      itemId: json['item_id'],
+      quantity: json['quantity'],
+      itemCost: json['item_cost'],
+      deliveryFee: json['delivery_fee'],
+      platformFee: json['platform_fee'],
+      smallOrderFee: json['small_order_fee'],
+      rainFee: json['rain_fee'],
+      highTrafficSurcharge: json['high_traffic_surcharge'],
+      packagingFee: json['packaging_fee'],
+      peakTimeSurcharge: json['peak_time_surcharge'],
+      subtotal: json['subtotal'],
+      discounts: json['discounts'],
+    );
   }
 }
 
@@ -41,9 +97,8 @@ class ItemInCart {
 
 class CartModel extends ChangeNotifier {
   final List<CartItem> _items = [];
+  CartDetails? _cartDetails;
   int _deliveryPartnerTip = 0;
-  int _packagingFee = 15;
-  int _deliveryFee = 35;
   late String customerId;
 
   // Initialize storage
@@ -67,6 +122,23 @@ class CartModel extends ChangeNotifier {
       latitude: 0.0);
 
   CartModel(this.customerId) {
+    _cartDetails = CartDetails(
+      cartItemId: 0,
+      cartId: 0,
+      itemId: 0,
+      quantity: 0,
+      itemCost: 0,
+      deliveryFee: 0,
+      platformFee: 0,
+      smallOrderFee: 0,
+      rainFee: 0,
+      highTrafficSurcharge: 0,
+      packagingFee: 0,
+      peakTimeSurcharge: 0,
+      subtotal: 0,
+      discounts: 0,
+    );
+
     _fetchDefaultAddress();
     _fetchCartId().then((_) {
       _fetchCartItems(); // Then fetch cart items from the server
@@ -111,9 +183,16 @@ class CartModel extends ChangeNotifier {
       //_logger.e('Response: $response');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
-          final List<dynamic> jsonData = json.decode(response.body);
+          final Map<String, dynamic> jsonData = json.decode(response.body);
+
+          final Map<String, dynamic> cartDetailsData =
+              jsonData['cart_details'] as Map<String, dynamic>;
+          _cartDetails = CartDetails.fromJson(cartDetailsData);
+
+          // Extracting 'cart_items_list' from the response
+          final List<dynamic> cartItemsList = jsonData['cart_items_list'];
           final List<CartItem> items =
-              jsonData.map((item) => CartItem.fromJson(item)).toList();
+              cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
           _items.clear();
           _items.addAll(items);
@@ -200,6 +279,7 @@ class CartModel extends ChangeNotifier {
     int? parsedCustomerId;
     try {
       parsedCustomerId = int.parse(customerId);
+      print("CustomerID: $parsedCustomerId");
     } catch (e) {
       _logger.e('Failed to parse customerId: $customerId, error: $e');
       return false; // if we can't parse customerId, it makes sense to return early
@@ -245,33 +325,19 @@ class CartModel extends ChangeNotifier {
 
   List<CartItem> get items => _items;
 
-  int get numberOfItems =>
-      items.fold(0, (total, current) => total + current.quantity);
-
-  int get totalPriceItems => items.fold(
-      0, (total, current) => total + current.price * current.quantity);
-
-  int get totalPrice =>
-      totalPriceItems + _deliveryPartnerTip + _deliveryFee + _packagingFee;
+  int get numberOfItems => _cartDetails!.quantity;
+  int get totalPriceItems => _cartDetails!.itemCost;
+  int get totalPrice => _cartDetails!.subtotal;
+  int get discount => _cartDetails!.discounts;
+  int get platformFee => _cartDetails!.platformFee;
+  int get packagingFee => _cartDetails!.packagingFee;
+  int get deliveryFee => _cartDetails!.deliveryFee;
+  int get smallOrderFee => _cartDetails!.smallOrderFee;
 
   int get deliveryPartnerTip => _deliveryPartnerTip;
 
   set deliveryPartnerTip(int tip) {
     _deliveryPartnerTip = tip;
-    notifyListeners();
-  }
-
-  int get packagingFee => _packagingFee;
-
-  set packagingFee(int fee) {
-    _packagingFee = fee;
-    notifyListeners();
-  }
-
-  int get deliveryFee => _deliveryFee;
-
-  set deliveryFee(int fee) {
-    _deliveryFee = fee;
     notifyListeners();
   }
 
@@ -324,10 +390,16 @@ class CartModel extends ChangeNotifier {
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
       //('HTTP POST response body: ${response.body}');
       if (response.statusCode == 200) {
-        //final responseData = jsonDecode(response.body);
-        final List<dynamic> jsonData = json.decode(response.body);
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        final Map<String, dynamic> cartDetailsData =
+            jsonData['cart_details'] as Map<String, dynamic>;
+        _cartDetails = CartDetails.fromJson(cartDetailsData);
+
+        // Extracting 'cart_items_list' from the response
+        final List<dynamic> cartItemsList = jsonData['cart_items_list'];
         final List<CartItem> items =
-            jsonData.map((item) => CartItem.fromJson(item)).toList();
+            cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
         _items.clear();
         _items.addAll(items);
@@ -358,10 +430,16 @@ class CartModel extends ChangeNotifier {
     http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
       //print('HTTP POST response body: ${response.body}');
       if (response.statusCode == 200) {
-        //final responseData = jsonDecode(response.body);
-        final List<dynamic> jsonData = json.decode(response.body);
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        // Extracting 'cart_details' from the response
+        final Map<String, dynamic> cartDetailsData = jsonData['cart_details'];
+        _cartDetails = CartDetails.fromJson(cartDetailsData);
+
+        // Extracting 'cart_items_list' from the response
+        final List<dynamic> cartItemsList = jsonData['cart_items_list'];
         final List<CartItem> items =
-            jsonData.map((item) => CartItem.fromJson(item)).toList();
+            cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
         _items.clear();
         _items.addAll(items);

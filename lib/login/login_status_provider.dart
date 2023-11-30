@@ -20,7 +20,7 @@ class LoginStatusProvider with ChangeNotifier {
     print("Attempt Login On Boot");
     customerId = await storage.read(key: 'customerId');
     String? phone = await storage.read(key: 'phone');
-
+    print("Phone: $phone");
     if (phone == null) {
       isLoggedIn == false;
       await storage.deleteAll();
@@ -39,7 +39,7 @@ class LoginStatusProvider with ChangeNotifier {
       },
       body: jsonEncode(requestData),
     );
-
+    print("Reponse for login: ${response.statusCode} ${response.body} ");
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);
       final Customer customer = Customer.fromJson(responseBody);

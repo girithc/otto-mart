@@ -370,7 +370,7 @@ class _CartList extends StatelessWidget {
                                       ),
                                   child: Center(
                                     child: Text(
-                                        "\u{20B9}${item.price * item.quantity}", // Replace with your price calculation
+                                        "\u{20B9}${item.soldPrice * item.quantity}", // Replace with your price calculation
                                         style: itemNameStyle
                                         /*
                                       const TextStyle(
@@ -425,16 +425,30 @@ class _TaxAndDelivery extends StatelessWidget {
               amount: '${cart.totalPriceItems}',
               font: Theme.of(context).textTheme.titleSmall,
             ),
-            _CustomListItem(
-              icon: Icons.shopping_bag_outlined,
-              label: 'Packaging Fee',
-              amount: '${cart.packagingFee}',
-              font: Theme.of(context).textTheme.titleSmall,
-            ),
+            cart.smallOrderFee > 0
+                ? _CustomListItem(
+                    icon: Icons.donut_small_rounded,
+                    label: 'Small Order Fee',
+                    amount: '${cart.smallOrderFee}',
+                    font: Theme.of(context).textTheme.titleSmall,
+                  )
+                : Container(),
             _CustomListItem(
               icon: Icons.electric_bike_outlined,
               label: 'Delivery Fee',
               amount: '${cart.deliveryFee}',
+              font: Theme.of(context).textTheme.titleSmall,
+            ),
+            _CustomListItem(
+              icon: Icons.shopping_bag_outlined,
+              label: 'Platform Fee',
+              amount: '${cart.platformFee}',
+              font: Theme.of(context).textTheme.titleSmall,
+            ),
+            _CustomListItem(
+              icon: Icons.shopping_bag_outlined,
+              label: 'Packaging Fee',
+              amount: '${cart.packagingFee}',
               font: Theme.of(context).textTheme.titleSmall,
             ),
             cart.deliveryPartnerTip > 0
@@ -491,7 +505,7 @@ class TotalAmountSaved extends StatelessWidget {
             width: 33,
           ),
           Text(
-            '\u{20B9} ${(cart.totalPriceItems * 0.10).toStringAsFixed(2)}',
+            '\u{20B9} ${(cart.discount)}',
             style: GoogleFonts.phudu(
                 textStyle: const TextStyle(
                     fontSize: 30,

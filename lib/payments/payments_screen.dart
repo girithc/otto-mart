@@ -101,6 +101,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
     var request =
         http.Request('POST', Uri.parse('$baseUrl/phonepe-payment-init'));
     // Replace with actual parameters
+    request.body = json.encode({"cart_id": cartId});
     request.headers.addAll(headers);
 
     try {

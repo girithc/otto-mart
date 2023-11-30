@@ -3,9 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:pronto/cart/cart.dart';
+import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/order/place_order_screen.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
@@ -96,6 +100,34 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
       );
   }
 
+  Future<bool> checkoutCancelItems(int cartId) async {
+    const String apiUrl = '$baseUrl/checkout-cancel';
+    final Map<String, dynamic> payload = {'cart_id': cartId};
+
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: json.encode(payload),
+      );
+
+      if (response.statusCode == 200) {
+        // Assuming the server returns a simple true or false in the body
+        return true;
+      } else {
+        // Handle the case when the server does not respond with a success code
+        print('Request failed with status: ${response.statusCode}.');
+        return false;
+      }
+    } on Exception catch (e) {
+      // Handle any exceptions here
+      print('Caught exception: $e');
+      return false;
+    }
+  }
+
   Future<bool> processPayment() async {
     String? cartId = await storage.read(key: 'cartId');
     int cartIdInt = int.parse(cartId!);
@@ -124,8 +156,50 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
 
   @override
   Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>();
+
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            // Call your function here
+            String? cartId = cart.cartId;
+            int cartIdInt = int.parse(cartId!);
+            checkoutCancelItems(cartIdInt).then((success) {
+              if (success) {
+                // If the checkout lock is successful, navigate to the PaymentsPage
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyCart(),
+                  ),
+                );
+              } else {
+                // If the checkout lock is unsuccessful, you might want to show an error message
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Failed to cancel checkout.'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+                Navigator.of(context).pop();
+              }
+            }).catchError((error) {
+              // Handle any errors here
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error: $error'),
+                  backgroundColor: Colors.redAccent,
+                ),
+              );
+            });
+            // Then navigate back
+          },
+        ),
         backgroundColor: Colors.deepPurpleAccent,
         title: InkWell(
           child: ShaderMask(

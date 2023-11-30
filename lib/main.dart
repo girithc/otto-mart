@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:http/http.dart' as http;
 import 'package:pronto/home/home_screen.dart';
+import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/no_internet.dart';
 import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
@@ -55,8 +59,8 @@ class _MyAppState extends State<MyApp> {
               CartModel(loginProvider.customerId ?? ""),
         ),
       ],
-      child: Consumer2<LoginStatusProvider, ConnectivityProvider>(
-        builder: (context, loginProvider, connectivityProvider, child) {
+      child: Consumer<ConnectivityProvider>(
+        builder: (context, connectivityProvider, child) {
           if (!connectivityProvider.hasInternet) {
             return MaterialApp(
               home: NoInternetPage(
@@ -66,18 +70,13 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           }
-
           return MaterialApp(
             title: 'Provider Demo',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-            home: (isLoggedIn == null)
-                ? const CircularProgressIndicator()
-                : OpeningPageAnimation(
-                    isLoggedIn: isLoggedIn!,
-                  ),
+            home: const OpeningPageAnimation(),
           );
         },
       ),
@@ -86,10 +85,7 @@ class _MyAppState extends State<MyApp> {
 }
 
 class OpeningPageAnimation extends StatefulWidget {
-  final bool isLoggedIn;
-
-  const OpeningPageAnimation({required this.isLoggedIn, Key? key})
-      : super(key: key);
+  const OpeningPageAnimation({Key? key}) : super(key: key);
 
   @override
   // ignore: library_private_types_in_public_api
@@ -99,6 +95,8 @@ class OpeningPageAnimation extends StatefulWidget {
 class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
   late double _begin;
   late double _end;
+  final storage = const FlutterSecureStorage();
+  bool isLoggedIn = false;
 
   @override
   void initState() {
@@ -107,8 +105,46 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
     _end = 1;
   }
 
+  Future<bool> checkLoginStatus() async {
+    print("Attempt Login On Boot");
+    String? phone = await storage.read(key: 'phone');
+    print("Attempt Login On Boot : $phone");
+    if (phone == null) {
+      isLoggedIn == false;
+      await storage.deleteAll();
+      return false;
+    }
+    final Map<String, dynamic> requestData = {
+      "phone": int.parse(phone),
+    };
+
+    final http.Response response = await http.post(
+      Uri.parse('$baseUrl/customer'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(requestData),
+    );
+    print("Reponse for login: ${response.statusCode} ${response.body} ");
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseBody = json.decode(response.body);
+      final Customer customer = Customer.fromJson(responseBody);
+      await storage.write(key: 'customerId', value: customer.id.toString());
+      await storage.write(key: 'phone', value: customer.phone.toString());
+      await storage.write(key: 'cartId', value: customer.cartId.toString());
+      isLoggedIn = true;
+      return true;
+    } else {
+      await storage.deleteAll();
+      print('Failed to login Customer');
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Use a default value if null
+    print("IsLoggedIn:$isLoggedIn");
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -131,13 +167,21 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                 );
               },
               onEnd: () {
-                if (widget.isLoggedIn) {
-                  Navigator.of(context).pushReplacement(MaterialPageRoute(
-                      builder: (context) => const MyHomePage(title: 'Pronto')));
-                } else {
-                  Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (context) => const MyPhone()));
-                }
+                checkLoginStatus().then((loggedIn) => {
+                      if (loggedIn)
+                        {
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      const MyHomePage(title: 'Pronto')))
+                        }
+                      else
+                        {
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) => const MyPhone()))
+                        }
+                    });
               },
               child: Image.asset('assets/images/scooter.jpg'),
             ),

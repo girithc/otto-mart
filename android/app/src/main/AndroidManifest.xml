@@ -25,11 +25,12 @@
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java 
+             Google Maps Flutter-->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
         <meta-data android:name="com.google.android.geo.API_KEY"
-               android:value="AIzaSyARoMzt-tHvh--HVMyRArfxEsoFnZR9VtQ"/>
+               android:value="AIzaSyARoMzt-tHvh--HVMyRArfxEsoFnZR9VtQ"/> 
     </application>
 </manifest>

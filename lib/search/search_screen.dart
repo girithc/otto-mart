@@ -725,6 +725,7 @@ class ListItem extends StatelessWidget {
                                               productId: id.toString(),
                                               productName: name,
                                               price: price,
+                                              soldPrice: price,
                                               quantity: 1,
                                               stockQuantity: stockQuantity,
                                               image: image));
@@ -747,6 +748,7 @@ class ListItem extends StatelessWidget {
                                             productId: id.toString(),
                                             productName: name,
                                             price: price,
+                                            soldPrice: price,
                                             quantity: 1,
                                             stockQuantity: stockQuantity,
                                             image: image);

@@ -13,7 +13,7 @@ class CustomerApiClient {
     };
 
     final http.Response response = await http.post(
-      Uri.parse('$baseUrl/customer'),
+      Uri.parse('$baseUrl/login-customer'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

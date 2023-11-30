@@ -77,6 +77,7 @@ class Product extends StatelessWidget {
                                 productId: productId.toString(),
                                 productName: productName,
                                 price: storePrice,
+                                soldPrice: storePrice,
                                 quantity: 1,
                                 stockQuantity: stockQuantity,
                                 image: image);
@@ -108,6 +109,7 @@ class Product extends StatelessWidget {
                                 productId: productId.toString(),
                                 productName: productName,
                                 price: storePrice,
+                                soldPrice: storePrice,
                                 quantity: 1,
                                 stockQuantity: stockQuantity,
                                 image: image);
