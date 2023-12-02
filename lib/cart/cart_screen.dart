@@ -24,7 +24,7 @@ class _MyCartState extends State<MyCart> {
   Future<bool> checkoutLockItems(int cartId) async {
     const String apiUrl = '$baseUrl/checkout-lock-items';
     final Map<String, dynamic> payload = {'cart_id': cartId};
-
+    print("Check-out-lock-items");
     try {
       final response = await http.post(
         Uri.parse(apiUrl),
@@ -39,7 +39,8 @@ class _MyCartState extends State<MyCart> {
         return true;
       } else {
         // Handle the case when the server does not respond with a success code
-        print('Request failed with status: ${response.statusCode}.');
+        print(
+            'Request failed with status: ${response.statusCode}. ${response.body}');
         return false;
       }
     } on Exception catch (e) {

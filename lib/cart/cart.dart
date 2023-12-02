@@ -145,6 +145,13 @@ class CartModel extends ChangeNotifier {
     });
   }
 
+  void clearCart() {
+    _fetchDefaultAddress();
+    _fetchCartId().then((_) {
+      _fetchCartItems(); // Then fetch cart items from the server
+    });
+  }
+
   Future<void> _fetchCartId() async {
     cartId = await storage.read(key: 'cartId');
     //print("cart Id $cartId");

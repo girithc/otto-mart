@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
+import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'dart:convert';
 
 import 'package:pronto/utils/constants.dart';
+import 'package:provider/provider.dart';
 
 class OrderConfirmed extends StatefulWidget {
   OrderConfirmed({super.key, required this.newOrder});
@@ -153,6 +155,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   @override
   Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>();
+
     return Scaffold(
       body: _isLoading
           ? const Column(
@@ -172,6 +176,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                         ),
                         onPressed: () {
                           // Navigate to the HomeScreen, replacing the current route
+                          if (widget.newOrder) {
+                            cart.clearCart();
+                          }
+
                           Navigator.of(context).pushReplacement(
                             MaterialPageRoute(
                                 builder: (context) => const MyHomePage(
