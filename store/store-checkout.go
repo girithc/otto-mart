@@ -60,26 +60,29 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 
 		res, err := tx.Exec(`UPDATE item_store SET stock_quantity = stock_quantity - $1, locked_quantity = locked_quantity + $1 WHERE id = $2 AND stock_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("error update item %d %d", checkout_cart_item.Item_Id, err)
 		}
 
 		affectedRows, err := res.RowsAffected()
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("error for item id %d %d", checkout_cart_item.Item_Id, err)
 		}
 
 		if affectedRows == 0 {
-			return false, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
+			return false, fmt.Errorf("not enough stock for item %d %d", checkout_cart_item.Item_Id, err)
 		}
 	}
 
 	err = tx.Commit()
 	if err != nil {
+		fmt.Print("Error in Committing Transaction: ", err)
+
 		return false, err
 	}
 
 	err = s.CreateTransaction(cart_id)
 	if err != nil {
+		fmt.Print("Error in Creating Transaction: ", err)
 		return false, err
 	}
 
@@ -123,6 +126,8 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 			s.ResetLockedQuantities(cart_id)
 			delete(s.cancelFuncs, cart_id)
 			delete(s.lockExtended, cart_id)
+			delete(s.paymentStatus, cart_id)
+
 		}
 	}()
 
@@ -134,7 +139,7 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 	var credit bool
 	if cancel, exists := s.cancelFuncs[cart_id]; exists {
-		if _, prepay := s.cancelFuncs[cart_id]; prepay {
+		if _, prepay := s.paymentStatus[cart_id]; prepay {
 			credit = true
 		}
 		s.paymentStatus[cart_id] = true
@@ -145,7 +150,7 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 		return false, fmt.Errorf("timeout no active timer found for cart id %d", cart_id)
 	}
 
-	fmt.Println("Payment is successful!")
+	fmt.Println("Step 1. Payment is successful!")
 
 	var storeID sql.NullInt64
 
@@ -202,12 +207,20 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 	} else {
 		paymentType = "cash"
 	}
-	_, err = tx.Exec(`
-		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type)
-		VALUES ($1, $2, $3, $4, $5)
-	`, cart_id, 1, customerID, defaultAddressID, paymentType)
+
+	var transactionID int
+	err = tx.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 `, cart_id).Scan(&transactionID)
 	if err != nil {
-		return true, fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
+		// Handle the error, for example, no default address found or query failed
+		return true, fmt.Errorf("failed to transaction_id for cart_id %d: %s", cart_id, err)
+	}
+
+	_, err = tx.Exec(`
+		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type, transaction_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, cart_id, 1, customerID, defaultAddressID, paymentType, transactionID)
+	if err != nil {
+		return true, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
 	}
 
 	for _, checkout_cart_item := range cartItems {

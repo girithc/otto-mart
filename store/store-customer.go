@@ -33,8 +33,9 @@ func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
-	// Check if merchant_user_id already exists
-	var merchantUserId string
+	// Use sql.NullString to handle potential NULL values
+	var merchantUserId sql.NullString
+
 	checkQuery := `SELECT merchant_user_id FROM customer 
                    INNER JOIN shopping_cart ON customer.id = shopping_cart.customer_id 
                    WHERE shopping_cart.id = $1`
@@ -50,7 +51,9 @@ func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
 		return false, err
 	}
 
-	if merchantUserId != "" {
+	// Check if the merchantUserId is not NULL and not an empty string
+	if merchantUserId.Valid && merchantUserId.String != "" {
+		fmt.Println("merchant Id, ", merchantUserId.String)
 		// Merchant User ID already exists
 		return true, nil
 	}
