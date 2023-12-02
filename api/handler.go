@@ -950,6 +950,30 @@ func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
+func (s *Server) handlePhonePeVerifyPayment(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+	if req.Method == "POST" {
+		print_path("POST", "phonepe-callback")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handlePhonePeCheckStatus(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	}
+
+	return nil
+}
+
 func (s *Server) handlePhonePeCallback(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 

@@ -14,6 +14,32 @@ import (
 	"github.com/girithc/pronto-go/types"
 )
 
+func (s *PostgresStore) PhonePeCheckStatus(cart_id int) (bool, error) {
+	// check for s2s callback
+	// if received and paid
+	// success
+	// if received and failed
+	// payment fail
+	// if not received
+	// send check status api
+	// repeat the process
+
+	//if status pending
+	//follow guidelines.
+	/*
+		Check Status API - Reconciliation [MANDATORY]
+		If the payment status is Pending, then Check Status API should be called in the following interval:
+		The first status check at 20-25 seconds post transaction start, then
+		Every 3 seconds once for the next 30 seconds,
+		Every 6 seconds once for the next 60 seconds,
+		Every 10 seconds for the next 60 seconds,
+		Every 30 seconds for the next 60 seconds, and then
+		Every 1 min until timeout (20 mins).
+	*/
+
+	return false, nil
+}
+
 func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentCallbackResult, error) {
 	// Decode the base64 encoded response
 	decoded, err := base64.StdEncoding.DecodeString(response)
