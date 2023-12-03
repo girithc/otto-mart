@@ -9,14 +9,14 @@ import (
 )
 
 func (s *Server) handlePhonePeCheckStatus(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.PhonePeCartId)
+	new_req := new(types.PhonePeCartIdStatus)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in handlePhonePeCheckStatus()")
 		return err
 	}
 
-	records, err := s.store.PhonePeCheckStatus(new_req.CartId)
+	records, err := s.store.PhonePeCheckStatus(new_req.CartId, new_req.StatusResult)
 	if err != nil {
 		return err
 	}

@@ -6,6 +6,11 @@ type PhonePeCartId struct {
 	CartId int `json:"cart_id"`
 }
 
+type PhonePeCartIdStatus struct {
+	CartId       int  `json:"cart_id"`
+	StatusResult bool `json:"status_result"`
+}
+
 type PhonePeInit struct {
 	MerchantId            string            `json:"merchantId"`
 	MerchantTransactionId string            `json:"merchantTransactionId"`
@@ -97,4 +102,10 @@ type PaymentCallbackResult struct {
 
 type TempInstrumentType struct {
 	Type string `json:"type"`
+}
+
+type Transaction struct {
+	MerchantTransactionId string `json:"merchant_transaction_id"`
+	MerchantId            string `json:"merchant_id"`
+	ResponseCode          string `json:"response_code"`
 }

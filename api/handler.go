@@ -953,7 +953,7 @@ func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 func (s *Server) handlePhonePeVerifyPayment(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 	if req.Method == "POST" {
-		print_path("POST", "phonepe-callback")
+		print_path("POST", "phonepe-check-status")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		task := func() worker.Result {

@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,7 +15,7 @@ import (
 	"github.com/girithc/pronto-go/types"
 )
 
-func (s *PostgresStore) PhonePeCheckStatus(cart_id int) (bool, error) {
+func (s *PostgresStore) PhonePeCheckStatus(cart_id int, return_status bool) (bool, error) {
 	// check for s2s callback
 	// if received and paid
 	// success
@@ -37,7 +38,105 @@ func (s *PostgresStore) PhonePeCheckStatus(cart_id int) (bool, error) {
 		Every 1 min until timeout (20 mins).
 	*/
 
-	return false, nil
+	transaction, err := s.GetTransactionByCartId(cart_id)
+	if err != nil {
+		return false, fmt.Errorf("error fetching transaction: %w", err)
+	}
+
+	// Check if S2S callback has been received
+	if transaction.ResponseCode != "" {
+		// Check if payment was successful or failed
+		if return_status {
+			return transaction.ResponseCode == "SUCCESS", nil
+		}
+	}
+
+	// If S2S callback not received, call Check Status API
+	success, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId)
+	if err != nil {
+		return false, err
+	}
+
+	return success, nil
+}
+
+func (s *PostgresStore) GetTransactionByCartId(cart_id int) (*types.Transaction, error) {
+	var transaction types.Transaction
+	query := "SELECT merchant_transaction_id, merchant_id, response_code FROM transaction WHERE cart_id = $1"
+	err := s.db.QueryRow(query, cart_id).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode)
+	if err != nil {
+		return nil, err
+	}
+	return &transaction, nil
+}
+
+func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId string) (bool, error) {
+	// Construct the URL
+	fmt.Println("Entered CallCheckStatusAPI")
+	url := fmt.Sprintf("https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/%s/%s", merchantId, merchantTransactionId)
+
+	// Create the request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return false, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-VERIFY", GenerateXVerify(merchantId, merchantTransactionId))
+	req.Header.Set("X-MERCHANT-ID", merchantId)
+
+	// Execute the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error executing request:", err)
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	// Read and print the response body
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response body:", err)
+		return false, err
+	}
+	bodyString := string(bodyBytes)
+	fmt.Println("Response Body:", bodyString)
+
+	// Parse the response
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			MerchantTransactionId string `json:"merchantTransactionId"`
+			State                 string `json:"state"`
+			Amount                int    `json:"amount"`
+		} `json:"data"`
+	}
+	err = json.Unmarshal(bodyBytes, &response)
+	if err != nil {
+		fmt.Println("Error decoding response:", err)
+		return false, err
+	}
+
+	fmt.Println("Check-Status-Response:", response.Data.Amount)
+	return response.Data.State == "COMPLETED", nil
+}
+
+func GenerateXVerify(merchantId, merchantTransactionId string) string {
+	// Concatenating the strings as per the requirement
+	saltKey := "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"
+	saltIndex := "1"
+	concatenatedString := fmt.Sprintf("/pg/v1/status/%s/%s%s", merchantId, merchantTransactionId, saltKey)
+
+	// Creating a SHA256 hash
+	hasher := sha256.New()
+	hasher.Write([]byte(concatenatedString))
+	sha256Hash := hex.EncodeToString(hasher.Sum(nil))
+
+	// Appending '###' and saltIndex
+	xVerify := fmt.Sprintf("%s###%s", sha256Hash, saltIndex)
+
+	return xVerify
 }
 
 func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentCallbackResult, error) {
