@@ -67,6 +67,10 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 	return partners[0], nil
 }
 
+func (s *PostgresStore) GetAssignedOrder() error {
+	return nil
+}
+
 func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone string, fcm_token string) (*types.Delivery_Partner, error) {
 	// Start a transaction
 	tx, err := s.db.Begin()

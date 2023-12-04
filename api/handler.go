@@ -585,17 +585,84 @@ func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request
 }
 
 func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
 	if req.Method == "POST" {
 		print_path("[POST]", "delivery_partner")
-		return s.Handle_Delivery_Partner_Login(res, req)
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.Handle_Delivery_Partner_Login(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
 	} else if req.Method == "PUT" {
 		print_path("[PUT]", "delivery_partner")
-		return s.Handle_Delivery_Partner_FCM_Token(res, req)
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.Handle_Delivery_Partner_FCM_Token(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
 	} else if req.Method == "GET" {
 		print_path("[GET]", "delivery_partner")
-		return s.Handle_Get_Delivery_Partners(res, req)
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.Handle_Get_Delivery_Partners(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
 	}
 	return nil
+}
+
+func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("[POST]", "delivery_partner_check_order")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		task := func() worker.Result {
+			err := s.handleCheckAssignedOrder(res, req)
+			return worker.Result{Error: err}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+
+	}
 }
 
 func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) error {

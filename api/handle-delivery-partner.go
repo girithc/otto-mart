@@ -104,3 +104,12 @@ func (s *Server) Handle_Get_Delivery_Partners(res http.ResponseWriter, req *http
 
 	return WriteJSON(res, http.StatusOK, customers)
 }
+
+func (s *Server) handleCheckAssignedOrder(res http.ResponseWriter, req *http.Request) error {
+	orders, err := s.store.Get_All_Delivery_Partners()
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, orders)
+}
