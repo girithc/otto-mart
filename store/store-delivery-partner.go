@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -67,8 +68,110 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 	return partners[0], nil
 }
 
-func (s *PostgresStore) GetAssignedOrder() error {
-	return nil
+func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, error) {
+	// Define the query to retrieve the first assigned order for the specified delivery partner phone number
+	query := `
+    SELECT so.id, so.delivery_partner_id, so.store_id,
+	       so.order_date, so.order_status, so.order_dp_status
+    FROM sales_order so
+    JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+    WHERE dp.phone = $1
+    ORDER BY so.order_date ASC
+    LIMIT 1
+    `
+
+	// Variable to hold the order details
+	order := &OrderAssigned{}
+
+	// Execute the query
+	err := s.db.QueryRow(query, phone).Scan(&order.ID, &order.DeliveryPartnerID, &order.StoreID, &order.OrderDate, &order.OrderStatus, &order.DeliveryPartnerStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	return order, nil
+}
+
+type OrderAssigned struct {
+	ID                    int       `json:"id"`
+	DeliveryPartnerID     int       `json:"delivery_partner_id"`
+	StoreID               int       `json:"store_id"`
+	OrderDate             time.Time `json:"order_date"`
+	OrderStatus           string    `json:"order_status"`
+	DeliveryPartnerStatus string    `json:"order_dp_status"`
+}
+
+func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted, error) {
+	// Update the order status to reflect acceptance by the delivery partner
+	acceptOrderQuery := `
+    UPDATE sales_order
+    SET order_dp_status = 'accepted'
+    WHERE id = $1 AND delivery_partner_id = (
+        SELECT id FROM delivery_partner WHERE phone = $2
+    ) RETURNING customer_id, store_id, payment_type, paid, cart_id;`
+
+	var customerID, storeID, cartID int
+	var paymentMethod string
+	var isPaid bool
+	err := s.db.QueryRow(acceptOrderQuery, order_id, phone).Scan(&customerID, &storeID, &paymentMethod, &isPaid, &cartID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch customer details
+	customerQuery := `SELECT name, phone, address FROM customer WHERE id = $1;`
+	orderAccepted := &OrderAccepted{}
+	err = s.db.QueryRow(customerQuery, customerID).Scan(&orderAccepted.CustomerName, &orderAccepted.CustomerPhone, &orderAccepted.CustomerAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch store address
+	storeQuery := `SELECT address FROM store WHERE id = $1;`
+	err = s.db.QueryRow(storeQuery, storeID).Scan(&orderAccepted.StoreAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the total quantity of items in the order
+	quantityQuery := `SELECT SUM(quantity) FROM cart_item WHERE cart_id = $1;`
+	var totalQuantity int
+	err = s.db.QueryRow(quantityQuery, cartID).Scan(&totalQuantity)
+	if err != nil {
+		return nil, err
+	}
+	orderAccepted.NumberOfItems = totalQuantity
+
+	// Fetch subtotal from shopping_cart if payment method is cash
+	if paymentMethod == "cash" {
+		subtotalQuery := `SELECT subtotal FROM shopping_cart WHERE id = $1;`
+		err = s.db.QueryRow(subtotalQuery, cartID).Scan(&orderAccepted.OrderAmount)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		orderAccepted.OrderAmount = 0
+	}
+
+	// Set payment method and payment status
+	orderAccepted.PaymentMethod = paymentMethod
+	orderAccepted.IsPaid = isPaid
+
+	// Add logic to get the number of items in the order
+	// Assuming you have a way to get this, for example, a query or a function
+
+	return orderAccepted, nil
+}
+
+type OrderAccepted struct {
+	CustomerAddress string  `json:"customer_address"`
+	NumberOfItems   int     `json:"number_of_items"` // Assuming you have a way to count this
+	StoreAddress    string  `json:"store_address"`
+	CustomerPhone   string  `json:"customer_phone"`
+	CustomerName    string  `json:"customer_name"`
+	PaymentMethod   string  `json:"payment_method"`
+	OrderAmount     float64 `json:"order_amount,omitempty"` // Include if payment method is cash
+	IsPaid          bool    `json:"is_paid"`
 }
 
 func (s *PostgresStore) Update_FCM_Token_Delivery_Partner(phone string, fcm_token string) (*types.Delivery_Partner, error) {

@@ -34,11 +34,24 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 		return err
 	}
 
+	// Define the ENUM type for order_status
+	orderDeliveryPartnerStatus := `DO $$ BEGIN
+        CREATE TYPE dp_status AS ENUM ('accepted', 'denied', 'pending');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`
+
+	_, err = tx.Exec(orderDeliveryPartnerStatus)
+	if err != nil {
+		return err
+	}
+
 	// Create the sales_order table with order_status field
 	query := `create table if not exists sales_order (
         id SERIAL PRIMARY KEY,
         delivery_partner_id INT REFERENCES Delivery_Partner(id) ON DELETE CASCADE,
-        cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
+        packer_id INT REFERENCES Packer(id) ON DELETE CASCADE,
+		cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
         store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
         customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
 		transaction_id INT,
@@ -46,7 +59,8 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         paid BOOLEAN NOT NULL DEFAULT false,
         payment_type payment_method DEFAULT 'cash',
         order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        order_status order_status DEFAULT 'received'
+        order_status order_status DEFAULT 'received',
+		order_dp_status dp_status DEFAULT 'pending'
     )`
 
 	_, err = tx.Exec(query)

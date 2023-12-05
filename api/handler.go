@@ -646,23 +646,108 @@ func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *h
 	workerPool := s.workerPool
 
 	if req.Method == "POST" {
-		print_path("[POST]", "delivery_partner_check_order")
+		print_path("POST", "delivery_partner_check_order")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.handleCheckAssignedOrder(res, req)
-			return worker.Result{Error: err}
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
 		}
 
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
+		// You can then create a new request body from bodyBytes to pass to your handler
+		newReq := &http.Request{
+			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
+			// ... copy other needed fields from the original request
+		}
 
-		// Wait for the result and return it
-		return <-resultChan
+		// Assuming that the request body is in JSON format, let's unmarshal it into a map
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+			return err
+		}
 
+		if len(requestBody) == 1 {
+			var task func() worker.Result
+
+			if _, ok := requestBody["phone"]; ok {
+				// If the key is delivery_partner_id
+				task = func() worker.Result {
+					// Adjust the handler function to handle requests with delivery_partner_id
+					err = s.handleCheckAssignedOrder(res, newReq)
+					return worker.Result{Error: err}
+				}
+			} else {
+				// Handle the case where the key is neither delivery_partner_id nor customer_id
+				return errors.New("invalid parameter in request body")
+			}
+
+			// Start the task in a worker and pass a callback to capture the result
+			workerPool.StartWorker(task, func(result worker.Result) {
+				resultChan <- result.Error // Send the result error to the channel
+			})
+
+			// Wait for the result and return it
+			return <-resultChan
+		}
 	}
+
+	return nil
+}
+
+func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "delivery_partner_move_order")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
+		}
+
+		// You can then create a new request body from bodyBytes to pass to your handler
+		newReq := &http.Request{
+			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
+			// ... copy other needed fields from the original request
+		}
+
+		// Assuming that the request body is in JSON format, let's unmarshal it into a map
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+			return err
+		}
+
+		if len(requestBody) == 3 {
+			var task func() worker.Result
+
+			if _, ok := requestBody["status"]; ok {
+				if _, ok := requestBody["order_id"]; ok {
+					if _, ok := requestBody["phone"]; ok {
+						// If the key is delivery_partner_id
+						task = func() worker.Result {
+							// Adjust the handler function to handle requests with delivery_partner_id
+							err = s.handleCheckAssignedOrder(res, newReq)
+							return worker.Result{Error: err}
+						}
+					}
+				}
+			} else {
+				// Handle the case where the key is neither delivery_partner_id nor customer_id
+				return errors.New("invalid parameter in request body")
+			}
+
+			// Start the task in a worker and pass a callback to capture the result
+			workerPool.StartWorker(task, func(result worker.Result) {
+				resultChan <- result.Error // Send the result error to the channel
+			})
+
+			// Wait for the result and return it
+			return <-resultChan
+		}
+	}
+
+	return nil
 }
 
 func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) error {

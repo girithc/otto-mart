@@ -106,10 +106,16 @@ func (s *Server) Handle_Get_Delivery_Partners(res http.ResponseWriter, req *http
 }
 
 func (s *Server) handleCheckAssignedOrder(res http.ResponseWriter, req *http.Request) error {
-	orders, err := s.store.Get_All_Delivery_Partners()
+	new_req := new(types.DeliveryPartnerPhone)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleCheckAssignedOrder()")
+		return err
+	}
+
+	order, err := s.store.GetFirstAssignedOrder(new_req.Phone)
 	if err != nil {
 		return err
 	}
 
-	return WriteJSON(res, http.StatusOK, orders)
+	return WriteJSON(res, http.StatusOK, order)
 }

@@ -170,6 +170,11 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Shopping Cart Table")
 
+	if err := s.CreatePackerTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Packer Table")
+
 	if err := s.CreateSalesOrderTable(tx); err != nil {
 		return err
 	}

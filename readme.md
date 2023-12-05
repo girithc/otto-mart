@@ -41,7 +41,8 @@ higher_level_category_image,
 customer,
 delivery_partner,
 shopping_cart,
-sales_order
+sales_order,
+transaction
 CASCADE;
 
 DROP TABLE IF EXISTS
