@@ -1,21 +1,23 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:pinput/pinput.dart';
 import 'package:pronto/login/verify_screen.dart';
 import 'package:pronto/utils/constants.dart';
-import 'package:http/http.dart' as http;
 
+// Main widget for phone number verification
 class MyPhone extends StatefulWidget {
-  const MyPhone({Key? key}) : super(key: key);
+  const MyPhone({super.key});
 
   @override
-  State<MyPhone> createState() => _MyPhoneState();
+  _MyPhoneState createState() => _MyPhoneState();
 }
 
 class _MyPhoneState extends State<MyPhone> {
   TextEditingController phoneNumberController = TextEditingController();
   TextEditingController countryController = TextEditingController();
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
@@ -24,9 +26,28 @@ class _MyPhoneState extends State<MyPhone> {
     super.initState();
   }
 
+  void _showDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Message"),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<String?> sendOTP(String phoneNumber) async {
     try {
-      // Define
       // Send the HTTP request to send OTP
       var url = Uri.parse('$baseUrl/send-otp');
       final Map<String, dynamic> requestData = {
@@ -35,27 +56,31 @@ class _MyPhoneState extends State<MyPhone> {
       var response = await http.post(
         url,
         body: jsonEncode(requestData),
+        headers: {"Content-Type": "application/json"},
       );
       if (response.statusCode == 200) {
-        // Successfully sent OTP, parse the response
         Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-        // Check the 'type' field in the response
         return jsonResponse['type'];
       } else {
         // Handle HTTP request error
         return response.reasonPhrase;
       }
     } catch (error) {
-      // Handle other errors
       print('Error(Send OTP): $error');
+      return null;
     }
-    return null;
+  }
+
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.deepPurpleAccent,
@@ -67,7 +92,7 @@ class _MyPhoneState extends State<MyPhone> {
             tileMode: TileMode.mirror,
           ).createShader(bounds),
           child: const Text(
-            'Pronto',
+            'Otto Mart',
             style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.bold,
@@ -112,54 +137,39 @@ class _MyPhoneState extends State<MyPhone> {
                 const SizedBox(
                   height: 30,
                 ),
-                Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                    border: Border.all(width: 1, color: Colors.grey),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 10,
+                SizedBox(
+                  height: 65,
+                  child: Pinput(
+                    length: 10, // Set the length of the input
+                    controller: phoneNumberController,
+                    pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                    onSubmitted: (pin) {
+                      // Handle submission logic here
+                    },
+                    defaultPinTheme: const PinTheme(
+                      width: 40,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        border: Border(
+                            top: BorderSide(
+                              color: Colors.black,
+                              width: 1,
+                            ),
+                            bottom: BorderSide(
+                              color: Colors.black,
+                              width: 1,
+                            ),
+                            left: BorderSide(
+                              color: Colors.deepPurpleAccent,
+                              width: 1,
+                            ),
+                            right: BorderSide(
+                              color: Colors.deepPurpleAccent,
+                              width: 1,
+                            )),
                       ),
-                      SizedBox(
-                        width: 40,
-                        child: TextField(
-                          controller: countryController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                          ),
-                        ),
-                      ),
-                      const Text(
-                        "|",
-                        style: TextStyle(fontSize: 33, color: Colors.grey),
-                      ),
-                      const SizedBox(
-                        width: 10,
-                      ),
-                      Expanded(
-                        child: TextFormField(
-                          controller: phoneNumberController,
-                          keyboardType: TextInputType.phone,
-                          decoration: const InputDecoration(
-                            border: InputBorder.none,
-                            hintText: "Phone",
-                          ),
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Phone number is required";
-                            } else if (value.length != 10) {
-                              return "Phone number must be 10 digits";
-                            }
-                            return null;
-                          },
-                        ),
-                      ),
-                    ],
+                    ),
+                    // Add more customization to Pinput as needed
                   ),
                 ),
                 const SizedBox(
@@ -176,27 +186,23 @@ class _MyPhoneState extends State<MyPhone> {
                       ),
                     ),
                     onPressed: () {
-                      if (formKey.currentState!.validate()) {
-                        // Phone number is valid, extract it and navigate to MyVerify
-                        String phoneNumber = phoneNumberController.text;
-
-                        sendOTP(phoneNumber).then((value) => {
-                              if (value == "success")
-                                {
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(const SnackBar(
-                                    content: Text('OTP sent'),
-                                    backgroundColor: Colors.green,
-                                  )),
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          MyVerify(number: phoneNumber),
-                                    ),
-                                  )
-                                }
-                            });
+                      String phoneNumber = phoneNumberController.text;
+                      if (phoneNumber.length == 10) {
+                        sendOTP(phoneNumber).then((value) {
+                          if (value == "success") {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    MyVerify(number: phoneNumber),
+                              ),
+                            );
+                          } else {
+                            _showDialog(value ?? 'Failed to send OTP');
+                          }
+                        });
+                      } else {
+                        _showDialog("Phone number must be 10 digits");
                       }
                     },
                     child: const Text(
