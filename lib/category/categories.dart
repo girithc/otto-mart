@@ -13,8 +13,7 @@ class Categories extends StatefulWidget {
 }
 
 class _CategoriesState extends State<Categories> {
-  final CategoryApiClient apiClient =
-      CategoryApiClient('https://localhost:3000');
+  final CategoryApiClient apiClient = CategoryApiClient();
   List<Category> categories = [];
 
   @override

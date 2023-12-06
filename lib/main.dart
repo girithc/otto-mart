@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:master/store/stores.dart';
 
 void main() {
@@ -96,8 +98,77 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class InventoryManagement extends StatelessWidget {
+class InventoryManagement extends StatefulWidget {
   const InventoryManagement({super.key});
+
+  @override
+  State<InventoryManagement> createState() => _InventoryManagementState();
+}
+
+class _InventoryManagementState extends State<InventoryManagement> {
+  String? _scanBarcodeResult;
+
+  Future<void> scanBarcode() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+      _showBarcodeResultDialog(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _scanBarcodeResult = barcodeScanRes;
+    });
+  }
+
+  Future<void> scanQR() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.QR);
+      _showBarcodeResultDialog(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _scanBarcodeResult = barcodeScanRes;
+    });
+  }
+
+  void _showBarcodeResultDialog(String barcodeResult) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Scan Result'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(
+                    'Barcode Type: ${barcodeResult.startsWith("http") ? "QR Code" : "Barcode"}'),
+                Text('Result: $barcodeResult'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,25 +196,21 @@ class InventoryManagement extends StatelessWidget {
         ),
         ListTile(
           leading: const CircleAvatar(
-            backgroundColor: Colors.white, //Color.fromARGB(255, 248, 219, 253),
-            child: Icon(Icons.shopping_bag_outlined),
+            backgroundColor: Colors.white, //Colors.white,
+            child: Icon(Icons.analytics_outlined),
           ),
           trailing: const Icon(Icons.arrow_forward_ios_outlined),
           title: const Text(
-            'Items',
+            'Scan Barcode',
+            style: TextStyle(color: Colors.white),
           ),
-          onTap: () => {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const Stores()),
-            )
-          },
+          onTap: scanBarcode,
           shape: ContinuousRectangleBorder(
             side: const BorderSide(width: 4, color: Colors.white),
             borderRadius: BorderRadius.circular(20),
           ),
+          tileColor: Colors.indigoAccent,
           contentPadding: const EdgeInsets.all(10),
-          tileColor: const Color.fromARGB(255, 248, 219, 253),
         ),
         ListTile(
           leading: const CircleAvatar(
@@ -151,18 +218,16 @@ class InventoryManagement extends StatelessWidget {
             child: Icon(Icons.analytics_outlined),
           ),
           trailing: const Icon(Icons.arrow_forward_ios_outlined),
-          title: const Text('Analytics'),
-          onTap: () => {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const Stores()),
-            )
-          },
+          title: const Text(
+            'Scan QR',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: scanQR,
           shape: ContinuousRectangleBorder(
             side: const BorderSide(width: 4, color: Colors.white),
             borderRadius: BorderRadius.circular(20),
           ),
-          tileColor: const Color.fromARGB(255, 248, 219, 253),
+          tileColor: Colors.indigoAccent,
           contentPadding: const EdgeInsets.all(10),
         ),
       ],

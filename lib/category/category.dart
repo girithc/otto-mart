@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:master/utils/constants.dart';
 
 class CategoryApiClient {
-  final String baseUrl;
-
-  CategoryApiClient(this.baseUrl);
+  CategoryApiClient();
 
   Future<List<Category>> fetchCategories() async {
-    var url = Uri.parse('http://localhost:3000/category');
+    var url = Uri.parse('$baseUrl/category');
 
     //var queryParams = {'id': id.toString()};
     //url = url.replace(queryParameters: queryParams);

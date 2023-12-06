@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:master/category/categories.dart';
 import 'package:master/store/store.dart';
+import 'package:master/utils/constants.dart';
 
 class Stores extends StatefulWidget {
   const Stores({super.key});
@@ -10,7 +11,7 @@ class Stores extends StatefulWidget {
 }
 
 class _StoresState extends State<Stores> {
-  final StoreApiClient apiClient = StoreApiClient('https://localhost:3000');
+  final StoreApiClient apiClient = StoreApiClient();
   List<Store> stores = [];
 
   @override

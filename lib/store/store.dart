@@ -1,14 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:master/utils/constants.dart';
 
 class StoreApiClient {
-  final String baseUrl;
-
-  StoreApiClient(this.baseUrl);
+  StoreApiClient();
 
   Future<List<Store>> fetchStores() async {
-    var url = Uri.parse('http://localhost:3000/store');
+    var url = Uri.parse('$baseUrl/store');
 
     http.Response response = await http.get(url);
 

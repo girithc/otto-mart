@@ -40,6 +40,11 @@ dependencies:
   googleapis_auth: ^1.4.1
   gcloud: ^0.8.11
   flutter_animate: ^4.2.0+1
+  connectivity_plus: ^5.0.2
+  google_fonts: ^6.1.0
+  flutter_form_builder: ^9.1.1
+  form_builder_validators: ^9.1.0
+  flutter_barcode_scanner: ^2.0.0
 
 dev_dependencies:
   flutter_test:

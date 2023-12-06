@@ -19,8 +19,7 @@ class ItemDetails extends StatefulWidget {
 
 class _ItemDetailsState extends State<ItemDetails> {
   bool isDataFetched = false; // Flag to indicate whether data is fetched
-  final ItemDetailApiClient apiClient =
-      ItemDetailApiClient('https://localhost:3000');
+  final ItemDetailApiClient apiClient = ItemDetailApiClient();
   List<Item> items = [];
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -30,13 +29,17 @@ class _ItemDetailsState extends State<ItemDetails> {
       return;
     }
     // Create an updated item based on form inputs
-    UpdateItem updatedItem = UpdateItem(
+    Item updatedItem = Item(
         id: widget.itemId,
         name: _nameController.text,
-        price: int.parse(_priceController.text),
+        mrpPrice: int.parse(_priceController.text),
         stockQuantity: int.parse(_stockQuantityController.text),
-        image: _imageController.text,
-        categoryId: items[0].categoryId);
+        images: [_imageController.text],
+        categories: items[0].categories,
+        discount: 0,
+        storePrice: 0,
+        quantity: 0,
+        unitOfQuantity: '');
 
     try {
       await apiClient
@@ -79,13 +82,13 @@ class _ItemDetailsState extends State<ItemDetails> {
       final fetchedItem = await apiClient.fetchItem(widget.itemId);
       setState(() {
         print(
-            "Fetched Item ${fetchedItem.name}, ${fetchedItem.price}, ${fetchedItem.stockQuantity}");
+            "Fetched Item ${fetchedItem.name}, ${fetchedItem.mrpPrice}, ${fetchedItem.stockQuantity}");
         //throw Exception("Debug");
         items.add(fetchedItem);
         _nameController.text = fetchedItem.name;
-        _priceController.text = fetchedItem.price.toString();
+        _priceController.text = fetchedItem.mrpPrice.toString();
         _stockQuantityController.text = fetchedItem.stockQuantity.toString();
-        _imageController.text = fetchedItem.image;
+        _imageController.text = fetchedItem.images[0];
         isDataFetched = true; // Mark data as fetched
       });
     } catch (err) {
@@ -121,102 +124,46 @@ class _ItemDetailsState extends State<ItemDetails> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      TextFormField(
+                      _buildCustomTextField(
                         controller: _nameController,
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.person),
-                          hintText: 'Enter Item Name',
-                          labelText: 'Item Name',
-                        ),
-                        //initialValue: items[0].name,
+                        icon: Icons.person,
+                        hintText: 'Enter Item Name',
+                        labelText: 'Item Name',
                       ),
-                      TextFormField(
+                      _buildCustomTextField(
                         controller: _stockQuantityController,
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.shopping_bag_outlined),
-                          hintText: 'Enter Stock Quantity',
-                          labelText: 'Stock Quantity',
-                        ),
-                        //initialValue: items[0].stockQuantity.toString(),
+                        icon: Icons.shopping_bag_outlined,
+                        hintText: 'Enter Stock Quantity',
+                        labelText: 'Stock Quantity',
                       ),
-                      TextFormField(
-                        controller: _priceController,
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.attach_money_outlined),
-                          hintText: 'Enter Item Price',
-                          labelText: 'Item Price',
-                        ),
-                        //initialValue: items[0].price.toString(),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildCustomTextField(
+                              controller: _priceController,
+                              icon: Icons.attach_money_outlined,
+                              hintText: 'Enter Item Price',
+                              labelText: 'Item Price',
+                            ),
+                          ),
+                          const SizedBox(
+                              width: 8), // Spacing between two text fields
+                          Expanded(
+                            child: _buildCustomTextField(
+                              controller:
+                                  _priceController, // Duplicate controller for demonstration
+                              icon: Icons.attach_money_outlined,
+                              hintText: 'Enter MRP Price',
+                              labelText: 'MRP Price',
+                            ),
+                          ),
+                        ],
                       ),
-                      TextFormField(
+                      _buildCustomTextField(
                         controller: _imageController,
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.person_2_outlined),
-                          hintText: 'Enter Image Link',
-                          labelText: 'Image',
-                        ),
-                      ),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.calendar_today),
-                          hintText: 'Enter Created Date',
-                          labelText: 'Created Date',
-                        ),
-                        initialValue: items[0].createdAt,
-                        enabled: false, // Make the field read-only
-                      ),
-                      TextFormField(
-                        decoration: const InputDecoration(
-                          icon: Icon(Icons.person_2_outlined),
-                          hintText: 'Enter Created By',
-                          labelText: 'Created By',
-                        ),
-                        initialValue: items[0].createdBy.toString(),
-                        enabled: false, // Make the field read-only
-                      ),
-                      Container(
-                        padding: const EdgeInsets.only(left: 150.0, top: 40.0),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (_) => CupertinoAlertDialog(
-                                title: Column(
-                                  children: [
-                                    const Text('Accept Image'),
-                                    const SizedBox(
-                                        height:
-                                            10), // Add spacing between text and image
-                                    Image.network(_imageController.text,
-                                        height: 200),
-                                  ],
-                                ),
-                                content: const Text(
-                                    'Are you sure you want to accept this image?'),
-                                actions: [
-                                  CupertinoDialogAction(
-                                    onPressed: () {
-                                      Navigator.pop(
-                                          context); // Close the dialog
-                                    },
-                                    child: const Text('Cancel'),
-                                  ),
-                                  CupertinoDialogAction(
-                                    onPressed: () {
-                                      // Perform the action you want when "Save" is pressed
-                                      _saveItem();
-                                      Navigator.pop(
-                                          context); // Close the dialog
-                                    },
-                                    child: const Text('Save'),
-                                  ),
-                                ],
-                              ),
-                              barrierDismissible: false,
-                            );
-                          },
-                          child: const Text('Save'),
-                        ),
+                        icon: Icons.image_outlined,
+                        hintText: 'Enter Image Link',
+                        labelText: 'Image',
                       ),
                       ImageUpload(
                         image: _imageController.text,
@@ -229,6 +176,40 @@ class _ItemDetailsState extends State<ItemDetails> {
       ),
     );
   }
+}
+
+Widget _buildCustomTextField({
+  required TextEditingController controller,
+  required IconData icon,
+  required String hintText,
+  required String labelText,
+}) {
+  return Container(
+    margin: const EdgeInsets.all(5),
+    decoration: BoxDecoration(
+      color: Colors.white, // Background color for the container
+      border: Border.all(color: Colors.deepPurpleAccent),
+      borderRadius: BorderRadius.circular(8.0),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.grey.withOpacity(0.5),
+          spreadRadius: 2,
+          blurRadius: 7,
+          offset: const Offset(0, 3), // changes position of shadow
+        ),
+      ],
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+    child: TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        icon: Icon(icon),
+        hintText: hintText,
+        labelText: labelText,
+        border: InputBorder.none,
+      ),
+    ),
+  );
 }
 
 class ImageUpload extends StatefulWidget {

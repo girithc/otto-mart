@@ -1,14 +1,13 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:master/utils/constants.dart';
 
 class ItemApiClient {
-  final String baseUrl;
-
-  ItemApiClient(this.baseUrl);
+  ItemApiClient();
 
   Future<List<Item>> fetchItems(int categoryId, int storeId) async {
-    var url = Uri.parse('http://localhost:3000/item');
+    var url = Uri.parse('$baseUrl/item');
 
     if (categoryId == 0 || storeId == 0) {
       throw Exception('(ItemApiClient) Parameters are not valid');
@@ -38,20 +37,38 @@ class ItemApiClient {
 class Item {
   final int id;
   final String name;
-  final int price;
+  final int mrpPrice;
+  final int discount;
+  final int storePrice;
   final int stockQuantity;
+  final String image;
+  final int quantity;
+  final String unitOfQuantity;
+  final String category;
 
   Item(
       {required this.id,
       required this.name,
-      required this.price,
-      required this.stockQuantity});
+      required this.mrpPrice,
+      required this.discount,
+      required this.storePrice,
+      required this.stockQuantity,
+      required this.image,
+      required this.quantity,
+      required this.unitOfQuantity,
+      required this.category});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
         id: json['id'],
         name: json['name'],
-        price: json['price'],
-        stockQuantity: json['stock_quantity']);
+        mrpPrice: json['mrp_price'],
+        discount: json['discount'],
+        storePrice: json['store_price'],
+        stockQuantity: json['stock_quantity'],
+        image: json['image'],
+        quantity: json['quantity'],
+        unitOfQuantity: json['unit_of_quantity'],
+        category: json['category']);
   }
 }
