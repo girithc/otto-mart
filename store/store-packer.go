@@ -67,8 +67,9 @@ func (s *PostgresStore) PackerPackOrder(cart_id int, phone string) error {
 
 	// Check if the current order_status is 'accepted'
 	var currentStatus string
-	statusCheckQuery := `SELECT order_status FROM sales_order WHERE cart_id = $1;`
-	err = s.db.QueryRow(statusCheckQuery, cart_id).Scan(&currentStatus)
+	var orderId int
+	statusCheckQuery := `SELECT id, order_status FROM sales_order WHERE cart_id = $1;`
+	err = s.db.QueryRow(statusCheckQuery, cart_id).Scan(&orderId, &currentStatus)
 	if err != nil {
 		return fmt.Errorf("error checking order status: %w", err)
 	}
@@ -79,13 +80,17 @@ func (s *PostgresStore) PackerPackOrder(cart_id int, phone string) error {
 	// Then, update the order status to 'packed'
 	packOrderQuery := `
     UPDATE sales_order
-    SET order_status = 'packed'
-    WHERE cart_id = $1 AND packer_id = $2;`
+    SET order_status = 'packed', packer_id = $1
+    WHERE cart_id = $2 AND id = $3;`
 
-	_, err = s.db.Exec(packOrderQuery, cart_id, packerID)
+	_, err = s.db.Exec(packOrderQuery, packerID, cart_id, orderId)
 	if err != nil {
 		return fmt.Errorf("error updating order status to 'packed': %w", err)
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) PackerPlaceOrder(cart_id int, phone string) (bool, error) {
+	return false, nil
 }

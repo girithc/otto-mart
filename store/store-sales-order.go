@@ -67,6 +67,42 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 	return err
 }
 
+func (s *PostgresStore) CreateOrderTimelineTable(tx *sql.Tx) error {
+	// Create the combined ENUM type
+	combinedStatusQuery := `DO $$ BEGIN
+        CREATE TYPE combined_order_status AS ENUM (
+            'received', 'accepted', 'packed', 'dispatched', 'arrived', 'completed',
+             'denied', 'pending' 
+        );
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`
+
+	_, err := tx.Exec(combinedStatusQuery)
+	if err != nil {
+		return fmt.Errorf("error creating combined_order_status ENUM type: %w", err)
+	}
+
+	// Create the order_timeline table
+	createTimelineTableQuery := `
+    CREATE TABLE IF NOT EXISTS order_timeline (
+        id SERIAL PRIMARY KEY,
+        order_id INT REFERENCES sales_order(id) ON DELETE CASCADE,
+        past_status combined_order_status,
+        current_status combined_order_status,
+        packer_id INT REFERENCES Packer(id) ON DELETE SET NULL,
+        delivery_partner_id INT REFERENCES Delivery_Partner(id) ON DELETE SET NULL,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+
+	_, err = tx.Exec(createTimelineTableQuery)
+	if err != nil {
+		return fmt.Errorf("error creating order_timeline table: %w", err)
+	}
+
+	return nil
+}
+
 func (s *PostgresStore) SetSalesOrderForeignKey(tx *sql.Tx) error {
 	// Add foreign key constraint to the already created table
 	query := `
