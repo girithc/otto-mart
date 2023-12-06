@@ -35,6 +35,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/category", makeHTTPHandleFunc(s.handleCategory))
 	http.HandleFunc("/item-store", makeHTTPHandleFunc(s.handleItemStore))
+	http.HandleFunc("/item-update", makeHTTPHandleFunc(s.handleItemUpdate))
 	http.HandleFunc("/item", makeHTTPHandleFunc(s.handleItem))
 	http.HandleFunc("/search-item", makeHTTPHandleFunc(s.handleSearchItem))
 

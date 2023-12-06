@@ -27,6 +27,7 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 		name VARCHAR(100) NOT NULL UNIQUE,
 		brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
 		quantity INT NOT NULL,
+		barcode VARCHAR(15) UNIQUE, 
 		unit_of_quantity unit_enum,
 		description TEXT DEFAULT 'description',
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -653,4 +654,31 @@ func (s *PostgresStore) AddStockToItem() ([]*types.Get_Item, error) {
 	}
 
 	return items, nil
+}
+
+func (s *PostgresStore) AddBarcodeToItem(barcode string, item_id int) (bool, error) {
+    // Prepare the SQL query to update the item
+    query := `UPDATE item SET barcode = $1 WHERE id = $2`
+
+    // Execute the query with the provided barcode and item_id
+    result, err := s.db.Exec(query, barcode, item_id)
+    if err != nil {
+        // If there is an error executing the query, return false and the error
+        return false, fmt.Errorf("error updating item barcode: %w", err)
+    }
+
+    // Check how many rows were affected
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        // If there is an error checking the rows affected, return false and the error
+        return false, fmt.Errorf("error getting rows affected: %w", err)
+    }
+
+    // If no rows were affected, return false and no error
+    if rowsAffected == 0 {
+        return false, nil
+    }
+
+    // If the update was successful, return true and no error
+    return true, nil
 }
