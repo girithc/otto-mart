@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:master/item-detail/api.dart';
 import 'package:master/item-detail/item-detail.dart';
@@ -31,6 +32,7 @@ class _ItemDetailsState extends State<ItemDetails> {
     // Create an updated item based on form inputs
     Item updatedItem = Item(
         id: widget.itemId,
+        barcode: items[0].barcode,
         name: _nameController.text,
         mrpPrice: int.parse(_priceController.text),
         stockQuantity: int.parse(_stockQuantityController.text),
@@ -56,11 +58,54 @@ class _ItemDetailsState extends State<ItemDetails> {
     }
   }
 
+  Future<void> _showEditBarcodeDialog() async {
+    TextEditingController barcodeEditController =
+        TextEditingController(text: _imageController.text);
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button to close the dialog
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Barcode'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextFormField(
+                  controller: barcodeEditController,
+                  decoration: const InputDecoration(hintText: 'Enter Barcode'),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                setState(() {
+                  _imageController.text = barcodeEditController.text;
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _stockQuantityController =
       TextEditingController();
   final TextEditingController _imageController = TextEditingController();
+  final TextEditingController _barcodeController = TextEditingController();
 
   @override
   void initState() {
@@ -73,6 +118,7 @@ class _ItemDetailsState extends State<ItemDetails> {
     _nameController.dispose();
     _priceController.dispose();
     _stockQuantityController.dispose();
+    _barcodeController.dispose();
     _imageController.dispose();
     super.dispose();
   }
@@ -88,6 +134,7 @@ class _ItemDetailsState extends State<ItemDetails> {
         _nameController.text = fetchedItem.name;
         _priceController.text = fetchedItem.mrpPrice.toString();
         _stockQuantityController.text = fetchedItem.stockQuantity.toString();
+        _barcodeController.text = fetchedItem.barcode;
         _imageController.text = fetchedItem.images[0];
         isDataFetched = true; // Mark data as fetched
       });
@@ -98,6 +145,174 @@ class _ItemDetailsState extends State<ItemDetails> {
       });
       print('(itemdetails)fetchItems error $err');
     }
+  }
+
+  Future<bool> addBarcode() async {
+    try {
+      final fetchedItem =
+          await apiClient.addBarcode(widget.itemId, _barcodeController.text);
+      setState(() {
+        print(
+            "Fetched Item ${fetchedItem.name}, ${fetchedItem.mrpPrice}, ${fetchedItem.stockQuantity}");
+        //throw Exception("Debug");
+        items.add(fetchedItem);
+        _nameController.text = fetchedItem.name;
+        _priceController.text = fetchedItem.mrpPrice.toString();
+        _stockQuantityController.text = fetchedItem.stockQuantity.toString();
+        _imageController.text = fetchedItem.images[0];
+        _barcodeController.text = fetchedItem.barcode;
+        isDataFetched = true; // Mark data as fetched
+      });
+
+      return true;
+    } catch (err) {
+      //Handle Error
+      setState(() {
+        items = [];
+      });
+      print('(itemdetails)fetchItems error $err');
+      return false;
+    }
+  }
+
+  String? _scanBarcodeResult;
+
+  Future<void> scanBarcode() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+      setState(() {
+        _scanBarcodeResult = barcodeScanRes;
+        _barcodeController.text = barcodeScanRes;
+      });
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    addBarcode().then(
+      (success) => {
+        Navigator.of(context).pop(),
+        if (!success) {_showErrorDialog('Error in saving barcode.')}
+      },
+    );
+
+    if (!mounted) return;
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(message),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showEditFieldDialog(
+      TextEditingController controller, String title) async {
+    TextEditingController editController =
+        TextEditingController(text: controller.text);
+
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit $title'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                TextFormField(
+                  controller: editController,
+                  decoration: InputDecoration(hintText: 'Enter $title'),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            title == "Barcode"
+                ? TextButton(
+                    onPressed: scanBarcode, child: const Text('Change'))
+                : const SizedBox.shrink(),
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                setState(() {
+                  controller.text = editController.text;
+                });
+                title == "Barcode" ? null : Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildCustomTextField({
+    required TextEditingController controller,
+    required IconData icon,
+    required String hintText,
+    required String labelText,
+  }) {
+    return InkWell(
+      onTap: () => _showEditFieldDialog(controller, labelText),
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.deepPurpleAccent),
+          borderRadius: BorderRadius.circular(8.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.3),
+              spreadRadius: 2,
+              blurRadius: 7,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+        child: TextFormField(
+          controller: controller,
+          decoration: InputDecoration(
+            icon: Icon(icon, color: Colors.deepPurpleAccent),
+            hintText: hintText,
+            labelText: labelText,
+            border: InputBorder.none,
+          ),
+          style:
+              const TextStyle(color: Colors.black), // Set text color to black
+          enabled: false, // Disable editing directly in the text field
+        ),
+      ),
+    );
   }
 
   @override
@@ -160,13 +375,16 @@ class _ItemDetailsState extends State<ItemDetails> {
                         ],
                       ),
                       _buildCustomTextField(
+                        controller: _barcodeController,
+                        icon: Icons.barcode_reader,
+                        hintText: 'Barcode',
+                        labelText: 'Barcode',
+                      ),
+                      _buildCustomTextField(
                         controller: _imageController,
                         icon: Icons.image_outlined,
                         hintText: 'Enter Image Link',
                         labelText: 'Image',
-                      ),
-                      ImageUpload(
-                        image: _imageController.text,
                       ),
                     ],
                   ),
@@ -176,40 +394,6 @@ class _ItemDetailsState extends State<ItemDetails> {
       ),
     );
   }
-}
-
-Widget _buildCustomTextField({
-  required TextEditingController controller,
-  required IconData icon,
-  required String hintText,
-  required String labelText,
-}) {
-  return Container(
-    margin: const EdgeInsets.all(5),
-    decoration: BoxDecoration(
-      color: Colors.white, // Background color for the container
-      border: Border.all(color: Colors.deepPurpleAccent),
-      borderRadius: BorderRadius.circular(8.0),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.grey.withOpacity(0.5),
-          spreadRadius: 2,
-          blurRadius: 7,
-          offset: const Offset(0, 3), // changes position of shadow
-        ),
-      ],
-    ),
-    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-    child: TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        icon: Icon(icon),
-        hintText: hintText,
-        labelText: labelText,
-        border: InputBorder.none,
-      ),
-    ),
-  );
 }
 
 class ImageUpload extends StatefulWidget {

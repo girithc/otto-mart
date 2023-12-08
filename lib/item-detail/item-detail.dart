@@ -32,6 +32,62 @@ class ItemDetailApiClient {
     }
   }
 
+  Future<Item> addBarcode(int itemId, String barcode) async {
+    var url = Uri.parse('$baseUrl/item-update');
+
+    if (itemId == 0 || barcode.isEmpty) {
+      throw Exception('Invalid parameters');
+    }
+
+    Map<String, String> headers = {'Content-Type': 'application/json'};
+    Map<String, dynamic> body = {
+      'item_id': itemId,
+      'barcode': barcode,
+    };
+
+    http.Response response = await http.post(
+      url,
+      headers: headers,
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final dynamic jsonData = json.decode(response.body);
+      final Item item = Item.fromJson(jsonData);
+
+      print("Item Updated: ${item.name}");
+      return item;
+    } else {
+      throw Exception('Failed to update item');
+    }
+  }
+
+  Future<ItemTruncated> fetchItemFromBarcode(String barcode) async {
+    var url = Uri.parse('$baseUrl/item');
+
+    if (barcode.isEmpty) {
+      throw Exception('(ItemDetailApiClient) Parameters are not valid');
+    }
+
+    var queryParams = {
+      'barcode': barcode,
+    };
+    url = url.replace(queryParameters: queryParams);
+
+    print("Query Params $queryParams");
+    http.Response response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final dynamic jsonData = json.decode(response.body);
+      final ItemTruncated item = ItemTruncated.fromJson(jsonData);
+
+      print("Item: ${item.name}");
+      return item;
+    } else {
+      throw Exception('Failed to load items');
+    }
+  }
+
   Future<Item> editItem(Item item) async {
     var url = Uri.parse(
         '$baseUrl/item'); // Assuming the endpoint expects the ID in the URL
@@ -78,6 +134,7 @@ class Item {
   final int quantity;
   final String unitOfQuantity;
   final List<String> categories;
+  final String barcode;
 
   Item(
       {required this.id,
@@ -89,21 +146,22 @@ class Item {
       required this.images,
       required this.quantity,
       required this.unitOfQuantity,
-      required this.categories});
+      required this.categories,
+      required this.barcode});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      mrpPrice: json['mrp_price'] as int,
-      discount: json['discount'] as int,
-      storePrice: json['store_price'] as int,
-      stockQuantity: json['stock_quantity'] as int,
-      images: List<String>.from(json['images']),
-      quantity: json['quantity'] as int,
-      unitOfQuantity: json['unit_of_quantity'] as String,
-      categories: List<String>.from(json['categories']),
-    );
+        id: json['id'] as int,
+        name: json['name'] as String,
+        mrpPrice: json['mrp_price'] as int,
+        discount: json['discount'] as int,
+        storePrice: json['store_price'] as int,
+        stockQuantity: json['stock_quantity'] as int,
+        images: List<String>.from(json['images']),
+        quantity: json['quantity'] as int,
+        unitOfQuantity: json['unit_of_quantity'] as String,
+        categories: List<String>.from(json['categories']),
+        barcode: json['barcode'] as String);
   }
 
   Map<String, dynamic> toJson() {
@@ -118,6 +176,47 @@ class Item {
       'quantity': quantity,
       'unitOfQuantity': unitOfQuantity,
       'categories': categories,
+      'barcode': barcode
+    };
+  }
+}
+
+class ItemTruncated {
+  final int id;
+  final String name;
+  final int mrpPrice;
+  final String unitOfQuantity;
+  final int quantity;
+  final List<String> imageURLs;
+
+  ItemTruncated({
+    required this.id,
+    required this.name,
+    required this.mrpPrice,
+    required this.unitOfQuantity,
+    required this.quantity,
+    required this.imageURLs,
+  });
+
+  factory ItemTruncated.fromJson(Map<String, dynamic> json) {
+    return ItemTruncated(
+      id: json['id'] as int,
+      name: json['name'] as String,
+      mrpPrice: json['mrp_price'] as int,
+      unitOfQuantity: json['unit_of_quantity'] as String,
+      quantity: json['quantity'] as int,
+      imageURLs: List<String>.from(json['images']),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'mrp_price': mrpPrice,
+      'unit_of_quantity': unitOfQuantity,
+      'quantity': quantity,
+      'images': imageURLs,
     };
   }
 }

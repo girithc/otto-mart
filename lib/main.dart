@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:master/item-detail/item-detail.dart';
+import 'package:master/stock/add-stock.dart';
 import 'package:master/store/stores.dart';
 
 void main() {
@@ -106,6 +108,8 @@ class InventoryManagement extends StatefulWidget {
 }
 
 class _InventoryManagementState extends State<InventoryManagement> {
+  final ItemDetailApiClient apiClient = ItemDetailApiClient();
+
   String? _scanBarcodeResult;
 
   Future<void> scanBarcode() async {
@@ -113,16 +117,28 @@ class _InventoryManagementState extends State<InventoryManagement> {
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.BARCODE);
-      _showBarcodeResultDialog(barcodeScanRes);
+      setState(() {
+        _scanBarcodeResult = barcodeScanRes;
+      });
+      //_showBarcodeResultDialog(barcodeScanRes);
     } on PlatformException {
       barcodeScanRes = 'Failed to get platform version';
       // TODO
     }
 
+    if (_scanBarcodeResult != '-1') {
+      apiClient.fetchItemFromBarcode(_scanBarcodeResult!).then((success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AddStock(item: success)),
+        );
+      }, onError: (error) {
+        // Handle error here if fetchItemFromBarcode fails
+        print("Error fetching item: $error");
+      });
+    }
+
     if (!mounted) return;
-    setState(() {
-      _scanBarcodeResult = barcodeScanRes;
-    });
   }
 
   Future<void> scanQR() async {
@@ -205,6 +221,24 @@ class _InventoryManagementState extends State<InventoryManagement> {
             style: TextStyle(color: Colors.white),
           ),
           onTap: scanBarcode,
+          shape: ContinuousRectangleBorder(
+            side: const BorderSide(width: 4, color: Colors.white),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          tileColor: Colors.indigoAccent,
+          contentPadding: const EdgeInsets.all(10),
+        ),
+        ListTile(
+          leading: const CircleAvatar(
+            backgroundColor: Colors.white, //Colors.white,
+            child: Icon(Icons.analytics_outlined),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios_outlined),
+          title: const Text(
+            'Scan QR',
+            style: TextStyle(color: Colors.white),
+          ),
+          onTap: scanQR,
           shape: ContinuousRectangleBorder(
             side: const BorderSide(width: 4, color: Colors.white),
             borderRadius: BorderRadius.circular(20),
