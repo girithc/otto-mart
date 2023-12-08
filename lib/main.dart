@@ -9,6 +9,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/no_internet.dart';
 import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
@@ -43,6 +44,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     isLoggedIn = widget.initialCustomerId != null;
+    showAddress = true;
   }
 
   @override
