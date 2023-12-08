@@ -355,7 +355,7 @@ func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) er
 	workerPool := s.workerPool
 
 	if req.Method == "POST" {
-		print_path("POST", "item_store")
+		print_path("POST", "item_update")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		// Check the content of the request body to determine which handler to invoke
@@ -382,9 +382,16 @@ func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) er
 		// Check if only 'customer_id' is present in the request body
 
 		if len(requestBody) == 2 { // is default
-			task = func() worker.Result {
-				err := s.Handle_Create_Item(res, newReq)
-				return worker.Result{Error: err}
+			if _, barcodeOk := requestBody["barcode"].(string); barcodeOk {
+				task = func() worker.Result {
+					err := s.HandleUpdateItemBarcode(res, newReq)
+					return worker.Result{Error: err}
+				}
+			} else if _, addStockOk := requestBody["add_stock"].(float64); addStockOk {
+				task = func() worker.Result {
+					err := s.HandleUpdateItemAddStock(res, newReq)
+					return worker.Result{Error: err}
+				}
 			}
 		}
 

@@ -410,21 +410,21 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 	return items, nil
 }
 
-func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item, error) {
+func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item_Barcode, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, fmt.Errorf("error starting transaction: %w", err)
 	}
 	defer tx.Rollback()
 
-	item := &types.Get_Item{}
+	item := &types.Get_Item_Barcode{}
 
 	// Get basic item data, brand name, and description
-	query := `SELECT i.id, i.name, i.quantity, i.unit_of_quantity, b.name, i.description, i.created_at, i.created_by FROM item i
+	query := `SELECT i.id, i.name, i.quantity, i.unit_of_quantity, b.name, i.description, i.created_at, i.created_by, i.barcode FROM item i
               LEFT JOIN brand b ON i.brand_id = b.id
               WHERE i.id = $1`
 	row := tx.QueryRow(query, id)
-	if err := row.Scan(&item.ID, &item.Name, &item.Quantity, &item.Unit_Of_Quantity, &item.Brand, &item.Description, &item.Created_At, &item.Created_By); err != nil {
+	if err := row.Scan(&item.ID, &item.Name, &item.Quantity, &item.Unit_Of_Quantity, &item.Brand, &item.Description, &item.Created_At, &item.Created_By, &item.Barcode); err != nil {
 		return nil, err
 	}
 
@@ -657,28 +657,111 @@ func (s *PostgresStore) AddStockToItem() ([]*types.Get_Item, error) {
 }
 
 func (s *PostgresStore) AddBarcodeToItem(barcode string, item_id int) (bool, error) {
-    // Prepare the SQL query to update the item
-    query := `UPDATE item SET barcode = $1 WHERE id = $2`
+	// Prepare the SQL query to update the item
+	query := `UPDATE item SET barcode = $1 WHERE id = $2`
 
-    // Execute the query with the provided barcode and item_id
-    result, err := s.db.Exec(query, barcode, item_id)
-    if err != nil {
-        // If there is an error executing the query, return false and the error
-        return false, fmt.Errorf("error updating item barcode: %w", err)
-    }
+	// Execute the query with the provided barcode and item_id
+	result, err := s.db.Exec(query, barcode, item_id)
+	if err != nil {
+		// If there is an error executing the query, return false and the error
+		return false, fmt.Errorf("error updating item barcode: %w", err)
+	}
 
-    // Check how many rows were affected
-    rowsAffected, err := result.RowsAffected()
-    if err != nil {
-        // If there is an error checking the rows affected, return false and the error
-        return false, fmt.Errorf("error getting rows affected: %w", err)
-    }
+	// Check how many rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// If there is an error checking the rows affected, return false and the error
+		return false, fmt.Errorf("error getting rows affected: %w", err)
+	}
 
-    // If no rows were affected, return false and no error
-    if rowsAffected == 0 {
-        return false, nil
-    }
+	// If no rows were affected, return false and no error
+	if rowsAffected == 0 {
+		return false, nil
+	}
 
-    // If the update was successful, return true and no error
-    return true, nil
+	// If the update was successful, return true and no error
+	return true, nil
+}
+
+func (s *PostgresStore) AddStockUpdateItem(add_stock int, item_id int) (bool, error) {
+	// Prepare the SQL query to update the item
+	query := `UPDATE item_store SET stock_quantity = stock_quantity + $1 WHERE item_id = $2`
+
+	result, err := s.db.Exec(query, add_stock, item_id)
+	if err != nil {
+		return false, fmt.Errorf("error updating item add stock: %w", err)
+	}
+
+	// Check how many rows were affected
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		// If there is an error checking the rows affected, return false and the error
+		return false, fmt.Errorf("error getting rows affected: %w", err)
+	}
+
+	// If no rows were affected, return false and no error
+	if rowsAffected == 0 {
+		return false, nil
+	}
+
+	// If the update was successful, return true and no error
+	return true, nil
+}
+
+// Define a struct to hold the item data
+type ItemData struct {
+	ID             int      `json:"id"`
+	Name           string   `json:"name"`
+	MRPPrice       int      `json:"mrp_price"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	Quantity       int      `json:"quantity"`
+	Images         []string `json:"images"`
+}
+
+func (s *PostgresStore) GetItemFromBarcode(barcode string) (*ItemData, error) {
+	// SQL query to get item details and MRP price
+	itemQuery := `
+		SELECT i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity
+		FROM item i
+		INNER JOIN item_store istore ON i.id = istore.item_id
+		WHERE i.barcode = $1
+	`
+
+	// Query the item table
+	var itemData ItemData
+	err := s.db.QueryRow(itemQuery, barcode).Scan(&itemData.ID, &itemData.Name, &itemData.MRPPrice, &itemData.UnitOfQuantity, &itemData.Quantity)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no item found with barcode %s", barcode)
+		}
+		return nil, fmt.Errorf("error querying item table: %w", err)
+	}
+
+	// SQL query to get item image URLs
+	imageQuery := `
+		SELECT image_url
+		FROM item_image
+		WHERE item_id = (SELECT id FROM item WHERE barcode = $1)
+		ORDER BY order_position
+	`
+
+	// Query the item_image table
+	rows, err := s.db.Query(imageQuery, barcode)
+	if err != nil {
+		return nil, fmt.Errorf("error querying item_image table: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var imageURL string
+		if err := rows.Scan(&imageURL); err != nil {
+			return nil, fmt.Errorf("error scanning item_image row: %w", err)
+		}
+		itemData.Images = append(itemData.Images, imageURL)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error in item_image rows: %w", err)
+	}
+
+	return &itemData, nil
 }

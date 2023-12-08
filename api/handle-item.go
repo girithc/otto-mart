@@ -51,11 +51,23 @@ func (s *Server) Handle_Get_Items(res http.ResponseWriter, req *http.Request) er
 	if category_id == "" && store_id == "" {
 		item_id := req.URL.Query().Get("item_id")
 		if item_id == "" {
-			items, err := s.store.GetItems()
+			barcode := req.URL.Query().Get("barcode")
+			if barcode == "" {
+				items, err := s.store.GetItems()
+				if err != nil {
+					return err
+				}
+				return WriteJSON(res, http.StatusOK, items)
+			}
+
+			// Create the new item using the provided CreateItem function
+			item, err := s.store.GetItemFromBarcode(barcode)
 			if err != nil {
 				return err
 			}
-			return WriteJSON(res, http.StatusOK, items)
+
+			// Return the newly created item as a JSON response
+			return WriteJSON(res, http.StatusOK, item)
 		}
 
 		itemID, err := strconv.Atoi(item_id)

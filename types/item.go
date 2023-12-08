@@ -43,6 +43,26 @@ type Get_Item struct {
 	Created_By       int       `json:"created_by"`
 }
 
+type Get_Item_Barcode struct {
+	ID               int       `json:"id"`
+	Name             string    `json:"name"`
+	MRP_Price        float64   `json:"mrp_price"`
+	Discount         float64   `json:"discount"`
+	Store_Price      float64   `json:"store_price"`
+	Description      string    `json:"description"`
+	Stores           []string  `json:"stores"`
+	Categories       []string  `json:"categories"`
+	Stock_Quantity   int       `json:"stock_quantity"`
+	Locked_Quantity  int       `json:"locked_quantity"`
+	Images           []string  `json:"images"`
+	Brand            string    `json:"brand"`
+	Quantity         int       `json:"quantity"`
+	Unit_Of_Quantity string    `json:"unit_of_quantity"`
+	Created_At       time.Time `json:"created_at"`
+	Created_By       int       `json:"created_by"`
+	Barcode          string    `json:"barcode"`
+}
+
 type Create_Item struct {
 	Name             string   `json:"name"`
 	MRP_Price        float64  `json:"mrp_price"`
