@@ -40,10 +40,12 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final bool _bottomSheetShown = false;
 
   List<Category> categories = [];
   List<Category> promotions = [];
   List<Address> addresses = [];
+  Address? defaultAddress;
 
   late AnimationController _buttonController;
   late Animation<Color?> _colorAnim;
@@ -69,15 +71,11 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
     print("Show Address: $showAddress");
 
-    _checkAddressAndLoginStatus();
     fetchCategories();
     fetchPromotions();
+
+    _checkAddressAndLoginStatus();
     retrieveCustomerInfo();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (showAddress) {
-        _showBottomSheet();
-      }
-    });
   }
 
   Future<void> retrieveCustomerInfo() async {
@@ -182,7 +180,7 @@ class _MyHomePageState extends State<MyHomePage>
         final List<Address> items =
             jsonData.map((item) => Address.fromJson(item)).toList();
         setState(() {
-          //print("Success");
+          print("Success $addresses");
           addresses = items;
           isLoadingGetAddress = false;
         });
@@ -257,18 +255,29 @@ class _MyHomePageState extends State<MyHomePage>
     var request = http.Request('POST', Uri.parse('$baseUrl/address'));
     String? storedCustomerId = await storage.read(key: 'customerId');
 
-    request.body = json.encode(
-        {"customer_id": int.parse(storedCustomerId!), "is_default": true});
+    final Map<String, dynamic> body = {
+      "customer_id": int.parse(storedCustomerId!),
+      "is_default": true // Replace with the actual customer_id value
+    };
     request.headers.addAll(headers);
 
-    http.StreamedResponse response = await request.send();
+    // Send the HTTP POST request
+    final http.Response response = await http.post(
+      Uri.parse("$baseUrl/address"),
+      headers: headers,
+      body: jsonEncode(body), // Convert the Map to a JSON string
+    );
 
     if (response.statusCode == 200) {
-      print(await response.stream.bytesToString());
+      final List<dynamic> jsonData = json.decode(response.body);
+      final List<Address> items =
+          jsonData.map((item) => Address.fromJson(item)).toList();
+      //print("Address: $jsonData");
       setState(() {
         isLoading = false;
-        print("Address Fetched");
+        print("Address Fetched ${items[0]}");
         showDialogVisible = false;
+        defaultAddress = items[0];
       });
     } else {
       setState(() {
@@ -281,144 +290,7 @@ class _MyHomePageState extends State<MyHomePage>
     // Update the state to indicate loading is complete
   }
 
-  void _showBottomSheet() {
-    var cart = Provider.of<CartModel>(context, listen: false);
-
-    getAllAddresses().then((_) {
-      showModalBottomSheet(
-        context: context,
-        isDismissible: false, // Prevent dismissing by tapping outside
-        enableDrag: false,
-        builder: (BuildContext context) {
-          return StatefulBuilder(
-            builder: (BuildContext context, StateSetter modalSetState) {
-              return Container(
-                padding: const EdgeInsets.all(10),
-                height: MediaQuery.of(context).size.height * 0.65,
-                width: MediaQuery.of(context).size.width * 0.95,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const Text(
-                      "Change Address",
-                      style: TextStyle(fontSize: 24),
-                    ),
-                    const Divider(),
-                    Expanded(
-                      child: isLoadingGetAddress
-                          ? ListView.builder(
-                              itemCount:
-                                  5, // Display 5 skeleton items for example
-                              itemBuilder: (BuildContext context, int index) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10.0, horizontal: 15.0),
-                                  child: Container(
-                                    height: 20.0, // Height of the skeleton item
-                                    width: double.infinity,
-                                    color: Colors.grey[
-                                        300], // Light grey color for the skeleton
-                                  ),
-                                );
-                              },
-                            )
-                          : ListView.builder(
-                              itemCount: addresses.length +
-                                  2, // Two more than the addresses for the 'add' option and the current address
-                              itemBuilder: (BuildContext context, int index) {
-                                if (index == 0) {
-                                  return ListTile(
-                                    // <-- You missed the return here
-                                    leading:
-                                        const Icon(Icons.add), // An add icon
-                                    title: const Text("Add New Address"),
-                                    onTap: () {
-                                      Navigator.of(context)
-                                          .pushReplacement(MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AddressScreen(),
-                                      ));
-                                    },
-                                  );
-                                } else if (index == 1) {
-                                  // Display the current address
-                                  return ListTile(
-                                    leading: const Text("Current"),
-                                    title: Text(
-                                      cart.deliveryAddress.streetAddress,
-                                      style:
-                                          const TextStyle(color: Colors.black),
-                                    ),
-                                  );
-                                } else {
-                                  return RadioListTile<int>(
-                                    value: index - 2,
-                                    groupValue: selectedAddressIndex,
-                                    onChanged: (int? value) {
-                                      modalSetState(() {
-                                        selectedAddressIndex = value;
-                                      });
-                                    },
-                                    title: Text(
-                                        addresses[index - 2].streetAddress),
-                                  );
-                                }
-                              },
-                            ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          String snackBarMessage;
-                          if (selectedAddressIndex != null &&
-                              selectedAddressIndex! < addresses.length) {
-                            setDefaultAddress(
-                                    addresses[selectedAddressIndex!].id)
-                                .then((address) => {
-                                      if (address != null)
-                                        {cart.deliveryAddress = address}
-                                    });
-                            snackBarMessage =
-                                'Default address set to: ${addresses[selectedAddressIndex!].streetAddress}';
-                          } else {
-                            snackBarMessage = 'No address selected';
-                          }
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(snackBarMessage),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-
-                          Navigator.pop(context); // Close the bottom sheet
-                        } catch (error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to set default address'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      child: const Text("Make Default Address"),
-                    ),
-                    ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context); // Close the bottom sheet
-                      },
-                      child: const Text("Done"),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      );
-    });
-  }
+  Future<void> getDefaultAddress() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -439,18 +311,6 @@ class _MyHomePageState extends State<MyHomePage>
                   SliverToBoxAdapter(
                     child: Consumer<CartModel>(
                       builder: (context, cart, child) {
-                        //print("Address : ${cart.deliveryAddress.streetAddress}");
-                        //print("Cart (in scaffold) : ${cart.deliveryAddress}");
-
-                        if (showDialogVisible) {
-                          // Show the dialog only when showDialogVisible is true
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (_isMounted) {
-                              // Check if state is still mounted
-                              _showMyDialog(context);
-                            }
-                          });
-                        }
                         return Column(
                           children: [
                             // Your other body content
@@ -470,7 +330,9 @@ class _MyHomePageState extends State<MyHomePage>
                                           // When getAllAddresses completes execution
                                           showModalBottomSheet(
                                             context: context,
-                                            isDismissible: true,
+                                            isDismissible:
+                                                true, // Prevent dismissing by tapping outside
+                                            enableDrag: false,
                                             builder: (BuildContext context) {
                                               return StatefulBuilder(
                                                 builder: (BuildContext context,
@@ -483,12 +345,24 @@ class _MyHomePageState extends State<MyHomePage>
                                                         MediaQuery.of(context)
                                                                 .size
                                                                 .height *
-                                                            0.65,
+                                                            0.5,
                                                     width:
                                                         MediaQuery.of(context)
                                                                 .size
                                                                 .width *
-                                                            0.95,
+                                                            0.90,
+                                                    decoration:
+                                                        const BoxDecoration(
+                                                      // other decoration properties like color, border, etc.
+                                                      color: Colors.white,
+                                                      borderRadius:
+                                                          BorderRadius.only(
+                                                        topLeft: Radius.circular(
+                                                            10), // Adjust the radius as needed
+                                                        topRight: Radius.circular(
+                                                            10), // Adjust the radius as needed
+                                                      ),
+                                                    ),
                                                     child: Column(
                                                       mainAxisAlignment:
                                                           MainAxisAlignment
@@ -497,12 +371,56 @@ class _MyHomePageState extends State<MyHomePage>
                                                           CrossAxisAlignment
                                                               .center,
                                                       children: [
-                                                        const Text(
-                                                          "Change Address",
-                                                          style: TextStyle(
-                                                              fontSize: 24),
+                                                        Container(
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.80,
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  vertical: 12,
+                                                                  horizontal:
+                                                                      30),
+                                                          decoration:
+                                                              BoxDecoration(
+                                                            color: Colors
+                                                                .white, // Grey background
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .circular(
+                                                                        10), // Rounded corners
+                                                            border: Border.all(
+                                                              color: Colors
+                                                                  .deepPurpleAccent, // Border color
+                                                              width:
+                                                                  1.0, // Border width
+                                                            ),
+                                                            boxShadow: [
+                                                              BoxShadow(
+                                                                color: Colors
+                                                                    .black
+                                                                    .withOpacity(
+                                                                        0.2), // Shadow color
+                                                                spreadRadius: 1,
+                                                                blurRadius: 5,
+                                                                offset: const Offset(
+                                                                    0,
+                                                                    3), // Changes position of shadow
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          child: const Center(
+                                                            child: Text(
+                                                              "Select Address",
+                                                              style: TextStyle(
+                                                                  fontSize: 24),
+                                                            ),
+                                                          ),
                                                         ),
-                                                        const Divider(),
+                                                        const SizedBox(
+                                                            height: 5),
                                                         Expanded(
                                                           child:
                                                               isLoadingGetAddress
@@ -595,38 +513,60 @@ class _MyHomePageState extends State<MyHomePage>
                                                                   selectedAddressIndex! <
                                                                       addresses
                                                                           .length) {
+                                                                showAddress =
+                                                                    false;
                                                                 setDefaultAddress(
                                                                         addresses[selectedAddressIndex!]
                                                                             .id)
                                                                     .then(
-                                                                        (address) =>
-                                                                            {
-                                                                              if (address != null)
-                                                                                {
-                                                                                  cart.deliveryAddress = address
-                                                                                }
-                                                                            });
+                                                                        (address) {
+                                                                  if (address !=
+                                                                      null) {
+                                                                    cart.deliveryAddress =
+                                                                        address;
+                                                                  }
+                                                                });
                                                                 snackBarMessage =
-                                                                    'Default address set to: ${addresses[selectedAddressIndex!].streetAddress}';
+                                                                    'Delivery address set to: ${addresses[selectedAddressIndex!].streetAddress}';
+                                                                Navigator.pop(
+                                                                    context);
+                                                                ScaffoldMessenger.of(
+                                                                        context)
+                                                                    .showSnackBar(
+                                                                  SnackBar(
+                                                                    content: Text(
+                                                                        snackBarMessage),
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .green,
+                                                                  ),
+                                                                );
                                                               } else {
                                                                 snackBarMessage =
-                                                                    'No address selected';
+                                                                    'No Address Selected';
+                                                                if (!mounted) {
+                                                                  return; // Check if the widget is still mounted
+                                                                }
+                                                                showDialog(
+                                                                    context:
+                                                                        context,
+                                                                    builder:
+                                                                        (context) {
+                                                                      Future.delayed(
+                                                                          const Duration(
+                                                                              seconds: 1),
+                                                                          () {
+                                                                        Navigator.of(context)
+                                                                            .pop(true);
+                                                                      });
+                                                                      return const AlertDialog(
+                                                                        title: Text(
+                                                                            'No Address Selected'),
+                                                                      );
+                                                                    });
                                                               }
 
-                                                              ScaffoldMessenger
-                                                                      .of(context)
-                                                                  .showSnackBar(
-                                                                SnackBar(
-                                                                  content: Text(
-                                                                      snackBarMessage),
-                                                                  backgroundColor:
-                                                                      Colors
-                                                                          .green,
-                                                                ),
-                                                              );
-
-                                                              Navigator.pop(
-                                                                  context); // Close the bottom sheet
+                                                              // Close the bottom sheet
                                                             } catch (error) {
                                                               ScaffoldMessenger
                                                                       .of(context)
@@ -641,8 +581,35 @@ class _MyHomePageState extends State<MyHomePage>
                                                               );
                                                             }
                                                           },
+                                                          style: ElevatedButton
+                                                              .styleFrom(
+                                                            foregroundColor:
+                                                                Colors.white,
+                                                            backgroundColor: Colors
+                                                                .deepPurpleAccent, // Button color
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8), // Smaller rounded corners for a squarish look
+                                                            ),
+                                                            elevation:
+                                                                5, // Floating effect
+                                                            padding:
+                                                                const EdgeInsets
+                                                                    .symmetric(
+                                                              horizontal:
+                                                                  35, // Slightly more horizontal padding
+                                                              vertical:
+                                                                  18, // Slightly more vertical padding
+                                                            ),
+                                                          ),
                                                           child: const Text(
-                                                              "Make Default Address"),
+                                                              "Deliver To Address"),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 5,
                                                         )
                                                       ],
                                                     ),
@@ -879,107 +846,207 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  Future<void> _showMyDialog(BuildContext context) async {
-    if (showDialogVisible) {
-      return showDialog<void>(
+  Future<void> _showBottomSheet(BuildContext context, CartModel cart) async {
+    //var cart = context.watch<CartModel>(); // or context.watch<CartModel>();
+
+    getAllAddresses().then((_) {
+      showModalBottomSheet(
         context: context,
-        barrierDismissible: false,
-        barrierColor: Colors.transparent,
+        isDismissible: false, // Prevent dismissing by tapping outside
+        enableDrag: false,
         builder: (BuildContext context) {
-          return Center(
-            child: Container(
-              width: MediaQuery.of(context).size.width *
-                  0.8, // 80% of screen width
-              padding: const EdgeInsets.all(20.0),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(15.0),
-                border: Border.all(
-                  color: Colors.deepPurple,
-                  width: 2.0,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25),
-                    spreadRadius: 2,
-                    blurRadius: 4,
-                    offset: const Offset(
-                        1, 1), // 3D effect by adjusting shadow position
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter modalSetState) {
+              return Container(
+                padding: const EdgeInsets.all(10),
+                height: MediaQuery.of(context).size.height * 0.5,
+                width: MediaQuery.of(context).size.width * 0.90,
+                decoration: const BoxDecoration(
+                  // other decoration properties like color, border, etc.
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(10), // Adjust the radius as needed
+                    topRight:
+                        Radius.circular(10), // Adjust the radius as needed
                   ),
-                ],
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.white, Colors.white.withOpacity(0.85)],
                 ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Otto Mart',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.deepPurpleAccent,
-                      decoration: TextDecoration.underline,
-                      decorationColor: Colors.pink,
-                      decorationThickness: 0.0,
-                    ),
-                  ),
-                  const Divider(),
-                  const SizedBox(height: 10),
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: const TextSpan(
-                      text: 'Enter Delivery Address',
-                      style: TextStyle(
-                        fontSize: 20,
-                        color: Colors.black,
-                        decoration: TextDecoration.underline,
-                        decorationColor: Colors.pink,
-                        decorationThickness: 0.0,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.80,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 12, horizontal: 30),
+                      decoration: BoxDecoration(
+                        color: Colors.white, // Grey background
+                        borderRadius:
+                            BorderRadius.circular(10), // Rounded corners
+                        border: Border.all(
+                          color: Colors.deepPurpleAccent, // Border color
+                          width: 1.0, // Border width
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.black.withOpacity(0.2), // Shadow color
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(
+                                0, 3), // Changes position of shadow
+                          ),
+                        ],
+                      ),
+                      child: const Center(
+                        child: Text(
+                          "Select Address",
+                          style: TextStyle(fontSize: 24),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  AnimatedBuilder(
-                    animation: _buttonController,
-                    builder: (context, child) {
-                      return ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context)
-                              .pushReplacement(MaterialPageRoute(
-                            builder: (context) => const AddressScreen(),
-                          ));
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _colorAnim.value,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(5),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20.0,
-                            vertical: 12.0,
-                          ),
+                    const SizedBox(height: 5),
+                    Expanded(
+                      child: isLoadingGetAddress
+                          ? ListView.builder(
+                              itemCount:
+                                  5, // Display 5 skeleton items for example
+                              itemBuilder: (BuildContext context, int index) {
+                                return Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 10.0, horizontal: 15.0),
+                                  child: Container(
+                                    height: 20.0, // Height of the skeleton item
+                                    width: double.infinity,
+                                    color: Colors.grey[
+                                        300], // Light grey color for the skeleton
+                                  ),
+                                );
+                              },
+                            )
+                          : ListView.builder(
+                              itemCount: addresses.length +
+                                  2, // Two more than the addresses for the 'add' option and the current address
+                              itemBuilder: (BuildContext context, int index) {
+                                if (index == 0) {
+                                  return ListTile(
+                                    // <-- You missed the return here
+                                    leading:
+                                        const Icon(Icons.add), // An add icon
+                                    title: const Text("Add New Address"),
+                                    onTap: () {
+                                      Navigator.of(context)
+                                          .pushReplacement(MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddressScreen(),
+                                      ));
+                                    },
+                                  );
+                                } else if (index == 1) {
+                                  // Display the current address
+                                  return ListTile(
+                                    leading: const Text("Current"),
+                                    title: Text(
+                                      cart.deliveryAddress.streetAddress,
+                                      style:
+                                          const TextStyle(color: Colors.black),
+                                    ),
+                                  );
+                                } else {
+                                  return RadioListTile<int>(
+                                    value: index - 2,
+                                    groupValue: selectedAddressIndex,
+                                    onChanged: (int? value) {
+                                      modalSetState(() {
+                                        selectedAddressIndex = value;
+                                      });
+                                    },
+                                    title: Text(
+                                        addresses[index - 2].streetAddress),
+                                  );
+                                }
+                              },
+                            ),
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        try {
+                          String snackBarMessage;
+                          if (selectedAddressIndex != null &&
+                              selectedAddressIndex! < addresses.length) {
+                            showAddress = false;
+                            setDefaultAddress(
+                                    addresses[selectedAddressIndex!].id)
+                                .then((address) {
+                              if (address != null) {
+                                cart.deliveryAddress = address;
+                              }
+                            });
+                            snackBarMessage =
+                                'Delivery address set to: ${addresses[selectedAddressIndex!].streetAddress}';
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(snackBarMessage),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          } else {
+                            snackBarMessage = 'No Address Selected';
+                            if (!mounted) {
+                              return; // Check if the widget is still mounted
+                            }
+                            showDialog(
+                                context: context,
+                                builder: (context) {
+                                  Future.delayed(const Duration(seconds: 1),
+                                      () {
+                                    Navigator.of(context).pop(true);
+                                  });
+                                  return const AlertDialog(
+                                    title: Text('No Address Selected'),
+                                  );
+                                });
+                          }
+
+                          // Close the bottom sheet
+                        } catch (error) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to set default address'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor:
+                            Colors.deepPurpleAccent, // Button color
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                              8), // Smaller rounded corners for a squarish look
                         ),
-                        child: const Text(
-                          'Add Address+',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
+                        elevation: 5, // Floating effect
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 35, // Slightly more horizontal padding
+                          vertical: 18, // Slightly more vertical padding
                         ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
+                      ),
+                      child: const Text(
+                        "Deliver To Address",
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 5,
+                    )
+                  ],
+                ),
+              );
+            },
           );
         },
       );
-    }
+    });
   }
 
   @override
@@ -1168,7 +1235,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 tileMode: TileMode.mirror)
                             .createShader(bounds),
                         child: const Text(
-                          'Pronto',
+                          'Otto Mart',
                           style: TextStyle(
                               fontSize: 25,
                               fontWeight: FontWeight.bold,
@@ -1199,6 +1266,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                             builder: (context) => const SettingScreen()));
                   },
                 ),
+                /*
                 IconButton(
                   color: Colors.black,
                   padding: const EdgeInsets.only(right: 15.0),
@@ -1218,6 +1286,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                     });
                   },
                 ),
+                */
               ],
             ),
             const SizedBox(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:pinput/pinput.dart';
+import 'package:pronto/home/address/select/select.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_api_client.dart';
@@ -12,9 +13,10 @@ import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
 class MyVerify extends StatefulWidget {
-  const MyVerify({Key? key, required this.number}) : super(key: key);
+  const MyVerify({Key? key, required this.number, required this.isTester})
+      : super(key: key);
   final String number; // Mark this as final
-
+  final bool isTester;
   @override
   State<MyVerify> createState() => _MyVerifyState();
 }
@@ -268,6 +270,22 @@ class _MyVerifyState extends State<MyVerify> {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10))),
                     onPressed: () {
+                      widget.isTester
+                          ? loginCustomer().then((isSuccess) {
+                              if (isSuccess) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(),
+                                  ),
+                                );
+                              } else {
+                                // Show an error message to the user or handle the failure appropriately.
+                              }
+                            })
+                          : null;
+
                       String otp = pinController.text;
                       isPinCorrect
                           ? verifyOTP(widget.number, otp).then((value) {
@@ -283,7 +301,7 @@ class _MyVerifyState extends State<MyVerify> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            const MyHomePage(title: "Pronto"),
+                                            const AddressSelectionWidget(),
                                       ),
                                     );
                                   } else {

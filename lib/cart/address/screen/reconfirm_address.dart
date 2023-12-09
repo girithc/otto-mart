@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pronto/cart/cart.dart';
+import 'package:pronto/cart/cart_screen.dart';
 import 'package:provider/provider.dart';
 
 class ReconfirmAddress extends StatefulWidget {
@@ -131,14 +132,12 @@ class _ReconfirmAddressState extends State<ReconfirmAddress> {
                     widget.coordinates.longitude);
 
                 if (isSuccess) {
-                  for (int i = 0; i < 3; i++) {
-                    if (Navigator.canPop(context)) {
-                      Navigator.pop(context);
-                    } else {
-                      // If you cannot pop any more, break the loop
-                      break;
-                    }
-                  }
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyCart()),
+                    (Route<dynamic> route) =>
+                        false, // This predicate always returns false
+                  );
                 }
               }
             },

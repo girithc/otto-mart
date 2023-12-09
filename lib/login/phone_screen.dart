@@ -16,6 +16,7 @@ class MyPhone extends StatefulWidget {
 class _MyPhoneState extends State<MyPhone> {
   TextEditingController phoneNumberController = TextEditingController();
   TextEditingController countryController = TextEditingController();
+  bool isTesterVersion = false; // To track the state of the checkbox
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -173,7 +174,23 @@ class _MyPhoneState extends State<MyPhone> {
                   ),
                 ),
                 const SizedBox(
-                  height: 20,
+                  height: 10,
+                ),
+                Row(
+                  children: [
+                    Checkbox(
+                      value: isTesterVersion,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          isTesterVersion = value ?? false;
+                        });
+                      },
+                    ),
+                    const Text('Tester Version'),
+                  ],
+                ),
+                const SizedBox(
+                  height: 10,
                 ),
                 SizedBox(
                   width: double.infinity,
@@ -187,20 +204,32 @@ class _MyPhoneState extends State<MyPhone> {
                     ),
                     onPressed: () {
                       String phoneNumber = phoneNumberController.text;
-                      if (phoneNumber.length == 10) {
+                      if (phoneNumber.length == 10 && !isTesterVersion) {
                         sendOTP(phoneNumber).then((value) {
                           if (value == "success") {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    MyVerify(number: phoneNumber),
+                                builder: (context) => MyVerify(
+                                  number: phoneNumber,
+                                  isTester: false,
+                                ),
                               ),
                             );
                           } else {
                             _showDialog(value ?? 'Failed to send OTP');
                           }
                         });
+                      } else if (isTesterVersion) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MyVerify(
+                              number: '1234567890',
+                              isTester: true,
+                            ),
+                          ),
+                        );
                       } else {
                         _showDialog("Phone number must be 10 digits");
                       }

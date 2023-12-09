@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
+import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:provider/provider.dart';
@@ -64,15 +65,25 @@ class _MyCartState extends State<MyCart> {
                   colors: [Colors.deepPurple, Colors.deepPurpleAccent],
                   tileMode: TileMode.mirror)
               .createShader(bounds),
-          child: const Text(
-            'Otto Cart',
-            style: TextStyle(
-                fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const MyHomePage(title: "Otto Mart")),
+              );
+            },
+            child: const Text(
+              'Otto Cart',
+              style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+            ),
           ),
         ),
         elevation: 4.0,
-        backgroundColor: //Colors.deepPurpleAccent.shade100,
-            Colors.white,
+        backgroundColor: Colors.white,
         foregroundColor: Colors.deepPurple,
         shadowColor: Colors.white,
         surfaceTintColor: Colors.white,

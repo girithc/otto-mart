@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:pronto/home/address/select/select.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
@@ -175,7 +176,13 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                           Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
                                   builder: (context) =>
+                                      const AddressSelectionWidget()))
+                          /*
+                          Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (context) =>
                                       const MyHomePage(title: 'Pronto')))
+                           */
                         }
                       else
                         {

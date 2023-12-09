@@ -179,6 +179,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                 ),
               ),
+              /*
               GestureDetector(
                 onTap: () {
                   Navigator.push(
@@ -216,6 +217,7 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                 ),
               ),
+              */
               Container(
                 height: MediaQuery.of(context).size.height * 0.14,
                 margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
