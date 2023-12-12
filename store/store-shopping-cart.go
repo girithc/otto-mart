@@ -26,6 +26,7 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
             high_traffic_surcharge INT DEFAULT 0,
             packaging_fee INT DEFAULT 0,
             peak_time_surcharge INT DEFAULT 0,
+			number_of_items INT DEFAULT 0,
             subtotal INT GENERATED ALWAYS AS (
                 item_cost + delivery_fee + platform_fee + small_order_fee + 
                 rain_fee + high_traffic_surcharge + peak_time_surcharge + packaging_fee
