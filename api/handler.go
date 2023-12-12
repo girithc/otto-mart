@@ -407,6 +407,61 @@ func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
+func (s *Server) handleItemAddStock(res http.ResponseWriter, req *http.Request) error {
+	workerPool := s.workerPool
+
+	if req.Method == "POST" {
+		print_path("POST", "item_add_stock")
+		resultChan := make(chan error, 1) // Create a channel to capture the result
+
+		// Check the content of the request body to determine which handler to invoke
+		bodyBytes, err := io.ReadAll(req.Body)
+		if err != nil {
+			return err
+		}
+
+		// You can then create a new request body from bodyBytes to pass to your handler
+		newReq := &http.Request{
+			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
+			// ... copy other needed fields from the original request
+		}
+
+		// Assuming that the request body is in JSON format, let's unmarshal it into a map
+		var requestBody map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
+			return err
+		}
+
+		// Define the task based on the request content
+		var task func() worker.Result
+
+		// Check if only 'customer_id' is present in the request body
+
+		if len(requestBody) == 3 { // is default
+			if _, addStockOk := requestBody["add_stock"].(float64); addStockOk {
+				if _, itemIdOk := requestBody["item_id"].(float64); itemIdOk {
+					if _, storeIdOk := requestBody["store_id"].(float64); storeIdOk {
+						task = func() worker.Result {
+							err := s.HandleItemAddStockByStore(res, newReq)
+							return worker.Result{Error: err}
+						}
+					}
+				}
+			}
+		}
+
+		// Start the task in a worker and pass a callback to capture the result
+		workerPool.StartWorker(task, func(result worker.Result) {
+			resultChan <- result.Error // Send the result error to the channel
+		})
+
+		// Wait for the result and return it
+		return <-resultChan
+	}
+
+	return nil
+}
+
 // Item
 func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool

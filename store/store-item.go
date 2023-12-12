@@ -10,34 +10,40 @@ import (
 )
 
 func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
-	// First, let's define the ENUM type for unit
+	// Define the ENUM type for unit
 	unitEnumQuery := `DO $$ BEGIN
-						CREATE TYPE unit_enum AS ENUM ('g', 'mg', 'ml', 'l', 'kg', 'ct');
-					EXCEPTION
-						WHEN duplicate_object THEN null;
-					END $$;`
+                        CREATE TYPE unit_enum AS ENUM ('g', 'mg', 'ml', 'l', 'kg', 'ct');
+                    EXCEPTION
+                        WHEN duplicate_object THEN null;
+                    END $$;`
 	_, err := tx.Exec(unitEnumQuery)
 	if err != nil {
 		return fmt.Errorf("error creating unit_enum type: %w", err)
 	}
 
-	// Now, create the item table with quantity, unit, and description fields
-	query := `CREATE TABLE IF NOT EXISTS item(
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL UNIQUE,
-		brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
-		quantity INT NOT NULL,
-		barcode VARCHAR(15) UNIQUE, 
-		unit_of_quantity unit_enum,
-		description TEXT DEFAULT 'description',
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		created_by INT
-	)
-	`
-
-	_, err = tx.Exec(query)
+	// Create the item table
+	createTableQuery := `CREATE TABLE IF NOT EXISTS item(
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
+        quantity INT NOT NULL,
+        barcode VARCHAR(15) UNIQUE,
+        unit_of_quantity unit_enum,
+        description TEXT DEFAULT 'description',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT
+    )`
+	_, err = tx.Exec(createTableQuery)
 	if err != nil {
 		return fmt.Errorf("error creating item table: %w", err)
+	}
+
+	// Create partial index for barcode
+	createIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nonempty_barcode 
+                          ON item(barcode) WHERE barcode <> ''`
+	_, err = tx.Exec(createIndexQuery)
+	if err != nil {
+		return fmt.Errorf("error creating partial index for barcode: %w", err)
 	}
 
 	return nil
@@ -654,6 +660,57 @@ func (s *PostgresStore) AddStockToItem() ([]*types.Get_Item, error) {
 	}
 
 	return items, nil
+}
+
+type StockUpdateInfo struct {
+	ItemID     int    `json:"item_id"`
+	ItemName   string `json:"item_name"`
+	AddedStock int    `json:"added_stock"`
+}
+
+func (s *PostgresStore) AddStockToItemByStore(item_id int, store_id int, stock int) (StockUpdateInfo, error) {
+	// Initialize an empty StockUpdateInfo struct
+	print("Enter AddStockToItemByStore")
+	stockInfo := StockUpdateInfo{}
+
+	// Start a new transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return stockInfo, fmt.Errorf("error starting transaction: %w", err)
+	}
+
+	// Prepare the SQL query for updating stock
+	updateQuery := `UPDATE item_store SET stock_quantity = stock_quantity + $1 WHERE item_id = $2 AND store_id = $3`
+
+	// Execute the update query with the provided stock, item_id, and store_id
+	_, err = tx.Exec(updateQuery, stock, item_id, store_id)
+	if err != nil {
+		// If there is an error, rollback the transaction
+		tx.Rollback()
+		return stockInfo, fmt.Errorf("error updating stock for item: %w", err)
+	}
+
+	// Prepare the SQL query to retrieve the updated information
+	selectQuery := `SELECT i.name, istore.item_id FROM item i INNER JOIN item_store istore ON i.id = istore.item_id WHERE istore.item_id = $1 AND istore.store_id = $2`
+
+	// Query the item name and item id
+	row := tx.QueryRow(selectQuery, item_id, store_id)
+	err = row.Scan(&stockInfo.ItemName, &stockInfo.ItemID)
+	if err != nil {
+		// If there is an error, rollback the transaction
+		tx.Rollback()
+		return stockInfo, fmt.Errorf("error fetching updated item information: %w", err)
+	}
+
+	// Commit the transaction if no errors
+	if err = tx.Commit(); err != nil {
+		return stockInfo, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	// Add the stock to the struct since it's not part of the SELECT query
+	stockInfo.AddedStock = stock
+
+	return stockInfo, nil
 }
 
 func (s *PostgresStore) AddBarcodeToItem(barcode string, item_id int) (bool, error) {

@@ -92,6 +92,12 @@ type Update_Item struct {
 	Stock_Quantity int     `json:"stock_quantity"`
 }
 
+type AddItemStockStore struct {
+	AddStock int `json:"add_stock"`
+	ItemId   int `json:"item_id"`
+	StoreId  int `json:"store_id"`
+}
+
 type Delete_Item struct {
 	ID int `json:"id"`
 }
@@ -105,6 +111,23 @@ type Get_Items_By_CategoryID_And_StoreID struct {
 	Store_Price      float64   `json:"store_price"`
 	Store            string    `json:"store"`
 	Category         string    `json:"category"`
+	Stock_Quantity   int       `json:"stock_quantity"`
+	Locked_Quantity  int       `json:"locked_quantity"`
+	Image            string    `json:"image"`
+	Brand            string    `json:"brand"`
+	Quantity         int       `json:"quantity"`
+	Unit_Of_Quantity string    `json:"unit_of_quantity"`
+	Created_At       time.Time `json:"created_at"`
+	Created_By       int       `json:"created_by"`
+}
+
+type Get_Items_By_CategoryID_And_StoreID_noCategory struct {
+	ID               int       `json:"id"`
+	Name             string    `json:"name"`
+	MRP_Price        float64   `json:"mrp_price"`
+	Discount         float64   `json:"discount"`
+	Store_Price      float64   `json:"store_price"`
+	Store            string    `json:"store"`
 	Stock_Quantity   int       `json:"stock_quantity"`
 	Locked_Quantity  int       `json:"locked_quantity"`
 	Image            string    `json:"image"`

@@ -112,6 +112,21 @@ func (s *Server) HandleAddStockToItem(res http.ResponseWriter, req *http.Request
 	return WriteJSON(res, http.StatusOK, items)
 }
 
+func (s *Server) HandleItemAddStockByStore(res http.ResponseWriter, req *http.Request) error {
+	print("Enter HandleItemAddStockByStore")
+	new_req := new(types.AddItemStockStore)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		return fmt.Errorf("error decoding request body in HandleItemAddStockByStore: %w", err)
+	}
+
+	itemStockUpdate, err := s.store.AddStockToItemByStore(new_req.ItemId, new_req.StoreId, new_req.AddStock)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, itemStockUpdate)
+}
+
 func (s *Server) Handle_Update_Item(res http.ResponseWriter, req *http.Request) error {
 	new_req := &types.Update_Item{}
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

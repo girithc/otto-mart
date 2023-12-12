@@ -42,7 +42,8 @@ customer,
 delivery_partner,
 shopping_cart,
 sales_order,
-transaction
+transaction,
+order_timeline
 CASCADE;
 
 DROP TABLE IF EXISTS
