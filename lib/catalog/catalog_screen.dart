@@ -115,26 +115,7 @@ class _CatalogPageState extends State<CatalogPage> {
                         child: Text("Offer 1"),
                       ),
                     ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 2"),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 3"),
-                      ),
-                    ),
+
                     // Add more items as needed
                   ],
                 ),
@@ -250,6 +231,7 @@ class _ListOfItemsState extends State<ListOfItems> {
                 //surfaceTintColor: Colors.white,
                 //shadowColor: Colors.grey,
                 margin: EdgeInsets.zero,
+                padding: EdgeInsets.zero,
                 child: ListView.builder(
                   itemCount: widget.categories.length,
                   itemBuilder: (context, index) {
@@ -354,6 +336,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
               image: items[index].image,
               quantity: items[index].quantity,
               unitOfQuantity: items[index].unitOfQuantity,
+              brand: items[index].brand,
               index: index % 2);
         },
       ),
@@ -367,45 +350,35 @@ class CategoryItem extends StatelessWidget {
   final String categoryImage;
   final bool isSelected;
 
-  const CategoryItem(
-      {required this.categoryID,
-      required this.categoryName,
-      required this.categoryImage,
-      required this.isSelected,
-      super.key});
+  const CategoryItem({
+    required this.categoryID,
+    required this.categoryName,
+    required this.categoryImage,
+    required this.isSelected,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      splashColor: const Color.fromRGBO(206, 157, 255, 1),
-      selected: isSelected ? true : false,
-      textColor: Colors.black,
-      selectedColor: Colors.black,
-      //contentPadding: const EdgeInsets.symmetric(vertical: 2.0),
-      title: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              categoryName,
-              textAlign: TextAlign.center,
-              style: isSelected
-                  ? const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)
-                  : const TextStyle(fontSize: 14),
-            ), // Optional: to provide some space between the text and image
-            Image.network(
-              categoryImage,
-              fit: BoxFit.cover,
-              height: 55.0,
-            ) // Replace 'categoryImage' with your image URL variable
-          ],
-        ),
-      ),
+    return GestureDetector(
       onTap: () {
         final catalogProvider = context.read<CatalogProvider>();
         catalogProvider.setCatalog(Catalog(
             categoryID: categoryID, storeID: 1, categoryName: categoryName));
       },
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        color: isSelected
+            ? const Color.fromRGBO(206, 157, 255, 1)
+            : Colors.transparent,
+        child: Center(
+          child: Text(
+            categoryName,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 14, color: Colors.black),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -421,6 +394,7 @@ class ListItem2 extends StatelessWidget {
   final String image;
   final String unitOfQuantity;
   final int quantity;
+  final String brand;
 
   const ListItem2(
       {required this.name,
@@ -433,6 +407,7 @@ class ListItem2 extends StatelessWidget {
       required this.index,
       required this.unitOfQuantity,
       required this.quantity,
+      required this.brand,
       super.key});
 
   @override
@@ -446,6 +421,7 @@ class ListItem2 extends StatelessWidget {
           context,
           MaterialPageRoute(
             builder: (context) => Product(
+              brand: brand,
               productName: name,
               productId: id,
               mrpPrice: mrpPrice,
@@ -453,6 +429,8 @@ class ListItem2 extends StatelessWidget {
               discount: discount,
               stockQuantity: stockQuantity,
               image: image,
+              quantity: quantity,
+              unitOfQuantity: unitOfQuantity,
             ),
           ),
         );
@@ -528,41 +506,6 @@ class ListItem2 extends StatelessWidget {
                           height: 1.2),
                     ),
                   ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Container(
-                      height: 17,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.local_offer_outlined,
-                            color: Colors.deepPurple,
-                            size: 15,
-                          ),
-                          const SizedBox(
-                              width:
-                                  5), // Adding some spacing between icon and text
-                          Text(
-                            'Add 1, Unlock offer',
-                            maxLines: 2,
-                            style: GoogleFonts.firaSans(
-                              textStyle: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                height: 1.1,
-                                color: Colors.deepPurple,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ),
-                        ],
-                      )),
                 ),
                 const Spacer(),
                 Padding(
@@ -692,7 +635,7 @@ class ListItem2 extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
               decoration: BoxDecoration(
-                color: Colors.pinkAccent,
+                color: Colors.deepPurpleAccent,
                 borderRadius: BorderRadius.circular(3),
               ),
               child: Text(

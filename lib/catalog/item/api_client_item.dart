@@ -48,6 +48,7 @@ class Item {
   final String image;
   final int quantity;
   final String unitOfQuantity;
+  final String brand;
 
   Item(
       {required this.id,
@@ -58,7 +59,8 @@ class Item {
       required this.stockQuantity,
       required this.image,
       required this.quantity,
-      required this.unitOfQuantity});
+      required this.unitOfQuantity,
+      required this.brand});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
@@ -70,6 +72,7 @@ class Item {
         stockQuantity: json['stock_quantity'],
         image: json['image'],
         quantity: json['quantity'],
-        unitOfQuantity: json['unit_of_quantity']);
+        unitOfQuantity: json['unit_of_quantity'],
+        brand: json['brand']);
   }
 }

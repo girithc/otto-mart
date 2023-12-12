@@ -195,7 +195,7 @@ class CartModel extends ChangeNotifier {
           final Map<String, dynamic> cartDetailsData =
               jsonData['cart_details'] as Map<String, dynamic>;
           _cartDetails = CartDetails.fromJson(cartDetailsData);
-
+          print("Cart Details Data: $cartDetailsData");
           // Extracting 'cart_items_list' from the response
           final List<dynamic> cartItemsList = jsonData['cart_items_list'];
           final List<CartItem> items =

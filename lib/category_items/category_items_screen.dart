@@ -192,6 +192,7 @@ class _CategoryItemsBodyState extends State<CategoryItemsBody> {
               image: items[index].image,
               quantity: items[index].quantity,
               unitOfQuantity: items[index].unitOfQuantity,
+              brand: items[index].brand,
               index: index % 2);
         },
       ),

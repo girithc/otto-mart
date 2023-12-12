@@ -2,6 +2,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
+import 'package:pinput/pinput.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/item/product.dart';
@@ -49,7 +50,8 @@ class SearchPage extends StatelessWidget {
           categoryName: 'Pronto', searchFocusNode: searchFocusNode),
       body: searchQuery.length > 2
           ? const SearchItemList()
-          : const SearchTemplate(),
+          : const TypingAnimation(),
+      //: const SearchTemplate(),
       bottomNavigationBar: BottomAppBar(
         color: Colors.white,
         shadowColor: Colors.white,
@@ -64,7 +66,7 @@ class SearchPage extends StatelessWidget {
                 flex: 5,
                 child: CarouselSlider(
                   options: CarouselOptions(
-                      autoPlay: true,
+                      autoPlay: false,
                       enlargeCenterPage: true,
                       aspectRatio: 3.5,
                       viewportFraction: 0.95),
@@ -79,26 +81,7 @@ class SearchPage extends StatelessWidget {
                         child: Text("Offer 1"),
                       ),
                     ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 2"),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 3"),
-                      ),
-                    ),
+
                     // Add more items as needed
                   ],
                 ),
@@ -163,6 +146,67 @@ class SearchPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class TypingAnimation extends StatefulWidget {
+  const TypingAnimation({super.key});
+
+  @override
+  _TypingAnimationState createState() => _TypingAnimationState();
+}
+
+class _TypingAnimationState extends State<TypingAnimation> {
+  List<String> words = [
+    "Tata Tea",
+    "Coffee",
+    "Atta",
+    "Mango",
+    "Masala",
+    "Baby Powder",
+    "Banana"
+  ];
+  int index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    startTyping();
+  }
+
+  void startTyping() {
+    Future.delayed(const Duration(seconds: 2), () {
+      setState(() {
+        index = (index + 1) % words.length;
+      });
+      startTyping();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            "Search for",
+            style:
+                TextStyle(fontSize: 72), // Adjusted font size for better layout
+          ),
+          const SizedBox(height: 10),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 500),
+            child: Text(
+              words[index],
+              key: ValueKey<String>(words[index]),
+              style:
+                  const TextStyle(fontSize: 72, color: Colors.deepPurpleAccent),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -275,7 +319,7 @@ class HorizontalScrollItems extends StatelessWidget {
                                 padding: const EdgeInsets.all(0),
                                 side: const BorderSide(
                                   width: 1.0,
-                                  color: Colors.pinkAccent,
+                                  color: Colors.deepPurpleAccent,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
@@ -502,16 +546,21 @@ class SearchItemListState extends State<SearchItemList> {
                 crossAxisCount: 2,
                 mainAxisSpacing: 0.0,
                 crossAxisSpacing: 0.0,
-                childAspectRatio: 0.84,
+                childAspectRatio: 0.82,
               ),
               itemCount: searchResults.length,
               itemBuilder: (context, index) {
                 return ListItem(
                   name: searchResults[index].name,
                   id: searchResults[index].id,
-                  price: searchResults[index].mrpPrice,
+                  mrpPrice: searchResults[index].mrpPrice,
+                  storePrice: searchResults[index].storePrice,
+                  discount: searchResults[index].discount,
                   stockQuantity: searchResults[index].stockQuantity,
+                  quantity: searchResults[index].quantity,
+                  unitOfQuantity: searchResults[index].unitOfQuantity,
                   image: searchResults[index].image,
+                  brand: searchResults[index].brand,
                   index: index % 2,
                 );
               },
@@ -526,18 +575,29 @@ class SearchItemListState extends State<SearchItemList> {
 class ListItem extends StatelessWidget {
   final String name;
   final int id;
-  final int price;
+  final int mrpPrice;
+  final int storePrice;
+  final int discount;
   final int stockQuantity;
   final int index;
+  final String unitOfQuantity;
+  final int quantity;
   final String image;
+  final String brand;
+
   const ListItem(
-      {required this.name,
+      {super.key,
+      required this.name,
       required this.id,
-      required this.price,
+      required this.mrpPrice,
+      required this.storePrice,
+      required this.discount,
       required this.stockQuantity,
       required this.image,
       required this.index,
-      super.key});
+      required this.quantity,
+      required this.unitOfQuantity,
+      required this.brand});
 
   @override
   Widget build(BuildContext context) {
@@ -552,11 +612,14 @@ class ListItem extends StatelessWidget {
             builder: (context) => Product(
               productName: name,
               productId: id,
-              mrpPrice: price,
-              storePrice: price,
-              discount: 0,
+              mrpPrice: mrpPrice,
+              storePrice: storePrice,
+              discount: discount,
               stockQuantity: stockQuantity,
+              brand: brand,
               image: image,
+              quantity: quantity,
+              unitOfQuantity: unitOfQuantity,
             ),
           ),
         );
@@ -575,11 +638,8 @@ class ListItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(3.0),
               ),
               margin: index == 0
-                  ? const EdgeInsets.only(
-                      top: 4.0,
-                      left: 6.0,
-                    )
-                  : const EdgeInsets.only(top: 4.0, left: 4.0, right: 6.0),
+                  ? const EdgeInsets.only(top: 4.0, left: 4.0, right: 2.0)
+                  : const EdgeInsets.only(top: 4.0, left: 2.0, right: 4.0),
               padding: EdgeInsets.zero,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -589,7 +649,7 @@ class ListItem extends StatelessWidget {
                     child: Center(
                       child: Image.network(
                         image,
-                        height: 110,
+                        height: MediaQuery.of(context).size.height * 0.15,
                         fit: BoxFit.cover,
                       ),
                     ),
@@ -599,7 +659,7 @@ class ListItem extends StatelessWidget {
                     child: Container(
                       margin: const EdgeInsets.only(top: 2.0),
                       alignment: Alignment.centerLeft,
-                      height: 28,
+                      height: MediaQuery.of(context).size.height * 0.04,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(1.0),
@@ -610,9 +670,9 @@ class ListItem extends StatelessWidget {
                         maxLines: 2,
                         style: GoogleFonts.hind(
                           textStyle: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: FontWeight.bold,
-                              height: 0.9,
+                              height: 1.1,
                               overflow: TextOverflow.ellipsis),
                         ),
                       ),
@@ -629,53 +689,18 @@ class ListItem extends StatelessWidget {
                         borderRadius: BorderRadius.circular(1.0),
                         border: Border.all(color: borderColor),
                       ),
-                      child: const Text(
-                        '100g',
-                        style: TextStyle(
-                            fontSize: 11,
+                      child: Text(
+                        '$quantity$unitOfQuantity',
+                        style: const TextStyle(
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             height: 1.2),
                       ),
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Container(
-                        height: 17,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(1.0),
-                          border: Border.all(color: borderColor),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              Icons.local_offer_outlined,
-                              color: Colors.deepPurple,
-                              size: 15,
-                            ),
-                            const SizedBox(
-                                width:
-                                    5), // Adding some spacing between icon and text
-                            Text(
-                              'Add 1, Unlock offer',
-                              maxLines: 2,
-                              style: GoogleFonts.firaSans(
-                                textStyle: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  height: 1.1,
-                                  color: Colors.deepPurple,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                          ],
-                        )),
-                  ),
                   const Spacer(),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: const EdgeInsets.only(left: 8.0),
                     child: Container(
                       height: 37,
                       margin: const EdgeInsets.only(top: 0),
@@ -688,7 +713,19 @@ class ListItem extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '\u{20B9}$price',
+                            '\u{20B9}$storePrice',
+                            style: const TextStyle(fontSize: 13),
+                          ),
+                          Text(
+                            '$mrpPrice',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: Colors.black54,
+                            ),
+                          ),
+                          const SizedBox(
+                            width: 2,
                           ),
                           itemIndexInCart != -1
                               ? Container(
@@ -710,6 +747,7 @@ class ListItem extends StatelessWidget {
                                         },
                                         child: const Icon(
                                           Icons.horizontal_rule,
+                                          size: 21,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -717,21 +755,22 @@ class ListItem extends StatelessWidget {
                                         cart.items[itemIndexInCart].quantity
                                             .toString(),
                                         style: const TextStyle(
-                                            color: Colors.white),
+                                            color: Colors.white, fontSize: 16),
                                       ),
                                       InkWell(
                                         onTap: () {
                                           cart.addItemToCart(CartItem(
                                               productId: id.toString(),
                                               productName: name,
-                                              price: price,
-                                              soldPrice: price,
+                                              price: mrpPrice,
+                                              soldPrice: storePrice,
                                               quantity: 1,
                                               stockQuantity: stockQuantity,
                                               image: image));
                                         },
                                         child: const Icon(
                                           Icons.add,
+                                          size: 24,
                                           color: Colors.white,
                                         ),
                                       ),
@@ -747,19 +786,20 @@ class ListItem extends StatelessWidget {
                                         final cartItem = CartItem(
                                             productId: id.toString(),
                                             productName: name,
-                                            price: price,
-                                            soldPrice: price,
+                                            price: mrpPrice,
+                                            soldPrice: storePrice,
                                             quantity: 1,
                                             stockQuantity: stockQuantity,
                                             image: image);
                                         cart.addItemToCart(cartItem);
                                       },
                                       style: ElevatedButton.styleFrom(
+                                          surfaceTintColor: Colors.white,
                                           backgroundColor: Colors.white,
-                                          padding: const EdgeInsets.all(0),
+                                          padding: const EdgeInsets.all(2),
                                           side: const BorderSide(
                                             width: 1.0,
-                                            color: Colors.pinkAccent,
+                                            color: Colors.pink,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius:
@@ -768,8 +808,7 @@ class ListItem extends StatelessWidget {
                                       child: const Text(
                                         'Add+',
                                         style: TextStyle(
-                                            color: Colors.pinkAccent,
-                                            fontSize: 12),
+                                            color: Colors.pink, fontSize: 13.5),
                                       )),
                                 )
                         ],
@@ -785,12 +824,12 @@ class ListItem extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Colors.pinkAccent,
+                  color: Colors.deepPurpleAccent,
                   borderRadius: BorderRadius.circular(3),
                 ),
-                child: const Text(
-                  '5% OFF',
-                  style: TextStyle(
+                child: Text(
+                  '\u{20B9}$discount OFF',
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -828,7 +867,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
 
   Future<void> fetchSearchItems(String queryString) async {
     try {
-      if (queryString.length > 2) {
+      if (queryString.length > 1) {
         final fetchedSearchItems =
             await apiClient.fetchSearchItems(queryString);
         setState(() {
@@ -854,7 +893,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       shadowColor: Colors.deepPurpleAccent,
       child: Container(
         padding: const EdgeInsets.only(
-          top: 35,
+          top: 50,
         ),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(
@@ -895,7 +934,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 controller: searchController,
                 onChanged: (value) async {
                   searchData.updateSearchQuery(value);
-                  if (value.length > 2) {
+                  if (value.isNotEmpty) {
                     apiClient.fetchSearchItems(value).then((searchItemResults) {
                       context
                           .read<SearchData>()

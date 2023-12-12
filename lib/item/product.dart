@@ -13,6 +13,9 @@ class Product extends StatelessWidget {
   final int discount;
   final int stockQuantity;
   final String image;
+  final String brand;
+  final int quantity;
+  final String unitOfQuantity;
 
   const Product({
     Key? key,
@@ -23,6 +26,9 @@ class Product extends StatelessWidget {
     required this.discount,
     required this.stockQuantity,
     required this.image,
+    required this.brand,
+    required this.quantity,
+    required this.unitOfQuantity,
   }) : super(key: key);
 
   @override
@@ -143,9 +149,9 @@ class Product extends StatelessWidget {
                     padding:
                         const EdgeInsets.only(left: 12.0, top: 10, bottom: 0.0),
                     alignment: Alignment.centerLeft,
-                    child: const Text(
-                      'Bhagirathi',
-                      style: TextStyle(
+                    child: Text(
+                      brand,
+                      style: const TextStyle(
                           fontSize: 14,
                           color: Colors.deepPurple,
                           fontWeight: FontWeight.bold),
@@ -160,8 +166,9 @@ class Product extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.only(left: 10.0),
                     alignment: Alignment.centerLeft,
-                    child: const Text('100g',
-                        style: TextStyle(fontSize: 13, color: Colors.black54)),
+                    child: Text('$quantity$unitOfQuantity',
+                        style:
+                            const TextStyle(fontSize: 15, color: Colors.black)),
                   ),
                   Container(
                     padding: const EdgeInsets.only(left: 10.0, top: 8),
@@ -192,7 +199,7 @@ class Product extends StatelessWidget {
                             color: Colors.deepPurpleAccent,
                           ),
                           child: Text(
-                            '\u{20B9}$discount Off',
+                            '\u{20B9}$discount OFF',
                             style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
@@ -212,8 +219,8 @@ class Product extends StatelessWidget {
                             fontSize: 16, fontWeight: FontWeight.bold)),
                     children: <Widget>[
                       Padding(
-                        padding: EdgeInsets.zero,
-                        child: Text("Info"),
+                        padding: EdgeInsets.only(bottom: 25),
+                        child: Text("COUNTRY OF ORIGIN: INDIA"),
                       )
                     ],
                   ),
@@ -227,6 +234,7 @@ class Product extends StatelessWidget {
               ),
             ),
             //Related Products
+            /*
             Container(
               height: 200,
               alignment: Alignment.center,
@@ -238,6 +246,7 @@ class Product extends StatelessWidget {
                   colors: [Colors.white, Color.fromARGB(255, 251, 226, 255)],
                 ),
               ),
+              
               child: Column(
                 children: [
                   Container(
@@ -254,6 +263,7 @@ class Product extends StatelessWidget {
                 ],
               ),
             ),
+            */
           ],
         ),
       ),
@@ -271,7 +281,7 @@ class Product extends StatelessWidget {
                 flex: 5,
                 child: CarouselSlider(
                   options: CarouselOptions(
-                      autoPlay: true,
+                      autoPlay: false,
                       enlargeCenterPage: true,
                       aspectRatio: 3.5,
                       viewportFraction: 0.95),
@@ -286,26 +296,7 @@ class Product extends StatelessWidget {
                         child: Text("Offer 1"),
                       ),
                     ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 2"),
-                      ),
-                    ),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 3"),
-                      ),
-                    ),
+
                     // Add more items as needed
                   ],
                 ),
