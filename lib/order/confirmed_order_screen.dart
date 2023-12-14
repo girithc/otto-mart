@@ -158,15 +158,142 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     var cart = context.watch<CartModel>();
 
     return Scaffold(
-      body: _isLoading
-          ? const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                  Center(child: CircularProgressIndicator()),
-                ])
-          : _isError
-              ? Center(child: Text(_errorMsg))
-              : CustomScrollView(
+        appBar: AppBar(
+          backgroundColor: Colors.deepPurpleAccent,
+          title: const Text(
+            'Otto Mart',
+            style: TextStyle(color: Colors.white),
+          ),
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_outlined,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              // Navigate to the HomeScreen, replacing the current route
+              if (widget.newOrder) {
+                cart.clearCart();
+              }
+
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                    builder: (context) => const MyHomePage(
+                          title: 'Otto',
+                        )),
+              );
+            },
+          ),
+          centerTitle: true,
+        ),
+        body: _isLoading
+            ? const Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                    Center(child: CircularProgressIndicator()),
+                  ])
+            : _isError
+                ? Center(child: Text(_errorMsg))
+                : SingleChildScrollView(
+                    // Enables scrolling
+                    child: Center(
+                      child: Column(
+                        children: [
+                          Container(
+                            height: MediaQuery.of(context).size.height * 0.24,
+                            width: MediaQuery.of(context).size.width * 0.95,
+                            margin: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 2),
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Center(
+                              // Center the Lottie animation within the container
+                              child: Transform.scale(
+                                scale:
+                                    orderLottieTransform, // Increase the size by 30%
+                                child: Lottie.network(
+                                  orderLottie,
+                                  fit: BoxFit.contain,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            margin: const EdgeInsets.only(
+                                left: 10, right: 10, top: 15, bottom: 5),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(15), // Rounded corners
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  spreadRadius: 2,
+                                  blurRadius: 4,
+                                  offset: const Offset(
+                                      0, 2), // Changes position of shadow
+                                ),
+                              ],
+                              border:
+                                  Border.all(color: Colors.white, width: 1.0),
+                            ),
+                            child: Align(
+                              alignment: Alignment.center,
+                              child: Text(
+                                orderStatus,
+                                style: const TextStyle(
+                                    fontSize: 22, // Increased font size
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors
+                                        .deepPurpleAccent // Bold font weight
+                                    ),
+                                textAlign: TextAlign
+                                    .center, // Ensure text is centered horizontally
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: MediaQuery.of(context).size.width,
+                            margin: const EdgeInsets.only(
+                                left: 10, right: 10, top: 5, bottom: 5),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(15), // Rounded corners
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  spreadRadius: 2,
+                                  blurRadius: 4,
+                                  offset: const Offset(
+                                      0, 2), // Changes position of shadow
+                                ),
+                              ],
+                              border:
+                                  Border.all(color: Colors.white, width: 1.0),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Delivery Partner: $_deliveryPartnerName'),
+                                Text('Number of Items: $_numberOfItems'),
+                                Text('Address: $_customerAddress'),
+                                Text('Payment Type: $_paymentType'),
+                                Text('Order Date: $_orderDate'),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+
+        /*
+              CustomScrollView(
                   slivers: <Widget>[
                     SliverAppBar(
                       leading: IconButton(
@@ -291,6 +418,43 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         ),
                                       ),
                                     ),
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 5),
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                            15), // Rounded corners
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.deepPurpleAccent
+                                                .withOpacity(0.5),
+                                            spreadRadius: 2,
+                                            blurRadius: 4,
+                                            offset: const Offset(0,
+                                                2), // Changes position of shadow
+                                          ),
+                                        ],
+                                        border: Border.all(
+                                            color: Colors.white, width: 1.0),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                              'Delivery Partner: $_deliveryPartnerName'),
+                                          Text(
+                                              'Number of Items: $_numberOfItems'),
+                                          Text('Address: $_customerAddress'),
+                                          Text('Payment Type: $_paymentType'),
+                                          Text('Order Date: $_orderDate'),
+                                        ],
+                                      ),
+                                    ),
+
+                                    /*
                                     SizedBox(
                                       height:
                                           MediaQuery.of(context).size.height *
@@ -339,6 +503,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         ],
                                       ),
                                     ),
+                                    */
                                     // Add more containers or widgets if needed
                                   ],
                                 ),
@@ -370,19 +535,25 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           // Define a list of custom widgets for each child
                           List<Widget> customChildren = [
                             Container(
-                              margin: const EdgeInsets.all(10),
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 5),
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                    15), // Rounded corners
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.indigoAccent.withOpacity(0.5),
-                                    spreadRadius: 4,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
+                                    color: Colors.deepPurpleAccent
+                                        .withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: const Offset(
+                                        0, 2), // Changes position of shadow
                                   ),
                                 ],
+                                border:
+                                    Border.all(color: Colors.white, width: 1.0),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,15 +573,20 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                    15), // Rounded corners
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.indigoAccent.withOpacity(0.5),
-                                    spreadRadius: 4,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
+                                    color: Colors.deepPurpleAccent
+                                        .withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: const Offset(
+                                        0, 2), // Changes position of shadow
                                   ),
                                 ],
+                                border:
+                                    Border.all(color: Colors.white, width: 1.0),
                               ),
                               child: const Center(
                                 child: Text('Wishlist'),
@@ -422,15 +598,20 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                    15), // Rounded corners
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.indigoAccent.withOpacity(0.5),
-                                    spreadRadius: 4,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
+                                    color: Colors.deepPurpleAccent
+                                        .withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: const Offset(
+                                        0, 2), // Changes position of shadow
                                   ),
                                 ],
+                                border:
+                                    Border.all(color: Colors.white, width: 1.0),
                               ),
                               child: const Center(
                                 child: Text('Wishlist'),
@@ -442,15 +623,20 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                    15), // Rounded corners
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.indigoAccent.withOpacity(0.5),
-                                    spreadRadius: 4,
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
+                                    color: Colors.deepPurpleAccent
+                                        .withOpacity(0.5),
+                                    spreadRadius: 2,
+                                    blurRadius: 4,
+                                    offset: const Offset(
+                                        0, 2), // Changes position of shadow
                                   ),
                                 ],
+                                border:
+                                    Border.all(color: Colors.white, width: 1.0),
                               ),
                               child: const Center(
                                 child: Text('Wishlist'),
@@ -466,7 +652,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                     ),
                   ],
                 ),
-    );
+              */
+        );
   }
 }
 

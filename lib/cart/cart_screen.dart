@@ -16,6 +16,7 @@ import 'package:http/http.dart' as http;
 
 class MyCart extends StatefulWidget {
   const MyCart({super.key});
+  static const String routeName = '/myCart';
 
   @override
   State<MyCart> createState() => _MyCartState();
@@ -87,6 +88,7 @@ class _MyCartState extends State<MyCart> {
         foregroundColor: Colors.deepPurple,
         shadowColor: Colors.white,
         surfaceTintColor: Colors.white,
+        centerTitle: true,
       ),
       body: Container(
         color: Colors.white,

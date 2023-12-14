@@ -195,7 +195,7 @@ class CartModel extends ChangeNotifier {
           final Map<String, dynamic> cartDetailsData =
               jsonData['cart_details'] as Map<String, dynamic>;
           _cartDetails = CartDetails.fromJson(cartDetailsData);
-          print("Cart Details Data: $cartDetailsData");
+          //print("Cart Details Data: $cartDetailsData");
           // Extracting 'cart_items_list' from the response
           final List<dynamic> cartItemsList = jsonData['cart_items_list'];
           final List<CartItem> items =
@@ -286,7 +286,7 @@ class CartModel extends ChangeNotifier {
     int? parsedCustomerId;
     try {
       parsedCustomerId = int.parse(customerId);
-      print("CustomerID: $parsedCustomerId");
+      //print("CustomerID: $parsedCustomerId");
     } catch (e) {
       _logger.e('Failed to parse customerId: $customerId, error: $e');
       return false; // if we can't parse customerId, it makes sense to return early

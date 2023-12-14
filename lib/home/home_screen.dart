@@ -5,6 +5,7 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:pronto/home/address/address_screen.dart';
@@ -13,6 +14,7 @@ import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/category_items/category_items_screen.dart';
 import 'package:pronto/home/address/confirm_address_screen.dart';
+import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/order/confirmed_order_screen.dart';
 import 'package:pronto/payments/phonepe.dart';
 import 'package:pronto/setting/setting_screen.dart';
@@ -29,6 +31,7 @@ import 'package:provider/provider.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
+  static const String routeName = '/myHomePage';
 
   final String title;
 
@@ -41,7 +44,7 @@ class _MyHomePageState extends State<MyHomePage>
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   final bool _bottomSheetShown = false;
-
+  static const String routeName = '/myHomePage';
   List<Category> categories = [];
   List<Category> promotions = [];
   List<Address> addresses = [];
@@ -62,6 +65,7 @@ class _MyHomePageState extends State<MyHomePage>
   String streetAddress = "";
   int addressId = 0;
   int? selectedAddressIndex;
+  int currentIndex = 0;
   final Logger _logger = Logger();
   final storage = const FlutterSecureStorage();
 
@@ -747,6 +751,80 @@ class _MyHomePageState extends State<MyHomePage>
                 ],
               ),
             ),
+      bottomNavigationBar: Container(
+        padding:
+            const EdgeInsets.only(bottom: 22, top: 10, left: 15, right: 15),
+        margin: const EdgeInsets.only(bottom: 0),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+          color: Colors.white,
+        ),
+        child: Consumer<ActiveTabProvider>(
+          builder: (context, activeTabProvider, child) => GNav(
+            gap: 12,
+            color: Colors.black87,
+            activeColor: Colors.white,
+            tabBackgroundColor: Colors.deepPurpleAccent.shade200,
+            selectedIndex: activeTabProvider
+                .activeTabIndex, // Always set to 0 to keep Home tab active
+            onTabChange: (index) {
+              // Always navigate to Home, regardless of selected tab
+              activeTabProvider.setActiveTabIndex(index);
+              if (index == 0) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyHomePage(title: "Otto Mart"),
+                  ),
+                );
+              } else if (index == 2) {
+                Navigator.pushNamed(context, MyCart.routeName);
+
+                /*
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyCart(),
+                  ),
+                );
+                */
+              }
+            },
+            tabs: const [
+              GButton(
+                icon: Icons.home,
+                text: 'Home',
+                textStyle:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                padding: EdgeInsets.all(15),
+              ),
+              GButton(
+                icon: Icons.book_outlined,
+                text: 'Otto Plan',
+                textStyle:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                padding: EdgeInsets.all(15),
+              ),
+              GButton(
+                icon: Icons.shopping_cart_outlined,
+                text: 'Otto Cart',
+                textStyle:
+                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                padding: EdgeInsets.all(15),
+              ),
+            ],
+          ),
+        ),
+      ),
+/*
       floatingActionButton: FutureBuilder<String?>(
         future: getOrderStatus(),
         builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
@@ -793,7 +871,8 @@ class _MyHomePageState extends State<MyHomePage>
           }
         },
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      */
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
@@ -812,17 +891,18 @@ class _MyHomePageState extends State<MyHomePage>
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(4.0),
-          border: Border.all(color: Colors.deepPurpleAccent),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: Colors.white),
+          boxShadow: [
             BoxShadow(
-              color: Color.fromARGB(255, 248, 219, 253),
+              color: Colors.pinkAccent.shade100,
               spreadRadius: 1,
               blurRadius: 3,
-              offset: Offset(0, 3),
+              offset: const Offset(0, 2),
             ),
           ],
         ),
+        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
         padding: const EdgeInsets.only(left: 2, right: 2, bottom: 1),
         child: Center(
           child: Column(
@@ -1244,6 +1324,17 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                       )),
                 ),
                 const Spacer(),
+                IconButton(
+                  color: Colors.black,
+                  padding: const EdgeInsets.only(right: 15.0),
+                  icon: const Icon(Icons.book_outlined),
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SettingScreen()));
+                  },
+                ),
                 IconButton(
                   color: Colors.black,
                   padding: const EdgeInsets.only(right: 15.0),

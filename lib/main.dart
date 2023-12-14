@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/home/address/select/select.dart';
 import 'package:pronto/home/home_screen.dart';
+import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/utils/constants.dart';
@@ -40,12 +42,14 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool? isLoggedIn;
+  late CustomRouteObserver routeObserver;
 
   @override
   void initState() {
     super.initState();
     isLoggedIn = widget.initialCustomerId != null;
     showAddress = true;
+    routeObserver = CustomRouteObserver();
   }
 
   @override
@@ -54,6 +58,7 @@ class _MyAppState extends State<MyApp> {
       providers: [
         ChangeNotifierProvider(create: (context) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (context) => LoginStatusProvider()),
+        ChangeNotifierProvider(create: (context) => ActiveTabProvider()),
         ChangeNotifierProvider(
             create: (context) => AddressModel(widget.initialCustomerId!)),
         ChangeNotifierProxyProvider<LoginStatusProvider, CartModel>(
@@ -74,12 +79,19 @@ class _MyAppState extends State<MyApp> {
             );
           }
           return MaterialApp(
+            navigatorObservers: [routeObserver],
             title: 'Provider Demo',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
             home: const OpeningPageAnimation(),
+            routes: {
+              MyHomePage.routeName: (context) =>
+                  const MyHomePage(title: 'Otto Mart'),
+              MyCart.routeName: (context) => const MyCart(),
+              // Add other routes as needed
+            },
           );
         },
       ),

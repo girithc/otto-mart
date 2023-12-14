@@ -395,21 +395,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          const MyHomePage(title: 'Otto Mart')),
-                );
+                Navigator.pushNamed(context, MyHomePage.routeName);
               } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
                 print("1b Branch");
 
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          const MyHomePage(title: 'Otto Mart')),
-                );
+                Navigator.pushNamed(context, MyHomePage.routeName);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -421,11 +411,14 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
               print("2nd Branch");
 
-              Navigator.pushReplacement(
+              /*
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (context) => const MyHomePage(title: 'Otto Mart')),
               );
+              */
+              Navigator.pushNamed(context, MyHomePage.routeName);
             } else {
               print("3rd Branch");
 

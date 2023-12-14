@@ -107,7 +107,7 @@ class _MyPhoneState extends State<MyPhone> {
       body: Form(
         key: formKey,
         child: Container(
-          margin: const EdgeInsets.only(left: 25, right: 25),
+          margin: const EdgeInsets.symmetric(horizontal: 15),
           alignment: Alignment.center,
           child: SingleChildScrollView(
             child: Column(
@@ -139,7 +139,7 @@ class _MyPhoneState extends State<MyPhone> {
                   height: 30,
                 ),
                 SizedBox(
-                  height: 65,
+                  height: 80, // Increased height for larger input boxes
                   child: Pinput(
                     length: 10, // Set the length of the input
                     controller: phoneNumberController,
@@ -147,27 +147,41 @@ class _MyPhoneState extends State<MyPhone> {
                     onSubmitted: (pin) {
                       // Handle submission logic here
                     },
-                    defaultPinTheme: const PinTheme(
-                      width: 40,
-                      height: 50,
+                    defaultPinTheme: PinTheme(
+                      width: 60, // Increased width for larger input boxes
+                      height: 60, // Increased height for larger input boxes
                       decoration: BoxDecoration(
-                        border: Border(
-                            top: BorderSide(
-                              color: Colors.black,
-                              width: 1,
-                            ),
-                            bottom: BorderSide(
-                              color: Colors.black,
-                              width: 1,
-                            ),
-                            left: BorderSide(
-                              color: Colors.deepPurpleAccent,
-                              width: 1,
-                            ),
-                            right: BorderSide(
-                              color: Colors.deepPurpleAccent,
-                              width: 1,
-                            )),
+                        color: Colors
+                            .deepPurpleAccent, // Uniform color for each input box
+                        border: Border.all(
+                          color: Colors.deepPurpleAccent, // Border color
+                          width: 2, // Border width
+                        ),
+                        borderRadius:
+                            BorderRadius.circular(10), // More rounded borders
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 25, // Larger font size for better visibility
+                        color: Colors.white, // Text color
+                      ),
+                    ),
+                    focusedPinTheme: PinTheme(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color:
+                            Colors.white, // Color of the input box when focused
+                        border: Border.all(
+                          color: Colors
+                              .deepPurpleAccent, // Border color when focused
+                          width: 2,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 25,
+                        color:
+                            Colors.deepPurpleAccent, // Text color when focused
                       ),
                     ),
                     // Add more customization to Pinput as needed
@@ -176,25 +190,29 @@ class _MyPhoneState extends State<MyPhone> {
                 const SizedBox(
                   height: 10,
                 ),
-                Row(
-                  children: [
-                    Checkbox(
-                      value: isTesterVersion,
-                      onChanged: (bool? value) {
-                        setState(() {
-                          isTesterVersion = value ?? false;
-                        });
-                      },
-                    ),
-                    const Text('Tester Version'),
-                  ],
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    children: [
+                      Checkbox(
+                        value: isTesterVersion,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isTesterVersion = value ?? false;
+                          });
+                        },
+                      ),
+                      const Text('Tester Version'),
+                    ],
+                  ),
                 ),
                 const SizedBox(
                   height: 10,
                 ),
-                SizedBox(
+                Container(
+                  margin: const EdgeInsets.symmetric(horizontal: 15),
                   width: double.infinity,
-                  height: 45,
+                  height: 55,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurpleAccent,
