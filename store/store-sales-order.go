@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -202,6 +203,89 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 
 	return &so, nil
 }
+
+func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*SalesOrderItem, error) {
+	var salesOrderItems []*SalesOrderItem
+
+	query := `
+        SELECT i.id, i.name, ci.sold_price AS price, sc.discount, st.name AS store, ii.image_url AS image, b.name AS brand, ci.quantity, i.unit_of_quantity, 
+               so.delivery_fee, so.platform_fee, so.small_order_fee, so.rain_fee, so.high_traffic_surcharge, so.packing_fee, so.subtotal, ci.sold_price * ci.quantity AS item_cost
+        FROM sales_order so
+        JOIN cart_item ci ON so.cart_id = ci.cart_id
+        JOIN item_store istore ON ci.item_id = istore.id
+        JOIN item i ON istore.item_id = i.id
+        LEFT JOIN item_image ii ON i.id = ii.item_id
+        JOIN store st ON istore.store_id = st.id
+        LEFT JOIN brand b ON i.brand_id = b.id
+        WHERE so.id = $1 AND so.customer_id = $2
+        GROUP BY i.id, i.name, ci.sold_price, sc.discount, st.name, ii.image_url, b.name, ci.quantity, i.unit_of_quantity, so.delivery_fee, so.platform_fee, so.small_order_fee, so.rain_fee, so.high_traffic_surcharge, so.packing_fee, so.subtotal
+        ORDER BY ii.order_position ASC
+    `
+
+	rows, err := s.db.Query(query, salesOrderID, customerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var soi SalesOrderItem
+		err := rows.Scan(
+			&soi.ID,
+			&soi.Name,
+			&soi.Price,
+			&soi.Discount,
+			&soi.Store,
+			&soi.Image,
+			&soi.Brand,
+			&soi.Quantity,
+			&soi.UnitOfQuantity,
+			&soi.DeliveryFee,
+			&soi.PlatformFee,
+			&soi.SmallOrderFee,
+			&soi.RainFee,
+			&soi.HighTrafficSurcharge,
+			&soi.PackingFee,
+			&soi.Subtotal,
+			&soi.ItemCost,
+		)
+		if err != nil {
+			return nil, err
+		}
+		salesOrderItems = append(salesOrderItems, &soi)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return salesOrderItems, nil
+}
+
+type SalesOrderItem struct {
+	ID                   int       `json:"id"`
+	Name                 string    `json:"name"`
+	Price                int       `json:"price"`
+	Discount             int       `json:"discount"`
+	Store                string    `json:"store"`
+	Image                string    `json:"image"`
+	Brand                string    `json:"brand"`
+	Quantity             int       `json:"quantity"`
+	ItemID               int       `json:"item_id"`
+	UnitOfQuantity       string    `json:"unit_of_quantity"`
+	ItemQuantity         int       `json:"item_quantity"`
+	CreatedAt            time.Time `json:"created_at"`
+	DeliveryFee          int       `json:"delivery_fee"`
+	PlatformFee          int       `json:"platform_fee"`
+	SmallOrderFee        int       `json:"small_order_fee"`
+	RainFee              int       `json:"rain_fee"`
+	HighTrafficSurcharge int       `json:"high_traffic_surcharge"`
+	PackingFee           int       `json:"packing_fee"`
+	Subtotal             int       `json:"subtotal"`
+	ItemCost             int       `json:"item_cost"` // Assuming this is the total cost of the item
+}
+
+// ... rest of the implementation remains the same
 
 func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
 	rows, err := s.db.Query("SELECT id, delivery_partner_id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date FROM sales_order")
