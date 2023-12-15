@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
-import 'package:pronto/setting/order.dart';
+import 'package:pronto/setting/order/order.dart';
 import 'package:pronto/payments/phonepe.dart';
 import 'package:provider/provider.dart';
 
@@ -218,52 +218,6 @@ class _SettingScreenState extends State<SettingScreen> {
                 ),
               ),
               */
-              Container(
-                height: MediaQuery.of(context).size.height * 0.14,
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.indigoAccent.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    'Profile',
-                    style: GoogleFonts.robotoMono(fontSize: 18),
-                  ),
-                ),
-              ),
-              Container(
-                height: MediaQuery.of(context).size.height * 0.14,
-                margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.indigoAccent.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 3),
-                    ),
-                  ],
-                ),
-                child: Center(
-                  child: Text(
-                    'Wallet',
-                    style: GoogleFonts.robotoMono(fontSize: 18),
-                  ),
-                ),
-              ),
 
               GestureDetector(
                 onTap: () {
