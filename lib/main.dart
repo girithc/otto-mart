@@ -11,6 +11,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/plan/plan.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/no_internet.dart';
@@ -90,6 +91,8 @@ class _MyAppState extends State<MyApp> {
               MyHomePage.routeName: (context) =>
                   const MyHomePage(title: 'Otto Mart'),
               MyCart.routeName: (context) => const MyCart(),
+              MyPlan.routeName: (context) => const MyPlan(), // Add this line
+
               // Add other routes as needed
             },
           );

@@ -17,6 +17,7 @@ import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/order/confirmed_order_screen.dart';
 import 'package:pronto/payments/phonepe.dart';
+import 'package:pronto/plan/plan.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
@@ -779,23 +780,11 @@ class _MyHomePageState extends State<MyHomePage>
               // Always navigate to Home, regardless of selected tab
               activeTabProvider.setActiveTabIndex(index);
               if (index == 0) {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyHomePage(title: "Otto Mart"),
-                  ),
-                );
+                Navigator.pushNamed(context, MyHomePage.routeName);
+              } else if (index == 1) {
+                Navigator.pushNamed(context, MyPlan.routeName);
               } else if (index == 2) {
                 Navigator.pushNamed(context, MyCart.routeName);
-
-                /*
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyCart(),
-                  ),
-                );
-                */
               }
             },
             tabs: const [
@@ -1292,72 +1281,74 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Container(
-                  padding: const EdgeInsets.only(left: 5.0),
-                  margin: const EdgeInsets.symmetric(horizontal: 0.0),
-                  child: TextButton(
-                      onPressed: () {
-                        //homePageState._openBottomSheet();
-
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyPhone()));
-                      },
-                      child: ShaderMask(
-                        shaderCallback: (bounds) => const RadialGradient(
-                                center: Alignment.topLeft,
-                                radius: 1.0,
-                                colors: [
-                                  Colors.deepPurple,
-                                  Colors.deepPurpleAccent
-                                ],
-                                tileMode: TileMode.mirror)
-                            .createShader(bounds),
-                        child: const Text(
-                          'Otto Mart',
-                          style: TextStyle(
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white),
-                        ),
-                      )),
+                IconButton(
+                  color: Colors.white,
+                  padding: const EdgeInsets.only(right: 15.0),
+                  icon: const Icon(Icons.arrow_drop_down),
+                  onPressed: () {},
                 ),
                 const Spacer(),
-                IconButton(
-                  color: Colors.black,
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.book_outlined),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SettingScreen()));
-                  },
+                Container(
+                  padding: const EdgeInsets.only(left: 0.0),
+                  margin: const EdgeInsets.symmetric(horizontal: 0.0),
+                  child: TextButton(
+                    onPressed: () {
+                      //homePageState._openBottomSheet();
+
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyPhone()));
+                    },
+                    child: ShaderMask(
+                      shaderCallback: (bounds) => const RadialGradient(
+                              center: Alignment.topLeft,
+                              radius: 1.0,
+                              colors: [
+                                Colors.deepPurple,
+                                Colors.deepPurpleAccent
+                              ],
+                              tileMode: TileMode.mirror)
+                          .createShader(bounds),
+                      child: const Text(
+                        'Otto Mart',
+                        style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
+                      ),
+                    ),
+                  ),
                 ),
-                IconButton(
-                  color: Colors.black,
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.shopping_cart_outlined),
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyCart()));
-                  },
-                ),
-                IconButton(
-                  color: Colors.black,
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.person_outline),
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const SettingScreen()));
-                  },
-                ),
-                /*
+                const Spacer(),
+                Container(
+                  height: 40.0, // Set height of the container
+                  width: 40.0, // Set width of the container
+                  decoration: const BoxDecoration(
+                    // Background color of the container
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.black45,
+                        Colors.black87
+                      ], // Gradient colors
+                    ), // Circular shape
+                  ),
+                  child: IconButton(
+                      icon: const Icon(Icons.person),
+                      color: Colors.white, // Icon color
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SettingScreen()),
+                        );
+                      }),
+                )
+
+/* 
                 IconButton(
                   color: Colors.black,
                   padding: const EdgeInsets.only(right: 15.0),

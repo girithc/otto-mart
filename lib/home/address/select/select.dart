@@ -176,34 +176,37 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           children: [
             // Title
             _buildAdvertisement(),
-
+            _buildTitleSection(),
             Expanded(
               child: Container(
+                margin: const EdgeInsets.only(
+                    bottom: 10, top: 5, left: 5, right: 5),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  boxShadow: const [
+                  borderRadius: BorderRadius.circular(15), // Rounded corners
+                  boxShadow: [
                     BoxShadow(
-                      color: Colors.deepPurpleAccent,
-                      spreadRadius: 1,
-                      blurRadius: 2,
-                      offset: Offset(0, -1),
+                      color: Colors.grey.withOpacity(0.5),
+                      spreadRadius: 2,
+                      blurRadius: 4,
+                      offset: const Offset(0, 2), // Changes position of shadow
                     ),
                   ],
+                  border: Border.all(color: Colors.white, width: 1.0),
                 ),
                 child: Column(
                   children: [
-                    _buildTitleSection(),
                     Expanded(
                       child: isLoadingGetAddress
                           ? _buildSkeletonLoader()
                           : _buildAddressList(),
                     ),
-                    _buildActionButton(),
                   ],
                 ),
               ),
             ),
+
+            _buildActionButton(),
           ],
         ),
       ),
@@ -227,8 +230,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
   Widget _buildTitleSection() {
     return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+      //width: MediaQuery.of(context).size.width,
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.only(
@@ -238,28 +242,24 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       ),
       child: Center(
         child: Container(
-          width: MediaQuery.of(context).size.width * 0.80,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 30),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white, // Grey background
-            borderRadius: BorderRadius.circular(10), // Rounded corners
-            border: Border.all(
-              color: Colors.white10, // Border color
-              width: 1.0, // Border width
-            ),
-            boxShadow: const [
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(15), // Rounded corners
+            boxShadow: [
               BoxShadow(
-                color: Colors.grey, // Shadow color
-                spreadRadius: 1,
-                blurRadius: 2,
-                offset: Offset(0, 1), // Changes position of shadow
+                color: Colors.grey.withOpacity(0.5),
+                spreadRadius: 2,
+                blurRadius: 4,
+                offset: const Offset(0, 2), // Changes position of shadow
               ),
             ],
+            border: Border.all(color: Colors.white, width: 1.0),
           ),
           child: const Center(
             child: Text(
               "Select Address",
-              style: TextStyle(fontSize: 24),
+              style: TextStyle(fontSize: 22),
             ),
           ),
         ),
@@ -367,7 +367,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     var cart = context.watch<CartModel>();
     return Container(
       width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.all(5),
+      padding: const EdgeInsets.only(
+        bottom: 20,
+      ),
       decoration: const BoxDecoration(
         color: Colors.white,
       ),
@@ -453,7 +455,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           foregroundColor: Colors.white,
           backgroundColor: Colors.deepPurpleAccent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(20),
           ),
           elevation: 5,
           padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 20),
