@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:pronto/setting/order/order_detail.dart';
 import 'package:pronto/utils/constants.dart';
 
 class MyOrdersPage extends StatefulWidget {
@@ -114,51 +115,63 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: orders.length,
               itemBuilder: (context, index) {
-                return Container(
-                  height: MediaQuery.of(context).size.height * 0.20,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: orders[index].paid!
-                            ? Colors.indigoAccent.withOpacity(0.5)
-                            : Colors.deepOrangeAccent.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment
-                          .center, // Centers the column content
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Paid: ${orders[index].paid.toString()}',
-                          style: GoogleFonts.robotoMono(fontSize: 18),
-                        ),
-                        Text(
-                          orders[index].address!,
-                          style: GoogleFonts.robotoMono(fontSize: 18),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center, // Center-aligns the text
-                        ),
-                        Text(
-                          orders[index].date!,
-                          style: GoogleFonts.robotoMono(fontSize: 18),
-                        ),
-                        Text(
-                          orders[index].paymentType!,
-                          style: GoogleFonts.robotoMono(fontSize: 18),
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => OrderDetailPage(
+                                salesOrderId: orders[index].id!,
+                              )),
+                    );
+                  },
+                  child: Container(
+                    height: MediaQuery.of(context).size.height * 0.20,
+                    margin:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: orders[index].paid!
+                              ? Colors.indigoAccent.withOpacity(0.5)
+                              : Colors.deepOrangeAccent.withOpacity(0.5),
+                          spreadRadius: 2,
+                          blurRadius: 4,
+                          offset: const Offset(0, 3),
                         ),
                       ],
+                    ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment
+                            .center, // Centers the column content
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Paid: ${orders[index].paid.toString()}',
+                            style: GoogleFonts.robotoMono(fontSize: 18),
+                          ),
+                          Text(
+                            orders[index].address!,
+                            style: GoogleFonts.robotoMono(fontSize: 18),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign:
+                                TextAlign.center, // Center-aligns the text
+                          ),
+                          Text(
+                            orders[index].date!,
+                            style: GoogleFonts.robotoMono(fontSize: 18),
+                          ),
+                          Text(
+                            orders[index].paymentType!,
+                            style: GoogleFonts.robotoMono(fontSize: 18),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -173,6 +186,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
 }
 
 class Order {
+  int? id;
   String? date;
   String? address;
   String? paymentType;
@@ -180,7 +194,8 @@ class Order {
   bool? paid;
 
   Order(
-      {this.date,
+      {this.id,
+      this.date,
       this.address,
       this.paymentType,
       this.deliveryPartnerName,
@@ -188,6 +203,7 @@ class Order {
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
+      id: json['order_id'],
       date: json['order_date']?.toString() ?? 'N/A',
       address: json['order_address']?.toString() ?? 'N/A',
       paymentType: json['payment_type']?.toString() ?? 'N/A',
