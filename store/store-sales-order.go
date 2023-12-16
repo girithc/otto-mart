@@ -208,17 +208,18 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 	var salesOrderItems []*SalesOrderItem
 
 	query := `
-        SELECT i.id, i.name, ci.sold_price AS price, sc.discount, st.name AS store, ii.image_url AS image, b.name AS brand, ci.quantity, i.unit_of_quantity, 
-               so.delivery_fee, so.platform_fee, so.small_order_fee, so.rain_fee, so.high_traffic_surcharge, so.packing_fee, so.subtotal, ci.sold_price * ci.quantity AS item_cost
+        SELECT i.id, i.name, ci.sold_price AS price, sc.discounts, st.name AS store, ii.image_url AS image, b.name AS brand, ci.quantity, i.unit_of_quantity, 
+               sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, ci.sold_price * ci.quantity AS item_cost, so.created_at
         FROM sales_order so
-        JOIN cart_item ci ON so.cart_id = ci.cart_id
+        JOIN shopping_cart sc ON so.cart_id = sc.id
+        JOIN cart_item ci ON sc.id = ci.cart_id
         JOIN item_store istore ON ci.item_id = istore.id
         JOIN item i ON istore.item_id = i.id
-        LEFT JOIN item_image ii ON i.id = ii.item_id
+        LEFT JOIN item_image ii ON i.id = ii.item_id AND ii.order_position = 1
         JOIN store st ON istore.store_id = st.id
         LEFT JOIN brand b ON i.brand_id = b.id
         WHERE so.id = $1 AND so.customer_id = $2
-        GROUP BY i.id, i.name, ci.sold_price, sc.discount, st.name, ii.image_url, b.name, ci.quantity, i.unit_of_quantity, so.delivery_fee, so.platform_fee, so.small_order_fee, so.rain_fee, so.high_traffic_surcharge, so.packing_fee, so.subtotal
+        GROUP BY i.id, i.name, ci.sold_price, sc.discounts, st.name, ii.image_url, b.name, ci.quantity, i.unit_of_quantity, sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, so.created_at
         ORDER BY ii.order_position ASC
     `
 
@@ -248,6 +249,7 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 			&soi.PackingFee,
 			&soi.Subtotal,
 			&soi.ItemCost,
+			&soi.CreatedAt,
 		)
 		if err != nil {
 			return nil, err

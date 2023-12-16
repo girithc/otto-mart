@@ -54,12 +54,12 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/delivery-partner-check-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCheckOrder))
 	http.HandleFunc("/delivery-partner-move-order", makeHTTPHandleFunc(s.handleDeliveryPartnerMoveOrder))
 
-	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
-
 	http.HandleFunc("/address", makeHTTPHandleFunc(s.handleAddress))
 	http.HandleFunc("/brand", makeHTTPHandleFunc(s.handleBrand))
 	http.HandleFunc("/store-sales-order", makeHTTPHandleFunc(s.handleStoreSalesOrder))
 	http.HandleFunc("/sales-order-store", makeHTTPHandleFunc(s.handleSalesOrderStore))
+	http.HandleFunc("/sales-order-details", makeHTTPHandleFunc(s.handleSalesOrderDetails))
+	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
 	http.HandleFunc("/phonepe-payment-init", makeHTTPHandleFunc(s.handlePhonePe))
 	http.HandleFunc("/phonepe-payment-complete", makeHTTPHandleFunc(s.handlePhonePeComplete))
 	http.HandleFunc("/phonepe-callback", makeHTTPHandleFunc(s.handlePhonePeCallback))

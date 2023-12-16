@@ -1089,6 +1089,10 @@ func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Reques
 	return nil
 }
 
+func (s *Server) handleSalesOrderDetails(res http.ResponseWriter, req *http.Request) error {
+	return nil
+}
+
 func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 
