@@ -316,6 +316,7 @@ func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
 }
 
 type OrderDetails struct {
+	OrderID             int    `json:"order_id"`
 	DeliveryPartnerName string `json:"delivery_partner_name"`
 	OrderDate           string `json:"order_date"`
 	OrderAddress        string `json:"order_address"`
@@ -328,7 +329,7 @@ func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, 
 
 	// SQL query to fetch the required details
 	query := `
-        SELECT dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
+        SELECT so.id, dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
         FROM sales_order so
         JOIN address a ON so.address_id = a.id
         JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
@@ -345,7 +346,7 @@ func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, 
 	// Iterate through the result set
 	for rows.Next() {
 		var order OrderDetails
-		err := rows.Scan(&order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+		err := rows.Scan(&order.OrderID, &order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
 		if err != nil {
 			return nil, err
 		}
