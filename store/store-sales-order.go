@@ -208,19 +208,19 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 	var salesOrderItems []*SalesOrderItem
 
 	query := `
-        SELECT i.id, i.name, ci.sold_price AS price, sc.discounts, st.name AS store, ii.image_url AS image, b.name AS brand, ci.quantity, i.unit_of_quantity, 
-               sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, ci.sold_price * ci.quantity AS item_cost, so.created_at
+        SELECT i.name, ci.sold_price AS price, sc.discounts, st.name AS store, 
+               (SELECT image_url FROM item_image WHERE item_id = i.id ORDER BY order_position ASC LIMIT 1) AS image, 
+               b.name AS brand, ci.quantity, i.unit_of_quantity, i.id, i.quantity, 
+               sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, ci.sold_price * ci.quantity AS item_cost, so.order_date
         FROM sales_order so
         JOIN shopping_cart sc ON so.cart_id = sc.id
         JOIN cart_item ci ON sc.id = ci.cart_id
         JOIN item_store istore ON ci.item_id = istore.id
         JOIN item i ON istore.item_id = i.id
-        LEFT JOIN item_image ii ON i.id = ii.item_id AND ii.order_position = 1
         JOIN store st ON istore.store_id = st.id
         LEFT JOIN brand b ON i.brand_id = b.id
         WHERE so.id = $1 AND so.customer_id = $2
-        GROUP BY i.id, i.name, ci.sold_price, sc.discounts, st.name, ii.image_url, b.name, ci.quantity, i.unit_of_quantity, sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, so.created_at
-        ORDER BY ii.order_position ASC
+        GROUP BY i.id, i.name, ci.sold_price, sc.discounts, st.name, b.name, ci.quantity, i.unit_of_quantity, sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, so.order_date
     `
 
 	rows, err := s.db.Query(query, salesOrderID, customerID)
@@ -232,7 +232,6 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 	for rows.Next() {
 		var soi SalesOrderItem
 		err := rows.Scan(
-			&soi.ID,
 			&soi.Name,
 			&soi.Price,
 			&soi.Discount,
@@ -241,6 +240,8 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 			&soi.Brand,
 			&soi.Quantity,
 			&soi.UnitOfQuantity,
+			&soi.ItemID,
+			&soi.ItemQuantity,
 			&soi.DeliveryFee,
 			&soi.PlatformFee,
 			&soi.SmallOrderFee,
@@ -249,11 +250,12 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 			&soi.PackingFee,
 			&soi.Subtotal,
 			&soi.ItemCost,
-			&soi.CreatedAt,
+			&soi.OrderDate,
 		)
 		if err != nil {
 			return nil, err
 		}
+		soi.ID = salesOrderID
 		salesOrderItems = append(salesOrderItems, &soi)
 	}
 
@@ -276,7 +278,7 @@ type SalesOrderItem struct {
 	ItemID               int       `json:"item_id"`
 	UnitOfQuantity       string    `json:"unit_of_quantity"`
 	ItemQuantity         int       `json:"item_quantity"`
-	CreatedAt            time.Time `json:"created_at"`
+	OrderDate            time.Time `json:"order_date"`
 	DeliveryFee          int       `json:"delivery_fee"`
 	PlatformFee          int       `json:"platform_fee"`
 	SmallOrderFee        int       `json:"small_order_fee"`

@@ -106,3 +106,18 @@ func (s *Server) handleOrderItemsByStoreAndOrderId(res http.ResponseWriter, req 
 
 	return WriteJSON(res, http.StatusOK, records)
 }
+
+func (s *Server) handleSalesOrderDetailsPOST(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.SalesOrderIDCustomerID)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode handleOrdersByCartIdCustomerId()")
+		return err
+	}
+
+	records, err := s.store.GetSalesOrderDetails(new_req.SalesOrderID, new_req.CustomerID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}

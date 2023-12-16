@@ -69,6 +69,11 @@ type Sales_Order_Cart struct {
 	Address           SOAddress         `json:"address"`
 }
 
+type SalesOrderIDCustomerID struct {
+	SalesOrderID int `json:"sales_order_id"`
+	CustomerID   int `json:"customer_id"`
+}
+
 type SODeliveryPartner struct {
 	ID               int            `json:"id"`
 	Name             string         `json:"name"`

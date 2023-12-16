@@ -1090,6 +1090,11 @@ func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) handleSalesOrderDetails(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "store_sales_order")
+		return s.handleSalesOrderDetailsPOST(res, req)
+	}
+
 	return nil
 }
 
