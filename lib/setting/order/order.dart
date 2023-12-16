@@ -127,22 +127,22 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                   },
                   child: Container(
                     height: MediaQuery.of(context).size.height * 0.20,
-                    margin:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 10.0, vertical: 5),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius:
+                          BorderRadius.circular(15), // Rounded corners
                       boxShadow: [
                         BoxShadow(
-                          color: orders[index].paid!
-                              ? Colors.indigoAccent.withOpacity(0.5)
-                              : Colors.deepOrangeAccent.withOpacity(0.5),
+                          color: Colors.grey.withOpacity(0.5),
                           spreadRadius: 2,
                           blurRadius: 4,
-                          offset: const Offset(0, 3),
+                          offset:
+                              const Offset(0, 2), // Changes position of shadow
                         ),
                       ],
+                      border: Border.all(color: Colors.white, width: 1.0),
                     ),
                     child: Center(
                       child: Column(
@@ -151,25 +151,33 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
-                            'Paid: ${orders[index].paid.toString()}',
-                            style: GoogleFonts.robotoMono(fontSize: 18),
-                          ),
-                          Text(
-                            orders[index].address!,
-                            style: GoogleFonts.robotoMono(fontSize: 18),
+                            "Address ${orders[index].address!}",
+                            style: GoogleFonts.robotoMono(fontSize: 14),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign:
                                 TextAlign.center, // Center-aligns the text
                           ),
                           Text(
-                            orders[index].date!,
-                            style: GoogleFonts.robotoMono(fontSize: 18),
+                            " Order Date ${orders[index].date!}",
+                            style: GoogleFonts.robotoMono(fontSize: 14),
                           ),
-                          Text(
-                            orders[index].paymentType!,
-                            style: GoogleFonts.robotoMono(fontSize: 18),
-                          ),
+                          const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'More Information',
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurpleAccent),
+                              ),
+                              Icon(
+                                Icons.arrow_forward_outlined,
+                                color: Colors.deepPurpleAccent,
+                              )
+                            ],
+                          )
                         ],
                       ),
                     ),
