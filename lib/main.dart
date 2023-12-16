@@ -72,6 +72,7 @@ class _MyAppState extends State<MyApp> {
         builder: (context, connectivityProvider, child) {
           if (!connectivityProvider.hasInternet) {
             return MaterialApp(
+              debugShowCheckedModeBanner: false,
               home: NoInternetPage(
                 onRetry: () {
                   connectivityProvider.checkInternetConnection();
@@ -80,6 +81,7 @@ class _MyAppState extends State<MyApp> {
             );
           }
           return MaterialApp(
+            debugShowCheckedModeBanner: false,
             navigatorObservers: [routeObserver],
             title: 'Provider Demo',
             theme: ThemeData(

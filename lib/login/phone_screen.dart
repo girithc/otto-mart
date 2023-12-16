@@ -151,8 +151,7 @@ class _MyPhoneState extends State<MyPhone> {
                       width: 60, // Increased width for larger input boxes
                       height: 60, // Increased height for larger input boxes
                       decoration: BoxDecoration(
-                        color: Colors
-                            .deepPurpleAccent, // Uniform color for each input box
+                        color: Colors.white, // Uniform color for each input box
                         border: Border.all(
                           color: Colors.deepPurpleAccent, // Border color
                           width: 2, // Border width
@@ -161,8 +160,8 @@ class _MyPhoneState extends State<MyPhone> {
                             BorderRadius.circular(10), // More rounded borders
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 25, // Larger font size for better visibility
-                        color: Colors.white, // Text color
+                        fontSize: 26, // Larger font size for better visibility
+                        color: Colors.black, // Text color
                       ),
                     ),
                     focusedPinTheme: PinTheme(
@@ -172,16 +171,15 @@ class _MyPhoneState extends State<MyPhone> {
                         color:
                             Colors.white, // Color of the input box when focused
                         border: Border.all(
-                          color: Colors
-                              .deepPurpleAccent, // Border color when focused
+                          color:
+                              Colors.greenAccent, // Border color when focused
                           width: 2,
                         ),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       textStyle: const TextStyle(
-                        fontSize: 25,
-                        color:
-                            Colors.deepPurpleAccent, // Text color when focused
+                        fontSize: 28,
+                        color: Colors.black, // Text color when focused
                       ),
                     ),
                     // Add more customization to Pinput as needed
