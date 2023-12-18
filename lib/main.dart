@@ -14,6 +14,7 @@ import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/login/verify_screen.dart';
 import 'package:pronto/plan/plan.dart';
+import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/no_internet.dart';
@@ -77,6 +78,12 @@ final GoRouter _router = GoRouter(
       path: '/select-address-login',
       builder: (BuildContext context, GoRouterState state) {
         return const AddressSelectionWidget();
+      },
+    ),
+    GoRoute(
+      path: '/setting',
+      builder: (BuildContext context, GoRouterState state) {
+        return const SettingScreen();
       },
     ),
   ],
@@ -240,7 +247,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                            */
                         }
                       else
-                        {context.go('phone')}
+                        {context.go('/phone')}
                     });
               },
               child: Image.asset('assets/images/scooter.jpg'),

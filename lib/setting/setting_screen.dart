@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
@@ -72,14 +73,7 @@ class _SettingScreenState extends State<SettingScreen> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const MyHomePage(
-                  title: 'Pronto',
-                ),
-              ),
-            );
+            context.go('/home');
           },
         ),
       ),

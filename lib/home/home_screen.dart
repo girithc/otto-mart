@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
@@ -1232,28 +1233,16 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                 Container(
                   height: 40.0, // Set height of the container
                   width: 40.0, // Set width of the container
-                  decoration: BoxDecoration(
-                    // Background color of the container
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.deepPurpleAccent.shade100,
-                        Colors.deepPurpleAccent.shade700
-                      ], // Gradient colors
-                    ), // Circular shape
-                  ),
+                  decoration: const BoxDecoration(
+                      // Background color of the container
+                      shape: BoxShape.circle,
+                      color: Colors.white // Circular shape
+                      ),
                   child: IconButton(
                       icon: const Icon(Icons.electric_bolt_rounded),
                       color: Colors.white, // Icon color
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) =>
-                                  const EaseBuzzWebView(url: "")),
-                        );
+                        context.go('/setting');
                       }),
                 ),
                 const Spacer(),
@@ -1263,11 +1252,6 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   child: TextButton(
                     onPressed: () {
                       //homePageState._openBottomSheet();
-
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyPhone()));
                     },
                     child: ShaderMask(
                       shaderCallback: (bounds) => const RadialGradient(
@@ -1309,11 +1293,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                       icon: const Icon(Icons.person),
                       color: Colors.white, // Icon color
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SettingScreen()),
-                        );
+                        context.go('/setting');
                       }),
                 )
 
