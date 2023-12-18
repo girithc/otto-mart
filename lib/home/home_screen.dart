@@ -758,7 +758,8 @@ class _MyHomePageState extends State<MyHomePage>
             const EdgeInsets.only(bottom: 22, top: 10, left: 15, right: 15),
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.white, width: 2),
+          border: Border.all(color: Colors.grey, width: 1),
+          borderRadius: BorderRadius.circular(8), // Squarish border
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.5),
@@ -769,100 +770,46 @@ class _MyHomePageState extends State<MyHomePage>
           ],
           color: Colors.white,
         ),
-        child: Consumer<ActiveTabProvider>(
-          builder: (context, activeTabProvider, child) => GNav(
-            gap: 12,
-            color: Colors.black87,
-            activeColor: Colors.white,
-            tabBackgroundColor: Colors.deepPurpleAccent.shade200,
-            selectedIndex: activeTabProvider
-                .activeTabIndex, // Always set to 0 to keep Home tab active
-            onTabChange: (index) {
-              // Always navigate to Home, regardless of selected tab
-              activeTabProvider.setActiveTabIndex(index);
-              if (index == 0) {
-                Navigator.pushNamed(context, MyHomePage.routeName);
-              } else if (index == 1) {
-                Navigator.pushNamed(context, MyPlan.routeName);
-              } else if (index == 2) {
-                Navigator.pushNamed(context, MyCart.routeName);
-              }
-            },
-            tabs: const [
-              GButton(
-                icon: Icons.home,
-                text: 'Home',
-                textStyle:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                padding: EdgeInsets.all(15),
-              ),
-              GButton(
-                icon: Icons.book_outlined,
-                text: 'Otto Plan',
-                textStyle:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                padding: EdgeInsets.all(15),
-              ),
-              GButton(
-                icon: Icons.shopping_cart_outlined,
-                text: 'Otto Cart',
-                textStyle:
-                    TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                padding: EdgeInsets.all(15),
-              ),
-            ],
-          ),
-        ),
-      ),
-/*
-      floatingActionButton: FutureBuilder<String?>(
-        future: getOrderStatus(),
-        builder: (BuildContext context, AsyncSnapshot<String?> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            // Optionally, return a placeholder widget while waiting for the data
-            return const CircularProgressIndicator();
-          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            // Check if the orderStatus is not null and not empty
-            return FloatingActionButton.extended(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ElevatedButton(
               onPressed: () {
-                Navigator.of(context).push(
+                // Navigate to Home
+                Navigator.push(
+                  context,
                   MaterialPageRoute(
-                      builder: (context) => OrderConfirmed(
-                            newOrder: false,
-                          )),
+                      builder: (context) =>
+                          const MyHomePage(title: 'Otto Mart')),
                 );
               },
-              icon: const Icon(Icons.delivery_dining_outlined), // Delivery icon
-              label: Row(
-                mainAxisSize: MainAxisSize
-                    .min, // To keep the Row size only as big as its children
-                children: [
-                  Text(snapshot.data!), // Display the order status
-                  const SizedBox(
-                      width: 8), // Space between text and cancel icon
-                  IconButton(
-                    icon: const Icon(Icons.close_outlined), // Cancel icon
-                    onPressed: () {
-                      deleteOrderStatus();
-                      // Optionally, navigate away or perform other UI updates
-                    },
-                  ),
-                ],
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white70, // Background color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Squarish shape
+                ),
               ),
-              backgroundColor:
-                  Colors.white.withOpacity(0.9), // Customizable color
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30), // Rounded corners
+              child: const Text('Home'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to Cart
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyCart()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white70, // Different background color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Squarish shape
+                ),
               ),
-            );
-          } else {
-            // Return an empty container if there's no orderStatus
-            return Container();
-          }
-        },
+              child: const Text('Cart'),
+            ),
+          ],
+        ),
       ),
-      */
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 

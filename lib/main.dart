@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -11,6 +12,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/login/verify_screen.dart';
 import 'package:pronto/plan/plan.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
@@ -31,6 +33,54 @@ void main() async {
     initialCustomerId: initialCustomerId,
   ));
 }
+
+final GoRouter _router = GoRouter(
+  routes: <RouteBase>[
+    GoRoute(
+      path: '/',
+      builder: (BuildContext context, GoRouterState state) {
+        return const OpeningPageAnimation();
+      },
+    ),
+    GoRoute(
+      path: '/home',
+      builder: (BuildContext context, GoRouterState state) {
+        return const MyHomePage(
+          title: 'Otto Mart',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/cart',
+      builder: (BuildContext context, GoRouterState state) {
+        return const MyCart();
+      },
+    ),
+    GoRoute(
+      path: '/phone',
+      builder: (BuildContext context, GoRouterState state) {
+        return const MyPhone();
+      },
+    ),
+    GoRoute(
+      path: '/verify/:number/:istester',
+      builder: (BuildContext context, GoRouterState state) {
+        final number = state.pathParameters['number'];
+        final istester = state.pathParameters['istester'];
+        return MyVerify(
+          number: number!,
+          isTester: bool.parse(istester!),
+        );
+      },
+    ),
+    GoRoute(
+      path: '/select-address-login',
+      builder: (BuildContext context, GoRouterState state) {
+        return const AddressSelectionWidget();
+      },
+    ),
+  ],
+);
 
 class MyApp extends StatefulWidget {
   final String? initialCustomerId;
@@ -80,23 +130,14 @@ class _MyAppState extends State<MyApp> {
               ),
             );
           }
-          return MaterialApp(
+          return MaterialApp.router(
+            routerConfig: _router,
             debugShowCheckedModeBanner: false,
-            navigatorObservers: [routeObserver],
             title: 'Provider Demo',
             theme: ThemeData(
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
-            home: const OpeningPageAnimation(),
-            routes: {
-              MyHomePage.routeName: (context) =>
-                  const MyHomePage(title: 'Otto Mart'),
-              MyCart.routeName: (context) => const MyCart(),
-              MyPlan.routeName: (context) => const MyPlan(), // Add this line
-
-              // Add other routes as needed
-            },
           );
         },
       ),
@@ -190,10 +231,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                 checkLoginStatus().then((loggedIn) => {
                       if (loggedIn)
                         {
-                          Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const AddressSelectionWidget()))
+                          context.go('/select-address-login')
                           /*
                           Navigator.of(context).pushReplacement(
                               MaterialPageRoute(
@@ -202,11 +240,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                            */
                         }
                       else
-                        {
-                          Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) => const MyPhone()))
-                        }
+                        {context.go('phone')}
                     });
               },
               child: Image.asset('assets/images/scooter.jpg'),

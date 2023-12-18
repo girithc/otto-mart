@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/address/address_screen.dart';
@@ -397,11 +398,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                     backgroundColor: Colors.green,
                   ),
                 );
-                Navigator.pushNamed(context, MyHomePage.routeName);
+                context.go('/home');
               } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
                 print("1b Branch");
 
-                Navigator.pushNamed(context, MyHomePage.routeName);
+                context.go('/home');
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -412,15 +413,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
               }
             } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
               print("2nd Branch");
-
-              /*
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const MyHomePage(title: 'Otto Mart')),
-              );
-              */
-              Navigator.pushNamed(context, MyHomePage.routeName);
+              context.go('/home');
             } else {
               print("3rd Branch");
 
