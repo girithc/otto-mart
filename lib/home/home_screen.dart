@@ -16,6 +16,7 @@ import 'package:pronto/category_items/category_items_screen.dart';
 import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/order/confirmed_order_screen.dart';
+import 'package:pronto/payments/easebuzz/easebuzz.dart';
 import 'package:pronto/payments/phonepe.dart';
 import 'package:pronto/plan/plan.dart';
 import 'package:pronto/setting/setting_screen.dart';
@@ -1281,11 +1282,32 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  color: Colors.white,
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.arrow_drop_down),
-                  onPressed: () {},
+                Container(
+                  height: 40.0, // Set height of the container
+                  width: 40.0, // Set width of the container
+                  decoration: BoxDecoration(
+                    // Background color of the container
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.deepPurpleAccent.shade100,
+                        Colors.deepPurpleAccent.shade700
+                      ], // Gradient colors
+                    ), // Circular shape
+                  ),
+                  child: IconButton(
+                      icon: const Icon(Icons.electric_bolt_rounded),
+                      color: Colors.white, // Icon color
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const EaseBuzzWebView(url: "")),
+                        );
+                      }),
                 ),
                 const Spacer(),
                 Container(

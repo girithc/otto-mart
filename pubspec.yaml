@@ -58,6 +58,7 @@ dependencies:
   webview_flutter_wkwebview: ^3.9.4
   uni_links: ^0.5.1
   google_nav_bar: ^5.0.6
+  go_router: ^12.1.3
 
 dev_dependencies:
   flutter_test:
