@@ -5,6 +5,7 @@ import 'package:master/item-detail/item-detail.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:http/http.dart' as http;
 import 'package:master/main.dart';
+import 'package:master/utils/constants.dart';
 
 class AddStock extends StatefulWidget {
   final ItemTruncated item;
@@ -147,10 +148,11 @@ class _AddStockState extends State<AddStock> {
             int itemId = widget.item.id; // assign your item_id value here
 
             // Define the URL and the body of the POST request
-            var url = Uri.parse('your_api_endpoint');
+            var url = Uri.parse('$baseUrl/item-add-stock');
             var body = json.encode({
               'add_stock': addStock,
               'item_id': itemId,
+              'store_id': 1,
             });
 
             // Make the HTTP POST request
@@ -175,6 +177,7 @@ class _AddStockState extends State<AddStock> {
                 content: Text('Failed to add stock'),
                 backgroundColor: Colors.red,
               ));
+              print(response.body);
             }
           },
           style: ElevatedButton.styleFrom(

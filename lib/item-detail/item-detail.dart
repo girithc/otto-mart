@@ -28,7 +28,7 @@ class ItemDetailApiClient {
       print("Item: ${item.name}");
       return item;
     } else {
-      throw Exception('Failed to load items');
+      throw Exception('Failed to load items ${response.body}');
     }
   }
 

@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:master/item-detail/item-detail.dart';
+import 'package:master/pack/checklist.dart';
 import 'package:master/stock/add-stock.dart';
 import 'package:master/store/stores.dart';
+import 'package:master/utils/login/provider/loginProvider.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => LoginProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -36,12 +44,17 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
   @override
   void initState() {
     super.initState();
-    _begin = -0.5; // start outside the screen on the left
-    _end = 1; // end outside the screen on the right
+    _begin = -0.5;
+    _end = 1;
   }
 
   @override
   Widget build(BuildContext context) {
+    // Delayed execution to ensure the context is fully established
+    Future.delayed(Duration.zero, () {
+      Provider.of<LoginProvider>(context, listen: false).checkLogin(context);
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -57,13 +70,8 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
               ),
             );
           },
-          onEnd: () {
-            // Navigate to the next page after the animation ends
-            Navigator.of(context).pushReplacement(MaterialPageRoute(
-                builder: (context) => const MyHomePage(
-                      title: 'Pronto',
-                    )));
-          },
+          onEnd:
+              () {}, // Removed navigation as it's handled in the LoginProvider now
           child: Image.asset('assets/scooter.avif'),
         ),
       ),
@@ -204,10 +212,10 @@ class _InventoryManagementState extends State<InventoryManagement> {
             )
           },
           shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 4, color: Colors.white),
+            side: const BorderSide(width: 1, color: Colors.black),
             borderRadius: BorderRadius.circular(20),
           ),
-          tileColor: const Color.fromARGB(255, 248, 219, 253),
+          tileColor: Colors.white,
           contentPadding: const EdgeInsets.all(10),
         ),
         ListTile(
@@ -218,14 +226,35 @@ class _InventoryManagementState extends State<InventoryManagement> {
           trailing: const Icon(Icons.arrow_forward_ios_outlined),
           title: const Text(
             'Scan Barcode',
-            style: TextStyle(color: Colors.white),
+            style: TextStyle(color: Colors.black),
           ),
           onTap: scanBarcode,
           shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 4, color: Colors.white),
+            side: const BorderSide(width: 1, color: Colors.black),
             borderRadius: BorderRadius.circular(20),
           ),
-          tileColor: Colors.indigoAccent,
+          tileColor: Colors.white,
+          contentPadding: const EdgeInsets.all(10),
+        ),
+        ListTile(
+          leading: const CircleAvatar(
+            backgroundColor: Colors.white,
+            child: Icon(Icons.store_outlined),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios_outlined),
+          title: const Text('Pack Order'),
+          onTap: () => {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const OrderChecklistPage()),
+            )
+          },
+          shape: ContinuousRectangleBorder(
+            side: const BorderSide(width: 1, color: Colors.black),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          tileColor: Colors.white,
           contentPadding: const EdgeInsets.all(10),
         ),
         ListTile(
@@ -235,15 +264,15 @@ class _InventoryManagementState extends State<InventoryManagement> {
           ),
           trailing: const Icon(Icons.arrow_forward_ios_outlined),
           title: const Text(
-            'Scan QR',
-            style: TextStyle(color: Colors.white),
+            'Item Locator',
+            style: TextStyle(color: Colors.black),
           ),
-          onTap: scanQR,
+          onTap: scanBarcode,
           shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 4, color: Colors.white),
+            side: const BorderSide(width: 1, color: Colors.black),
             borderRadius: BorderRadius.circular(20),
           ),
-          tileColor: Colors.indigoAccent,
+          tileColor: Colors.white,
           contentPadding: const EdgeInsets.all(10),
         ),
         ListTile(
@@ -253,15 +282,15 @@ class _InventoryManagementState extends State<InventoryManagement> {
           ),
           trailing: const Icon(Icons.arrow_forward_ios_outlined),
           title: const Text(
-            'Scan QR',
-            style: TextStyle(color: Colors.white),
+            'Item Reporting',
+            style: TextStyle(color: Colors.black),
           ),
-          onTap: scanQR,
+          onTap: scanBarcode,
           shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 4, color: Colors.white),
+            side: const BorderSide(width: 1, color: Colors.black),
             borderRadius: BorderRadius.circular(20),
           ),
-          tileColor: Colors.indigoAccent,
+          tileColor: Colors.white,
           contentPadding: const EdgeInsets.all(10),
         ),
       ],
