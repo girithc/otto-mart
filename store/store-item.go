@@ -430,8 +430,19 @@ func (s *PostgresStore) Get_Item_By_ID(id int) (*types.Get_Item_Barcode, error) 
               LEFT JOIN brand b ON i.brand_id = b.id
               WHERE i.id = $1`
 	row := tx.QueryRow(query, id)
-	if err := row.Scan(&item.ID, &item.Name, &item.Quantity, &item.Unit_Of_Quantity, &item.Brand, &item.Description, &item.Created_At, &item.Created_By, &item.Barcode); err != nil {
+	var barcode sql.NullString
+
+	if err := row.Scan(&item.ID, &item.Name, &item.Quantity, &item.Unit_Of_Quantity, &item.Brand, &item.Description, &item.Created_At, &item.Created_By, &barcode); err != nil {
+		// Handle error
 		return nil, err
+	}
+
+	// Check if barcode is not NULL and assign the value to item.Barcode
+	if barcode.Valid {
+		item.Barcode = barcode.String
+	} else {
+		// Handle or assign a default value if barcode is NULL
+		item.Barcode = ""
 	}
 
 	// Get categories

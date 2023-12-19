@@ -42,6 +42,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/customer", makeHTTPHandleFunc(s.handleCustomer))
 	http.HandleFunc("/login-customer", makeHTTPHandleFunc(s.handleLoginCustomer))
+	http.HandleFunc("/login-packer", makeHTTPHandleFunc(s.handleLoginPacker))
 	http.HandleFunc("/shopping-cart", makeHTTPHandleFunc(s.handleShoppingCart))
 	http.HandleFunc("/cart-item", makeHTTPHandleFunc(s.handleCartItem))
 
@@ -49,6 +50,9 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/checkout-payment", makeHTTPHandleFunc(s.handleCheckoutPayment))
 	http.HandleFunc("/checkout-cancel", makeHTTPHandleFunc(s.handleCancelCheckout))
 	http.HandleFunc("/checkout", makeHTTPHandleFunc(s.handleCheckout))
+
+	http.HandleFunc("/packer-pack-order", makeHTTPHandleFunc(s.handlePackerPackOrder))
+	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
 
 	http.HandleFunc("/delivery-partner", makeHTTPHandleFunc(s.handleDeliveryPartner))
 	http.HandleFunc("/delivery-partner-check-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCheckOrder))

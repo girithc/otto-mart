@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"time"
 )
 
 func (s *PostgresStore) CreatePackerTable(tx *sql.Tx) error {
@@ -20,6 +21,48 @@ func (s *PostgresStore) CreatePackerTable(tx *sql.Tx) error {
 		return fmt.Errorf("error creating packer table: %w", err)
 	}
 	return nil
+}
+
+func (s *PostgresStore) CreatePacker(phone string) (*Packer, error) {
+	// Query to check if a packer already exists with the given phone number
+	checkQuery := `SELECT id, name, phone, address, created_at FROM packer WHERE phone = $1`
+
+	var existingPacker Packer
+	err := s.db.QueryRow(checkQuery, phone).Scan(&existingPacker.ID, &existingPacker.Name, &existingPacker.Phone, &existingPacker.Address, &existingPacker.CreatedAt)
+
+	// If a packer is found, return their details
+	if err == nil {
+		return &existingPacker, nil
+	}
+
+	// If no existing packer was found, create a new one
+	if err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error checking for existing packer: %w", err)
+	}
+
+	// SQL query to insert a new packer and return its details
+	insertQuery := `
+        INSERT INTO packer (name, phone, address)
+        VALUES ('', $1, '')
+        RETURNING id, name, phone, address, created_at;
+    `
+
+	var newPacker Packer
+	err = s.db.QueryRow(insertQuery, phone).Scan(&newPacker.ID, &newPacker.Name, &newPacker.Phone, &newPacker.Address, &newPacker.CreatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error creating new packer: %w", err)
+	}
+
+	return &newPacker, nil
+}
+
+// Packer represents the structure of a packer in the database
+type Packer struct {
+	ID        int       `json:"id"`
+	Name      string    `json:"name"`
+	Phone     string    `json:"phone"`
+	Address   string    `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 func (s *PostgresStore) PackerAcceptOrder(cart_id int, phone string) error {

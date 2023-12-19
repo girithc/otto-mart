@@ -117,3 +117,14 @@ type SOAddress struct {
 	Zipcode        string  `json:"zipcode"`
 	IsDefault      bool    `json:"is_default"`
 }
+
+type RecentOrder struct {
+	StoreID  int `json:"store_id"`
+	PackerID int `json:"packer_id"`
+}
+
+type CancelRecentOrder struct {
+	StoreID  int `json:"store_id"`
+	PackerID int `json:"packer_id"`
+	OrderID  int `json:"order_id"`
+}

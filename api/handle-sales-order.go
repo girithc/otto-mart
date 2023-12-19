@@ -121,3 +121,39 @@ func (s *Server) handleSalesOrderDetailsPOST(res http.ResponseWriter, req *http.
 
 	return WriteJSON(res, http.StatusOK, records)
 }
+
+func (s *Server) GetRecentSalesOrderByStore(res http.ResponseWriter, req *http.Request) error {
+	print("Enter GetRecentSalesOrderByStore")
+	new_req := new(types.RecentOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in GetRecentSalesOrderByStore()")
+		return err
+	}
+
+	print("Packer-ID: ", new_req.PackerID)
+
+	records, err := s.store.PackOrder(new_req.StoreID, new_req.PackerID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}
+
+func (s *Server) CancelPackSalesOrder(res http.ResponseWriter, req *http.Request) error {
+	print("Enter CancelPackSalesOrder")
+	new_req := new(types.CancelRecentOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in CancelPackSalesOrder()")
+		return err
+	}
+
+	print("Packer-ID: ", new_req.PackerID)
+
+	records, err := s.store.CancelPackOrder(new_req.StoreID, new_req.PackerID, new_req.OrderID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}

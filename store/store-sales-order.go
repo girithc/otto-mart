@@ -539,3 +539,137 @@ type ItemDetails struct {
 	MrpPrice       float64  `json:"mrp_price"`        // Maximum Retail Price of the item
 	Images         []string `json:"images"`           // URLs of item images
 }
+
+func (s *PostgresStore) PackOrder(storeId, phoneNumber int) ([]PackedItem, error) {
+	// Step 1: Retrieve the actual packerId using the phone number
+	str := fmt.Sprintf("%d", phoneNumber)
+	var packerId int
+	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
+	err := s.db.QueryRow(packerIdQuery, str).Scan(&packerId)
+	if err != nil {
+		return nil, fmt.Errorf("error finding packer ID: %w", err)
+	}
+
+	// Step 2: Combined query to retrieve and update the oldest order using the retrieved packerId
+	var orderId int
+	combinedQuery := `
+        WITH updated_order AS (
+            UPDATE sales_order 
+            SET order_status = 'accepted', packer_id = $1
+            WHERE id = (
+                SELECT id FROM sales_order
+                WHERE store_id = $2 AND order_status = 'received'
+                ORDER BY order_date ASC
+                LIMIT 1
+            )
+            RETURNING id
+        )
+        SELECT id FROM updated_order;
+    `
+
+	err = s.db.QueryRow(combinedQuery, packerId, storeId).Scan(&orderId)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving and updating oldest order: %w", err)
+	}
+
+	itemsQuery := `
+			SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity 
+			FROM cart_item ci
+			JOIN item i ON ci.item_id = i.id
+			JOIN brand b ON i.brand_id = b.id
+			WHERE ci.cart_id = (SELECT cart_id FROM sales_order WHERE id = $1)
+		`
+	rows, err := s.db.Query(itemsQuery, orderId)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching items: %w", err)
+	}
+	defer rows.Close()
+
+	var packedItems []PackedItem
+	for rows.Next() {
+		var item PackedItem
+		var itemId int
+		if err := rows.Scan(&itemId, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
+			return nil, fmt.Errorf("error scanning items: %w", err)
+		}
+
+		// Fetch images for each item
+		images, err := s.getItemImages(itemId)
+		if err != nil {
+			return nil, err
+		}
+		item.ImageURLs = images
+		item.Order_ID = orderId
+		packedItems = append(packedItems, item)
+	}
+
+	return packedItems, nil
+}
+
+// getItemImages fetches all images for a given item
+func (s *PostgresStore) getItemImages(itemId int) ([]string, error) {
+	query := `SELECT image_url FROM item_image WHERE item_id = $1 ORDER BY order_position`
+	rows, err := s.db.Query(query, itemId)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching item images: %w", err)
+	}
+	defer rows.Close()
+
+	var images []string
+	for rows.Next() {
+		var imageUrl string
+		if err := rows.Scan(&imageUrl); err != nil {
+			return nil, fmt.Errorf("error scanning image url: %w", err)
+		}
+		images = append(images, imageUrl)
+	}
+
+	return images, nil
+}
+
+// PackedItem represents the structure of an item in the packed order
+type PackedItem struct {
+	Order_ID       int      `json:"order_id"`
+	Name           string   `json:"name"`
+	Brand          string   `json:"brand"`
+	Quantity       int      `json:"quantity"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	ItemQuantity   int      `json:"item_quantity"`
+	ImageURLs      []string `json:"image_urls"` // Using camelCase for consistency
+}
+
+func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool, error) {
+	// Step 1: Retrieve the actual packerId using the phone number
+	str := fmt.Sprintf("%d", phoneNumber)
+	var packerId int
+	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
+	err := s.db.QueryRow(packerIdQuery, str).Scan(&packerId)
+	if err != nil {
+		return false, fmt.Errorf("error finding packer ID: %w", err)
+	}
+
+	// Step 2: Reverse the sales_order status from 'accepted' to 'received'
+	updateQuery := `
+        UPDATE sales_order
+        SET order_status = 'received'
+        WHERE id = $1 AND store_id = $2 AND packer_id = $3 AND order_status = 'accepted'
+        RETURNING id;
+    `
+	var updatedOrderId int
+	err = s.db.QueryRow(updateQuery, orderId, storeId, packerId).Scan(&updatedOrderId)
+	if err != nil {
+		// If no rows are affected, it might not necessarily be an error.
+		// It could be that no order met the criteria.
+		if err == sql.ErrNoRows {
+			return false, nil // No order was updated.
+		}
+		return false, fmt.Errorf("error updating order status: %w", err)
+	}
+
+	// Check if the update was successful
+	if updatedOrderId == orderId {
+		return true, nil // The order was successfully updated.
+	}
+
+	return false, nil // No order was updated.
+}

@@ -55,25 +55,17 @@ func (s *Server) handleCustomer(res http.ResponseWriter, req *http.Request) erro
 }
 
 func (s *Server) handleLoginCustomer(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
-
 	if req.Method == "POST" {
 		print_path("POST", "login-customer")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
+		return s.HandleCustomerLogin(res, req)
+	}
+	return nil
+}
 
-		task := func() worker.Result {
-			err := s.HandleCustomerLogin(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
-
+func (s *Server) handleLoginPacker(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "login-packer")
+		return s.HandlePackerLogin(res, req)
 	}
 	return nil
 }
@@ -568,6 +560,22 @@ func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) er
 		return <-resultChan
 	}
 
+	return nil
+}
+
+func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-pack")
+		return s.GetRecentSalesOrderByStore(res, req)
+	}
+	return nil
+}
+
+func (s *Server) handlePackerCancelOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-pack")
+		return s.CancelPackSalesOrder(res, req)
+	}
 	return nil
 }
 
