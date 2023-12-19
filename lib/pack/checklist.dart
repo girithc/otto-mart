@@ -25,7 +25,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     },
   );
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
-  late List<PackedItem> packedItems;
+  List<PackedItem> packedItems = [];
 
   @override
   void initState() {
@@ -45,6 +45,8 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     );
 
     if (response.statusCode == 200) {
+      print('response: ${response.body}');
+
       setState(() {
         packedItems = (json.decode(response.body) as List)
             .map((item) => PackedItem.fromJson(item))
@@ -71,7 +73,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     );
 
     if (response.statusCode == 200) {
-      // Handle successful response
+      print('response: ${response.body}');
       return true;
     } else {
       // Handle error
@@ -113,135 +115,172 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         ),
         backgroundColor: Colors.deepPurpleAccent,
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: products.length,
+      body: packedItems.isEmpty
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: packedItems.length,
               itemBuilder: (context, index) {
-                var product = products[index];
-                return Container(
-                  margin:
-                      const EdgeInsets.only(left: 1.0, right: 1.0, bottom: 5.0),
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                        color: Theme.of(context).colorScheme.secondary),
-                    borderRadius: BorderRadius.circular(2.0),
-                    color: product['checked']
-                        ? Colors.lightGreenAccent
-                        : Colors
-                            .white, // Change color based on 'checked' status
-                  ),
+                PackedItem item = packedItems[index];
+                return Card(
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 4),
-                    title: Text(product['name']),
-                    leading: Text(product['aisle']),
-                    trailing: IconButton(
-                      icon: Icon(
-                        product['checked']
-                            ? Icons.remove_circle_outline
-                            : Icons
-                                .check_circle_outline, // Change icon based on 'checked' status
-                        size: 30.0,
-                        color: product['checked']
-                            ? Colors.deepOrangeAccent
-                            : null, // Change icon color for 'checked' items
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          product['checked'] =
-                              !product['checked']; // Toggle 'checked' status
-                        });
-                      },
+                    title: Text(item.name), // Display item name
+                    subtitle: Text(
+                      '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}', // Display brand and quantity
                     ),
+                    leading: Row(
+                      mainAxisSize:
+                          MainAxisSize.min, // Use min size for the row
+                      children: [
+                        Text(
+                          '${item.itemQuantity}x',
+                          style: const TextStyle(fontSize: 25),
+                        ), // Display item quantity
+                        item.imageURLs.isNotEmpty
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Image.network(
+                                  item.imageURLs.first, // Adjust the image size
+                                  height: 80,
+                                ),
+                              ) // Display first image if available
+                            : const SizedBox(
+                                width: 40, height: 40), // Placeholder size
+                      ],
+                    ),
+                    trailing: const Icon(Icons.check_circle_outline_outlined),
                   ),
                 );
               },
             ),
-          ),
-          Row(
-            // Use Row to split the button into two parts
-            children: <Widget>[
-              Expanded(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                  color: Colors.white,
-                  child: ElevatedButton(
-                    onPressed: areAllItemsChecked()
-                        ? () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const MyHomePage(title: 'Otto Store')),
-                            );
-                          }
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple, // Left side color
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(5), // Square shape
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 20,
-                      ),
-                    ),
-                    child: const Text('Pack Order', // Left side text
-                        style: TextStyle(color: Colors.white, fontSize: 22)),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Hero(
-                  tag: 'handoffbutton',
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                    color: Colors.white,
-                    child: ElevatedButton(
-                      onPressed: allItemsChecked
-                          ? () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => const MyHomePage(
-                                          title: 'Otto Store',
-                                        )),
-                              );
-                            }
-                          : null,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.lightGreenAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(5),
-                          side: BorderSide(
-                            color: allItemsChecked
-                                ? Colors.black26
-                                : Colors.white, // Conditional border color
-                            width: 2.0,
+      /*
+          Column(
+              children: [
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: packedItems.length,
+                    itemBuilder: (context, index) {
+                      var item = packedItems[index];
+                      return Container(
+                        margin: const EdgeInsets.only(
+                            left: 1.0, right: 1.0, bottom: 5.0),
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                              color: Theme.of(context).colorScheme.secondary),
+                          borderRadius: BorderRadius.circular(2.0),
+                          color: Colors
+                              .white, // Change color based on 'checked' status
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10.0, horizontal: 4),
+                          title: Text(item.name),
+                          subtitle: Text(item.brand),
+                          leading: Text(item.imageURLs[0]),
+                          trailing: IconButton(
+                            icon: const Icon(
+                              Icons
+                                  .check_circle_outline, // Change icon based on 'checked' status
+                              size: 30.0,
+                              color:
+                                  null, // Change icon color for 'checked' items
+                            ),
+                            onPressed: () {
+                              setState(() {});
+                            },
                           ),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                      ),
-                      child: Text(
-                        'Hand Off',
-                        style: TextStyle(
-                          color: allItemsChecked
-                              ? Colors.black
-                              : Colors.white, // Conditional text color
-                          fontSize: 22,
+                      );
+                    },
+                  ),
+                ),
+                Row(
+                  // Use Row to split the button into two parts
+                  children: <Widget>[
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 4),
+                        color: Colors.white,
+                        child: ElevatedButton(
+                          onPressed: areAllItemsChecked()
+                              ? () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => const MyHomePage(
+                                            title: 'Otto Store')),
+                                  );
+                                }
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.deepPurple, // Left side color
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(5), // Square shape
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 20,
+                            ),
+                          ),
+                          child: const Text('Pack Order', // Left side text
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 22)),
                         ),
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: Hero(
+                        tag: 'handoffbutton',
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 4),
+                          color: Colors.white,
+                          child: ElevatedButton(
+                            onPressed: allItemsChecked
+                                ? () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const MyHomePage(
+                                                title: 'Otto Store',
+                                              )),
+                                    );
+                                  }
+                                : null,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.lightGreenAccent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                                side: BorderSide(
+                                  color: allItemsChecked
+                                      ? Colors.black26
+                                      : Colors
+                                          .white, // Conditional border color
+                                  width: 2.0,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 20),
+                            ),
+                            child: Text(
+                              'Hand Off',
+                              style: TextStyle(
+                                color: allItemsChecked
+                                    ? Colors.black
+                                    : Colors.white, // Conditional text color
+                                fontSize: 22,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
+              ],
+            ),
+          */
     );
   }
 }
