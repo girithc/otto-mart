@@ -1242,7 +1242,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                       icon: const Icon(Icons.electric_bolt_rounded),
                       color: Colors.white, // Icon color
                       onPressed: () {
-                        context.go('/setting');
+                        context.push('/setting');
                       }),
                 ),
                 const Spacer(),
@@ -1293,7 +1293,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                       icon: const Icon(Icons.person),
                       color: Colors.white, // Icon color
                       onPressed: () {
-                        context.go('/setting');
+                        context.push('/setting');
                       }),
                 )
 
