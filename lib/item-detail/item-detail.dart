@@ -88,6 +88,34 @@ class ItemDetailApiClient {
     }
   }
 
+  Future<ItemTruncated> fetchItemFromBarcodeInSalesOrder(String barcode) async {
+    var url = Uri.parse('$baseUrl/item');
+
+    if (barcode.isEmpty) {
+      throw Exception('(ItemDetailApiClient) Parameters are not valid');
+    }
+
+    var queryParams = {
+      'barcode': barcode,
+    };
+    url = url.replace(queryParameters: queryParams);
+
+    print("Query Params $queryParams");
+    http.Response response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final dynamic jsonData = json.decode(response.body);
+      final ItemTruncated item = ItemTruncated.fromJson(jsonData);
+
+      print("Item: ${item.name}");
+      return item;
+    } else {
+      throw Exception('Failed to load items');
+    }
+  }
+
+  Future<void> scanItemFromOrder(String barcode) async {}
+
   Future<Item> editItem(Item item) async {
     var url = Uri.parse(
         '$baseUrl/item'); // Assuming the endpoint expects the ID in the URL
@@ -217,6 +245,49 @@ class ItemTruncated {
       'unit_of_quantity': unitOfQuantity,
       'quantity': quantity,
       'images': imageURLs,
+    };
+  }
+}
+
+class ItemPackOrder {
+  final int id;
+  final String name;
+  final int mrpPrice;
+  final String unitOfQuantity;
+  final int quantity;
+  final List<String> imageURLs;
+  final int stockQuantity;
+
+  ItemPackOrder({
+    required this.id,
+    required this.name,
+    required this.mrpPrice,
+    required this.unitOfQuantity,
+    required this.quantity,
+    required this.imageURLs,
+    required this.stockQuantity,
+  });
+
+  factory ItemPackOrder.fromJson(Map<String, dynamic> json) {
+    return ItemPackOrder(
+        id: json['id'] as int,
+        name: json['name'] as String,
+        mrpPrice: json['mrp_price'] as int,
+        unitOfQuantity: json['unit_of_quantity'] as String,
+        quantity: json['quantity'] as int,
+        imageURLs: List<String>.from(json['images']),
+        stockQuantity: json['stock_quantity']);
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'mrp_price': mrpPrice,
+      'unit_of_quantity': unitOfQuantity,
+      'quantity': quantity,
+      'images': imageURLs,
+      'stock_quantity': stockQuantity,
     };
   }
 }

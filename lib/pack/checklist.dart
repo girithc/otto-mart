@@ -1,10 +1,14 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
+import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
+import 'package:master/item-detail/item-detail.dart';
 import 'package:master/main.dart';
+import 'package:master/stock/add-stock.dart';
 import 'package:master/utils/constants.dart';
 
 class OrderChecklistPage extends StatefulWidget {
@@ -16,14 +20,6 @@ class OrderChecklistPage extends StatefulWidget {
 
 class _OrderChecklistPageState extends State<OrderChecklistPage> {
   // Sample data for the list
-  final List<Map<String, dynamic>> products = List.generate(
-    5,
-    (index) => {
-      'name': 'Product ${index + 1}',
-      'aisle': 'Aisle ${index + 1}',
-      'checked': false, // Added 'checked' status
-    },
-  );
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   List<PackedItem> packedItems = [];
 
@@ -82,14 +78,40 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
-  bool areAllItemsChecked() {
-    return products.every((product) => product['checked']);
+  String? _scanBarcodeResult;
+  final ItemDetailApiClient apiClient = ItemDetailApiClient();
+
+  Future<void> scanBarcode() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+      setState(() {
+        _scanBarcodeResult = barcodeScanRes;
+      });
+      //_showBarcodeResultDialog(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    if (_scanBarcodeResult != '-1') {
+      apiClient.fetchItemFromBarcode(_scanBarcodeResult!).then((success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => AddStock(item: success)),
+        );
+      }, onError: (error) {
+        // Handle error here if fetchItemFromBarcode fails
+        print("Error fetching item: $error");
+      });
+    }
+
+    if (!mounted) return;
   }
 
   @override
   Widget build(BuildContext context) {
-    bool allItemsChecked = areAllItemsChecked();
-
     return Scaffold(
       appBar: AppBar(
         title: const Hero(
@@ -122,165 +144,136 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
               itemBuilder: (context, index) {
                 PackedItem item = packedItems[index];
                 return Card(
-                  child: ListTile(
-                    title: Text(item.name), // Display item name
-                    subtitle: Text(
-                      '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}', // Display brand and quantity
-                    ),
-                    leading: Row(
-                      mainAxisSize:
-                          MainAxisSize.min, // Use min size for the row
-                      children: [
-                        Text(
-                          '${item.itemQuantity}x',
-                          style: const TextStyle(fontSize: 25),
-                        ), // Display item quantity
-                        item.imageURLs.isNotEmpty
-                            ? Padding(
-                                padding: const EdgeInsets.only(left: 8.0),
-                                child: Image.network(
-                                  item.imageURLs.first, // Adjust the image size
-                                  height: 80,
-                                ),
-                              ) // Display first image if available
-                            : const SizedBox(
-                                width: 40, height: 40), // Placeholder size
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        // Leading widget
+                        Column(
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                if (item.imageURLs.isNotEmpty) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        content: Image.network(
+                                          item.imageURLs.first,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.7, // Use screen width for the image
+                                          height:
+                                              300, // Adjust height as needed
+                                        ),
+                                        actions: <Widget>[
+                                          Center(
+                                            child: TextButton(
+                                              onPressed: () => Navigator.of(
+                                                      context)
+                                                  .pop(), // Close the dialog
+                                              style: ButtonStyle(
+                                                backgroundColor:
+                                                    MaterialStateProperty.all<
+                                                        Color>(Colors.white),
+                                              ),
+                                              child: const Text(
+                                                'Cancel',
+                                                style: TextStyle(
+                                                    color: Colors.black,
+                                                    fontSize:
+                                                        20), // Optional: Change text color if needed
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                }
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${item.itemQuantity}x',
+                                    style: const TextStyle(fontSize: 25),
+                                  ),
+                                  item.imageURLs.isNotEmpty
+                                      ? Padding(
+                                          padding:
+                                              const EdgeInsets.only(left: 8.0),
+                                          child: Image.network(
+                                            item.imageURLs.first,
+                                            height: 90,
+                                            width: 100,
+                                          ),
+                                        )
+                                      : const SizedBox(width: 40, height: 40),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(
+                              height: 2.0,
+                            ),
+                            const Center(
+                              child: Text(
+                                'Aisle 1A',
+                                style: TextStyle(fontSize: 18),
+                              ),
+                            )
+                          ],
+                        ),
+                        // Spacer to push the trailing widget to the end
+
+                        // Title and subtitle
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 180,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    item.name,
+                                    style: const TextStyle(fontSize: 16),
+                                  ), // Display item name
+                                  Text(
+                                    '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
+                                    style: const TextStyle(fontSize: 16),
+                                  ), // Display brand and quantity
+                                ],
+                              ),
+                            ),
+                            // Spacer for spacing between title and trailing icon
+                            const SizedBox(width: 4.0),
+                            // Trailing widget
+                            const Icon(Icons.check_circle_outline_outlined),
+                          ],
+                        ),
                       ],
                     ),
-                    trailing: const Icon(Icons.check_circle_outline_outlined),
                   ),
                 );
               },
             ),
-      /*
-          Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: packedItems.length,
-                    itemBuilder: (context, index) {
-                      var item = packedItems[index];
-                      return Container(
-                        margin: const EdgeInsets.only(
-                            left: 1.0, right: 1.0, bottom: 5.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                              color: Theme.of(context).colorScheme.secondary),
-                          borderRadius: BorderRadius.circular(2.0),
-                          color: Colors
-                              .white, // Change color based on 'checked' status
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 10.0, horizontal: 4),
-                          title: Text(item.name),
-                          subtitle: Text(item.brand),
-                          leading: Text(item.imageURLs[0]),
-                          trailing: IconButton(
-                            icon: const Icon(
-                              Icons
-                                  .check_circle_outline, // Change icon based on 'checked' status
-                              size: 30.0,
-                              color:
-                                  null, // Change icon color for 'checked' items
-                            ),
-                            onPressed: () {
-                              setState(() {});
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Row(
-                  // Use Row to split the button into two parts
-                  children: <Widget>[
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 4),
-                        color: Colors.white,
-                        child: ElevatedButton(
-                          onPressed: areAllItemsChecked()
-                              ? () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => const MyHomePage(
-                                            title: 'Otto Store')),
-                                  );
-                                }
-                              : null,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                Colors.deepPurple, // Left side color
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(5), // Square shape
-                            ),
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 20,
-                            ),
-                          ),
-                          child: const Text('Pack Order', // Left side text
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 22)),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Hero(
-                        tag: 'handoffbutton',
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 10, horizontal: 4),
-                          color: Colors.white,
-                          child: ElevatedButton(
-                            onPressed: allItemsChecked
-                                ? () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const MyHomePage(
-                                                title: 'Otto Store',
-                                              )),
-                                    );
-                                  }
-                                : null,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.lightGreenAccent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(5),
-                                side: BorderSide(
-                                  color: allItemsChecked
-                                      ? Colors.black26
-                                      : Colors
-                                          .white, // Conditional border color
-                                  width: 2.0,
-                                ),
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 20),
-                            ),
-                            child: Text(
-                              'Hand Off',
-                              style: TextStyle(
-                                color: allItemsChecked
-                                    ? Colors.black
-                                    : Colors.white, // Conditional text color
-                                fontSize: 22,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          */
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: scanBarcode,
+        backgroundColor: Colors.deepPurpleAccent,
+        label: const Text(
+          'Scan Item',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
