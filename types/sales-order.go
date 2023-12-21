@@ -123,6 +123,18 @@ type RecentOrder struct {
 	PackerID int `json:"packer_id"`
 }
 
+type AcceptOrderItem struct {
+	PackerID     int    `json:"packer_id"`
+	SalesOrderID int    `json:"sales_order_id"`
+	Barcode      string `json:"barcode"`
+}
+
+type PackOrderItem struct {
+	PackerID     int `json:"packer_id"`
+	SalesOrderID int `json:"sales_order_id"`
+	ItemID       int `json:"item_id"`
+}
+
 type CancelRecentOrder struct {
 	StoreID  int `json:"store_id"`
 	PackerID int `json:"packer_id"`

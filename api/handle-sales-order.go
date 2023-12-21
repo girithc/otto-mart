@@ -140,6 +140,38 @@ func (s *Server) GetRecentSalesOrderByStore(res http.ResponseWriter, req *http.R
 	return WriteJSON(res, http.StatusOK, records)
 }
 
+func (s *Server) PackerFetchItem(res http.ResponseWriter, req *http.Request) error {
+	print("Enter PackerFetchItem")
+	new_req := new(types.AcceptOrderItem)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in PackerFetchItem()")
+		return err
+	}
+
+	records, err := s.store.GetItemFromBarcodeInOrder(new_req.Barcode, new_req.SalesOrderID, new_req.PackerID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}
+
+func (s *Server) PackerPackItem(res http.ResponseWriter, req *http.Request) error {
+	print("Enter PackerFetchItem")
+	new_req := new(types.PackOrderItem)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in PackerFetchItem()")
+		return err
+	}
+
+	records, err := s.store.PackerPackItem(new_req.ItemID, new_req.PackerID, new_req.SalesOrderID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}
+
 func (s *Server) CancelPackSalesOrder(res http.ResponseWriter, req *http.Request) error {
 	print("Enter CancelPackSalesOrder")
 	new_req := new(types.CancelRecentOrder)

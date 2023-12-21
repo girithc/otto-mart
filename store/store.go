@@ -185,6 +185,11 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Order Timeline Table")
 
+	if err := s.CreatePackerItemTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Packer Item Table")
+
 	if err := s.CreateTransactionTable(tx); err != nil {
 		return err
 	}
