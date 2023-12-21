@@ -786,6 +786,16 @@ type ItemData struct {
 	Images         []string `json:"images"`
 }
 
+type ItemDataQuantity struct {
+	ID             int      `json:"id"`
+	Name           string   `json:"name"`
+	MRPPrice       int      `json:"mrp_price"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	Quantity       int      `json:"quantity"`
+	StockQuantity  int      `json:"stock_quantity"`
+	Images         []string `json:"images"`
+}
+
 func (s *PostgresStore) GetItemFromBarcode(barcode string) (*ItemData, error) {
 	// SQL query to get item details and MRP price
 	itemQuery := `
@@ -830,6 +840,33 @@ func (s *PostgresStore) GetItemFromBarcode(barcode string) (*ItemData, error) {
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("error in item_image rows: %w", err)
 	}
+
+	return &itemData, nil
+}
+
+func (s *PostgresStore) GetItemFromBarcodeInOrder(barcode string, salesOrderId int, packerId int) (*ItemDataQuantity, error) {
+	itemQuery := `
+        SELECT i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity, ci.quantity, array_agg(ii.image_url) 
+        FROM sales_order so
+        JOIN cart_item ci ON so.cart_id = ci.cart_id
+        JOIN item i ON ci.item_id = i.id
+        JOIN item_store istore ON i.id = istore.item_id
+        LEFT JOIN item_image ii ON i.id = ii.item_id
+        WHERE so.id = $1 AND so.packer_id = $2 AND i.barcode = $3
+        GROUP BY i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity
+    `
+
+	var itemData ItemDataQuantity
+	var images pq.StringArray
+	err := s.db.QueryRow(itemQuery, salesOrderId, packerId, barcode).Scan(&itemData.ID, &itemData.Name, &itemData.MRPPrice, &itemData.UnitOfQuantity, &itemData.Quantity, &images)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no item found with barcode %s in sales order %d for packer %d", barcode, salesOrderId, packerId)
+		}
+		return nil, fmt.Errorf("error querying for item: %w", err)
+	}
+
+	itemData.Images = images
 
 	return &itemData, nil
 }

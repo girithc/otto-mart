@@ -550,6 +550,22 @@ func (s *PostgresStore) PackOrder(storeId, phoneNumber int) ([]PackedItem, error
 		return nil, fmt.Errorf("error finding packer ID: %w", err)
 	}
 
+	// New Step: Check if the packer already has an accepted order
+	var existingOrderId int
+	checkOrderQuery := `SELECT id FROM sales_order WHERE packer_id = $1 AND order_status = 'accepted'`
+	err = s.db.QueryRow(checkOrderQuery, packerId).Scan(&existingOrderId)
+	if err == nil {
+		// Packer already has an accepted order, fetching items for this order
+		items, err := s.fetchPackedItems(existingOrderId)
+		if err != nil {
+			return nil, fmt.Errorf("error fetching items for existing order: %w", err)
+		}
+		return items, nil
+	} else if err != sql.ErrNoRows {
+		// Some other error occurred
+		return nil, fmt.Errorf("error checking for existing accepted orders: %w", err)
+	}
+
 	// Step 2: Combined query to retrieve and update the oldest order using the retrieved packerId
 	var orderId int
 	combinedQuery := `
@@ -603,6 +619,40 @@ func (s *PostgresStore) PackOrder(storeId, phoneNumber int) ([]PackedItem, error
 		packedItems = append(packedItems, item)
 	}
 
+	return packedItems, nil
+}
+
+func (s *PostgresStore) fetchPackedItems(orderId int) ([]PackedItem, error) {
+	itemsQuery := `
+			SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity 
+			FROM cart_item ci
+			JOIN item i ON ci.item_id = i.id
+			JOIN brand b ON i.brand_id = b.id
+			WHERE ci.cart_id = (SELECT cart_id FROM sales_order WHERE id = $1)
+		`
+	rows, err := s.db.Query(itemsQuery, orderId)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching items: %w", err)
+	}
+	defer rows.Close()
+
+	var packedItems []PackedItem
+	for rows.Next() {
+		var item PackedItem
+		var itemId int
+		if err := rows.Scan(&itemId, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
+			return nil, fmt.Errorf("error scanning items: %w", err)
+		}
+
+		// Fetch images for each item
+		images, err := s.getItemImages(itemId)
+		if err != nil {
+			return nil, err
+		}
+		item.ImageURLs = images
+		item.Order_ID = orderId
+		packedItems = append(packedItems, item)
+	}
 	return packedItems, nil
 }
 
