@@ -133,7 +133,3 @@ func (s *PostgresStore) PackerPackOrder(cart_id int, phone string) error {
 
 	return nil
 }
-
-func (s *PostgresStore) PackerPlaceOrder(cart_id int, phone string) (bool, error) {
-	return false, nil
-}

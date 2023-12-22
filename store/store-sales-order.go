@@ -540,12 +540,46 @@ type ItemDetails struct {
 	Images         []string `json:"images"`           // URLs of item images
 }
 
-func (s *PostgresStore) PackOrder(storeId, phoneNumber int) ([]PackedItem, error) {
-	// Step 1: Retrieve the actual packerId using the phone number
-	str := fmt.Sprintf("%d", phoneNumber)
+func (s *PostgresStore) GetCombinedOrderDetails(storeId int, phoneNumber string) (CombinedOrderResponse, error) {
+	var combinedResponse CombinedOrderResponse
+
+	// Call PackOrder
+	packedItems, err := s.PackOrder(storeId, phoneNumber)
+	if err != nil {
+		return combinedResponse, err
+	}
+	combinedResponse.PackedItems = packedItems
+
+	// Retrieve packer_id from packer table using phoneNumber
 	var packerId int
 	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
-	err := s.db.QueryRow(packerIdQuery, str).Scan(&packerId)
+	err = s.db.QueryRow(packerIdQuery, phoneNumber).Scan(&packerId)
+	if err != nil {
+		return combinedResponse, fmt.Errorf("error querying packer_id: %w", err)
+	}
+
+	// Assuming the order ID is available in the packed items list
+	var orderId int
+	if len(packedItems) > 0 {
+		orderId = packedItems[0].Order_ID // Replace with correct field if necessary
+	}
+
+	// Call GetAllPackedItems
+	packedDetails, err := s.GetAllPackedItems(phoneNumber, orderId)
+	if err != nil {
+		return combinedResponse, err
+	}
+	combinedResponse.PackedDetails = packedDetails
+
+	return combinedResponse, nil
+}
+
+func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem, error) {
+	// Step 1: Retrieve the actual packerId using the phone number
+
+	var packerId int
+	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
+	err := s.db.QueryRow(packerIdQuery, phoneNumber).Scan(&packerId)
 	if err != nil {
 		return nil, fmt.Errorf("error finding packer ID: %w", err)
 	}
@@ -722,4 +756,9 @@ func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool
 	}
 
 	return false, nil // No order was updated.
+}
+
+type CombinedOrderResponse struct {
+	PackedItems   []PackedItem       `json:"packed_items"`
+	PackedDetails []PackerItemDetail `json:"packed_details"`
 }

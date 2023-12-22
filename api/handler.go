@@ -579,6 +579,14 @@ func (s *Server) handlePackerFetchItem(res http.ResponseWriter, req *http.Reques
 	return nil
 }
 
+func (s *Server) handlePackerGetAllItems(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-get-all-items")
+		return s.PackerGetAllPackedItems(res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerPackItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack-item")

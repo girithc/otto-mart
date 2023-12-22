@@ -130,9 +130,7 @@ func (s *Server) GetRecentSalesOrderByStore(res http.ResponseWriter, req *http.R
 		return err
 	}
 
-	print("Packer-ID: ", new_req.PackerID)
-
-	records, err := s.store.PackOrder(new_req.StoreID, new_req.PackerID)
+	records, err := s.store.GetCombinedOrderDetails(new_req.StoreID, new_req.PackerPhone)
 	if err != nil {
 		return err
 	}
@@ -148,7 +146,7 @@ func (s *Server) PackerFetchItem(res http.ResponseWriter, req *http.Request) err
 		return err
 	}
 
-	records, err := s.store.GetItemFromBarcodeInOrder(new_req.Barcode, new_req.SalesOrderID, new_req.PackerID)
+	records, err := s.store.GetItemFromBarcodeInOrder(new_req.Barcode, new_req.SalesOrderID, new_req.PackerPhone)
 	if err != nil {
 		return err
 	}
@@ -158,13 +156,29 @@ func (s *Server) PackerFetchItem(res http.ResponseWriter, req *http.Request) err
 
 func (s *Server) PackerPackItem(res http.ResponseWriter, req *http.Request) error {
 	print("Enter PackerFetchItem")
-	new_req := new(types.PackOrderItem)
+	new_req := new(types.AcceptOrderItem)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error Decode in PackerFetchItem()")
+		fmt.Println("Error Decode in PackerPackItem()")
 		return err
 	}
 
-	records, err := s.store.PackerPackItem(new_req.ItemID, new_req.PackerID, new_req.SalesOrderID)
+	records, err := s.store.PackerPackItem(new_req.Barcode, new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}
+
+func (s *Server) PackerGetAllPackedItems(res http.ResponseWriter, req *http.Request) error {
+	print("Enter PackerGetAllPackedItems")
+	new_req := new(types.PackedOrderItem)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in PackerGetAllPackedItems()")
+		return err
+	}
+
+	records, err := s.store.GetAllPackedItems(new_req.PackerPhone, new_req.SalesOrderID)
 	if err != nil {
 		return err
 	}

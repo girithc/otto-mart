@@ -844,24 +844,25 @@ func (s *PostgresStore) GetItemFromBarcode(barcode string) (*ItemData, error) {
 	return &itemData, nil
 }
 
-func (s *PostgresStore) GetItemFromBarcodeInOrder(barcode string, salesOrderId int, packerId int) (*ItemDataQuantity, error) {
+func (s *PostgresStore) GetItemFromBarcodeInOrder(barcode string, salesOrderId int, packerPhone string) (*ItemDataQuantity, error) {
 	itemQuery := `
-        SELECT i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity, ci.quantity, array_agg(ii.image_url) 
-        FROM sales_order so
-        JOIN cart_item ci ON so.cart_id = ci.cart_id
-        JOIN item i ON ci.item_id = i.id
-        JOIN item_store istore ON i.id = istore.item_id
-        LEFT JOIN item_image ii ON i.id = ii.item_id
-        WHERE so.id = $1 AND so.packer_id = $2 AND i.barcode = $3
-        GROUP BY i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity
+    SELECT i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity, ci.quantity, array_agg(ii.image_url) 
+    FROM sales_order so
+    JOIN cart_item ci ON so.cart_id = ci.cart_id
+    JOIN item i ON ci.item_id = i.id
+    JOIN item_store istore ON i.id = istore.item_id
+    LEFT JOIN item_image ii ON i.id = ii.item_id
+    JOIN packer p ON so.packer_id = p.id
+    WHERE so.id = $1 AND p.phone = $2 AND i.barcode = $3
+    GROUP BY i.id, i.name, istore.mrp_price, i.unit_of_quantity, i.quantity, ci.quantity	
     `
 
 	var itemData ItemDataQuantity
 	var images pq.StringArray
-	err := s.db.QueryRow(itemQuery, salesOrderId, packerId, barcode).Scan(&itemData.ID, &itemData.Name, &itemData.MRPPrice, &itemData.UnitOfQuantity, &itemData.Quantity, &images)
+	err := s.db.QueryRow(itemQuery, salesOrderId, packerPhone, barcode).Scan(&itemData.ID, &itemData.Name, &itemData.MRPPrice, &itemData.UnitOfQuantity, &itemData.Quantity, &itemData.StockQuantity, &images)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no item found with barcode %s in sales order %d for packer %d", barcode, salesOrderId, packerId)
+			return nil, fmt.Errorf("no item found with barcode %s in sales order %d for packer with phone %s", barcode, salesOrderId, packerPhone)
 		}
 		return nil, fmt.Errorf("error querying for item: %w", err)
 	}

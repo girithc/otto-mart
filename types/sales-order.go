@@ -119,20 +119,20 @@ type SOAddress struct {
 }
 
 type RecentOrder struct {
-	StoreID  int `json:"store_id"`
-	PackerID int `json:"packer_id"`
+	StoreID     int    `json:"store_id"`
+	PackerPhone string `json:"packer_phone"`
 }
 
 type AcceptOrderItem struct {
-	PackerID     int    `json:"packer_id"`
+	PackerPhone  string `json:"packer_phone"`
 	SalesOrderID int    `json:"sales_order_id"`
 	Barcode      string `json:"barcode"`
+	StoreId      int    `json:"store_id"`
 }
 
-type PackOrderItem struct {
-	PackerID     int `json:"packer_id"`
-	SalesOrderID int `json:"sales_order_id"`
-	ItemID       int `json:"item_id"`
+type PackedOrderItem struct {
+	PackerPhone  string `json:"packer_phone"`
+	SalesOrderID int    `json:"sales_order_id"`
 }
 
 type CancelRecentOrder struct {
