@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:master/item-detail/item-detail.dart';
 import 'package:master/main.dart';
+import 'package:master/pack/pack-item.dart';
 import 'package:master/stock/add-stock.dart';
 import 'package:master/utils/constants.dart';
 
@@ -22,14 +23,18 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   // Sample data for the list
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   List<PackedItem> packedItems = [];
+  PackerItemResponse? packerItemResponse;
+
+  int? orderId;
+  int totalQuantity = 0; // New variable to store total quantity
 
   @override
   void initState() {
     super.initState();
-    fetchPackedItems();
+    fetchItems();
   }
 
-  Future<void> fetchPackedItems() async {
+  Future<void> fetchItems() async {
     String? packerId = await _storage.read(key: "packerId");
     String? storeId = await _storage.read(key: "storeId");
     var url = Uri.parse('$baseUrl/packer-pack-order');
@@ -37,17 +42,25 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(
-          {"store_id": int.parse(storeId!), "packer_id": int.parse(packerId!)}),
+          {"store_id": int.parse(storeId!), "packer_phone": packerId}),
     );
 
     if (response.statusCode == 200) {
       print('response: ${response.body}');
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse.isNotEmpty) {
+        final combinedResponse = CombinedOrderResponse.fromJson(jsonResponse);
+        // Calculate the sum of quantities
 
-      setState(() {
-        packedItems = (json.decode(response.body) as List)
-            .map((item) => PackedItem.fromJson(item))
-            .toList();
-      });
+        setState(() {
+          packedItems = combinedResponse.packedItems;
+          orderId = packedItems.isNotEmpty ? packedItems[0].orderId : null;
+
+          // Calculate the sum of quantities
+          totalQuantity = combinedResponse.packedDetails
+              .fold(0, (int sum, item) => sum + (item.quantity ?? 0));
+        });
+      }
     } else {
       print("Error ${response.body}");
     }
@@ -83,6 +96,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
 
   Future<void> scanBarcode() async {
     String barcodeScanRes;
+    String? packerId = await _storage.read(key: "packerId");
+    String? storeId = await _storage.read(key: "storeId");
+
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
           '#ff6666', 'Cancel', true, ScanMode.BARCODE);
@@ -96,18 +112,22 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
 
     if (_scanBarcodeResult != '-1') {
-      apiClient.fetchItemFromBarcode(_scanBarcodeResult!).then((success) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => AddStock(item: success)),
-        );
+      apiClient
+          .fetchItemFromBarcodeInSalesOrder(
+              _scanBarcodeResult!, packerId!, orderId!, storeId!)
+          .then((item) {
+        setState(() {
+          print("Return value: $item");
+          packerItemResponse = item; // Storing the response
+          // Calculate the sum of quantities
+          totalQuantity =
+              item.itemList.fold(0, (sum, item) => sum + item.quantity);
+        });
       }, onError: (error) {
         // Handle error here if fetchItemFromBarcode fails
         print("Error fetching item: $error");
       });
     }
-
-    if (!mounted) return;
   }
 
   @override
@@ -261,16 +281,48 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: scanBarcode,
-        backgroundColor: Colors.deepPurpleAccent,
-        label: const Text(
-          'Scan Item',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            // First FAB
+            FloatingActionButton.extended(
+              heroTag: 'scanItemButton', // Unique tag for this FAB
+
+              onPressed: scanBarcode,
+              backgroundColor: Colors.deepPurpleAccent,
+              label: const Text(
+                'Scan Item',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+
+            const SizedBox(
+              width: 4.0,
+            ),
+            // Second FAB
+            FloatingActionButton(
+              heroTag: 'counterButton', // Unique tag for this FAB
+
+              onPressed: () {
+                // Define the action for this button
+              },
+              backgroundColor: Colors.deepPurpleAccent,
+              child: Text(
+                '$totalQuantity',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -306,6 +358,74 @@ class PackedItem {
       unitOfQuantity: json['unit_of_quantity'],
       itemQuantity: json['item_quantity'],
       imageURLs: List<String>.from(json['image_urls']),
+    );
+  }
+}
+
+class PackerItemDetail {
+  final int itemId;
+  final int packerId;
+  final int orderId;
+  final int quantity;
+
+  PackerItemDetail({
+    required this.itemId,
+    required this.packerId,
+    required this.orderId,
+    required this.quantity,
+  });
+
+  factory PackerItemDetail.fromJson(Map<String, dynamic> json) {
+    return PackerItemDetail(
+      itemId: json['item_id'],
+      packerId: json['packer_id'],
+      orderId: json['order_id'],
+      quantity: json['quantity'],
+    );
+  }
+}
+
+class PackerItemResponse {
+  final List<PackerItemDetail> itemList;
+  final bool success;
+
+  PackerItemResponse({required this.itemList, required this.success});
+
+  factory PackerItemResponse.fromJson(Map<String, dynamic> json) {
+    return PackerItemResponse(
+      itemList: (json['item_list'] as List)
+          .map((i) => PackerItemDetail.fromJson(i))
+          .toList(),
+      success: json['success'],
+    );
+  }
+}
+
+class CombinedOrderResponse {
+  List<PackedItem> packedItems;
+  List<PackerItemDetail> packedDetails;
+
+  CombinedOrderResponse({
+    required this.packedItems,
+    required this.packedDetails,
+  });
+
+  factory CombinedOrderResponse.fromJson(Map<String, dynamic> json) {
+    // Handle packed_items
+    var packedItemsJson = json['packed_items'] as List<dynamic>?;
+    var packedItems = packedItemsJson != null
+        ? packedItemsJson.map((x) => PackedItem.fromJson(x)).toList()
+        : <PackedItem>[];
+
+    // Handle packed_details
+    var packedDetailsJson = json['packed_details'] as List<dynamic>?;
+    var packedDetails = packedDetailsJson != null
+        ? packedDetailsJson.map((x) => PackerItemDetail.fromJson(x)).toList()
+        : <PackerItemDetail>[];
+
+    return CombinedOrderResponse(
+      packedItems: packedItems,
+      packedDetails: packedDetails,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:master/pack/checklist.dart';
 import 'package:master/utils/constants.dart';
 
 class ItemDetailApiClient {
@@ -88,29 +89,30 @@ class ItemDetailApiClient {
     }
   }
 
-  Future<ItemTruncated> fetchItemFromBarcodeInSalesOrder(String barcode) async {
-    var url = Uri.parse('$baseUrl/item');
-
-    if (barcode.isEmpty) {
-      throw Exception('(ItemDetailApiClient) Parameters are not valid');
-    }
-
-    var queryParams = {
-      'barcode': barcode,
+  Future<PackerItemResponse> fetchItemFromBarcodeInSalesOrder(
+      String barcode, String packerPhone, int orderId, String storeId) async {
+    var url = Uri.parse('$baseUrl/packer-pack-item');
+    final Map<String, dynamic> requestData = {
+      "store_id": int.parse(storeId),
+      "barcode": barcode,
+      "packer_phone": packerPhone,
+      "sales_order_id": orderId
     };
-    url = url.replace(queryParameters: queryParams);
-
-    print("Query Params $queryParams");
-    http.Response response = await http.get(url);
+    var response = await http.post(
+      url,
+      body: jsonEncode(requestData),
+      headers: {"Content-Type": "application/json"},
+    );
 
     if (response.statusCode == 200) {
-      final dynamic jsonData = json.decode(response.body);
-      final ItemTruncated item = ItemTruncated.fromJson(jsonData);
+      print("Packer Item $response");
+      final jsonData = json.decode(response.body);
+      final PackerItemResponse packerItemResponse =
+          PackerItemResponse.fromJson(jsonData);
 
-      print("Item: ${item.name}");
-      return item;
+      return packerItemResponse;
     } else {
-      throw Exception('Failed to load items');
+      throw Exception('Failed to load items ${response.body}');
     }
   }
 
@@ -215,26 +217,27 @@ class ItemTruncated {
   final int mrpPrice;
   final String unitOfQuantity;
   final int quantity;
+  int? stockQuantity;
   final List<String> imageURLs;
 
-  ItemTruncated({
-    required this.id,
-    required this.name,
-    required this.mrpPrice,
-    required this.unitOfQuantity,
-    required this.quantity,
-    required this.imageURLs,
-  });
+  ItemTruncated(
+      {required this.id,
+      required this.name,
+      required this.mrpPrice,
+      required this.unitOfQuantity,
+      required this.quantity,
+      required this.imageURLs,
+      this.stockQuantity});
 
   factory ItemTruncated.fromJson(Map<String, dynamic> json) {
     return ItemTruncated(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      mrpPrice: json['mrp_price'] as int,
-      unitOfQuantity: json['unit_of_quantity'] as String,
-      quantity: json['quantity'] as int,
-      imageURLs: List<String>.from(json['images']),
-    );
+        id: json['id'] as int,
+        name: json['name'] as String,
+        mrpPrice: json['mrp_price'] as int,
+        unitOfQuantity: json['unit_of_quantity'] as String,
+        quantity: json['quantity'] as int,
+        imageURLs: List<String>.from(json['images']),
+        stockQuantity: json['stock_quantity']);
   }
 
   Map<String, dynamic> toJson() {

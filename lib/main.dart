@@ -196,104 +196,106 @@ class _InventoryManagementState extends State<InventoryManagement> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.store_outlined),
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(Icons.store_outlined),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_outlined),
+            title: const Text('Stores'),
+            onTap: () => {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const Stores()),
+              )
+            },
+            shape: ContinuousRectangleBorder(
+              side: const BorderSide(width: 1, color: Colors.black),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            tileColor: Colors.white,
+            contentPadding: const EdgeInsets.all(10),
           ),
-          trailing: const Icon(Icons.arrow_forward_ios_outlined),
-          title: const Text('Stores'),
-          onTap: () => {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const Stores()),
-            )
-          },
-          shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 1, color: Colors.black),
-            borderRadius: BorderRadius.circular(20),
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.white, //Colors.white,
+              child: Icon(Icons.analytics_outlined),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_outlined),
+            title: const Text(
+              'Scan Barcode',
+              style: TextStyle(color: Colors.black),
+            ),
+            onTap: scanBarcode,
+            shape: ContinuousRectangleBorder(
+              side: const BorderSide(width: 1, color: Colors.black),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            tileColor: Colors.white,
+            contentPadding: const EdgeInsets.all(10),
           ),
-          tileColor: Colors.white,
-          contentPadding: const EdgeInsets.all(10),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: Colors.white, //Colors.white,
-            child: Icon(Icons.analytics_outlined),
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Icon(Icons.store_outlined),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_outlined),
+            title: const Text('Pack Order'),
+            onTap: () => {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const OrderChecklistPage()),
+              )
+            },
+            shape: ContinuousRectangleBorder(
+              side: const BorderSide(width: 1, color: Colors.black),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            tileColor: Colors.white,
+            contentPadding: const EdgeInsets.all(10),
           ),
-          trailing: const Icon(Icons.arrow_forward_ios_outlined),
-          title: const Text(
-            'Scan Barcode',
-            style: TextStyle(color: Colors.black),
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.white, //Colors.white,
+              child: Icon(Icons.analytics_outlined),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_outlined),
+            title: const Text(
+              'Item Locator',
+              style: TextStyle(color: Colors.black),
+            ),
+            onTap: scanBarcode,
+            shape: ContinuousRectangleBorder(
+              side: const BorderSide(width: 1, color: Colors.black),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            tileColor: Colors.white,
+            contentPadding: const EdgeInsets.all(10),
           ),
-          onTap: scanBarcode,
-          shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 1, color: Colors.black),
-            borderRadius: BorderRadius.circular(20),
+          ListTile(
+            leading: const CircleAvatar(
+              backgroundColor: Colors.white, //Colors.white,
+              child: Icon(Icons.analytics_outlined),
+            ),
+            trailing: const Icon(Icons.arrow_forward_ios_outlined),
+            title: const Text(
+              'Item Reporting',
+              style: TextStyle(color: Colors.black),
+            ),
+            onTap: scanBarcode,
+            shape: ContinuousRectangleBorder(
+              side: const BorderSide(width: 1, color: Colors.black),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            tileColor: Colors.white,
+            contentPadding: const EdgeInsets.all(10),
           ),
-          tileColor: Colors.white,
-          contentPadding: const EdgeInsets.all(10),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: Colors.white,
-            child: Icon(Icons.store_outlined),
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios_outlined),
-          title: const Text('Pack Order'),
-          onTap: () => {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => const OrderChecklistPage()),
-            )
-          },
-          shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 1, color: Colors.black),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          tileColor: Colors.white,
-          contentPadding: const EdgeInsets.all(10),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: Colors.white, //Colors.white,
-            child: Icon(Icons.analytics_outlined),
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios_outlined),
-          title: const Text(
-            'Item Locator',
-            style: TextStyle(color: Colors.black),
-          ),
-          onTap: scanBarcode,
-          shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 1, color: Colors.black),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          tileColor: Colors.white,
-          contentPadding: const EdgeInsets.all(10),
-        ),
-        ListTile(
-          leading: const CircleAvatar(
-            backgroundColor: Colors.white, //Colors.white,
-            child: Icon(Icons.analytics_outlined),
-          ),
-          trailing: const Icon(Icons.arrow_forward_ios_outlined),
-          title: const Text(
-            'Item Reporting',
-            style: TextStyle(color: Colors.black),
-          ),
-          onTap: scanBarcode,
-          shape: ContinuousRectangleBorder(
-            side: const BorderSide(width: 1, color: Colors.black),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          tileColor: Colors.white,
-          contentPadding: const EdgeInsets.all(10),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
