@@ -638,13 +638,12 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 	var packedItems []PackedItem
 	for rows.Next() {
 		var item PackedItem
-		var itemId int
-		if err := rows.Scan(&itemId, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
+		if err := rows.Scan(&item.ItemID, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
 			return nil, fmt.Errorf("error scanning items: %w", err)
 		}
 
 		// Fetch images for each item
-		images, err := s.getItemImages(itemId)
+		images, err := s.getItemImages(item.ItemID)
 		if err != nil {
 			return nil, err
 		}
@@ -673,13 +672,12 @@ func (s *PostgresStore) fetchPackedItems(orderId int) ([]PackedItem, error) {
 	var packedItems []PackedItem
 	for rows.Next() {
 		var item PackedItem
-		var itemId int
-		if err := rows.Scan(&itemId, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
+		if err := rows.Scan(&item.ItemID, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
 			return nil, fmt.Errorf("error scanning items: %w", err)
 		}
 
 		// Fetch images for each item
-		images, err := s.getItemImages(itemId)
+		images, err := s.getItemImages(item.ItemID)
 		if err != nil {
 			return nil, err
 		}
@@ -713,6 +711,7 @@ func (s *PostgresStore) getItemImages(itemId int) ([]string, error) {
 
 // PackedItem represents the structure of an item in the packed order
 type PackedItem struct {
+	ItemID         int      `json:"item_id"`
 	Order_ID       int      `json:"order_id"`
 	Name           string   `json:"name"`
 	Brand          string   `json:"brand"`
