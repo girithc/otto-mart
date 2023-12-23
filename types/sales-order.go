@@ -135,6 +135,12 @@ type PackedOrderItem struct {
 	SalesOrderID int    `json:"sales_order_id"`
 }
 
+type CompletePackOrder struct {
+	PackerPhone  string `json:"packer_phone"`
+	SalesOrderID int    `json:"sales_order_id"`
+	StoreID      int    `json:"store_id"`
+}
+
 type CancelRecentOrder struct {
 	StoreID  int `json:"store_id"`
 	PackerID int `json:"packer_id"`

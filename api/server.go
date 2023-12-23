@@ -57,6 +57,8 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/packer-pack-item", makeHTTPHandleFunc(s.handlePackerPackItem))
 	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
 
+	http.HandleFunc("/packer-complete-packing", makeHTTPHandleFunc(s.handlePackerCompletePacking))
+
 	// http.HandleFunc("/packer-pack-item", makeHTTPHandleFunc(s.handlePackerPackItem))
 
 	http.HandleFunc("/delivery-partner", makeHTTPHandleFunc(s.handleDeliveryPartner))

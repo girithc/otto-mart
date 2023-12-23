@@ -571,6 +571,21 @@ func (s *PostgresStore) GetCombinedOrderDetails(storeId int, phoneNumber string)
 	}
 	combinedResponse.PackedDetails = packedDetails
 
+	// Calculate the sum of quantities of items needed
+	sumNeeded := 0
+	for _, item := range packedItems {
+		sumNeeded += item.ItemQuantity
+	}
+
+	// Calculate the sum of quantities of items packed
+	sumPacked := 0
+	for _, detail := range packedDetails {
+		sumPacked += detail.Quantity
+	}
+
+	// Check if all items are packed
+	combinedResponse.AllPacked = sumNeeded == sumPacked
+
 	return combinedResponse, nil
 }
 
@@ -721,6 +736,10 @@ type PackedItem struct {
 	ImageURLs      []string `json:"image_urls"` // Using camelCase for consistency
 }
 
+func (s *PostgresStore) CompletePacking(packerPhone string, salesOrderId int, storeId int) (string, error) {
+	return "", nil
+}
+
 func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool, error) {
 	// Step 1: Retrieve the actual packerId using the phone number
 	str := fmt.Sprintf("%d", phoneNumber)
@@ -760,4 +779,5 @@ func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool
 type CombinedOrderResponse struct {
 	PackedItems   []PackedItem       `json:"packed_items"`
 	PackedDetails []PackerItemDetail `json:"packed_details"`
+	AllPacked     bool               `json:"all_packed"`
 }

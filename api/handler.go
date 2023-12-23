@@ -595,6 +595,14 @@ func (s *Server) handlePackerPackItem(res http.ResponseWriter, req *http.Request
 	return nil
 }
 
+func (s *Server) handlePackerCompletePacking(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-complete-packing")
+		return s.PackerPackItem(res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerCancelOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")
