@@ -27,6 +27,7 @@ func (s *PostgresStore) CreatePackerItemTable(tx *sql.Tx) error {
 
 func (s *PostgresStore) PackerPackItem(barcode string, packerPhone string, orderId int, storeId int) (PackerItemResponse, error) {
 	var response PackerItemResponse
+	var allItemsPacked bool
 
 	// Retrieve packer_id from packer table using packerPhone
 	var packerId int
@@ -80,6 +81,14 @@ func (s *PostgresStore) PackerPackItem(barcode string, packerPhone string, order
 		}
 	}
 
+	
+
+	if (requiredQuantity == packedQuantity) || (requiredQuantity == packedQuantity+1) {
+		allItemsPacked = true
+	} else {
+		allItemsPacked = false
+	}
+
 	// Fetch all packer_item records for the sales_order_id and group by item_id to sum the quantity
 	groupedItemsQuery := `
     SELECT item_id, SUM(quantity) as quantity
@@ -110,8 +119,9 @@ func (s *PostgresStore) PackerPackItem(barcode string, packerPhone string, order
 	}
 
 	response = PackerItemResponse{
-		ItemList: itemList,
-		Success:  true,
+		ItemList:  itemList,
+		Success:   true,
+		AllPacked: allItemsPacked,
 	}
 
 	return response, nil
@@ -163,17 +173,14 @@ func (s *PostgresStore) GetAllPackedItems(packerPhone string, orderId int) ([]Pa
 }
 
 type PackerItemResponse struct {
-	ItemList []PackerItemDetail `json:"item_list"`
-	Success  bool               `json:"success"`
+	ItemList  []PackerItemDetail `json:"item_list"`
+	Success   bool               `json:"success"`
+	AllPacked bool               `json:"all_packed"`
 }
+
 type PackerItemDetail struct {
 	ItemID   int `json:"item_id"`
 	PackerID int `json:"packer_id"`
 	OrderID  int `json:"order_id"`
 	Quantity int `json:"quantity"`
-}
-
-type CombinedPackerResponse struct {
-	PackItemResponse PackerItemResponse `json:"pack_item_response"`
-	AllPackedItems   []PackerItemDetail `json:"all_packed_items"`
 }

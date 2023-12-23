@@ -39,8 +39,9 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	}
 
 	// Create partial index for barcode
-	createIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nonempty_barcode 
-                          ON item(barcode) WHERE barcode <> ''`
+	createIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nonempty_barcode ON item(barcode);
+	`
+
 	_, err = tx.Exec(createIndexQuery)
 	if err != nil {
 		return fmt.Errorf("error creating partial index for barcode: %w", err)
@@ -726,6 +727,7 @@ func (s *PostgresStore) AddStockToItemByStore(item_id int, store_id int, stock i
 
 func (s *PostgresStore) AddBarcodeToItem(barcode string, item_id int) (bool, error) {
 	// Prepare the SQL query to update the item
+
 	query := `UPDATE item SET barcode = $1 WHERE id = $2`
 
 	// Execute the query with the provided barcode and item_id
