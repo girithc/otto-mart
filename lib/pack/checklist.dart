@@ -163,117 +163,140 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
               itemCount: packedItems.length,
               itemBuilder: (context, index) {
                 PackedItem item = packedItems[index];
+                int? quantityPacked = packerItemResponse?.itemList
+                    .firstWhere((result) => result.itemId == 1)
+                    .quantity;
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        // Leading widget
-                        Column(
-                          children: [
-                            GestureDetector(
-                              onTap: () {
-                                if (item.imageURLs.isNotEmpty) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        content: Image.network(
-                                          item.imageURLs.first,
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.7, // Use screen width for the image
-                                          height:
-                                              300, // Adjust height as needed
-                                        ),
-                                        actions: <Widget>[
-                                          Center(
-                                            child: TextButton(
-                                              onPressed: () => Navigator.of(
-                                                      context)
-                                                  .pop(), // Close the dialog
-                                              style: ButtonStyle(
-                                                backgroundColor:
-                                                    MaterialStateProperty.all<
-                                                        Color>(Colors.white),
-                                              ),
-                                              child: const Text(
-                                                'Cancel',
-                                                style: TextStyle(
-                                                    color: Colors.black,
-                                                    fontSize:
-                                                        20), // Optional: Change text color if needed
-                                              ),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
+                            // Leading widget
+
+                            Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    if (item.imageURLs.isNotEmpty) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            content: Image.network(
+                                              item.imageURLs.first,
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.7, // Use screen width for the image
+                                              height:
+                                                  300, // Adjust height as needed
                                             ),
-                                          ),
-                                        ],
+                                            actions: <Widget>[
+                                              Center(
+                                                child: TextButton(
+                                                  onPressed: () => Navigator.of(
+                                                          context)
+                                                      .pop(), // Close the dialog
+                                                  style: ButtonStyle(
+                                                    backgroundColor:
+                                                        MaterialStateProperty
+                                                            .all<Color>(
+                                                                Colors.white),
+                                                  ),
+                                                  child: const Text(
+                                                    'Cancel',
+                                                    style: TextStyle(
+                                                        color: Colors.black,
+                                                        fontSize:
+                                                            20), // Optional: Change text color if needed
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        },
                                       );
-                                    },
-                                  );
-                                }
-                              },
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${item.itemQuantity}x',
-                                    style: const TextStyle(fontSize: 25),
+                                    }
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '${item.itemQuantity}x',
+                                        style: const TextStyle(fontSize: 25),
+                                      ),
+                                      item.imageURLs.isNotEmpty
+                                          ? Padding(
+                                              padding: const EdgeInsets.only(
+                                                  left: 8.0),
+                                              child: Image.network(
+                                                item.imageURLs.first,
+                                                height: 90,
+                                                width: 100,
+                                              ),
+                                            )
+                                          : const SizedBox(
+                                              width: 40, height: 40),
+                                    ],
                                   ),
-                                  item.imageURLs.isNotEmpty
-                                      ? Padding(
-                                          padding:
-                                              const EdgeInsets.only(left: 8.0),
-                                          child: Image.network(
-                                            item.imageURLs.first,
-                                            height: 90,
-                                            width: 100,
-                                          ),
-                                        )
-                                      : const SizedBox(width: 40, height: 40),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(
+                                  height: 2.0,
+                                ),
+                                const Center(
+                                  child: Text(
+                                    'Aisle 1A',
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                )
+                              ],
                             ),
-                            const SizedBox(
-                              height: 2.0,
+                            // Spacer to push the trailing widget to the end
+
+                            // Title and subtitle
+                            Row(
+                              children: <Widget>[
+                                SizedBox(
+                                  width: 180,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        style: const TextStyle(fontSize: 16),
+                                      ), // Display item name
+                                      Text(
+                                        '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
+                                        style: const TextStyle(fontSize: 16),
+                                      ), // Display brand and quantity
+                                    ],
+                                  ),
+                                ),
+                                // Spacer for spacing between title and trailing icon
+                                const SizedBox(width: 4.0),
+                                // Trailing widget
+                                const Icon(Icons.check_circle_outline_outlined),
+                              ],
                             ),
-                            const Center(
-                              child: Text(
-                                'Aisle 1A',
-                                style: TextStyle(fontSize: 18),
-                              ),
-                            )
                           ],
                         ),
-                        // Spacer to push the trailing widget to the end
-
-                        // Title and subtitle
-                        Row(
-                          children: <Widget>[
-                            SizedBox(
-                              width: 180,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    item.name,
-                                    style: const TextStyle(fontSize: 16),
-                                  ), // Display item name
-                                  Text(
-                                    '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
-                                    style: const TextStyle(fontSize: 16),
-                                  ), // Display brand and quantity
-                                ],
-                              ),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                              6.0), // Adjust the radius as needed
+                          child: SizedBox(
+                            height: 25,
+                            child: LinearProgressIndicator(
+                              value: (quantityPacked ?? 0) / item.itemQuantity,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.blue),
                             ),
-                            // Spacer for spacing between title and trailing icon
-                            const SizedBox(width: 4.0),
-                            // Trailing widget
-                            const Icon(Icons.check_circle_outline_outlined),
-                          ],
+                          ),
                         ),
                       ],
                     ),
@@ -331,6 +354,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
 }
 
 class PackedItem {
+  int itemId;
   int orderId;
   String name;
   String brand;
@@ -340,6 +364,7 @@ class PackedItem {
   List<String> imageURLs;
 
   PackedItem({
+    required this.itemId,
     required this.orderId,
     required this.name,
     required this.brand,
@@ -351,6 +376,7 @@ class PackedItem {
 
   factory PackedItem.fromJson(Map<String, dynamic> json) {
     return PackedItem(
+      itemId: json['item_id'],
       orderId: json['order_id'],
       name: json['name'],
       brand: json['brand'],
