@@ -36,8 +36,11 @@ class ItemDetailApiClient {
   Future<Item> addBarcode(int itemId, String barcode) async {
     var url = Uri.parse('$baseUrl/item-update');
 
-    if (itemId == 0 || barcode.isEmpty) {
+    if (itemId == 0) {
       throw Exception('Invalid parameters');
+    }
+    if (barcode.isEmpty) {
+      print('Setting Empty Barcode');
     }
 
     Map<String, String> headers = {'Content-Type': 'application/json'};

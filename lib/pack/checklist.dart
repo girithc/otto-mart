@@ -22,8 +22,11 @@ class OrderChecklistPage extends StatefulWidget {
 class _OrderChecklistPageState extends State<OrderChecklistPage> {
   // Sample data for the list
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+
   List<PackedItem> packedItems = [];
-  PackerItemResponse? packerItemResponse;
+  List<PackerItemDetail?> prePackedItems = [];
+  bool allPacked = false;
+  //PackerItemResponse? packerItemResponse;
 
   int? orderId;
   int totalQuantity = 0; // New variable to store total quantity
@@ -54,6 +57,8 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
 
         setState(() {
           packedItems = combinedResponse.packedItems;
+          prePackedItems = combinedResponse.packedDetails;
+          allPacked = combinedResponse.allPacked;
           orderId = packedItems.isNotEmpty ? packedItems[0].orderId : null;
 
           // Calculate the sum of quantities
@@ -118,7 +123,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
           .then((item) {
         setState(() {
           print("Return value: $item");
-          packerItemResponse = item; // Storing the response
+          prePackedItems = item.itemList; // Storing the response
           // Calculate the sum of quantities
           totalQuantity =
               item.itemList.fold(0, (sum, item) => sum + item.quantity);
@@ -163,16 +168,26 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
               itemCount: packedItems.length,
               itemBuilder: (context, index) {
                 PackedItem item = packedItems[index];
-                int? quantityPacked = packerItemResponse?.itemList
-                    .firstWhere((result) => result.itemId == 1)
-                    .quantity;
+                int? quantityPacked = prePackedItems
+                    .firstWhere(
+                      (result) => result?.itemId == item.itemId,
+                      orElse: () => PackerItemDetail(
+                          itemId: 0,
+                          orderId: 0,
+                          packerId: 0,
+                          quantity:
+                              0), // Return null to match the type PackerItemDetail?
+                    )
+                    ?.quantity;
+
+                print("Quantity Packed $quantityPacked");
                 return Card(
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: Column(
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: <Widget>[
                             // Leading widget
 
@@ -250,7 +265,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                 const Center(
                                   child: Text(
                                     'Aisle 1A',
-                                    style: TextStyle(fontSize: 18),
+                                    style: TextStyle(fontSize: 20),
                                   ),
                                 )
                               ],
@@ -269,19 +284,15 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                     children: [
                                       Text(
                                         item.name,
-                                        style: const TextStyle(fontSize: 16),
+                                        style: const TextStyle(fontSize: 18),
                                       ), // Display item name
                                       Text(
                                         '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
-                                        style: const TextStyle(fontSize: 16),
+                                        style: const TextStyle(fontSize: 18),
                                       ), // Display brand and quantity
                                     ],
                                   ),
                                 ),
-                                // Spacer for spacing between title and trailing icon
-                                const SizedBox(width: 4.0),
-                                // Trailing widget
-                                const Icon(Icons.check_circle_outline_outlined),
                               ],
                             ),
                           ],
@@ -310,20 +321,36 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             // First FAB
-            FloatingActionButton.extended(
-              heroTag: 'scanItemButton', // Unique tag for this FAB
 
-              onPressed: scanBarcode,
-              backgroundColor: Colors.deepPurpleAccent,
-              label: const Text(
-                'Scan Item',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
+            allPacked
+                ? FloatingActionButton.extended(
+                    heroTag: 'packItemButton', // Unique tag for this FAB
+
+                    onPressed: scanBarcode,
+                    backgroundColor: Colors.deepPurpleAccent,
+                    label: const Text(
+                      'Complete Packing',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : FloatingActionButton.extended(
+                    heroTag: 'scanItemButton', // Unique tag for this FAB
+
+                    onPressed: scanBarcode,
+                    backgroundColor: Colors.deepPurpleAccent,
+                    label: const Text(
+                      'Scan Item',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
 
             const SizedBox(
               width: 4.0,
@@ -430,11 +457,12 @@ class PackerItemResponse {
 class CombinedOrderResponse {
   List<PackedItem> packedItems;
   List<PackerItemDetail> packedDetails;
+  bool allPacked;
 
-  CombinedOrderResponse({
-    required this.packedItems,
-    required this.packedDetails,
-  });
+  CombinedOrderResponse(
+      {required this.packedItems,
+      required this.packedDetails,
+      required this.allPacked});
 
   factory CombinedOrderResponse.fromJson(Map<String, dynamic> json) {
     // Handle packed_items
@@ -449,9 +477,11 @@ class CombinedOrderResponse {
         ? packedDetailsJson.map((x) => PackerItemDetail.fromJson(x)).toList()
         : <PackerItemDetail>[];
 
+    var allPacked = json['all_packed'] as bool;
+
     return CombinedOrderResponse(
-      packedItems: packedItems,
-      packedDetails: packedDetails,
-    );
+        packedItems: packedItems,
+        packedDetails: packedDetails,
+        allPacked: allPacked);
   }
 }

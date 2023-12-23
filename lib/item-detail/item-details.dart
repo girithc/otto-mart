@@ -151,6 +151,7 @@ class _ItemDetailsState extends State<ItemDetails> {
     try {
       final fetchedItem =
           await apiClient.addBarcode(widget.itemId, _barcodeController.text);
+      print("Barcode controller: ${_barcodeController.text} ");
       setState(() {
         print(
             "Fetched Item ${fetchedItem.name}, ${fetchedItem.mrpPrice}, ${fetchedItem.stockQuantity}");
@@ -266,7 +267,18 @@ class _ItemDetailsState extends State<ItemDetails> {
                 setState(() {
                   controller.text = editController.text;
                 });
-                title == "Barcode" ? null : Navigator.of(context).pop();
+                title == "Barcode"
+                    ? setState(() {
+                        _barcodeController.text = editController.text;
+                        addBarcode().then(
+                          (success) => {
+                            Navigator.of(context).pop(),
+                            if (!success)
+                              {_showErrorDialog('Error in saving barcode.')}
+                          },
+                        );
+                      })
+                    : Navigator.of(context).pop();
               },
             ),
           ],
