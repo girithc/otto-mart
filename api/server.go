@@ -67,16 +67,24 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/address", makeHTTPHandleFunc(s.handleAddress))
 	http.HandleFunc("/brand", makeHTTPHandleFunc(s.handleBrand))
+
 	http.HandleFunc("/store-sales-order", makeHTTPHandleFunc(s.handleStoreSalesOrder))
 	http.HandleFunc("/sales-order-store", makeHTTPHandleFunc(s.handleSalesOrderStore))
 	http.HandleFunc("/sales-order-details", makeHTTPHandleFunc(s.handleSalesOrderDetails))
 	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
+
 	http.HandleFunc("/phonepe-payment-init", makeHTTPHandleFunc(s.handlePhonePe))
 	http.HandleFunc("/phonepe-payment-complete", makeHTTPHandleFunc(s.handlePhonePeComplete))
 	http.HandleFunc("/phonepe-callback", makeHTTPHandleFunc(s.handlePhonePeCallback))
 	http.HandleFunc("/phonepe-check-status", makeHTTPHandleFunc(s.handlePhonePeVerifyPayment))
+
 	http.HandleFunc("/send-otp", makeHTTPHandleFunc(s.handleSendOtp))
 	http.HandleFunc("/verify-otp", makeHTTPHandleFunc(s.handleVerifyOtp))
+
+	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
+
+	// Planner
+	// http.HandleFunc("/plan-add-item", makeHTTPHandleFunc(s.handleAddItemList))
 
 	fmt.Println("Listening PORT", s.listen_address)
 

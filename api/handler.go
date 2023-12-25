@@ -1419,6 +1419,15 @@ func (s *Server) handleVerifyOtp(res http.ResponseWriter, req *http.Request) err
 	return nil
 }
 
+func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "create-shelf")
+		return s.HandleCreateShelf(res, req)
+	}
+
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }
