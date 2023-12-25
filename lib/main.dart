@@ -1,12 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:master/item-detail/item-detail.dart';
 import 'package:master/pack/checklist.dart';
 import 'package:master/stock/add-stock.dart';
 import 'package:master/store/stores.dart';
+import 'package:master/utils/constants.dart';
 import 'package:master/utils/login/provider/loginProvider.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(
@@ -117,6 +122,13 @@ class InventoryManagement extends StatefulWidget {
 
 class _InventoryManagementState extends State<InventoryManagement> {
   final ItemDetailApiClient apiClient = ItemDetailApiClient();
+  List<PackedItem> packedItems = [];
+  List<PackerItemDetail> prePackedItems = [];
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  bool allPacked = false;
+  //PackerItemResponse? packerItemResponse;
+  int? orderId;
+  int totalQuantity = 0;
 
   String? _scanBarcodeResult;
 
@@ -194,6 +206,44 @@ class _InventoryManagementState extends State<InventoryManagement> {
     );
   }
 
+  Future<bool> fetchItems() async {
+    String? packerId = await _storage.read(key: "packerId");
+    String? storeId = await _storage.read(key: "storeId");
+    var url = Uri.parse('$baseUrl/packer-pack-order');
+    var response = await http.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(
+          {"store_id": int.parse(storeId!), "packer_phone": packerId}),
+    );
+
+    if (response.statusCode == 200) {
+      print('response: ${response.body}');
+      final jsonResponse = json.decode(response.body);
+      if (jsonResponse.isNotEmpty) {
+        final combinedResponse = CombinedOrderResponse.fromJson(jsonResponse);
+        // Calculate the sum of quantities
+
+        setState(() {
+          packedItems = combinedResponse.packedItems;
+          prePackedItems = combinedResponse.packedDetails;
+          allPacked = combinedResponse.allPacked;
+          orderId = packedItems.isNotEmpty ? packedItems[0].orderId : null;
+
+          // Calculate the sum of quantities
+          totalQuantity = combinedResponse.packedDetails
+              .fold(0, (int sum, item) => sum + (item.quantity ?? 0));
+        });
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      print("Error ${response.body}");
+      return false;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -244,12 +294,37 @@ class _InventoryManagementState extends State<InventoryManagement> {
             ),
             trailing: const Icon(Icons.arrow_forward_ios_outlined),
             title: const Text('Pack Order'),
-            onTap: () => {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const OrderChecklistPage()),
-              )
+            onTap: () {
+              fetchItems().then((value) {
+                if (value) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OrderChecklistPage(
+                        packedItems: packedItems,
+                        prePackedItems: prePackedItems,
+                        allPacked: allPacked,
+                        orderId: orderId!,
+                        totalQuantity: totalQuantity,
+                      ),
+                    ),
+                  );
+                } else {
+                  // Show a Snackbar when there is no order to pack
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Center(
+                        child: Text(
+                          'No order to pack',
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                      duration: Duration(seconds: 2),
+                      backgroundColor: Colors.deepPurpleAccent,
+                    ),
+                  );
+                }
+              });
             },
             shape: ContinuousRectangleBorder(
               side: const BorderSide(width: 1, color: Colors.black),

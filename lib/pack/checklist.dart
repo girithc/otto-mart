@@ -13,8 +13,18 @@ import 'package:master/stock/add-stock.dart';
 import 'package:master/utils/constants.dart';
 
 class OrderChecklistPage extends StatefulWidget {
-  const OrderChecklistPage({super.key});
-
+  OrderChecklistPage(
+      {super.key,
+      required this.packedItems,
+      required this.prePackedItems,
+      required this.allPacked,
+      required this.orderId,
+      required this.totalQuantity});
+  List<PackedItem> packedItems;
+  List<PackerItemDetail> prePackedItems;
+  bool allPacked;
+  int orderId;
+  int totalQuantity;
   @override
   State<OrderChecklistPage> createState() => _OrderChecklistPageState();
 }
@@ -34,7 +44,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   @override
   void initState() {
     super.initState();
-    fetchItems();
+    //fetchItems();
   }
 
   Future<void> fetchItems() async {
@@ -82,7 +92,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
       body: jsonEncode({
         "packer_id": int.parse(packerId!),
         "store_id": int.parse(storeId!),
-        "order_id": packedItems[0].orderId,
+        "order_id": widget.packedItems[0].orderId,
       }),
     );
 
@@ -119,20 +129,88 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     if (_scanBarcodeResult != '-1') {
       apiClient
           .fetchItemFromBarcodeInSalesOrder(
-              _scanBarcodeResult!, packerId!, orderId!, storeId!)
+              _scanBarcodeResult!, packerId!, widget.orderId, storeId!)
           .then((item) {
         setState(() {
           print("Return value: $item");
-          prePackedItems = item.itemList; // Storing the response
+          widget.prePackedItems = item.itemList; // Storing the response
           // Calculate the sum of quantities
-          totalQuantity =
+          widget.totalQuantity =
               item.itemList.fold(0, (sum, item) => sum + item.quantity);
+          widget.allPacked = item.allPacked;
         });
       }, onError: (error) {
         // Handle error here if fetchItemFromBarcode fails
         print("Error fetching item: $error");
       });
     }
+  }
+
+  Future<void> scanBarcodeAssignSpace() async {
+    String barcodeScanRes;
+    String? packerId = await _storage.read(key: "packerId");
+    String? storeId = await _storage.read(key: "storeId");
+
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+      setState(() {
+        _scanBarcodeResult = barcodeScanRes;
+      });
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO: Handle platform exception here
+    }
+
+    if (_scanBarcodeResult != '-1') {
+      apiClient
+          .orderAssignSpace(
+              _scanBarcodeResult!, packerId!, widget.orderId, storeId!)
+          .then((allocationInfo) {
+        // Show the allocation details in a dialog
+        _showAllocationDetailsDialog(allocationInfo);
+      }, onError: (error) {
+        // Handle error here if orderAssignSpace fails
+        print("Error: $error");
+      });
+    }
+  }
+
+  void _showAllocationDetailsDialog(AllocationInfo allocationInfo) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Makes the dialog not dismissable
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Allocation Details'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('Order ID: ${allocationInfo.salesOrderId}'),
+                Text('Row: ${allocationInfo.row}'),
+                Text('Column: ${allocationInfo.column}'),
+                Text('Shelf ID: ${allocationInfo.shelfId}'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const MyHomePage(
+                            title: 'Otto Store',
+                          )),
+                ); // Navigate to MyHomePage
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -162,15 +240,15 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         ),
         backgroundColor: Colors.deepPurpleAccent,
       ),
-      body: packedItems.isEmpty
+      body: widget.packedItems.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
-              itemCount: packedItems.length,
+              itemCount: widget.packedItems.length,
               itemBuilder: (context, index) {
-                PackedItem item = packedItems[index];
-                int? quantityPacked = prePackedItems
+                PackedItem item = widget.packedItems[index];
+                int? quantityPacked = widget.prePackedItems
                     .firstWhere(
-                      (result) => result?.itemId == item.itemId,
+                      (result) => result.itemId == item.itemId,
                       orElse: () => PackerItemDetail(
                           itemId: 0,
                           orderId: 0,
@@ -178,7 +256,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                           quantity:
                               0), // Return null to match the type PackerItemDetail?
                     )
-                    ?.quantity;
+                    .quantity;
 
                 print("Quantity Packed $quantityPacked");
                 return Card(
@@ -301,11 +379,11 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                           borderRadius: BorderRadius.circular(
                               6.0), // Adjust the radius as needed
                           child: SizedBox(
-                            height: 25,
+                            height: 30,
                             child: LinearProgressIndicator(
                               value: (quantityPacked ?? 0) / item.itemQuantity,
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(Colors.blue),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                  Colors.blue),
                             ),
                           ),
                         ),
@@ -317,27 +395,27 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
             ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // First FAB
+        child: widget.allPacked
+            ? FloatingActionButton.extended(
+                heroTag: 'packItemButton', // Unique tag for this FAB
 
-            allPacked
-                ? FloatingActionButton.extended(
-                    heroTag: 'packItemButton', // Unique tag for this FAB
+                onPressed: scanBarcodeAssignSpace,
+                backgroundColor: Colors.deepPurpleAccent,
+                label: const Text(
+                  'Complete Packing',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  // First FAB
 
-                    onPressed: scanBarcode,
-                    backgroundColor: Colors.deepPurpleAccent,
-                    label: const Text(
-                      'Complete Packing',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  )
-                : FloatingActionButton.extended(
+                  FloatingActionButton.extended(
                     heroTag: 'scanItemButton', // Unique tag for this FAB
 
                     onPressed: scanBarcode,
@@ -352,28 +430,28 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                     ),
                   ),
 
-            const SizedBox(
-              width: 4.0,
-            ),
-            // Second FAB
-            FloatingActionButton(
-              heroTag: 'counterButton', // Unique tag for this FAB
+                  const SizedBox(
+                    width: 4.0,
+                  ),
+                  // Second FAB
+                  FloatingActionButton(
+                    heroTag: 'counterButton', // Unique tag for this FAB
 
-              onPressed: () {
-                // Define the action for this button
-              },
-              backgroundColor: Colors.deepPurpleAccent,
-              child: Text(
-                '$totalQuantity',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                    onPressed: () {
+                      // Define the action for this button
+                    },
+                    backgroundColor: Colors.deepPurpleAccent,
+                    child: Text(
+                      "${widget.totalQuantity}",
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
@@ -441,16 +519,18 @@ class PackerItemDetail {
 class PackerItemResponse {
   final List<PackerItemDetail> itemList;
   final bool success;
+  final bool allPacked;
 
-  PackerItemResponse({required this.itemList, required this.success});
+  PackerItemResponse(
+      {required this.itemList, required this.success, required this.allPacked});
 
   factory PackerItemResponse.fromJson(Map<String, dynamic> json) {
     return PackerItemResponse(
-      itemList: (json['item_list'] as List)
-          .map((i) => PackerItemDetail.fromJson(i))
-          .toList(),
-      success: json['success'],
-    );
+        itemList: (json['item_list'] as List)
+            .map((i) => PackerItemDetail.fromJson(i))
+            .toList(),
+        success: json['success'],
+        allPacked: json['all_packed']);
   }
 }
 

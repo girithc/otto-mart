@@ -92,6 +92,30 @@ class ItemDetailApiClient {
     }
   }
 
+  Future<AllocationInfo> orderAssignSpace(
+      String barcode, String packerPhone, int orderId, String storeId) async {
+    var url = Uri.parse('$baseUrl/packer-space-order');
+    final Map<String, dynamic> requestData = {
+      "store_id": int.parse(storeId),
+      "barcode": barcode,
+      "packer_phone": packerPhone,
+      "sales_order_id": orderId
+    };
+    var response = await http.post(
+      url,
+      body: jsonEncode(requestData),
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      print("Packer Item $response");
+      final jsonData = json.decode(response.body);
+      return AllocationInfo.fromJson(jsonData);
+    } else {
+      throw Exception('Failed to load items ${response.body}');
+    }
+  }
+
   Future<PackerItemResponse> fetchItemFromBarcodeInSalesOrder(
       String barcode, String packerPhone, int orderId, String storeId) async {
     var url = Uri.parse('$baseUrl/packer-pack-item');
@@ -295,5 +319,28 @@ class ItemPackOrder {
       'images': imageURLs,
       'stock_quantity': stockQuantity,
     };
+  }
+}
+
+class AllocationInfo {
+  final int salesOrderId;
+  final int row;
+  final String column;
+  final int shelfId;
+
+  AllocationInfo({
+    required this.salesOrderId,
+    required this.row,
+    required this.column,
+    required this.shelfId,
+  });
+
+  factory AllocationInfo.fromJson(Map<String, dynamic> json) {
+    return AllocationInfo(
+      salesOrderId: json['SalesOrderID'],
+      row: json['Row'],
+      column: json['Column'],
+      shelfId: json['ShelfID'],
+    );
   }
 }
