@@ -736,8 +736,63 @@ type PackedItem struct {
 	ImageURLs      []string `json:"image_urls"` // Using camelCase for consistency
 }
 
-func (s *PostgresStore) CompletePacking(packerPhone string, salesOrderId int, storeId int) (string, error) {
-	return "", nil
+func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone string, salesOrderId int, storeId int) (AllocationInfo, error) {
+	var info AllocationInfo
+
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return info, err
+	}
+
+	// Rollback transaction in case of any error
+	defer tx.Rollback()
+
+	// 1. Obtain shelf_id using the provided barcode
+	var shelfID, row int
+	var column string
+	shelfQuery := `SELECT shelf_id, horizontal, vertical FROM Shelf WHERE barcode = $1`
+	err = tx.QueryRow(shelfQuery, barcode).Scan(&shelfID, &row, &column)
+	if err != nil {
+		return info, err
+	}
+
+	// 2. Create a Packer_Shelf record
+	packerShelfQuery := `INSERT INTO Packer_Shelf (sales_order_id, packer_id, shelf_id, active) VALUES ($1, (SELECT id FROM Packer WHERE phone = $2), $3, true)`
+	_, err = tx.Exec(packerShelfQuery, salesOrderId, packerPhone, shelfID)
+	if err != nil {
+		return info, err
+	}
+
+	// 3. Update the order status to 'transit'
+	orderStatusQuery := `UPDATE sales_order SET order_status = 'transit' WHERE id = $1 AND order_status = 'accepted`
+	_, err = tx.Exec(orderStatusQuery, salesOrderId)
+	if err != nil {
+		return info, err
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return info, err
+	}
+
+	// Set return values
+	info = AllocationInfo{
+		SalesOrderID: salesOrderId,
+		Row:          row,
+		Column:       column,
+		ShelfID:      shelfID,
+	}
+
+	return info, nil
+}
+
+type AllocationInfo struct {
+	SalesOrderID int
+	Row          int
+	Column       string
+	ShelfID      int
 }
 
 func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool, error) {

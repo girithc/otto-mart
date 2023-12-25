@@ -43,7 +43,11 @@ delivery_partner,
 shopping_cart,
 sales_order,
 transaction,
-order_timeline
+order_timeline,
+packer,
+packer_item,
+shelf,
+packer_shelf
 CASCADE;
 
 DROP TABLE IF EXISTS

@@ -611,6 +611,14 @@ func (s *Server) handlePackerCancelOrder(res http.ResponseWriter, req *http.Requ
 	return nil
 }
 
+func (s *Server) handlePackerAllocateSpace(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-allocate-space")
+		return s.PackerAllocateSpace(res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleCheckout(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "checkout")

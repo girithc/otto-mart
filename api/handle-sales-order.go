@@ -170,22 +170,6 @@ func (s *Server) PackerPackItem(res http.ResponseWriter, req *http.Request) erro
 	return WriteJSON(res, http.StatusOK, records)
 }
 
-func (s *Server) PackerCompletePacking(res http.ResponseWriter, req *http.Request) error {
-	print("Enter PackerCompletePacking")
-	new_req := new(types.CompletePackOrder)
-	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error Decode in PackerCompletePacking()")
-		return err
-	}
-
-	records, err := s.store.CompletePacking(new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreID)
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(res, http.StatusOK, records)
-}
-
 func (s *Server) PackerGetAllPackedItems(res http.ResponseWriter, req *http.Request) error {
 	print("Enter PackerGetAllPackedItems")
 	new_req := new(types.PackedOrderItem)
@@ -213,6 +197,22 @@ func (s *Server) CancelPackSalesOrder(res http.ResponseWriter, req *http.Request
 	print("Packer-ID: ", new_req.PackerID)
 
 	records, err := s.store.CancelPackOrder(new_req.StoreID, new_req.PackerID, new_req.OrderID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}
+
+func (s *Server) PackerAllocateSpace(res http.ResponseWriter, req *http.Request) error {
+	print("Enter PackerAllocateSpace")
+	new_req := new(types.AcceptOrderItem)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in PackerPackItem()")
+		return err
+	}
+
+	records, err := s.store.PackerOrderAllocateSpace(new_req.Barcode, new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreId)
 	if err != nil {
 		return err
 	}
