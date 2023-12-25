@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:master/item-detail/item-detail.dart';
+import 'package:master/store/item-detail/item-detail.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:http/http.dart' as http;
 import 'package:master/main.dart';

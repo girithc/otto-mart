@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:master/item-detail/item-detail.dart';
+import 'package:master/store/item-detail/item-detail.dart';
 import 'package:master/pack/checklist.dart';
 import 'package:master/stock/add-stock.dart';
 import 'package:master/store/stores.dart';
@@ -248,52 +248,89 @@ class _InventoryManagementState extends State<InventoryManagement> {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.store_outlined),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            title: const Text('Stores'),
+          const SizedBox(height: 10),
+          GestureDetector(
             onTap: () => {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const Stores()),
               )
             },
-            shape: ContinuousRectangleBorder(
-              side: const BorderSide(width: 1, color: Colors.black),
-              borderRadius: BorderRadius.circular(20),
+            child: Center(
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.2,
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15), // Rounded borders
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Color(0xFFDF98FA), // Light purple
+                      Color(0xFF9055FF), // Darker purple
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.25), // Shadow color
+                      spreadRadius: 0,
+                      blurRadius: 20, // Increased shadow blur
+                      offset: const Offset(0, 10), // Increased vertical offset
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Stores',
+                    style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
             ),
-            tileColor: Colors.white,
-            contentPadding: const EdgeInsets.all(10),
           ),
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white, //Colors.white,
-              child: Icon(Icons.analytics_outlined),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            title: const Text(
-              'Scan Barcode',
-              style: TextStyle(color: Colors.black),
-            ),
+          const SizedBox(height: 10),
+          GestureDetector(
             onTap: scanBarcode,
-            shape: ContinuousRectangleBorder(
-              side: const BorderSide(width: 1, color: Colors.black),
-              borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.2,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15), // Rounded borders
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFDF98FA), // Light purple
+                    Color(0xFF9055FF), // Darker purple
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Scan Barcode',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
-            tileColor: Colors.white,
-            contentPadding: const EdgeInsets.all(10),
           ),
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Icon(Icons.store_outlined),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            title: const Text('Pack Order'),
+          const SizedBox(height: 10),
+          GestureDetector(
             onTap: () {
               fetchItems().then((value) {
                 if (value) {
@@ -326,48 +363,118 @@ class _InventoryManagementState extends State<InventoryManagement> {
                 }
               });
             },
-            shape: ContinuousRectangleBorder(
-              side: const BorderSide(width: 1, color: Colors.black),
-              borderRadius: BorderRadius.circular(20),
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.2,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15), // Rounded borders
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFDF98FA), // Light purple
+                    Color(0xFF9055FF), // Darker purple
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Pack Order',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
-            tileColor: Colors.white,
-            contentPadding: const EdgeInsets.all(10),
           ),
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white, //Colors.white,
-              child: Icon(Icons.analytics_outlined),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => OrderChecklistPage(
+                    packedItems: packedItems,
+                    prePackedItems: prePackedItems,
+                    allPacked: allPacked,
+                    orderId: orderId!,
+                    totalQuantity: totalQuantity,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.2,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15), // Rounded borders
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFFDF98FA), // Light purple
+                    Color(0xFF9055FF), // Darker purple
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Shelf Management',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
-            trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            title: const Text(
-              'Item Locator',
-              style: TextStyle(color: Colors.black),
-            ),
-            onTap: scanBarcode,
-            shape: ContinuousRectangleBorder(
-              side: const BorderSide(width: 1, color: Colors.black),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            tileColor: Colors.white,
-            contentPadding: const EdgeInsets.all(10),
           ),
-          ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.white, //Colors.white,
-              child: Icon(Icons.analytics_outlined),
-            ),
-            trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            title: const Text(
-              'Item Reporting',
-              style: TextStyle(color: Colors.black),
-            ),
-            onTap: scanBarcode,
-            shape: ContinuousRectangleBorder(
-              side: const BorderSide(width: 1, color: Colors.black),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            tileColor: Colors.white,
-            contentPadding: const EdgeInsets.all(10),
+        ],
+      ),
+    );
+  }
+}
+
+class ProductCard extends StatelessWidget {
+  const ProductCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.2,
+      width: MediaQuery.of(context).size.width * 0.85,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(15), // Rounded borders
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFDF98FA), // Light purple
+            Color(0xFF9055FF), // Darker purple
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25), // Shadow color
+            spreadRadius: 0,
+            blurRadius: 20, // Increased shadow blur
+            offset: const Offset(0, 10), // Increased vertical offset
           ),
         ],
       ),

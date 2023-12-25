@@ -6,7 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
-import 'package:master/item-detail/item-detail.dart';
+import 'package:master/store/item-detail/item-detail.dart';
 import 'package:master/main.dart';
 import 'package:master/pack/pack-item.dart';
 import 'package:master/stock/add-stock.dart';
