@@ -31,6 +31,7 @@ class MyApp extends StatelessWidget {
       title: 'Scooter Animation',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: const OpeningPageAnimation(),
+      debugShowCheckedModeBanner: false, // Add this line
     );
   }
 }
