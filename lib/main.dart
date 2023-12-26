@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:master/shelf/shelf.dart';
 import 'package:master/store/item-detail/item-detail.dart';
 import 'package:master/pack/checklist.dart';
 import 'package:master/stock/add-stock.dart';
@@ -402,15 +403,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => OrderChecklistPage(
-                    packedItems: packedItems,
-                    prePackedItems: prePackedItems,
-                    allPacked: allPacked,
-                    orderId: orderId!,
-                    totalQuantity: totalQuantity,
-                  ),
-                ),
+                MaterialPageRoute(builder: (context) => const ShelfPage()),
               );
             },
             child: Container(
