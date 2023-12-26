@@ -216,7 +216,7 @@ class _SettingScreenState extends State<SettingScreen> {
               GestureDetector(
                 onTap: () {
                   signOutUser(context).then(
-                    (value) => Navigator.pushReplacement(
+                    (value) => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const MyPhone()),
                     ),

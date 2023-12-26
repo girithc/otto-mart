@@ -153,6 +153,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           'Address',
           style: TextStyle(color: Colors.white),
         ),
+        leading: Container(),
       ),
       body: Container(
         padding: const EdgeInsets.all(10),

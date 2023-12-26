@@ -8,6 +8,7 @@ import 'package:pronto/home/address/select/select.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_api_client.dart';
+import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -130,33 +131,6 @@ class _MyVerifyState extends State<MyVerify> {
     );
     return Scaffold(
       extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
-        title: ShaderMask(
-          shaderCallback: (bounds) => const RadialGradient(
-                  center: Alignment.topLeft,
-                  radius: 1.0,
-                  colors: [Colors.white, Colors.white70],
-                  tileMode: TileMode.mirror)
-              .createShader(bounds),
-          child: const Text(
-            "Pronto",
-            style: TextStyle(
-                fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
-        ),
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: Colors.black,
-          ),
-        ),
-        elevation: 4.0,
-        surfaceTintColor: Colors.white,
-      ),
       body: Container(
         margin: const EdgeInsets.only(left: 25, right: 25),
         alignment: Alignment.center,
@@ -165,9 +139,8 @@ class _MyVerifyState extends State<MyVerify> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
-                'assets/images/img1.png',
-                width: 150,
-                height: 150,
+                'assets/icon/icon.jpeg',
+                height: 250,
               ),
               const SizedBox(
                 height: 25,
@@ -330,10 +303,11 @@ class _MyVerifyState extends State<MyVerify> {
                 children: [
                   TextButton(
                       onPressed: () {
-                        Navigator.pushNamedAndRemoveUntil(
+                        Navigator.pushReplacement(
                           context,
-                          'phone',
-                          (route) => false,
+                          MaterialPageRoute(
+                            builder: (context) => const MyPhone(),
+                          ),
                         );
                       },
                       child: Text(
