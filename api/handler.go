@@ -1423,6 +1423,9 @@ func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) err
 	if req.Method == "POST" {
 		print_path("POST", "create-shelf")
 		return s.HandleCreateShelf(res, req)
+	} else if req.Method == "GET" {
+		print_path("GET", "get-shelf")
+		return s.HandleGetShelf(res, req)
 	}
 
 	return nil

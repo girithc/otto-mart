@@ -6,3 +6,7 @@ type CreateShelf struct {
 	Vertical   string `json:"vertical"`
 	Barcode    string `json:"barcode"`
 }
+
+type GetShelf struct {
+	StoreId int `json:"store_id"`
+}

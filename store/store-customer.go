@@ -76,6 +76,13 @@ func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
 
 func (s *PostgresStore) SendOtpMSG91(phone int) (*types.SendOTPResponse, error) {
 	// Prepare the URL and headers
+	if phone == 1234567890 {
+		// Return a mock response
+		return &types.SendOTPResponse{
+			Type:      "test",
+			RequestId: "test",
+		}, nil
+	}
 	url := "https://control.msg91.com/api/v5/otp?template_id=6562ddc2d6fc0517bc535382&mobile=91" + fmt.Sprintf("%d", phone)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {

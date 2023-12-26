@@ -42,6 +42,41 @@ func (s *PostgresStore) CreateShelf(storeID, horizontal int, barcode, vertical s
 	return newShelf, nil
 }
 
+// GetShelf retrieves all shelves associated with a given store ID from the database.
+func (s *PostgresStore) GetShelf(storeID int) ([]Shelf, error) {
+	// SQL query to select shelves based on storeID.
+	shelfSelectQuery := `SELECT id, store_id, horizontal, barcode, vertical FROM Shelf WHERE store_id = $1`
+
+	// Execute the query with storeID as the parameter.
+	rows, err := s.db.Query(shelfSelectQuery, storeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Slice to hold the shelves.
+	var shelves []Shelf
+
+	// Iterate through the rows.
+	for rows.Next() {
+		var shelf Shelf
+		// Scan each row into a Shelf struct.
+		if err := rows.Scan(&shelf.ID, &shelf.StoreID, &shelf.Horizontal, &shelf.Barcode, &shelf.Vertical); err != nil {
+			return nil, err
+		}
+		// Append the Shelf struct to the slice.
+		shelves = append(shelves, shelf)
+	}
+
+	// Check for any error encountered during iteration.
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Return the slice of shelves.
+	return shelves, nil
+}
+
 // Shelf represents the structure of a shelf in the database.
 type Shelf struct {
 	ID         int    `json:"id"`
