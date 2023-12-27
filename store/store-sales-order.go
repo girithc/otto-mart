@@ -72,7 +72,7 @@ func (s *PostgresStore) CreateOrderTimelineTable(tx *sql.Tx) error {
 	// Create the combined ENUM type
 	combinedStatusQuery := `DO $$ BEGIN
         CREATE TYPE combined_order_status AS ENUM (
-            'received', 'accepted', 'packed', 'dispatched', 'arrived', 'completed',
+            'received', 'accepted', 'packed','transit','dispatched', 'arrived', 'completed',
              'denied', 'pending' 
         );
     EXCEPTION
@@ -751,7 +751,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone str
 	// 1. Obtain shelf_id using the provided barcode
 	var shelfID, row int
 	var column string
-	shelfQuery := `SELECT shelf_id, horizontal, vertical FROM Shelf WHERE barcode = $1`
+	shelfQuery := `SELECT id, horizontal, vertical FROM Shelf WHERE barcode = $1`
 	err = tx.QueryRow(shelfQuery, barcode).Scan(&shelfID, &row, &column)
 	if err != nil {
 		return info, err
@@ -765,7 +765,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone str
 	}
 
 	// 3. Update the order status to 'transit'
-	orderStatusQuery := `UPDATE sales_order SET order_status = 'transit' WHERE id = $1 AND order_status = 'accepted`
+	orderStatusQuery := `UPDATE sales_order SET order_status = 'transit' WHERE id = $1 AND order_status = 'accepted'`
 	_, err = tx.Exec(orderStatusQuery, salesOrderId)
 	if err != nil {
 		return info, err

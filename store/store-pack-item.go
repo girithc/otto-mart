@@ -75,15 +75,15 @@ func (s *PostgresStore) PackerPackItem(barcode string, packerPhone string, order
 	if requiredQuantity > packedQuantity {
 		// Insert a new record into the packer_item table
 		insertQuery := `INSERT INTO packer_item (item_id, packer_id, sales_order_id, quantity, store_id) VALUES ($1, $2, $3, $4, $5)`
+
 		_, err = s.db.Exec(insertQuery, itemId, packerId, orderId, 1, storeId)
 		if err != nil {
 			return response, fmt.Errorf("error inserting into packer_item table: %w", err)
 		}
+		packedQuantity++
 	}
 
-	
-
-	if (requiredQuantity == packedQuantity) || (requiredQuantity == packedQuantity+1) {
+	if (requiredQuantity == packedQuantity) {
 		allItemsPacked = true
 	} else {
 		allItemsPacked = false
