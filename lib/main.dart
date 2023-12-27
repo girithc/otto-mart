@@ -262,21 +262,14 @@ class _InventoryManagementState extends State<InventoryManagement> {
             },
             child: Center(
               child: Container(
-                height: MediaQuery.of(context).size.height * 0.2,
+                height: MediaQuery.of(context).size.height * 0.15,
                 width: MediaQuery.of(context).size.width * 0.85,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15), // Rounded borders
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFDF98FA), // Light purple
-                      Color(0xFF9055FF), // Darker purple
-                    ],
-                  ),
+                  color: Colors.white,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.25), // Shadow color
+                      color: Colors.grey.withOpacity(0.25), // Shadow color
                       spreadRadius: 0,
                       blurRadius: 20, // Increased shadow blur
                       offset: const Offset(0, 10), // Increased vertical offset
@@ -288,8 +281,8 @@ class _InventoryManagementState extends State<InventoryManagement> {
                     'Stores',
                     style: TextStyle(
                         fontSize: 25,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
+                        color: Colors.black,
+                        fontWeight: FontWeight.normal),
                   ),
                 ),
               ),
@@ -303,17 +296,10 @@ class _InventoryManagementState extends State<InventoryManagement> {
               width: MediaQuery.of(context).size.width * 0.85,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15), // Rounded borders
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFDF98FA), // Light purple
-                    Color(0xFF9055FF), // Darker purple
-                  ],
-                ),
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25), // Shadow color
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
                     spreadRadius: 0,
                     blurRadius: 20, // Increased shadow blur
                     offset: const Offset(0, 10), // Increased vertical offset
@@ -322,11 +308,11 @@ class _InventoryManagementState extends State<InventoryManagement> {
               ),
               child: const Center(
                 child: Text(
-                  'Scan Barcode',
+                  'Add+ Inventory',
                   style: TextStyle(
                       fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
@@ -355,11 +341,14 @@ class _InventoryManagementState extends State<InventoryManagement> {
                       content: Center(
                         child: Text(
                           'No order to pack',
-                          style: TextStyle(fontSize: 18),
+                          style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                       duration: Duration(seconds: 2),
-                      backgroundColor: Colors.deepPurpleAccent,
+                      backgroundColor: Color.fromARGB(255, 255, 188, 188),
                     ),
                   );
                 }
@@ -370,17 +359,10 @@ class _InventoryManagementState extends State<InventoryManagement> {
               width: MediaQuery.of(context).size.width * 0.85,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15), // Rounded borders
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFDF98FA), // Light purple
-                    Color(0xFF9055FF), // Darker purple
-                  ],
-                ),
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25), // Shadow color
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
                     spreadRadius: 0,
                     blurRadius: 20, // Increased shadow blur
                     offset: const Offset(0, 10), // Increased vertical offset
@@ -392,8 +374,8 @@ class _InventoryManagementState extends State<InventoryManagement> {
                   'Pack Order',
                   style: TextStyle(
                       fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
@@ -407,21 +389,14 @@ class _InventoryManagementState extends State<InventoryManagement> {
               );
             },
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.2,
+              height: MediaQuery.of(context).size.height * 0.15,
               width: MediaQuery.of(context).size.width * 0.85,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15), // Rounded borders
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFFDF98FA), // Light purple
-                    Color(0xFF9055FF), // Darker purple
-                  ],
-                ),
+                color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.25), // Shadow color
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
                     spreadRadius: 0,
                     blurRadius: 20, // Increased shadow blur
                     offset: const Offset(0, 10), // Increased vertical offset
@@ -433,8 +408,8 @@ class _InventoryManagementState extends State<InventoryManagement> {
                   'Shelf Management',
                   style: TextStyle(
                       fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
@@ -465,7 +440,7 @@ class ProductCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25), // Shadow color
+            color: Colors.grey.withOpacity(0.25), // Shadow color
             spreadRadius: 0,
             blurRadius: 20, // Increased shadow blur
             offset: const Offset(0, 10), // Increased vertical offset

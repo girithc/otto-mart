@@ -172,6 +172,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
       }, onError: (error) {
         // Handle error here if orderAssignSpace fails
         print("Error: $error");
+        _showErrorDialog("Error: $error"); // Show error dialog
       });
     }
   }
@@ -205,6 +206,33 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                             title: 'Otto Store',
                           )),
                 ); // Navigate to MyHomePage
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showErrorDialog(String errorMessage) {
+    showDialog(
+      context: context,
+      barrierDismissible: true, // Makes the dialog dismissible
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text(errorMessage),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Close'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
               },
             ),
           ],
