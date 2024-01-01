@@ -40,3 +40,14 @@ func (s *Server) handleGetBrands(res http.ResponseWriter, req *http.Request) err
 	}
 	return WriteJSON(res, http.StatusOK, brands)
 }
+
+func (s *Server) HandleGetBrandList(res http.ResponseWriter, req *http.Request) error {
+	brand, err := s.store.GetBrandsList()
+
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, brand)
+
+}

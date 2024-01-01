@@ -873,3 +873,76 @@ func (s *PostgresStore) GetItemFromBarcodeInOrder(barcode string, salesOrderId i
 
 	return &itemData, nil
 }
+
+func (s *PostgresStore) CreateItemAddQuick(params types.ItemAddQuick) (ItemAddQuickResponse, error) {
+	// Start a transaction
+	response := ItemAddQuickResponse{Success: false} // Initialize with false success
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return response, fmt.Errorf("error starting transaction: %w", err)
+	}
+
+	// Check if brand exists, if not create it
+	var brandId int
+	brandQuery := `SELECT id FROM brand WHERE name = $1`
+	err = tx.QueryRow(brandQuery, params.BrandName).Scan(&brandId)
+	if err == sql.ErrNoRows {
+		// Brand does not exist, create it
+		insertBrandQuery := `INSERT INTO brand (name) VALUES ($1) RETURNING id`
+		err = tx.QueryRow(insertBrandQuery, params.BrandName).Scan(&brandId)
+		if err != nil {
+			tx.Rollback()
+			return response, fmt.Errorf("error inserting new brand: %w", err)
+		}
+	} else if err != nil {
+		tx.Rollback()
+		return response, fmt.Errorf("error querying brand: %w", err)
+	}
+
+	// Insert into item table
+	itemQuery := `INSERT INTO item (name, brand_id, quantity, barcode, unit_of_quantity, description, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`
+	var itemId int
+	err = tx.QueryRow(itemQuery, params.Name, brandId, params.Quantity, params.Barcode, params.Unit, params.Description, params.CreatedBy).Scan(&itemId)
+	if err != nil {
+		tx.Rollback()
+		return response, fmt.Errorf("error inserting item: %w", err)
+	}
+
+	// Insert into item_category table
+	categoryQuery := `INSERT INTO item_category (item_id, category_id, created_by) VALUES ($1, $2, $3)`
+	_, err = tx.Exec(categoryQuery, itemId, params.CategoryId, params.CreatedBy)
+	if err != nil {
+		tx.Rollback()
+		return response, fmt.Errorf("error inserting item category: %w", err)
+	}
+
+	// Insert into item_image table with empty image_url
+	imageQuery := `INSERT INTO item_image (item_id, image_url, order_position, created_by) VALUES ($1, '', 1, $2)`
+	_, err = tx.Exec(imageQuery, itemId, params.CreatedBy)
+	if err != nil {
+		tx.Rollback()
+		return response, fmt.Errorf("error inserting item image: %w", err)
+	}
+
+	// Insert into item_store table
+	storeQuery := `INSERT INTO item_store (item_id, mrp_price, store_price, discount, store_id, stock_quantity, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7)`
+	_, err = tx.Exec(storeQuery, itemId, params.MrpPrice, params.StorePrice, params.Discount, params.StoreId, params.StockQuantity, params.CreatedBy)
+	if err != nil {
+		tx.Rollback()
+		return response, fmt.Errorf("error inserting item store: %w", err)
+	}
+
+	// Commit the transaction
+	if commitErr := tx.Commit(); commitErr != nil {
+		return response, fmt.Errorf("error committing transaction: %w", commitErr)
+	}
+
+	response.Success = true // Set success to true as the transaction is committed successfully
+	return response, nil
+
+}
+
+type ItemAddQuickResponse struct {
+	Success bool `json:"success"`
+}

@@ -169,3 +169,18 @@ func (s *Server) Handle_Delete_Item(res http.ResponseWriter, req *http.Request) 
 
 	return WriteJSON(res, http.StatusOK, map[string]int{"deleted": new_req.ID})
 }
+
+func (s *Server) HandleItemAddQuick(res http.ResponseWriter, req *http.Request) error {
+	print("Enter HandleItemAddStockByStore")
+	new_req := new(types.ItemAddQuick)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		return fmt.Errorf("error decoding request body in HandleItemAddStockByStore: %w", err)
+	}
+
+	itemStockUpdate, err := s.store.CreateItemAddQuick(*new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, itemStockUpdate)
+}

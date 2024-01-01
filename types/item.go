@@ -169,3 +169,19 @@ func New_Update_Item(id int, name string, mrp_price float64, store_price float64
 		Image:          image,
 	}, nil
 }
+
+type ItemAddQuick struct {
+	Name          string `json:"name"`
+	BrandName     string `json:"brand_name"`
+	Quantity      int    `json:"quantity"`
+	Barcode       string `json:"barcode"`
+	Unit          string `json:"unit"`
+	Description   string `json:"description"`
+	CreatedBy     int    `json:"created_by"`
+	CategoryId    int    `json:"category_id"`
+	StoreId       int    `json:"store_id"`
+	MrpPrice      int    `json:"mrp_price"`
+	StorePrice    int    `json:"store_price"`
+	Discount      int    `json:"discount"`
+	StockQuantity int    `json:"stock_quantity"`
+}

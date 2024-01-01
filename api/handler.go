@@ -260,6 +260,22 @@ func (s *Server) handleCategory(res http.ResponseWriter, req *http.Request) erro
 	return nil
 }
 
+func (s *Server) handleGetCategory(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("[GET]", "get-category")
+		return s.HandleGetCategoryList(res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleGetBrand(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("[GET]", "get-brand")
+		return s.HandleGetBrandList(res, req)
+	}
+	return nil
+}
+
 // Category Higher Level Mapping
 func (s *Server) handleCategoryHigherLevelMapping(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
@@ -558,6 +574,16 @@ func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) er
 
 		// Collect all results and return the first one (since you're using a buffer of size 1)
 		return <-resultChan
+	}
+
+	return nil
+}
+
+func (s *Server) handleItemAddQuick(res http.ResponseWriter, req *http.Request) error {
+
+	if req.Method == "POST" {
+		print_path("POST", "item-add-quick")
+		return s.HandleItemAddQuick(res, req)
 	}
 
 	return nil

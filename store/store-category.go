@@ -264,3 +264,34 @@ func scan_Into_Update_Category(rows *sql.Rows) (*types.Update_Category, error) {
 
 	return category, error
 }
+
+type Category struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
+func (s *PostgresStore) GetCategoriesList() ([]Category, error) {
+	var categories []Category
+
+	query := `SELECT id, name FROM category`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying categories: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cat Category
+		if err := rows.Scan(&cat.ID, &cat.Name); err != nil {
+			return nil, fmt.Errorf("error scanning category row: %w", err)
+		}
+		categories = append(categories, cat)
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating category rows: %w", err)
+	}
+
+	return categories, nil
+}

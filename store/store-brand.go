@@ -104,3 +104,34 @@ func (s *PostgresStore) GetBrands() ([]*types.Brand, error) {
 
 	return brands, nil
 }
+
+func (s *PostgresStore) GetBrandsList() ([]Brand, error) {
+	var brands []Brand
+
+	query := `SELECT id, name FROM brand`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error querying brands: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var brand Brand
+		if err := rows.Scan(&brand.ID, &brand.Name); err != nil {
+			return nil, fmt.Errorf("error scanning brand row: %w", err)
+		}
+		brands = append(brands, brand)
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating brand rows: %w", err)
+	}
+
+	return brands, nil
+}
+
+type Brand struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}

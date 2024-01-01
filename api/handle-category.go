@@ -111,3 +111,16 @@ func (s *Server) Handle_Delete_Category(res http.ResponseWriter, req *http.Reque
 
 	return WriteJSON(res, http.StatusOK, map[string]int{"deleted": new_req.ID})
 }
+
+func (s *Server) HandleGetCategoryList(res http.ResponseWriter, req *http.Request) error {
+	cat, err := s.store.GetCategoriesList()
+
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, cat)
+
+}
+
+

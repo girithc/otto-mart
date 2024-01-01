@@ -34,11 +34,16 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/category-higher-level-mapping", makeHTTPHandleFunc(s.handleCategoryHigherLevelMapping))
 
 	http.HandleFunc("/category", makeHTTPHandleFunc(s.handleCategory))
+
+	http.HandleFunc("/get-category", makeHTTPHandleFunc(s.handleGetCategory))
+	http.HandleFunc("/get-brand", makeHTTPHandleFunc(s.handleGetBrand))
+
 	http.HandleFunc("/item-store", makeHTTPHandleFunc(s.handleItemStore))
 	http.HandleFunc("/item-update", makeHTTPHandleFunc(s.handleItemUpdate))
 	http.HandleFunc("/item-add-stock", makeHTTPHandleFunc(s.handleItemAddStock))
 	http.HandleFunc("/item", makeHTTPHandleFunc(s.handleItem))
 	http.HandleFunc("/search-item", makeHTTPHandleFunc(s.handleSearchItem))
+	http.HandleFunc("/item-add-quick", makeHTTPHandleFunc(s.handleItemAddQuick))
 
 	http.HandleFunc("/customer", makeHTTPHandleFunc(s.handleCustomer))
 	http.HandleFunc("/login-customer", makeHTTPHandleFunc(s.handleLoginCustomer))
