@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/deprecated/cart.dart';
-import 'package:pronto/order/place_order_screen.dart';
+import 'package:pronto/cart/order/place_order_screen.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:provider/provider.dart';

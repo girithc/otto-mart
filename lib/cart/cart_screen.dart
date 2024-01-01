@@ -186,90 +186,6 @@ class _MyCartState extends State<MyCart> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  /*
-                  Container(
-                    margin: EdgeInsets.zero,
-                    padding: EdgeInsets.zero,
-                    height: MediaQuery.of(context).size.height * 0.065,
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                            style: BorderStyle.solid, color: Colors.white)),
-                    child: Row(
-                      children: [
-                        const Expanded(flex: 1, child: SizedBox()),
-                        Expanded(
-                          flex: 8,
-                          child: Container(
-                            height: MediaQuery.of(context).size.height * 0.05,
-                            padding: const EdgeInsets.all(
-                                0), // Add some padding inside the container
-                            decoration: BoxDecoration(
-                              color: Colors
-                                  .white, // Background color of the container
-                              borderRadius:
-                                  BorderRadius.circular(15), // Rounded corners
-                              boxShadow: [
-                                // Optional shadow for a subtle "raised" effect
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 1,
-                                  blurRadius: 2,
-                                  offset: const Offset(0, 0),
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: Text(
-                                "Address: ${cart.deliveryAddress.streetAddress}",
-                                style: const TextStyle(
-                                  fontSize: 14, // Optional: Adjust font size
-                                  color: Colors
-                                      .black, // Optional: Adjust text color
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          flex: 8,
-                          child: Container(
-                            margin:
-                                const EdgeInsets.only(right: 12.0, left: 16.0),
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const SavedAddressScreen(),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                foregroundColor: Colors.deepPurpleAccent,
-                                backgroundColor: Colors.white,
-                                surfaceTintColor:
-                                    Colors.white, // Text and icon color
-                                elevation: 5, // Shadow depth
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10.0),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 0, vertical: 5),
-                              ),
-                              child: const Text(
-                                "Change Address",
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  */
                   Container(
                     padding: const EdgeInsets.only(
                         left: 12, right: 12, bottom: 20, top: 0),
@@ -426,8 +342,29 @@ class _CartList extends StatelessWidget {
                                     // Add border
                                     ),
                                 child: Center(
-                                    child:
-                                        Image.network(item.image, height: 75)),
+                                  child: Image.network(
+                                    item.image,
+                                    height: 75,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (BuildContext context,
+                                        Object exception,
+                                        StackTrace? stackTrace) {
+                                      return Container(
+                                        height: 50,
+                                        color: Colors.grey[200],
+                                        alignment: Alignment.center,
+                                        child: const Center(
+                                          child: Text(
+                                            'no image',
+                                            style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
                               ),
                             ),
                             Expanded(

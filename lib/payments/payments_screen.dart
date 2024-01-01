@@ -3,7 +3,7 @@ import 'package:pronto/payments/phonepe.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
-import 'package:pronto/order/place_order_screen.dart';
+import 'package:pronto/cart/order/place_order_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';

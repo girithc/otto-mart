@@ -6,31 +6,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
-import 'package:pronto/category_items/category_items_screen.dart';
-import 'package:pronto/home/address/confirm_address_screen.dart';
-import 'package:pronto/home/tab/tab.dart';
-import 'package:pronto/order/confirmed_order_screen.dart';
-import 'package:pronto/payments/easebuzz/easebuzz.dart';
-import 'package:pronto/payments/phonepe.dart';
-import 'package:pronto/plan/plan.dart';
-import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
 import 'package:pronto/login/login_status_provider.dart';
-import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/search/search_screen.dart';
 import 'package:pronto/utils/globals.dart';
 import 'package:provider/provider.dart';
+import 'package:pronto/item/category_items/category_items_screen.dart';
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
@@ -727,7 +718,6 @@ class _MyHomePageState extends State<MyHomePage>
                       },
                     ),
                   ),
-                  // This is the GridView, wrapped inside a SliverPadding
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 4),
                     sliver: SliverGrid(
@@ -750,7 +740,6 @@ class _MyHomePageState extends State<MyHomePage>
                       ),
                     ),
                   ),
-                  // Add other content here if needed
                 ],
               ),
             ),
@@ -1105,12 +1094,14 @@ class Highlights extends StatelessWidget {
             return GestureDetector(
               onTap: () {
                 Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => CategoryItemsPage(
-                              categoryID: promo.id,
-                              categoryName: promo.name,
-                            )));
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CategoryItemsPage(
+                      categoryID: promo.id,
+                      categoryName: promo.name,
+                    ),
+                  ),
+                );
               },
               child: Card(
                 elevation: 1,
@@ -1236,11 +1227,11 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   decoration: const BoxDecoration(
                       // Background color of the container
                       shape: BoxShape.circle,
-                      color: Colors.white // Circular shape
+                      color: Colors.transparent // Circular shape
                       ),
                   child: IconButton(
                       icon: const Icon(Icons.electric_bolt_rounded),
-                      color: Colors.white, // Icon color
+                      color: Colors.transparent, // Icon color
                       onPressed: () {
                         context.push('/setting');
                       }),
@@ -1296,28 +1287,6 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                         context.push('/setting');
                       }),
                 )
-
-/* 
-                IconButton(
-                  color: Colors.black,
-                  padding: const EdgeInsets.only(right: 15.0),
-                  icon: const Icon(Icons.mobile_friendly_outlined),
-                  onPressed: () {
-                    String? cartId = cart.cartId;
-                    int cartIdInt = int.parse(cartId!);
-                    initiatePhonePePayment(cartIdInt).then((url) {
-                      if (url.isNotEmpty) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PhonePeWebView(url: url),
-                          ),
-                        );
-                      } else {}
-                    });
-                  },
-                ),
-                */
               ],
             ),
             const SizedBox(

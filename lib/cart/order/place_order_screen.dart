@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:pronto/order/confirmed_order_screen.dart';
+import 'package:pronto/cart/order/confirmed_order_screen.dart';
 
 class PlaceOrder extends StatelessWidget {
   const PlaceOrder({super.key});

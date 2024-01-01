@@ -49,7 +49,24 @@ class Product extends StatelessWidget {
                 itemCount: 3, // Display the image 3 times, adjust as needed
                 itemBuilder:
                     (BuildContext context, int itemIndex, int pageViewIndex) {
-                  return Image.network(image, fit: BoxFit.cover);
+                  return Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (BuildContext context, Object exception,
+                        StackTrace? stackTrace) {
+                      return Container(
+                        height: MediaQuery.of(context).size.height * 0.30,
+                        color: Colors.grey[200],
+                        alignment: Alignment.center,
+                        child: const Center(
+                          child: Text(
+                            'no image',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    },
+                  );
                 },
                 options: CarouselOptions(
                   height: MediaQuery.of(context).size.height * 0.30,

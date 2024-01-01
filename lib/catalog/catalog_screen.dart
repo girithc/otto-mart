@@ -4,6 +4,7 @@
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
@@ -13,6 +14,7 @@ import 'package:pronto/catalog/constants.dart';
 import 'package:pronto/catalog/item/api_client_item.dart';
 import 'package:pronto/catalog/catalog.dart';
 import 'package:pronto/item/product.dart';
+import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -123,11 +125,26 @@ class _CatalogPageState extends State<CatalogPage> {
               Flexible(
                 flex: 4,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    const storage = FlutterSecureStorage();
+
+                    // Read the cartId from storage
+                    String? cartId = await storage.read(key: 'cartId');
+
+                    // Check if cartId is null
+                    if (cartId == null) {
+                      // If cartId is null, navigate to MyPhone()
+                      Navigator.push(
                         context,
                         MaterialPageRoute(
-                            builder: (context) => const MyCart()));
+                            builder: (context) => const MyPhone()),
+                      );
+                    } else {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyCart()));
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.pinkAccent,
@@ -416,24 +433,38 @@ class ListItem2 extends StatelessWidget {
     var itemIndexInCart =
         cart.items.indexWhere((item) => item.productId == id.toString());
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Product(
-              brand: brand,
-              productName: name,
-              productId: id,
-              mrpPrice: mrpPrice,
-              storePrice: storePrice,
-              discount: discount,
-              stockQuantity: stockQuantity,
-              image: image,
-              quantity: quantity,
-              unitOfQuantity: unitOfQuantity,
+      onTap: () async {
+        const storage = FlutterSecureStorage();
+
+        // Read the cartId from storage
+        String? cartId = await storage.read(key: 'cartId');
+
+        // Check if cartId is null
+        if (cartId == null) {
+          // If cartId is null, navigate to MyPhone()
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyPhone()),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Product(
+                brand: brand,
+                productName: name,
+                productId: id,
+                mrpPrice: mrpPrice,
+                storePrice: storePrice,
+                discount: discount,
+                stockQuantity: stockQuantity,
+                image: image,
+                quantity: quantity,
+                unitOfQuantity: unitOfQuantity,
+              ),
             ),
-          ),
-        );
+          );
+        }
       },
       child: Stack(
         children: [
@@ -460,6 +491,21 @@ class ListItem2 extends StatelessWidget {
                       image,
                       height: 120,
                       fit: BoxFit.cover,
+                      errorBuilder: (BuildContext context, Object exception,
+                          StackTrace? stackTrace) {
+                        return Container(
+                          height: 120,
+                          color: Colors.grey[200],
+                          alignment: Alignment.center,
+                          child: const Center(
+                            child: Text(
+                              'no image',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -592,16 +638,36 @@ class ListItem2 extends StatelessWidget {
                                 margin: const EdgeInsets.only(
                                     right: 2, top: 2, bottom: 4),
                                 child: ElevatedButton(
-                                    onPressed: () {
-                                      final cartItem = CartItem(
+                                    onPressed: () async {
+                                      // Create an instance of FlutterSecureStorage
+                                      const storage = FlutterSecureStorage();
+
+                                      // Read the cartId from storage
+                                      String? cartId =
+                                          await storage.read(key: 'cartId');
+
+                                      // Check if cartId is null
+                                      if (cartId == null) {
+                                        // If cartId is null, navigate to MyPhone()
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MyPhone()),
+                                        );
+                                      } else {
+                                        // If cartId is not null, proceed with adding item to cart
+                                        final cartItem = CartItem(
                                           productId: id.toString(),
                                           productName: name,
                                           price: mrpPrice,
                                           soldPrice: storePrice,
                                           quantity: 1,
                                           stockQuantity: stockQuantity,
-                                          image: image);
-                                      cart.addItemToCart(cartItem);
+                                          image: image,
+                                        );
+                                        cart.addItemToCart(cartItem);
+                                      }
                                     },
                                     style: ElevatedButton.styleFrom(
                                         surfaceTintColor: Colors.white,
@@ -736,12 +802,26 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
                     color: Colors.black,
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const SearchTopLevel()),
-                  );
+                onPressed: () async {
+                  const storage = FlutterSecureStorage();
+
+                  // Read the cartId from storage
+                  String? cartId = await storage.read(key: 'cartId');
+
+                  // Check if cartId is null
+                  if (cartId == null) {
+                    // If cartId is null, navigate to MyPhone()
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyPhone()),
+                    );
+                  } else {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SearchTopLevel()),
+                    );
+                  }
                 },
               ),
             ),
