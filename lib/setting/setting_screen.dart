@@ -37,6 +37,71 @@ class _SettingScreenState extends State<SettingScreen> {
     // For example, you might want to navigate to the login screen
   }
 
+  // Function to show confirmation dialog
+  Future<bool> _showConfirmationDialog(BuildContext context) async {
+    return await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              backgroundColor:
+                  Colors.deepPurpleAccent, // Set the background color
+              title: Text(
+                'Confirm',
+                style:
+                    TextStyle(color: Colors.white), // White text for the title
+              ),
+              content: Text(
+                'Are you sure you want to delete your profile?',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18), // White text for the content
+              ),
+              actions: <Widget>[
+                TextButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                        Colors.white), // White background for buttons
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(
+                            8), // Squarish roundish border
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Cancel',
+                    style: TextStyle(
+                        color: Colors
+                            .deepPurpleAccent), // Deep purple text for buttons
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(false);
+                  },
+                ),
+                TextButton(
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(Colors.white),
+                    shape: MaterialStateProperty.all(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  child: Text(
+                    'Delete',
+                    style: TextStyle(color: Colors.deepPurpleAccent),
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            );
+          },
+        ) ??
+        false; // Returning false if dialog is dismissed
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -173,45 +238,6 @@ class _SettingScreenState extends State<SettingScreen> {
                   ),
                 ),
               ),
-              /*
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const PhonePeWebView(
-                          url:
-                              "https://mercury-uat.phonepe.com/transact/simulator?token=9E7mYEWviFlagB06K57DXxQpeHfDcRETOhbtSdZaS8"),
-                    ),
-                  );
-                },
-                child: Container(
-                  height: MediaQuery.of(context).size.height * 0.14,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.indigoAccent.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Text(
-                      'Phonepe',
-                      style: GoogleFonts.robotoMono(
-                          fontSize: 18, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-              */
 
               GestureDetector(
                 onTap: () {
@@ -242,6 +268,46 @@ class _SettingScreenState extends State<SettingScreen> {
                   child: Center(
                     child: Text(
                       'Sign Out',
+                      style: GoogleFonts.robotoMono(
+                          fontSize: 18, color: Colors.black),
+                    ),
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  _showConfirmationDialog(context).then((confirmed) {
+                    if (confirmed) {
+                      signOutUser(context).then(
+                        (value) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyPhone()),
+                        ),
+                      );
+                    }
+                  });
+                },
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.07,
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 4,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      'Delete User',
                       style: GoogleFonts.robotoMono(
                           fontSize: 18, color: Colors.black),
                     ),

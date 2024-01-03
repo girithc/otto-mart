@@ -244,7 +244,7 @@ class _MyPhoneState extends State<MyPhone> {
                       MaterialPageRoute(builder: (context) => const Terms()),
                     );
                   },
-                  child: const Text('Terms'),
+                  child: const Text('Terms Of Use'),
                 ),
               ),
               Expanded(
@@ -270,8 +270,8 @@ class _MyPhoneState extends State<MyPhone> {
                     );
                   },
                   child: const Text(
-                    'Skip',
-                    style: TextStyle(color: Colors.grey),
+                    'Guest User',
+                    style: TextStyle(color: Colors.black54),
                   ),
                 ),
               ),
