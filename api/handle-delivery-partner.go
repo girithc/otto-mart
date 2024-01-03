@@ -119,3 +119,29 @@ func (s *Server) handleCheckAssignedOrder(res http.ResponseWriter, req *http.Req
 
 	return WriteJSON(res, http.StatusOK, order)
 }
+
+func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerPhone)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleCheckAssignedOrder()")
+		return err
+	}
+
+	// Check if Delivery Partner Exists
+	user, err := s.store.Get_Delivery_Partner_By_Phone(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	if user != nil {
+		return WriteJSON(res, http.StatusOK, user)
+
+	}
+
+	new_user, err := s.store.DeliveryPartnerLogin(new_req.Phone)
+	if err != nil {
+		return err
+	}
+	return WriteJSON(res, http.StatusOK, new_user)
+
+}

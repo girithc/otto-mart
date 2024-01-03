@@ -241,7 +241,7 @@ func (s *PostgresStore) Get_All_Delivery_Partners() ([]*types.Delivery_Partner, 
 
 // 3. Create a function to retrieve a delivery partner by phone
 func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone string) (*types.Delivery_Partner, error) {
-	rows, err := s.db.Query("SELECT id, name, fcm_token, store_id, phone, address, created_at FROM delivery_partner where phone = $1", phone)
+	rows, err := s.db.Query("SELECT id, name, fcm_token, store_id, phone, address, created_at, available FROM delivery_partner where phone = $1", phone)
 	if err != nil {
 		return nil, err
 	}
@@ -281,9 +281,32 @@ func (s *PostgresStore) getNextDeliveryPartner() (int, error) {
 // Assuming you have a scan_Into_Delivery_Partner function to scan row data into the Delivery_Partner type.
 func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error) {
 	partner := &types.Delivery_Partner{}
-	err := rows.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At)
+	err := rows.Scan(&partner.ID, &partner.Name, &partner.FCM_Token, &partner.Store_ID, &partner.Phone, &partner.Address, &partner.Created_At, &partner.Available)
 	if err != nil {
 		return nil, err
 	}
 	return partner, nil
+}
+
+type DeliveryPartner struct {
+	Name         string `json:"name"`
+	Availability bool   `json:"availability"`
+}
+
+func (s *PostgresStore) DeliveryPartnerLogin(phone string) (*DeliveryPartner, error) {
+	query := `
+	INSERT INTO delivery_partner 
+		(name, fcm_token, store_id, phone, address, available, current_location, active_deliveries) 
+	VALUES 
+		('', '', 1, $1, '', false, '', 0)
+	RETURNING name, available;`
+
+	// Assuming you have a connection to the database
+	var partner DeliveryPartner
+	err := s.db.QueryRow(query, phone).Scan(&partner.Name, &partner.Availability)
+	if err != nil {
+		return nil, fmt.Errorf("error creating delivery partner: %w", err)
+	}
+
+	return &partner, nil
 }

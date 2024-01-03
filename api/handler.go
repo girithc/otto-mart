@@ -827,6 +827,14 @@ func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Reques
 	return nil
 }
 
+func (s *Server) handleDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("[POST]", "delivery_partner_login")
+		return s.HandlePostDeliveryPartnerLogin(res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 

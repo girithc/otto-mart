@@ -13,6 +13,7 @@ type Delivery_Partner struct {
 	Phone      string    `json:"phone"`
 	Address    string    `json:"address"`
 	Created_At time.Time `json:"created_at"`
+	Available  string    `json:"available"`
 }
 
 type Create_Delivery_Partner struct {
