@@ -294,6 +294,7 @@ class Product extends StatelessWidget {
             // Expand the Row to fill the available space
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              /*
               Expanded(
                 flex: 5,
                 child: CarouselSlider(
@@ -318,8 +319,9 @@ class Product extends StatelessWidget {
                   ],
                 ),
               ),
+              */
               Flexible(
-                flex: 4,
+                flex: 5,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -337,7 +339,7 @@ class Product extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4.0),
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
                   child: cart.numberOfItems > 0

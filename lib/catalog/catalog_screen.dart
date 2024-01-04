@@ -97,6 +97,7 @@ class _CatalogPageState extends State<CatalogPage> {
             // Expand the Row to fill the available space
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              /*
               Flexible(
                 flex: 5,
                 child: CarouselSlider(
@@ -122,6 +123,7 @@ class _CatalogPageState extends State<CatalogPage> {
                   ],
                 ),
               ),
+              */
               Flexible(
                 flex: 4,
                 child: ElevatedButton(
@@ -156,7 +158,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4.0),
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
                   child: cart.numberOfItems > 0

@@ -68,7 +68,14 @@ class _MyCartState extends State<MyCart> {
               .createShader(bounds),
           child: GestureDetector(
             onTap: () {
-              Navigator.pushNamed(context, MyHomePage.routeName);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MyHomePage(
+                    title: 'Otto Mart',
+                  ),
+                ),
+              );
             },
             child: const Text(
               'Otto Cart',
@@ -194,7 +201,14 @@ class _MyCartState extends State<MyCart> {
                       onPressed: () {
                         // Make sure to get the actual cart ID from your cart variable or state
                         if (cart.isEmpty()) {
-                          Navigator.pushNamed(context, MyHomePage.routeName);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const MyHomePage(
+                                title: 'Otto Mart',
+                              ),
+                            ),
+                          );
                         } else {
                           String? cartId = cart.cartId;
                           if (cartId != null) {
@@ -202,7 +216,7 @@ class _MyCartState extends State<MyCart> {
                             checkoutLockItems(cartIdInt).then((success) {
                               if (success) {
                                 // If the checkout lock is successful, navigate to the PaymentsPage
-                                Navigator.push(
+                                Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => const PaymentsPage(),

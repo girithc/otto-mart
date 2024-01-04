@@ -748,7 +748,7 @@ class _MyHomePageState extends State<MyHomePage>
             const EdgeInsets.only(bottom: 22, top: 10, left: 15, right: 15),
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey, width: 1),
+          border: Border.all(color: Colors.white, width: 1),
           borderRadius: BorderRadius.circular(8), // Squarish border
           boxShadow: [
             BoxShadow(
@@ -762,6 +762,7 @@ class _MyHomePageState extends State<MyHomePage>
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisSize: MainAxisSize.max,
           children: [
             ElevatedButton(
               onPressed: () {
@@ -774,12 +775,17 @@ class _MyHomePageState extends State<MyHomePage>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white70, // Background color
+                backgroundColor: Colors.white, // Background color
+                surfaceTintColor: Colors.white,
+                elevation: 4.0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Squarish shape
                 ),
               ),
-              child: const Text('Home'),
+              child: const Text(
+                'Home',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
@@ -790,12 +796,17 @@ class _MyHomePageState extends State<MyHomePage>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white70, // Different background color
+                backgroundColor: Colors.white, // Background color
+                surfaceTintColor: Colors.white,
+                elevation: 4.0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Squarish shape
                 ),
               ),
-              child: const Text('Cart'),
+              child: const Text(
+                'Cart',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),

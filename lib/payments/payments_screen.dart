@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/payments/phonepe.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
@@ -144,7 +145,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
               checkoutCancelItems(cartIdInt).then((success) {
                 if (success) {
                   // If the checkout lock is successful, navigate to the PaymentsPage
-                  Navigator.of(context).pop();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyCart(),
+                    ),
+                  );
                 } else {
                   // If the checkout lock is unsuccessful, you might want to show an error message
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -153,7 +159,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       backgroundColor: Colors.redAccent,
                     ),
                   );
-                  Navigator.of(context).pop();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyCart(),
+                    ),
+                  );
                 }
               }).catchError((error) {
                 // Handle any errors here
@@ -247,7 +258,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 int cartIdInt = int.parse(cartId);
                 initiatePhonePePayment(cartIdInt).then((url) {
                   if (url.isNotEmpty) {
-                    Navigator.push(
+                    Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PhonePeWebView(url: url),

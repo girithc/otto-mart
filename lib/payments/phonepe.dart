@@ -174,7 +174,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
             checkoutCancelItems(cartIdInt).then((success) {
               if (success) {
                 // If the checkout lock is successful, navigate to the PaymentsPage
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const MyCart(),
@@ -188,7 +188,12 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
                     backgroundColor: Colors.redAccent,
                   ),
                 );
-                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyCart(),
+                  ),
+                );
               }
             }).catchError((error) {
               // Handle any errors here

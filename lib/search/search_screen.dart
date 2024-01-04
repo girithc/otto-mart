@@ -62,6 +62,7 @@ class SearchPage extends StatelessWidget {
             // Expand the Row to fill the available space
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
+              /*
               Expanded(
                 flex: 5,
                 child: CarouselSlider(
@@ -86,8 +87,9 @@ class SearchPage extends StatelessWidget {
                   ],
                 ),
               ),
+              */
               Flexible(
-                flex: 4,
+                flex: 5,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.push(
@@ -105,7 +107,7 @@ class SearchPage extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(4.0),
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
                   child: cart.numberOfItems > 0
@@ -893,7 +895,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       shadowColor: Colors.deepPurpleAccent,
       child: Container(
         padding: const EdgeInsets.only(
-          top: 50,
+          top: 60,
         ),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(
