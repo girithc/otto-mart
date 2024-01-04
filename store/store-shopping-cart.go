@@ -91,20 +91,24 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 }
 
 func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
-	var itemCost, discounts, deliveryFee, smallOrderFee, platformFee, packagingFee int
+	var itemCost, discounts, numberOfItems, deliveryFee, smallOrderFee, platformFee, packagingFee int
 
 	// Calculate total item cost and discounts from cart_item and item_store
 	query := `
-    SELECT 
-        COALESCE(SUM(ci.sold_price * ci.quantity), 0), 
-        COALESCE(SUM((istore.mrp_price - ci.sold_price) * ci.quantity), 0)
-    FROM cart_item ci
-    JOIN item_store istore ON ci.item_id = istore.id
-    WHERE ci.cart_id = $1`
-	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &discounts)
+	SELECT 
+		COALESCE(SUM(ci.sold_price * ci.quantity), 0),
+		COALESCE(SUM(ci.quantity), 0),  
+		COALESCE(SUM((istore.mrp_price - ci.sold_price) * ci.quantity), 0)
+	FROM cart_item ci
+	JOIN item_store istore ON ci.item_id = istore.id
+	WHERE ci.cart_id = $1`
+
+	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &numberOfItems, &discounts)
 	if err != nil {
 		return err
 	}
+
+	print("Number of Items ", numberOfItems)
 
 	// Calculate delivery fee based on item cost
 	switch {
@@ -153,9 +157,9 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	updateQuery := `
     UPDATE shopping_cart
     SET item_cost = $2, delivery_fee = $3, platform_fee = $4, small_order_fee = $5, 
-        packaging_fee = $6, discounts = $7
+        packaging_fee = $6, discounts = $7, number_of_items = $8
     WHERE id = $1`
-	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, platformFee, smallOrderFee, packagingFee, discounts)
+	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, platformFee, smallOrderFee, packagingFee, discounts, numberOfItems)
 	return err
 }
 

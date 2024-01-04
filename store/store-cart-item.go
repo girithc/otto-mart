@@ -233,14 +233,14 @@ func (s *PostgresStore) Add_Cart_Item(cart_id int, item_id int, quantity int) (*
 	cartQuery := `
 SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, 
        high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal, 
-       discounts
+       discounts, number_of_items
 FROM shopping_cart
 WHERE id = $1`
 
 	err = s.db.QueryRow(cartQuery, cart_id).Scan(&cartItem.ItemCost, &cartItem.DeliveryFee, &cartItem.PlatformFee,
 		&cartItem.SmallOrderFee, &cartItem.RainFee, &cartItem.HighTrafficSurcharge,
 		&cartItem.PackagingFee, &cartItem.PeakTimeSurcharge, &cartItem.Subtotal,
-		&cartItem.Discounts)
+		&cartItem.Discounts, &cartItem.Quantity)
 	if err != nil {
 		return nil, err
 	}
@@ -372,6 +372,15 @@ WHERE id = $1`
 		CartItemsList: cart_items,
 		CartDetails:   cartItem,
 	}
+
+	itemQuantity := 0
+
+	for _, item := range cart_items {
+		itemQuantity += item.Quantity
+	}
+
+	// Now, update the Quantity field in CartItemResponse
+	cartResponse.CartDetails.Quantity = itemQuantity
 
 	return &cartResponse, nil
 }
