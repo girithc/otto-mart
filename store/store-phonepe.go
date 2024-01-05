@@ -238,21 +238,6 @@ func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
 }
 
 func (s *PostgresStore) PhonePePaymentInit(cart_id int) (*types.PhonePeResponse, error) {
-	// Hardcoded values for PhonePeInit
-
-	/*
-		phonepe := &types.PhonePeInit{
-			MerchantId:            "PGTESTPAYUAT",
-			MerchantTransactionId: "MT7850590068188104",
-			MerchantUserId:        "MUID123",
-			Amount:                10000,
-			RedirectUrl:           "https://youtube.com/redirect-url",
-			RedirectMode:          "REDIRECT",
-			CallbackUrl:           "https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback",
-			MobileNumber:          "9999999999",
-			PaymentInstrument:     types.PaymentInstrument{Type: "PAY_PAGE"},
-		}
-	*/
 
 	phonepe := &types.PhonePeInit{
 		MerchantId:        "PGTESTPAYUAT",
@@ -358,7 +343,7 @@ func (s *PostgresStore) InitiatePayment(cart_id int) error {
 	}
 
 	// Check for an existing cart_lock record and update it
-	query := `UPDATE cart_lock SET completed = 'success', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND lock_type = 'lock-stock' RETURNING id`
+	query := `UPDATE cart_lock SET completed = 'success', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND lock_type = 'lock-stock-pay' RETURNING id`
 	var lockID int
 	err = tx.QueryRow(query, cart_id).Scan(&lockID)
 	if err != nil {

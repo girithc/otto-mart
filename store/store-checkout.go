@@ -1,7 +1,6 @@
 package store
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"time"
@@ -66,6 +65,40 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) error {
 	return nil
 }
 
+func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (bool, error) {
+	// Update the cart_lock record
+	updateCartLockQuery := `
+        UPDATE cart_lock 
+        SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
+        WHERE cart_id = $1 AND completed = 'started' `
+	_, err := s.db.Exec(updateCartLockQuery, cartId)
+	if err != nil {
+		return false, fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
+	}
+
+	if !cash {
+		// Calculate the expiration timestamp
+		expiresAt := time.Now().Add(1 * time.Minute)
+
+		// Insert a new cart_lock record
+		insertCartLockQuery := `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'pay-verify', 'started', $2)`
+		_, err = tx.Exec(insertCartLockQuery, cartId, expiresAt)
+		if err != nil {
+			return false, fmt.Errorf("error creating new cart_lock record for cart %d: %s", cartId, err)
+		}
+	} else {
+
+		// Insert a new cart_lock record
+		insertCartLockQuery := `INSERT INTO cart_lock (cart_id, lock_type, completed) VALUES ($1, 'paid', 'success')`
+		_, err = tx.Exec(insertCartLockQuery, cartId)
+		if err != nil {
+			return false, fmt.Errorf("error creating new cart_lock record for cart %d: %s", cartId, err)
+		}
+	}
+
+	return true, nil
+}
+
 // /helper functions end
 
 func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
@@ -114,26 +147,54 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 }
 
 func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
-	var credit bool
-	if cancel, exists := s.cancelFuncs[cart_id]; exists {
-		if _, prepay := s.paymentStatus[cart_id]; prepay {
-			credit = true
-		}
-		s.paymentStatus[cart_id] = true
-		cancel()
-	} else {
-		// Timeout Try Locking Quantities again
-		// isLocked, err := s.LockStock(cart_id)
-		return false, fmt.Errorf("timeout no active timer found for cart id %d", cart_id)
+
+	//Credit
+
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
-	fmt.Println("Step 1. Payment is successful!")
+	_, err = s.cartLockUpdate(tx, cart_id, false)
+	if err != nil {
+		return false, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return false, fmt.Errorf("error committing transaction: %s", err)
+	}
+
+	return true, nil
+}
+
+func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
+
+	var credit bool
 
 	var storeID sql.NullInt64
 
+	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
+		return false, fmt.Errorf("failed to start transaction: %s", err)
+	}
+
+	_, err = s.cartLockUpdate(tx, cart_id, true)
+	if err != nil {
 		return false, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return false, fmt.Errorf("error committing transaction: %s", err)
+	}
+
+	// Start a transaction
+	tx, err = s.db.Begin()
+	if err != nil {
+		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
@@ -265,16 +326,14 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 		return true, fmt.Errorf("error updating delivery partner details: %s", err)
 	}
 
-	// If all operations are successful, commit the transaction
-	return true, nil
-}
+	err = tx.Commit()
+	if err != nil {
+		return false, fmt.Errorf("error committing transaction: %s", err)
+	}
 
-/*
-func (s *PostgresStore) processPayment(cart_id int) (bool, error) {
-	time.Sleep(1 * time.Second)
 	return true, nil
+	// If all operations are successful, commit the transaction
 }
-*/
 
 func (s *PostgresStore) MakeQuantitiesPermanent(cart_id int) error {
 	_, err := s.db.Exec(`WITH quantities AS (
@@ -294,115 +353,6 @@ func isDeadlockError(err error) bool {
 	// This is a simple example. In a real-world scenario, you might want to check the error more thoroughly,
 	// maybe using specific error codes or more precise string matching.
 	return err.Error() == "deadlock detected"
-}
-
-func (s *PostgresStore) MonitorLockedItems(ctx context.Context, tx *sql.Tx, cart_id int, timeoutDuration time.Duration, payment_done bool, cartItems []*types.Checkout_Cart_Item) error {
-	fmt.Printf("Entered MonitorLockedItems")
-	doneChan := make(chan bool)
-	var isPaid bool
-	var err error
-
-	go func() {
-		isPaid, err = s.IsPaymentDone(ctx, cart_id, payment_done)
-		doneChan <- true
-	}()
-
-	select {
-	case <-doneChan:
-		if err != nil {
-			return fmt.Errorf("error checking payment status for cart %d: %s", cart_id, err)
-		}
-
-		if isPaid {
-			fmt.Printf("Payment Successful")
-
-			var customerID, storeID sql.NullInt64
-			var address sql.NullString
-
-			err := tx.QueryRowContext(ctx, `SELECT customer_id, store_id, address FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID, &address)
-			if err != nil {
-				return fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
-			}
-
-			_, err = tx.ExecContext(ctx, `
-                INSERT INTO sales_order ( cart_id, store_id, customer_id, delivery_address)
-                VALUES ($1, $2, $3, $4)
-            `, cart_id, 1, customerID, address.String)
-			if err != nil {
-				return fmt.Errorf("error creating order for cart %d: %s", cart_id, err)
-			}
-
-			for _, checkout_cart_item := range cartItems {
-				fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
-
-				res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
-				if err != nil {
-					return err
-				}
-
-				affectedRows, err := res.RowsAffected()
-				if err != nil {
-					return err
-				}
-
-				if affectedRows == 0 {
-					return fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
-				}
-			}
-
-			_, err = tx.ExecContext(ctx, `UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
-			if err != nil {
-				return fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
-			}
-
-			query := `insert into shopping_cart
-					(customer_id, active) 
-					values ($1, $2) returning id, customer_id, active, created_at
-					`
-			_, err = tx.Query(
-				query,
-				customerID,
-				true,
-			)
-			if err != nil {
-				return err
-			}
-
-		} else {
-			fmt.Println("Payment was not successful. Resetting quantities...")
-			err := s.ResetLockedQuantities(cart_id)
-			if err != nil {
-				return fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
-			}
-		}
-
-	case <-time.After(timeoutDuration):
-		fmt.Println("Payment check timeout. Resetting quantities...")
-		err := s.ResetLockedQuantities(cart_id)
-		if err != nil {
-			return fmt.Errorf("error resetting locked quantities for cart %d: %s", cart_id, err)
-		}
-	case <-ctx.Done():
-		return fmt.Errorf("monitorLockedItems was aborted")
-	}
-
-	err = s.PrintItemStoreRecords("after")
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *PostgresStore) IsPaymentDone(ctx context.Context, cart_id int, payment_done bool) (bool, error) {
-	fmt.Println("Started Payment Delay")
-	select {
-	case <-time.After(10 * time.Second):
-		fmt.Println("End Payment Delay")
-		return payment_done, nil
-	case <-ctx.Done():
-		fmt.Println("Payment check was aborted!")
-		return false, ctx.Err()
-	}
 }
 
 func (s *PostgresStore) PrintItemStoreRecords(state string) error {

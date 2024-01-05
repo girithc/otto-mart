@@ -11,7 +11,7 @@ func (s *PostgresStore) CreateCartLockTable(tx *sql.Tx) error {
 	fmt.Println("Entered CreateCartLockTable")
 
 	query := `
-    CREATE TYPE lock_type_enum AS ENUM ('lock-stock', 'lock-stock-pay');
+    CREATE TYPE lock_type_enum AS ENUM ('lock-stock', 'lock-stock-pay', 'pay-verify', 'paid');
     CREATE TYPE completed_status_enum AS ENUM ('started', 'success', 'ended');
 
     CREATE TABLE IF NOT EXISTS cart_lock (
@@ -19,7 +19,7 @@ func (s *PostgresStore) CreateCartLockTable(tx *sql.Tx) error {
         cart_id INT,
         lock_type lock_type_enum NOT NULL,
         completed completed_status_enum NOT NULL DEFAULT 'started',
-        lock_timeout TIMESTAMP,
+        lock_timeout TIMESTAMP NULL,  
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`
 
