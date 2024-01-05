@@ -2,15 +2,14 @@ package store
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -327,7 +326,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int) (*types.PhonePeResponse,
 	defer resp.Body.Close()
 
 	// Read the response
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -352,64 +351,38 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int) (*types.PhonePeResponse,
 }
 
 func (s *PostgresStore) InitiatePayment(cart_id int) error {
-	// Cancel the existing context if it exists
-	if cancel, exists := s.cancelFuncs[cart_id]; exists {
-		s.lockExtended[cart_id] = true
-		cancel()
-		delete(s.cancelFuncs, cart_id)
-	} else {
-		// If no context exists, it might indicate an issue, handle it as needed
-		return fmt.Errorf("no active context for cart this might indicate a problem")
+	// Begin a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("error starting transaction: %w", err)
 	}
 
-	// Set a new timeout duration for the payment process
-	timeoutDuration := 9 * time.Minute
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutDuration)
+	// Check for an existing cart_lock record and update it
+	query := `UPDATE cart_lock SET completed = 'success', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND lock_type = 'lock-stock' RETURNING id`
+	var lockID int
+	err = tx.QueryRow(query, cart_id).Scan(&lockID)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error updating cart_lock table: %w", err)
+	}
+	if lockID == 0 {
+		tx.Rollback()
+		return fmt.Errorf("no active cart_lock record found for cart_id %d", cart_id)
+	}
 
-	// Store the new cancel function
-	s.cancelFuncs[cart_id] = cancel
-	s.paymentStatus[cart_id] = false
+	// Create a new cart_lock record for the payment phase
+	query = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'lock-stock-pay', 'started', CURRENT_TIMESTAMP + INTERVAL '5 minutes')`
+	_, err = tx.Exec(query, cart_id)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("error creating new cart_lock record for payment: %w", err)
+	}
 
-	// Launch a new goroutine for the new context
-	go func() {
-		<-ctx.Done()
-		if ctx.Err() == context.DeadlineExceeded {
-			// Timeout exceeded, reset quantities
-			fmt.Println("Payment was not completed in time. Resetting quantities...")
-			s.ResetLockedQuantities(cart_id)
-
-			// Clean up
-			delete(s.cancelFuncs, cart_id)
-			delete(s.lockExtended, cart_id)
-			delete(s.paymentStatus, cart_id)
-
-			// Context Cancelled. Payment completed. S2S call completed.
-		} else if paymentMade, exists := s.paymentStatus[cart_id]; exists {
-
-			if paymentMade {
-				fmt.Print("Phone Pe Processed. (tbd: S2S Callback received)")
-				// s.MakeQuantitiesPermanent(cart_id)
-			} else {
-				fmt.Print("Payment not made. Or. Payment was not successful.")
-				s.ResetLockedQuantities(cart_id)
-			}
-
-			// Clean up
-			delete(s.cancelFuncs, cart_id)
-			delete(s.lockExtended, cart_id)
-			delete(s.paymentStatus, cart_id)
-		} else {
-			// Payment process has either moved forward or an error occurred
-			fmt.Println("Cancelled-PhonePe-Checkout")
-			s.ResetLockedQuantities(cart_id)
-
-			delete(s.cancelFuncs, cart_id)
-			delete(s.lockExtended, cart_id)
-			delete(s.paymentStatus, cart_id)
-
-		}
-		// Clean up the cancel function
-	}()
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return fmt.Errorf("error committing transaction: %w", err)
+	}
 
 	return nil
 }

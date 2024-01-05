@@ -54,7 +54,6 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/checkout-lock-items", makeHTTPHandleFunc(s.handleCheckoutLockItems))
 	http.HandleFunc("/checkout-payment", makeHTTPHandleFunc(s.handleCheckoutPayment))
 	http.HandleFunc("/checkout-cancel", makeHTTPHandleFunc(s.handleCancelCheckout))
-	http.HandleFunc("/checkout", makeHTTPHandleFunc(s.handleCheckout))
 
 	http.HandleFunc("/packer-pack-order", makeHTTPHandleFunc(s.handlePackerPackOrder))
 	http.HandleFunc("/packer-fetch-item", makeHTTPHandleFunc(s.handlePackerFetchItem))
@@ -88,6 +87,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/verify-otp", makeHTTPHandleFunc(s.handleVerifyOtp))
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
+	http.Handle("/cloud-task", makeHTTPHandleFunc(s.handleCloudTask))
 
 	// Planner
 	// http.HandleFunc("/plan-add-item", makeHTTPHandleFunc(s.handleAddItemList))

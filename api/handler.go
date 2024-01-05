@@ -580,7 +580,6 @@ func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) er
 }
 
 func (s *Server) handleItemAddQuick(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "item-add-quick")
 		return s.HandleItemAddQuick(res, req)
@@ -645,63 +644,10 @@ func (s *Server) handlePackerAllocateSpace(res http.ResponseWriter, req *http.Re
 	return nil
 }
 
-func (s *Server) handleCheckout(res http.ResponseWriter, req *http.Request) error {
-	if req.Method == "POST" {
-		print_path("POST", "checkout")
-
-		// Read and store the request body
-		bodyBytes, err := io.ReadAll(req.Body)
-		if err != nil {
-			return err // or handle this error accordingly
-		}
-
-		// You can then create a new request body from bodyBytes to pass to your handler
-		newReq := &http.Request{
-			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
-			// ... copy other needed fields from the original request
-		}
-
-		// Spawn a goroutine to handle the checkout process
-		go func() {
-			err := s.Handle_Checkout_Cart(res, newReq)
-			if err != nil {
-				// Handle the error, e.g., log it
-				fmt.Printf("Error handling checkout: %s\n", err)
-			}
-		}()
-
-		// Return an acknowledgment to the user immediately or some placeholder response
-		// Example:
-		res.WriteHeader(http.StatusOK)
-		res.Write([]byte("Checkout initiated, please wait..."))
-
-		return nil
-	}
-	return nil
-}
-
 func (s *Server) handleCheckoutLockItems(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
-
 	if req.Method == "POST" {
 		print_path("POST", "checkout-lock-items")
-
-		// Create a channel to capture the results of multiple runs
-		resultChan := make(chan error, 1)
-
-		// Define the task function to run
-		task := func() worker.Result {
-			err := s.handlePostCheckoutLockItems(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Collect all results and return the first one (since you're using a buffer of size 1)
-		return <-resultChan
+		return s.handlePostCheckoutLockItems(res, req)
 	}
 
 	return nil
@@ -753,7 +699,7 @@ func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request
 
 		// Define the task function to run
 		task := func() worker.Result {
-			err := s.Handle_Cancel_Checkout_Cart(res, req)
+			err := s.HandleCancelCheckoutCart(res, req)
 			return worker.Result{Error: err}
 		}
 
@@ -1460,6 +1406,15 @@ func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) err
 	} else if req.Method == "GET" {
 		print_path("GET", "get-shelf")
 		return s.HandleGetShelf(res, req)
+	}
+
+	return nil
+}
+
+func (s *Server) handleCloudTask(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "create-shelf")
+		return s.HandlePOSTCloudTask(res, req)
 	}
 
 	return nil

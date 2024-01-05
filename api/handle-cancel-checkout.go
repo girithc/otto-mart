@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (s *Server) Handle_Cancel_Checkout_Cart(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) HandleCancelCheckoutCart(res http.ResponseWriter, req *http.Request) error {
 	var requestBody map[string]int
 	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
 		return err
