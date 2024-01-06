@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,8 +15,8 @@ import (
 )
 
 type PhonePeCheckStatus struct {
-	status string `json:"status"`
-	done   bool   `json:"done"`
+	Status string `json:"status"`
+	Done   bool   `json:"done"`
 }
 
 func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (PhonePeCheckStatus, error) {
@@ -41,22 +42,24 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (Ph
 		Every 1 min until timeout (20 mins).
 	*/
 
+	var response PhonePeCheckStatus
+
 	transaction, err := s.GetTransactionByCartId(cartID)
 	if err != nil {
-		return false, fmt.Errorf("error fetching transaction: %w", err)
+		response.Done = false
+		response.Status = "transaction not found"
+		return response, fmt.Errorf("error fetching transaction: %w", err)
 	}
-
-	var response PhonePeCheckStatus
 
 	// Check if S2S callback has been received
 	if transaction.ResponseCode == "SUCCESS" {
-		response.done = true
-		response.status = "SUCCESS"
+		response.Done = true
+		response.Status = "SUCCESS"
 		return response, nil
 	} else if transaction.ResponseCode == "FAILED" {
 		// LOG POTENTIAL REFUND
-		response.done = false
-		response.status = "FAILED"
+		response.Done = false
+		response.Status = "FAILED"
 		return response, nil
 	}
 
@@ -64,8 +67,8 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (Ph
 	success, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId)
 	if err != nil {
 		// LOG POTENTIAL REFUND
-		response.status = "FAILED"
-		response.done = false
+		response.Status = "FAILED"
+		response.Done = false
 		return response, err
 	}
 
@@ -91,7 +94,7 @@ func (s *PostgresStore) GetTransactionByCartId(cart_id int) (*types.Transaction,
 	return &transaction, nil
 }
 
-func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId string) (bool, error) {
+func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId string) (PhonePeCheckStatus, error) {
 	// Construct the URL
 	fmt.Println("Entered CallCheckStatusAPI")
 	url := fmt.Sprintf("https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/%s/%s", merchantId, merchantTransactionId)
@@ -100,7 +103,11 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		fmt.Println("Error creating request:", err)
-		return false, err
+
+		var response PhonePeCheckStatus
+		response.Done = false
+		response.Status = "REQUEST ERROR"
+		return response, nil
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-VERIFY", GenerateXVerify(merchantId, merchantTransactionId))
@@ -111,7 +118,10 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error executing request:", err)
-		return false, err
+		var response PhonePeCheckStatus
+		response.Done = false
+		response.Status = "REQUEST_ERROR_2"
+		return response, nil
 	}
 	defer resp.Body.Close()
 
@@ -119,17 +129,20 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
-		return false, err
+		var response PhonePeCheckStatus
+		response.Done = false
+		response.Status = "REQUEST_ERROR_RESPONSE"
+		return response, nil
 	}
 	bodyString := string(bodyBytes)
 	fmt.Println("Response Body:", bodyString)
 
 	// Parse the response
 	var response struct {
-		Success bool              `json:"success"`
-		Code    string            `json:"code"`
-		Message string            `json:"message"`
-		Data    types.PaymentData `json:"data"`
+		Success bool               `json:"success"`
+		Code    string             `json:"code"`
+		Message string             `json:"message"`
+		Data    *types.PaymentData `json:"data"`
 	}
 	err = json.Unmarshal(bodyBytes, &response)
 	if err != nil {
@@ -137,7 +150,26 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 		return false, err
 	}
 
-	fmt.Println("Check-Status-Response:", response.Data.Amount)
+	// Check if the response was successful
+	if response.Success {
+		if response.Data != nil && response.Data.State == "COMPLETED" {
+			fmt.Println("Transaction completed successfully")
+			var response PhonePeCheckStatus
+			response.Done = true
+			response.Status = "PAYMENT_SUCCESS"
+			return response, nil
+		}
+		fmt.Println("Transaction not completed:", response.Message)
+		return false, nil
+	} else {
+		// Handle failure scenarios
+		errMsg := fmt.Sprintf("API call failed: %s - %s", response.Code, response.Message)
+		fmt.Println(errMsg)
+
+		// You can customize the error based on the response code if needed
+		return false, errors.New(errMsg)
+	}
+
 	return response.Data.State == "COMPLETED", nil
 }
 
