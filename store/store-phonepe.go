@@ -147,30 +147,45 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	err = json.Unmarshal(bodyBytes, &response)
 	if err != nil {
 		fmt.Println("Error decoding response:", err)
-		return false, err
+		var response PhonePeCheckStatus
+		response.Done = false
+		response.Status = "REQUEST_ERROR_RESPONSE"
+		return response, nil
 	}
 
 	// Check if the response was successful
 	if response.Success {
 		if response.Data != nil && response.Data.State == "COMPLETED" {
 			fmt.Println("Transaction completed successfully")
+
+			//update transaction
+
 			var response PhonePeCheckStatus
 			response.Done = true
 			response.Status = "PAYMENT_SUCCESS"
 			return response, nil
 		}
-		fmt.Println("Transaction not completed:", response.Message)
-		return false, nil
+		var response PhonePeCheckStatus
+		response.Done = false
+		response.Status = "PAYMENT_PENDING"
+
+		//update transaction
+
+		return response, nil
 	} else {
 		// Handle failure scenarios
 		errMsg := fmt.Sprintf("API call failed: %s - %s", response.Code, response.Message)
 		fmt.Println(errMsg)
 
+		//update transaction
+
+		var response PhonePeCheckStatus
+		response.Done = false
+		response.Status = "PAYMENT_FAILED"
 		// You can customize the error based on the response code if needed
-		return false, errors.New(errMsg)
+		return response, errors.New(errMsg)
 	}
 
-	return response.Data.State == "COMPLETED", nil
 }
 
 func GenerateXVerify(merchantId, merchantTransactionId string) string {
