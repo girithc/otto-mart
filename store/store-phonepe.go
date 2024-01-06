@@ -8,13 +8,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/girithc/pronto-go/types"
 )
 
-func (s *PostgresStore) PhonePeCheckStatus(cart_id int, return_status bool) (bool, error) {
+type PhonePeCheckStatus struct {
+	status string `json:"status"`
+	done   bool   `json:"done"`
+}
+
+func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (PhonePeCheckStatus, error) {
 	// check for s2s callback
 	// if received and paid
 	// success
@@ -37,23 +41,32 @@ func (s *PostgresStore) PhonePeCheckStatus(cart_id int, return_status bool) (boo
 		Every 1 min until timeout (20 mins).
 	*/
 
-	transaction, err := s.GetTransactionByCartId(cart_id)
+	transaction, err := s.GetTransactionByCartId(cartID)
 	if err != nil {
 		return false, fmt.Errorf("error fetching transaction: %w", err)
 	}
 
+	var response PhonePeCheckStatus
+
 	// Check if S2S callback has been received
-	if transaction.ResponseCode != "" {
-		// Check if payment was successful or failed
-		if return_status {
-			return transaction.ResponseCode == "SUCCESS", nil
-		}
+	if transaction.ResponseCode == "SUCCESS" {
+		response.done = true
+		response.status = "SUCCESS"
+		return response, nil
+	} else if transaction.ResponseCode == "FAILED" {
+		// LOG POTENTIAL REFUND
+		response.done = false
+		response.status = "FAILED"
+		return response, nil
 	}
 
 	// If S2S callback not received, call Check Status API
 	success, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId)
 	if err != nil {
-		return false, err
+		// LOG POTENTIAL REFUND
+		response.status = "FAILED"
+		response.done = false
+		return response, err
 	}
 
 	return success, nil
@@ -61,11 +74,20 @@ func (s *PostgresStore) PhonePeCheckStatus(cart_id int, return_status bool) (boo
 
 func (s *PostgresStore) GetTransactionByCartId(cart_id int) (*types.Transaction, error) {
 	var transaction types.Transaction
-	query := "SELECT merchant_transaction_id, merchant_id, response_code FROM transaction WHERE cart_id = $1"
-	err := s.db.QueryRow(query, cart_id).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode)
+
+	// Updated query to fetch the latest transaction based on transaction_date
+	query := `
+        SELECT merchant_transaction_id, merchant_id, response_code, status 
+        FROM transaction 
+        WHERE cart_id = $1 
+        ORDER BY transaction_date DESC 
+        LIMIT 1`
+
+	err := s.db.QueryRow(query, cart_id).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode, &transaction.Status)
 	if err != nil {
 		return nil, err
 	}
+
 	return &transaction, nil
 }
 
@@ -94,7 +116,7 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	defer resp.Body.Close()
 
 	// Read and print the response body
-	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
 		return false, err
@@ -104,12 +126,10 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 
 	// Parse the response
 	var response struct {
-		Success bool `json:"success"`
-		Data    struct {
-			MerchantTransactionId string `json:"merchantTransactionId"`
-			State                 string `json:"state"`
-			Amount                int    `json:"amount"`
-		} `json:"data"`
+		Success bool              `json:"success"`
+		Code    string            `json:"code"`
+		Message string            `json:"message"`
+		Data    types.PaymentData `json:"data"`
 	}
 	err = json.Unmarshal(bodyBytes, &response)
 	if err != nil {
@@ -138,107 +158,11 @@ func GenerateXVerify(merchantId, merchantTransactionId string) string {
 	return xVerify
 }
 
-func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentCallbackResult, error) {
-	// Decode the base64 encoded response
-	decoded, err := base64.StdEncoding.DecodeString(response)
-	if err != nil {
-		fmt.Printf("Error decoding base64 string: %v\n", err)
-		return nil, err
-	}
-
-	// Unmarshal the JSON into the PaymentResponse struct
-	var paymentResponse types.PaymentResponse
-	err = json.Unmarshal(decoded, &paymentResponse)
-	if err != nil {
-		fmt.Printf("Error unmarshalling JSON: %v\n", err)
-		return nil, err
-	}
-
-	// Temporary struct to extract the instrument type
-	type TempInstrumentType struct {
-		Type string `json:"type"`
-	}
-	var tempInstrument TempInstrumentType
-	err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &tempInstrument)
-	if err != nil {
-		fmt.Printf("Error unmarshalling instrument type: %v\n", err)
-		return nil, err
-	}
-	instrumentType := tempInstrument.Type
-	fmt.Printf("InstrumentType: %s\n", instrumentType)
-
-	// Determine the type of payment instrument and unmarshal accordingly
-	var paymentInstrument interface{}
-	switch instrumentType {
-	case "UPI":
-		var upi types.UPIPaymentInstrument
-		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &upi)
-		if err != nil {
-			fmt.Printf("Error unmarshalling UPI payment instrument: %v\n", err)
-			return nil, err
-		}
-		paymentInstrument = upi
-	case "CARD": // Assuming "CARD"  is the type for credit/debit cards
-		var card types.CardPaymentInstrument
-		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &card)
-		if err != nil {
-			fmt.Printf("Error unmarshalling CARD payment instrument: %v\n", err)
-			return nil, err
-		}
-		paymentInstrument = card
-	case "NETBANKING": // Assuming "NETBANKING" is the type for net banking
-		var netBanking types.NetBankingPaymentInstrument
-		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &netBanking)
-		if err != nil {
-			fmt.Printf("Error unmarshalling NETBANKING payment instrument: %v\n", err)
-			return nil, err
-		}
-		paymentInstrument = netBanking
-	default:
-		return nil, fmt.Errorf("unknown payment instrument type: %s", instrumentType)
-	}
-
-	/*
-		paymentDetails, err := json.Marshal(paymentResponse.Data.PaymentInstrument) // Convert the whole response to JSON
-		if err != nil {
-			fmt.Printf("Error marshalling payment response: %v\n", err)
-			return nil, err
-		}
-	*/
-
-	// Prepare and execute the SQL update query
-	updateQuery := `
-    UPDATE transaction
-    SET status = $1, 
-        response_code = $2,
-        payment_details = $3,
-		payment_method = $4,
-		merchant_id = $5,
-		payment_gateway_name = $6
-    WHERE merchant_transaction_id = $7`
-
-	_, err = s.db.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
-		paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId)
-	if err != nil {
-		fmt.Printf("Error updating transaction record: %v\n", err)
-		return nil, err
-	}
-
-	// Create the result struct
-	result := &types.PaymentCallbackResult{
-		PaymentResponse:   paymentResponse,
-		PaymentInstrument: paymentInstrument,
-	}
-
-	return result, nil
-}
-
 func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
 	return nil
 }
 
 func (s *PostgresStore) PhonePePaymentInit(cart_id int) (*types.PhonePeResponse, error) {
-
 	phonepe := &types.PhonePeInit{
 		MerchantId:        "PGTESTPAYUAT",
 		RedirectUrl:       "https://youtube.com/redirect-url",
@@ -343,7 +267,7 @@ func (s *PostgresStore) InitiatePayment(cart_id int) error {
 	}
 
 	// Check for an existing cart_lock record and update it
-	query := `UPDATE cart_lock SET completed = 'success', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND lock_type = 'lock-stock-pay' RETURNING id`
+	query := `UPDATE cart_lock SET completed = 'success', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND lock_type = 'lock-stock' RETURNING id`
 	var lockID int
 	err = tx.QueryRow(query, cart_id).Scan(&lockID)
 	if err != nil {
@@ -356,7 +280,7 @@ func (s *PostgresStore) InitiatePayment(cart_id int) error {
 	}
 
 	// Create a new cart_lock record for the payment phase
-	query = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'lock-stock-pay', 'started', CURRENT_TIMESTAMP + INTERVAL '5 minutes')`
+	query = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'lock-stock-pay', 'started', CURRENT_TIMESTAMP + INTERVAL '9 minutes')`
 	_, err = tx.Exec(query, cart_id)
 	if err != nil {
 		tx.Rollback()
@@ -370,4 +294,123 @@ func (s *PostgresStore) InitiatePayment(cart_id int) error {
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentCallbackResult, error) {
+	// Decode the base64 encoded response
+	decoded, err := base64.StdEncoding.DecodeString(response)
+	if err != nil {
+		fmt.Printf("Error decoding base64 string: %v\n", err)
+		return nil, err
+	}
+
+	// Unmarshal the JSON into the PaymentResponse struct
+	var paymentResponse types.PaymentResponse
+	err = json.Unmarshal(decoded, &paymentResponse)
+	if err != nil {
+		fmt.Printf("Error unmarshalling JSON: %v\n", err)
+		return nil, err
+	}
+
+	paymentData := paymentResponse.Data
+
+	type PaymentType struct {
+		Type string `json:"type"`
+	}
+
+	var paymentType PaymentType
+	err = json.Unmarshal(paymentData.PaymentInstrument, &paymentType)
+	if err != nil {
+		fmt.Printf("Error unmarshalling instrument type: %v\n", err)
+		return nil, err
+	}
+	instrumentType := paymentType.Type
+	fmt.Printf("InstrumentType: %s\n", instrumentType)
+
+	// Determine the type of payment instrument and unmarshal accordingly
+	var paymentInstrument interface{}
+	switch instrumentType {
+	case "UPI":
+		var upi types.UPIPaymentInstrument
+		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &upi)
+		if err != nil {
+			fmt.Printf("Error unmarshalling UPI payment instrument: %v\n", err)
+			return nil, err
+		}
+		paymentInstrument = upi
+	case "CARD": // Assuming "CARD"  is the type for credit/debit cards
+		var card types.CardPaymentInstrument
+		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &card)
+		if err != nil {
+			fmt.Printf("Error unmarshalling CARD payment instrument: %v\n", err)
+			return nil, err
+		}
+		paymentInstrument = card
+	case "NETBANKING": // Assuming "NETBANKING" is the type for net banking
+		var netBanking types.NetBankingPaymentInstrument
+		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &netBanking)
+		if err != nil {
+			fmt.Printf("Error unmarshalling NETBANKING payment instrument: %v\n", err)
+			return nil, err
+		}
+		paymentInstrument = netBanking
+	default:
+		return nil, fmt.Errorf("unknown payment instrument type: %s", instrumentType)
+	}
+
+	// Extract cart_id from the transaction record
+	var cartID string
+	queryCartID := `SELECT cart_id FROM transaction WHERE merchant_transaction_id = $1`
+	err = s.db.QueryRow(queryCartID, paymentResponse.Data.MerchantTransactionId).Scan(&cartID)
+	if err != nil {
+		fmt.Printf("Error fetching cart ID: %v\n", err)
+		return nil, err
+	}
+
+	// Update cart lock record with lock type having pay-verify and completed having started
+	updateCartLockQuery := `
+    UPDATE cart_lock
+    SET completed = 'success'
+    WHERE cart_id = $1 AND lock_type = 'pay-verify',`
+	_, err = s.db.Exec(updateCartLockQuery, cartID)
+	if err != nil {
+		fmt.Printf("Error updating cart lock record: %v\n", err)
+		return nil, err
+	}
+
+	// Insert a new cart_lock record with lock-type paid, completed as success
+	insertCartLockQuery := `
+    INSERT INTO cart_lock (cart_id, lock_type, completed)
+    VALUES ($1, 'paid', 'success')`
+	_, err = s.db.Exec(insertCartLockQuery, cartID)
+	if err != nil {
+		fmt.Printf("Error inserting new cart lock record: %v\n", err)
+		return nil, err
+	}
+
+	// Prepare and execute the SQL update query
+	updateQuery := `
+    UPDATE transaction
+    SET status = $1, 
+        response_code = $2,
+        payment_details = $3,
+		payment_method = $4,
+		merchant_id = $5,
+		payment_gateway_name = $6
+    WHERE merchant_transaction_id = $7`
+
+	_, err = s.db.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
+		paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId)
+	if err != nil {
+		fmt.Printf("Error updating transaction record: %v\n", err)
+		return nil, err
+	}
+
+	// Create the result struct
+	result := &types.PaymentCallbackResult{
+		PaymentResponse:   paymentResponse,
+		PaymentInstrument: paymentInstrument,
+	}
+
+	return result, nil
 }

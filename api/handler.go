@@ -1349,6 +1349,15 @@ func (s *Server) handlePhonePeComplete(res http.ResponseWriter, req *http.Reques
 	return nil
 }
 
+func (s *Server) handlePaymentVerify(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "payment-verify")
+		return s.PaymentVerify(res, req)
+	}
+
+	return nil
+}
+
 func (s *Server) handleSendOtp(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 

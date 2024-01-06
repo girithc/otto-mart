@@ -21,6 +21,7 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
                 CHAR_LENGTH(merchant_id) <= 38
             ),
             merchant_user_id VARCHAR(36) REFERENCES Customer(merchant_user_id) ON DELETE CASCADE,
+			transaction_id VARCHAR(35) DEFAULT '',
             cart_id INT REFERENCES shopping_cart(id) ON DELETE CASCADE,
             payment_method VARCHAR(20) DEFAULT '',            
             amount INT CHECK (amount > 0),
@@ -35,6 +36,27 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
 	if err != nil {
 		return fmt.Errorf("error creating transaction table: %w", err)
 	}
+
+	// Add transaction_id column to the existing table
+	alterQuery := `
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'transaction' AND column_name = 'transaction_id'
+            ) THEN
+                ALTER TABLE transaction
+                ADD COLUMN transaction_id VARCHAR(35) DEFAULT '';
+            END IF;
+        END
+        $$;`
+
+	_, err = tx.Exec(alterQuery)
+	if err != nil {
+		return fmt.Errorf("error altering transaction table to add transaction_id: %w", err)
+	}
+
+	return nil
 
 	return err
 }
@@ -84,11 +106,11 @@ func (s *PostgresStore) CreateTransaction(cart_id int) error {
 	return nil
 }
 
-func (s *PostgresStore) DeleteTransaction(cart_id int) error {
+func (s *PostgresStore) DeleteTransaction(tx *sql.Tx, cart_id int) error {
 	// Find the sales_order_id associated with the given cart_id
 	var salesOrderID int
 	query := `SELECT order_id FROM shopping_cart WHERE cart_id = $1`
-	err := s.db.QueryRow(query, cart_id).Scan(&salesOrderID)
+	err := tx.QueryRow(query, cart_id).Scan(&salesOrderID)
 	if err != nil {
 		// If no sales order is found, handle the error accordingly
 		if err == sql.ErrNoRows {
@@ -98,8 +120,8 @@ func (s *PostgresStore) DeleteTransaction(cart_id int) error {
 	}
 
 	// Delete transactions related to the fetched sales_order_id
-	deleteQuery := `DELETE FROM transaction WHERE sales_order_id = $1`
-	_, err = s.db.Exec(deleteQuery, salesOrderID)
+	deleteQuery := `DELETE FROM transaction WHERE sales_order_id = $1 AND status = 'pending' `
+	_, err = tx.Exec(deleteQuery, salesOrderID)
 	if err != nil {
 		return fmt.Errorf("error deleting transaction for sales_order_id %d: %w", salesOrderID, err)
 	}

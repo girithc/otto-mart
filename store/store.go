@@ -214,6 +214,11 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Packer Shelf Table")
 
+	if err := s.CreateCartLockTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Cart Lock Table")
+
 	constraintQuery := `
     DO $$
     BEGIN

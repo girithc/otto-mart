@@ -108,4 +108,10 @@ type Transaction struct {
 	MerchantTransactionId string `json:"merchant_transaction_id"`
 	MerchantId            string `json:"merchant_id"`
 	ResponseCode          string `json:"response_code"`
+	Status                string `json:"status"`
+}
+
+type VerifyPayment struct {
+	CustomerPhone string `json:"phone"`
+	CartID        int    `json:"cart_id"`
 }

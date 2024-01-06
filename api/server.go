@@ -63,8 +63,6 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/packer-space-order", makeHTTPHandleFunc(s.handlePackerAllocateSpace))
 
-	// http.HandleFunc("/packer-pack-item", makeHTTPHandleFunc(s.handlePackerPackItem))
-
 	http.HandleFunc("/delivery-partner", makeHTTPHandleFunc(s.handleDeliveryPartner))
 	http.HandleFunc("/delivery-partner-login", makeHTTPHandleFunc(s.handleDeliveryPartnerLogin))
 	http.HandleFunc("/delivery-partner-check-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCheckOrder))
@@ -82,6 +80,8 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/phonepe-payment-complete", makeHTTPHandleFunc(s.handlePhonePeComplete))
 	http.HandleFunc("/phonepe-callback", makeHTTPHandleFunc(s.handlePhonePeCallback))
 	http.HandleFunc("/phonepe-check-status", makeHTTPHandleFunc(s.handlePhonePeVerifyPayment))
+
+	http.HandleFunc("/payment-verify", makeHTTPHandleFunc(s.handlePaymentVerify))
 
 	http.HandleFunc("/send-otp", makeHTTPHandleFunc(s.handleSendOtp))
 	http.HandleFunc("/verify-otp", makeHTTPHandleFunc(s.handleVerifyOtp))

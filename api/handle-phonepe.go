@@ -16,12 +16,7 @@ func (s *Server) handlePhonePeCheckStatus(res http.ResponseWriter, req *http.Req
 		return err
 	}
 
-	records, err := s.store.PhonePeCheckStatus(new_req.CartId, new_req.StatusResult)
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(res, http.StatusOK, records)
+	return WriteJSON(res, http.StatusOK, nil)
 }
 
 func (s *Server) handlePhonePePaymentCallback(res http.ResponseWriter, req *http.Request) error {

@@ -56,7 +56,7 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) error {
 	// Insert a record into the cart_lock table
 	lockType := "lock-stock"
 	expiresAt := time.Now().Add(1 * time.Minute) // 1 minute from now
-	_, err := tx.Exec(`INSERT INTO cart_lock (cart_id, lock_type, expires_at) VALUES ($1, $2, $3)`, cartId, lockType, expiresAt)
+	_, err := tx.Exec(`INSERT INTO cart_lock (cart_id, lock_type, lock_timeout) VALUES ($1, $2, $3)`, cartId, lockType, expiresAt)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error inserting lock record for cart %d: %v", cartId, err)
@@ -78,7 +78,7 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (bool,
 
 	if !cash {
 		// Calculate the expiration timestamp
-		expiresAt := time.Now().Add(1 * time.Minute)
+		expiresAt := time.Now().Add((1 * time.Minute) + (10 * time.Second))
 
 		// Insert a new cart_lock record
 		insertCartLockQuery := `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'pay-verify', 'started', $2)`
@@ -147,10 +147,6 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 }
 
 func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
-
-	//Credit
-
-	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
 		return false, fmt.Errorf("failed to start transaction: %s", err)
@@ -170,7 +166,6 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 }
 
 func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
-
 	var credit bool
 
 	var storeID sql.NullInt64

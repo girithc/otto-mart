@@ -41,6 +41,15 @@ func (s *Server) handlePostCheckoutPayment(res http.ResponseWriter, req *http.Re
 		return err
 	}
 
+	if new_req.Cash {
+		isPaid, err := s.store.PayStockCash(new_req.Cart_Id)
+		if err != nil {
+			return err
+		}
+
+		return WriteJSON(res, http.StatusOK, isPaid)
+	}
+
 	isPaid, err := s.store.PayStock(new_req.Cart_Id)
 	if err != nil {
 		return err
