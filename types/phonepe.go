@@ -65,7 +65,7 @@ type PaymentData struct {
 	MerchantId            string          `json:"merchantId"`
 	MerchantTransactionId string          `json:"merchantTransactionId"`
 	TransactionId         string          `json:"transactionId"`
-	Amount                float64         `json:"amount"`
+	Amount                int             `json:"amount"`
 	State                 string          `json:"state"`
 	ResponseCode          string          `json:"responseCode"`
 	PaymentInstrument     json.RawMessage `json:"paymentInstrument"`
@@ -109,6 +109,7 @@ type Transaction struct {
 	MerchantId            string `json:"merchant_id"`
 	ResponseCode          string `json:"response_code"`
 	Status                string `json:"status"`
+	Amount                int    `json:"amount"`
 }
 
 type VerifyPayment struct {

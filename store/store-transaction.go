@@ -57,8 +57,6 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
 	}
 
 	return nil
-
-	return err
 }
 
 func (s *PostgresStore) CreateTransaction(cart_id int) error {
@@ -106,24 +104,12 @@ func (s *PostgresStore) CreateTransaction(cart_id int) error {
 	return nil
 }
 
-func (s *PostgresStore) DeleteTransaction(tx *sql.Tx, cart_id int) error {
-	// Find the sales_order_id associated with the given cart_id
-	var salesOrderID int
-	query := `SELECT order_id FROM shopping_cart WHERE cart_id = $1`
-	err := tx.QueryRow(query, cart_id).Scan(&salesOrderID)
-	if err != nil {
-		// If no sales order is found, handle the error accordingly
-		if err == sql.ErrNoRows {
-			return fmt.Errorf("no sales order found for cart_id %d", cart_id)
-		}
-		return fmt.Errorf("error fetching sales order: %w", err)
-	}
-
+func (s *PostgresStore) DeleteTransaction(tx *sql.Tx, cartID int) error {
 	// Delete transactions related to the fetched sales_order_id
-	deleteQuery := `DELETE FROM transaction WHERE sales_order_id = $1 AND status = 'pending' `
-	_, err = tx.Exec(deleteQuery, salesOrderID)
+	deleteQuery := `DELETE FROM transaction WHERE cart_id = $1 AND status = 'pending' `
+	_, err := tx.Exec(deleteQuery, cartID)
 	if err != nil {
-		return fmt.Errorf("error deleting transaction for sales_order_id %d: %w", salesOrderID, err)
+		return fmt.Errorf("error deleting transaction for cartID %d: %w", cartID, err)
 	}
 
 	return nil

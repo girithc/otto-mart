@@ -31,7 +31,7 @@ func (s *PostgresStore) Cancel_Checkout(cart_id int) error {
 		err = s.DeleteTransaction(tx, cart_id)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("error resetting locked quantities: %w", err)
+			return fmt.Errorf("error resetting deleting transaction: %w", err)
 		}
 	}
 
