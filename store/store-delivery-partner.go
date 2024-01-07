@@ -263,9 +263,9 @@ func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone string) (*types.Deli
 }
 
 // updated
-func (s *PostgresStore) getNextDeliveryPartner() (int, error) {
+func (s *PostgresStore) getNextDeliveryPartner(tx *sql.Tx) (int, error) {
 	var deliveryPartnerID int
-	err := s.db.QueryRow(`
+	err := tx.QueryRow(`
 		SELECT id 
 		FROM delivery_partner 
 		WHERE available = true 
@@ -309,4 +309,45 @@ func (s *PostgresStore) DeliveryPartnerLogin(phone string) (*DeliveryPartner, er
 	}
 
 	return &partner, nil
+}
+
+func (s *PostgresStore) AssignDeliveryPartnerToSalesOrder(cart_id int) (bool, error) {
+
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, fmt.Errorf("failed to start transaction: %s", err)
+	}
+
+	deliveryPartnerID, err := s.getNextDeliveryPartner(tx)
+	if err != nil {
+		return true, fmt.Errorf("error fetching next available delivery partner: %s", err)
+	}
+
+	_, err = tx.Exec(`
+		UPDATE sales_order 
+		SET delivery_partner_id = $1 
+		WHERE cart_id = $2
+	`, deliveryPartnerID, cart_id)
+	if err != nil {
+		return true, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
+	}
+
+	// Update the delivery partner's last_assigned_time or set their availability to false
+	_, err = tx.Exec(`
+		UPDATE delivery_partner 
+		SET last_assigned_time = NOW()
+		WHERE id = $1
+	`, deliveryPartnerID)
+	if err != nil {
+		return true, fmt.Errorf("error updating delivery partner details: %s", err)
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return false, fmt.Errorf("error committing transaction: %s", err)
+	}
+
+	return true, nil
+
 }
