@@ -135,7 +135,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
     int cartIdInt = int.parse(cartId!);
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse('$baseUrl/checkout-payment'));
-    request.body = json.encode({"cart_id": cartIdInt});
+    request.body = json.encode({"cart_id": cartIdInt, "cash": false});
     request.headers.addAll(headers);
 
     try {

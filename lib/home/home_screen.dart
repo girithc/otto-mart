@@ -12,6 +12,7 @@ import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/payments/verify.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
@@ -1238,13 +1239,17 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   decoration: const BoxDecoration(
                       // Background color of the container
                       shape: BoxShape.circle,
-                      color: Colors.transparent // Circular shape
+                      color: Colors.deepPurpleAccent // Circular shape
                       ),
                   child: IconButton(
                       icon: const Icon(Icons.electric_bolt_rounded),
-                      color: Colors.transparent, // Icon color
+                      color: Colors.white, // Icon color
                       onPressed: () {
-                        context.push('/setting');
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const PaymentVerificationScreen()));
                       }),
                 ),
                 const Spacer(),

@@ -75,10 +75,10 @@ class _PaymentsPageState extends State<PaymentsPage> {
     }
   }
 
-  Future<bool> processPayment(int cartId) async {
+  Future<bool> processPayment(int cartId, bool cash) async {
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse('$baseUrl/checkout-payment'));
-    request.body = json.encode({"cart_id": cartId});
+    request.body = json.encode({"cart_id": cartId, "cash": cash});
     request.headers.addAll(headers);
 
     try {
@@ -268,7 +268,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 });
               } else if (_selectedPayment == 'Cash' && cartId != null) {
                 int cartIdInt = int.parse(cartId);
-                processPayment(cartIdInt).then((isPaid) {
+                processPayment(cartIdInt, true).then((isPaid) {
                   if (isPaid) {
                     Navigator.push(
                       context,
