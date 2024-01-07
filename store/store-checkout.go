@@ -99,6 +99,112 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (bool,
 	return true, nil
 }
 
+func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string) (bool, error) {
+
+	var storeID sql.NullInt64
+
+	//get cart items
+	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
+	rows, err := tx.Query(query, cart_id)
+	if err != nil {
+		return true, err
+	}
+	defer rows.Close()
+
+	var cartItems []*types.Checkout_Cart_Item
+	for rows.Next() {
+		checkout_cart_item := &types.Checkout_Cart_Item{}
+		if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
+			return true, err
+		}
+		cartItems = append(cartItems, checkout_cart_item)
+	}
+	if err = rows.Err(); err != nil {
+		return true, err
+	}
+
+	// Existing query to fetch customer_id, store_id, and address from shopping_cart
+	var customerID sql.NullInt64
+	err = tx.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
+	if err != nil {
+		return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
+	}
+
+	// Check if customerID is valid
+	if !customerID.Valid {
+		// Handle the case where customerID is NULL or invalid
+		return true, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
+	}
+
+	// New query to get the default address ID for the customer
+	var defaultAddressID int
+	err = tx.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
+	if err != nil {
+		// Handle the error, for example, no default address found or query failed
+		return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
+	}
+
+	// Continue with your logic, now having defaultAddressID
+
+	var transactionID int
+	err = tx.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 `, cart_id).Scan(&transactionID)
+	if err != nil {
+		// Handle the error, for example, no default address found or query failed
+		return true, fmt.Errorf("failed to transaction_id for cart_id %d: %s", cart_id, err)
+	}
+
+	_, err = tx.Exec(`
+		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type, transaction_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+	`, cart_id, 1, customerID, defaultAddressID, paymentType, transactionID)
+	if err != nil {
+		return true, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
+	}
+
+	for _, checkout_cart_item := range cartItems {
+		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
+
+		res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+		if err != nil {
+			return true, err
+		}
+
+		affectedRows, err := res.RowsAffected()
+		if err != nil {
+			return true, err
+		}
+
+		if affectedRows == 0 {
+			return true, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
+		}
+	}
+
+	_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
+	if err != nil {
+		return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
+	}
+
+	query = `insert into shopping_cart
+			(customer_id, active) 
+			values ($1, $2) returning id, customer_id, active, created_at
+			`
+	_, err = s.db.Query(
+		query,
+		customerID,
+		true,
+	)
+	if err != nil {
+		return true, err
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return true, err
+	}
+
+	return true, nil
+}
+
 // /helper functions end
 
 func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
@@ -166,9 +272,6 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 }
 
 func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
-	var credit bool
-
-	var storeID sql.NullInt64
 
 	// Start a transaction
 	tx, err := s.db.Begin()
@@ -181,144 +284,10 @@ func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
 		return false, err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return false, fmt.Errorf("error committing transaction: %s", err)
-	}
-
 	// Start a transaction
-	tx, err = s.db.Begin()
+	success, err := s.CreateOrder(tx, cart_id, "cash")
 	if err != nil {
-		return false, fmt.Errorf("failed to start transaction: %s", err)
-	}
-
-	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
-	rows, err := tx.Query(query, cart_id)
-	if err != nil {
-		return true, err
-	}
-	defer rows.Close()
-
-	var cartItems []*types.Checkout_Cart_Item
-	for rows.Next() {
-		checkout_cart_item := &types.Checkout_Cart_Item{}
-		if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
-			return true, err
-		}
-		cartItems = append(cartItems, checkout_cart_item)
-	}
-	if err = rows.Err(); err != nil {
-		return true, err
-	}
-
-	// Existing query to fetch customer_id, store_id, and address from shopping_cart
-	var customerID sql.NullInt64
-	err = tx.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
-	if err != nil {
-		return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
-	}
-
-	// Check if customerID is valid
-	if !customerID.Valid {
-		// Handle the case where customerID is NULL or invalid
-		return true, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
-	}
-
-	// New query to get the default address ID for the customer
-	var defaultAddressID int
-	err = tx.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
-	if err != nil {
-		// Handle the error, for example, no default address found or query failed
-		return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
-	}
-
-	// Continue with your logic, now having defaultAddressID
-
-	var paymentType string
-	if credit {
-		paymentType = "credit card"
-	} else {
-		paymentType = "cash"
-	}
-
-	var transactionID int
-	err = tx.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 `, cart_id).Scan(&transactionID)
-	if err != nil {
-		// Handle the error, for example, no default address found or query failed
-		return true, fmt.Errorf("failed to transaction_id for cart_id %d: %s", cart_id, err)
-	}
-
-	_, err = tx.Exec(`
-		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type, transaction_id)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, cart_id, 1, customerID, defaultAddressID, paymentType, transactionID)
-	if err != nil {
-		return true, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
-	}
-
-	for _, checkout_cart_item := range cartItems {
-		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
-
-		res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
-		if err != nil {
-			return true, err
-		}
-
-		affectedRows, err := res.RowsAffected()
-		if err != nil {
-			return true, err
-		}
-
-		if affectedRows == 0 {
-			return true, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
-		}
-	}
-
-	_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
-	if err != nil {
-		return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return true, err
-	}
-
-	query = `insert into shopping_cart
-			(customer_id, active) 
-			values ($1, $2) returning id, customer_id, active, created_at
-			`
-	_, err = s.db.Query(
-		query,
-		customerID,
-		true,
-	)
-	if err != nil {
-		return true, err
-	}
-
-	deliveryPartnerID, err := s.getNextDeliveryPartner()
-	if err != nil {
-		return true, fmt.Errorf("error fetching next available delivery partner: %s", err)
-	}
-
-	_, err = s.db.Exec(`
-		UPDATE sales_order 
-		SET delivery_partner_id = $1 
-		WHERE cart_id = $2
-	`, deliveryPartnerID, cart_id)
-	if err != nil {
-		return true, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
-	}
-
-	// Update the delivery partner's last_assigned_time or set their availability to false
-	_, err = s.db.Exec(`
-		UPDATE delivery_partner 
-		SET last_assigned_time = NOW()
-		WHERE id = $1
-	`, deliveryPartnerID)
-	if err != nil {
-		return true, fmt.Errorf("error updating delivery partner details: %s", err)
+		return success, err
 	}
 
 	err = tx.Commit()
@@ -326,7 +295,7 @@ func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
 		return false, fmt.Errorf("error committing transaction: %s", err)
 	}
 
-	return true, nil
+	return success, nil
 	// If all operations are successful, commit the transaction
 }
 
