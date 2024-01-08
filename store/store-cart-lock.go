@@ -23,20 +23,43 @@ func (s *PostgresStore) CreateCartLockTable(tx *sql.Tx) error {
 		return err
 	}
 
-	// Create the cart_lock table
+	// Create or modify the cart_lock table
 	createTableQuery := `
-    CREATE TABLE IF NOT EXISTS cart_lock (
-        id SERIAL PRIMARY KEY,
-        cart_id INT,
-        lock_type lock_type_enum NOT NULL,
-        completed completed_status_enum NOT NULL DEFAULT 'started',
-        lock_timeout TIMESTAMP NULL,  
-        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`
+	CREATE TABLE IF NOT EXISTS cart_lock (
+		id SERIAL PRIMARY KEY,
+		cart_id INT,
+		lock_type lock_type_enum NOT NULL,
+		completed completed_status_enum NOT NULL DEFAULT 'started',
+		sign UUID DEFAULT gen_random_uuid(),
+		lock_timeout TIMESTAMP NULL,  
+		last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	)`
 
 	_, err := tx.Exec(createTableQuery)
 	if err != nil {
 		return fmt.Errorf("error creating cart_lock table: %w", err)
+	}
+
+	// Additional check to add the 'sign' column if it's missing in an existing table
+	var exists bool
+	checkColumnQuery := `SELECT EXISTS (
+                            SELECT FROM information_schema.columns 
+                            WHERE table_schema = 'public' 
+                            AND table_name = 'cart_lock' 
+                            AND column_name = 'sign'
+                        )`
+	err = tx.QueryRow(checkColumnQuery).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("error checking existence of 'sign' column in cart_lock table: %w", err)
+	}
+
+	if !exists {
+		alterTableQuery := `ALTER TABLE cart_lock ADD COLUMN sign UUID DEFAULT gen_random_uuid()`
+		_, err = tx.Exec(alterTableQuery)
+		if err != nil {
+			return fmt.Errorf("error adding 'sign' column to cart_lock table: %w", err)
+		}
+		fmt.Println("'sign' column added to cart_lock table")
 	}
 
 	fmt.Println("Exiting CreateCartLockTable")

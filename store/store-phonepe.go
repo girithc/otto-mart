@@ -218,7 +218,7 @@ func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
 	return nil
 }
 
-func (s *PostgresStore) PhonePePaymentInit(cart_id int) (*types.PhonePeResponse, error) {
+func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.PhonePeResponse, error) {
 	phonepe := &types.PhonePeInit{
 		MerchantId:        "PGTESTPAYUAT",
 		RedirectUrl:       "https://youtube.com/redirect-url",

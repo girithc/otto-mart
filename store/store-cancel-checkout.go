@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (s *PostgresStore) Cancel_Checkout(cart_id int) error {
+func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string) error {
 	fmt.Println("Entered Cancel_Checkout")
 
 	// Begin a transaction

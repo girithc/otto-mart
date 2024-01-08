@@ -7,18 +7,24 @@ import (
 )
 
 func (s *Server) HandleCancelCheckoutCart(res http.ResponseWriter, req *http.Request) error {
-	var requestBody map[string]int
+	var requestBody map[string]interface{}
 	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
 		return err
 	}
 
-	cartID, exists := requestBody["cart_id"]
+	cartID, exists := requestBody["cart_id"].(int)
 	if !exists {
 		http.Error(res, "cart_id is required", http.StatusBadRequest)
 		return fmt.Errorf("cart_id is required")
 	}
 
-	err := s.store.Cancel_Checkout(cartID)
+	sign, exists := requestBody["sign"].(string)
+	if !exists {
+		http.Error(res, "cart_id is required", http.StatusBadRequest)
+		return fmt.Errorf("cart_id is required")
+	}
+
+	err := s.store.Cancel_Checkout(cartID, sign)
 	if err != nil {
 		return err
 	}

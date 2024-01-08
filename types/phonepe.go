@@ -3,7 +3,8 @@ package types
 import "encoding/json"
 
 type PhonePeCartId struct {
-	CartId int `json:"cart_id"`
+	CartId int    `json:"cart_id"`
+	Sign   string `json:"sign"`
 }
 
 type PhonePeCartIdStatus struct {

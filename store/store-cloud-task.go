@@ -11,7 +11,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func createHTTPTaskWithToken(projectID, locationID, queueID, url, email string, payload interface{}) (*taskspb.Task, error) {
+func createHTTPTaskWithToken(projectID, locationID, queueID, url, email string, payload interface{}, delayTime int) (*taskspb.Task, error) {
 	// Create a new Cloud Tasks client instance.
 	ctx := context.Background()
 	client, err := cloudtasks.NewClient(ctx)
@@ -23,7 +23,7 @@ func createHTTPTaskWithToken(projectID, locationID, queueID, url, email string, 
 	// Build the Task queue path.
 	queuePath := fmt.Sprintf("projects/%s/locations/%s/queues/%s", projectID, locationID, queueID)
 
-	scheduleTime := time.Now().Add(time.Minute * 1)
+	scheduleTime := time.Now().Add(time.Minute * time.Duration(delayTime))
 
 	// Convert payload to JSON
 	jsonPayload, err := json.Marshal(payload)
@@ -61,20 +61,43 @@ func createHTTPTaskWithToken(projectID, locationID, queueID, url, email string, 
 	return createdTask, nil
 }
 
-func (s *PostgresStore) CreateCloudTask() error {
+func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string) error {
 	email := "quickstart-service-account@hip-well-400702.iam.gserviceaccount.com"
 
-	// Prepare the payload
-	payload := map[string]interface{}{
-		"cart_id":   1,
-		"lock_type": "lock-stock",
-	}
+	var delayTime int
 
-	// Create Task with Token and JSON payload
-	if task, err := createHTTPTaskWithToken("hip-well-400702", "asia-south1", "lock-stock-9", "https://pronto-go-3ogvsx3vlq-el.a.run.app/cloud-task", email, payload); err != nil {
-		fmt.Printf("Failed to create Task with token: %v\n", err)
-	} else {
-		fmt.Println("Task with token created successfully", task.GetName())
+	if lockType == "lock-stock" {
+		delayTime = 1
+
+		// Prepare the payload
+		payload := map[string]interface{}{
+			"cart_id":   cartID,
+			"lock_type": lockType,
+			"sign":      sign,
+		}
+
+		// Create Task with Token and JSON payload
+		if task, err := createHTTPTaskWithToken("hip-well-400702", "asia-south1", "lock-stock-9", "https://pronto-go-3ogvsx3vlq-el.a.run.app/lock-stock", email, payload, delayTime); err != nil {
+			fmt.Printf("Failed to create Task with token: %v\n", err)
+		} else {
+			fmt.Println("Task with token created successfully", task.GetName())
+		}
+	} else if lockType == "lock-stock-pay" {
+		delayTime = 9
+
+		// Prepare the payload
+		payload := map[string]interface{}{
+			"cart_id":   cartID,
+			"lock_type": lockType,
+			"sign":      sign,
+		}
+
+		// Create Task with Token and JSON payload
+		if task, err := createHTTPTaskWithToken("hip-well-400702", "asia-south1", "lock-stock-9", "https://pronto-go-3ogvsx3vlq-el.a.run.app/lock-stock", email, payload, delayTime); err != nil {
+			fmt.Printf("Failed to create Task with token: %v\n", err)
+		} else {
+			fmt.Println("Task with token created successfully", task.GetName())
+		}
 	}
 
 	return nil

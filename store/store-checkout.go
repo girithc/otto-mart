@@ -52,51 +52,60 @@ func (s *PostgresStore) lockItems(cartItems []*types.Checkout_Cart_Item, tx *sql
 	return true, nil
 }
 
-func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) error {
+func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 	// Insert a record into the cart_lock table
 	lockType := "lock-stock"
 	expiresAt := time.Now().Add(1 * time.Minute) // 1 minute from now
-	_, err := tx.Exec(`INSERT INTO cart_lock (cart_id, lock_type, lock_timeout) VALUES ($1, $2, $3)`, cartId, lockType, expiresAt)
+	var sign string
+	err := tx.QueryRow(`INSERT INTO cart_lock (cart_id, lock_type, lock_timeout) VALUES ($1, $2, $3) RETURNING sign`, cartId, lockType, expiresAt).Scan(&sign)
 	if err != nil {
 		tx.Rollback()
-		return fmt.Errorf("error inserting lock record for cart %d: %v", cartId, err)
+		return "", fmt.Errorf("error inserting lock record for cart %d: %v", cartId, err)
 	}
 
-	return nil
+	return sign, nil
 }
 
-func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (bool, error) {
+func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (string, error) {
 	// Update the cart_lock record
 	updateCartLockQuery := `
         UPDATE cart_lock 
         SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
-        WHERE cart_id = $1 AND completed = 'started' `
-	_, err := s.db.Exec(updateCartLockQuery, cartId)
+        WHERE cart_id = $1 AND completed = 'started'`
+	_, err := tx.Exec(updateCartLockQuery, cartId)
 	if err != nil {
-		return false, fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
+		return "", fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
 	}
 
+	var insertCartLockQuery string
 	if !cash {
 		// Calculate the expiration timestamp
 		expiresAt := time.Now().Add((1 * time.Minute) + (10 * time.Second))
 
 		// Insert a new cart_lock record
-		insertCartLockQuery := `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'pay-verify', 'started', $2)`
-		_, err = tx.Exec(insertCartLockQuery, cartId, expiresAt)
-		if err != nil {
-			return false, fmt.Errorf("error creating new cart_lock record for cart %d: %s", cartId, err)
+		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'pay-verify', 'started', $2) RETURNING sign`
+		row := tx.QueryRow(insertCartLockQuery, cartId, expiresAt)
+
+		// Retrieve and return the sign value
+		var sign string
+		if err := row.Scan(&sign); err != nil {
+			return "", fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
 		}
+
+		return sign, nil
 	} else {
-
 		// Insert a new cart_lock record
-		insertCartLockQuery := `INSERT INTO cart_lock (cart_id, lock_type, completed) VALUES ($1, 'paid', 'success')`
-		_, err = tx.Exec(insertCartLockQuery, cartId)
-		if err != nil {
-			return false, fmt.Errorf("error creating new cart_lock record for cart %d: %s", cartId, err)
-		}
-	}
+		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed) VALUES ($1, 'paid', 'success') RETURNING sign`
+		row := tx.QueryRow(insertCartLockQuery, cartId)
 
-	return true, nil
+		// Retrieve and return the sign value
+		var sign string
+		if err := row.Scan(&sign); err != nil {
+			return "", fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
+		}
+
+		return sign, nil
+	}
 }
 
 func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string) (bool, error) {
@@ -206,16 +215,26 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string)
 
 // /helper functions end
 
-func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
+type IsLockStock struct {
+	Lock bool   `json:"lock"`
+	Sign string `json:"sign"`
+}
+
+func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
+	var resp IsLockStock
 	cartItems, err := s.getCartItems(cart_id)
 	if err != nil {
-		return false, err
+		resp.Lock = false
+		resp.Sign = ""
+		return resp, err
 	}
 
 	// Transaction starts
 	tx, err := s.db.Begin()
 	if err != nil {
-		return false, err
+		resp.Lock = false
+		resp.Sign = ""
+		return resp, err
 	}
 
 	// Deferred rollback in case of any error during the transaction
@@ -227,28 +246,38 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 
 	areItemsLocked, err := s.lockItems(cartItems, tx)
 	if err != nil {
-		return areItemsLocked, err
+		resp.Lock = areItemsLocked
+		resp.Sign = ""
+		return resp, err
 	}
 
-	err = s.cartLockStock(cart_id, tx)
+	sign, err := s.cartLockStock(cart_id, tx)
 	if err != nil {
-		return false, err
+		resp.Lock = false
+		resp.Sign = ""
+		return resp, err
 	}
 
 	err = s.CreateTransaction(tx, cart_id)
 	if err != nil {
 		fmt.Print("Error in Creating Transaction: ", err)
-		return false, err
+		resp.Lock = false
+		resp.Sign = ""
+		return resp, err
 	}
+
+	_ = s.CreateCloudTask(cart_id, "lock-stock", sign)
 
 	err = tx.Commit()
 	if err != nil {
-		return false, fmt.Errorf("error in committing transaction: %v", err)
+		resp.Lock = false
+		resp.Sign = ""
+		return resp, fmt.Errorf("error in committing transaction: %v", err)
 	}
 
-	// Transaction ends
-
-	return true, nil
+	resp.Lock = true
+	resp.Sign = sign
+	return resp, nil
 }
 
 func (s *PostgresStore) PayStock(cart_id int) (bool, error) {

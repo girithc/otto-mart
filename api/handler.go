@@ -1420,10 +1420,10 @@ func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) err
 	return nil
 }
 
-func (s *Server) handleCloudTask(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) handleLockStock(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "create-shelf")
-		return s.HandlePOSTCloudTask(res, req)
+		return s.HandleLockStockCloudTask(res, req)
 	}
 
 	return nil
