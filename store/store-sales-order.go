@@ -127,54 +127,46 @@ func (s *PostgresStore) SetSalesOrderForeignKey(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, cartID int) (*types.Sales_Order_Cart, error) {
-	// SQL query to fetch the most recent sales order for specific customer, store, and cart
-	query := `SELECT id, delivery_partner_id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	var so types.Sales_Order_Cart
+	query := `SELECT id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date
               FROM sales_order
               WHERE customer_id = $1 AND store_id = $2 AND cart_id = $3
               ORDER BY order_date DESC
               LIMIT 1`
-
-	// Execute the query
-	var so types.Sales_Order_Cart
-	err := s.db.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.DeliveryPartnerID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate)
+	err = tx.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 
 	shoppingCartQuery := `SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true`
-
-	// Execute the shopping cart query
-	err = s.db.QueryRow(shoppingCartQuery, customerID).Scan(&so.NewCartID)
+	err = tx.QueryRow(shoppingCartQuery, customerID).Scan(&so.NewCartID)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-
-	deliveryPartnerQuery := `SELECT id, name, fcm_token, store_id, phone, address, created_at, available, current_location, active_deliveries, last_assigned_time
-                         FROM delivery_partner
-                         WHERE id = $1`
-	// Execute the delivery partner query
-	var dp types.SODeliveryPartner
-	err = s.db.QueryRow(deliveryPartnerQuery, so.DeliveryPartnerID).Scan(&dp.ID, &dp.Name, &dp.FcmToken, &dp.StoreID, &dp.Phone, &dp.Address, &dp.CreatedAt, &dp.Available, &dp.CurrentLocation, &dp.ActiveDeliveries, &dp.LastAssignedTime)
-	if err != nil {
-		return nil, err
-	}
-	so.DeliveryPartner = dp
 
 	productListQuery := `SELECT ci.id, ci.item_id, ci.quantity, i.name, i.brand_id, i.quantity AS item_quantity, i.unit_of_quantity, i.description
-                     FROM cart_item ci
-                     JOIN item i ON ci.item_id = i.id
-                     WHERE ci.cart_id = $1`
-	// Execute the product list query
-	rows, err := s.db.Query(productListQuery, so.CartID)
+                         FROM cart_item ci
+                         JOIN item i ON ci.item_id = i.id
+                         WHERE ci.cart_id = $1`
+	rows, err := tx.Query(productListQuery, so.CartID)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
 	defer rows.Close()
+
 	var products []types.SOProduct
 	for rows.Next() {
 		var p types.SOProduct
-		err := rows.Scan(&p.ID, &p.ItemID, &p.Quantity, &p.Name, &p.BrandID, &p.ItemQuantity, &p.UnitOfQuantity, &p.Description)
-		if err != nil {
+		if err := rows.Scan(&p.ID, &p.ItemID, &p.Quantity, &p.Name, &p.BrandID, &p.ItemQuantity, &p.UnitOfQuantity, &p.Description); err != nil {
+			tx.Rollback()
 			return nil, err
 		}
 		products = append(products, p)
@@ -182,24 +174,24 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 	so.Products = products
 
 	storeQuery := `SELECT id, name, address FROM store WHERE id = $1`
-	var store types.SOStore
-	err = s.db.QueryRow(storeQuery, so.StoreID).Scan(&store.ID, &store.Name, &store.Address)
+	err = tx.QueryRow(storeQuery, so.StoreID).Scan(&so.Store.ID, &so.Store.Name, &so.Store.Address)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	so.Store = store
 
 	addressQuery := `SELECT id, latitude, longitude, street_address, line_one_address, line_two_address, city, state, zipcode, is_default
-                 FROM address
-                 WHERE id = $1`
-	var address types.SOAddress
-	err = s.db.QueryRow(addressQuery, so.AddressID).Scan(&address.ID, &address.Latitude, &address.Longitude, &address.StreetAddress, &address.LineOneAddress, &address.LineTwoAddress, &address.City, &address.State, &address.Zipcode, &address.IsDefault)
+                     FROM address
+                     WHERE id = $1`
+	err = tx.QueryRow(addressQuery, so.AddressID).Scan(&so.Address.ID, &so.Address.Latitude, &so.Address.Longitude, &so.Address.StreetAddress, &so.Address.LineOneAddress, &so.Address.LineTwoAddress, &so.Address.City, &so.Address.State, &so.Address.Zipcode, &so.Address.IsDefault)
 	if err != nil {
+		tx.Rollback()
 		return nil, err
 	}
-	so.Address = address
 
-	// Combine the sales order and shopping cart ID in the result
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
 
 	return &so, nil
 }
@@ -316,12 +308,11 @@ func (s *PostgresStore) Get_All_Sales_Orders() ([]*types.Sales_Order, error) {
 }
 
 type OrderDetails struct {
-	OrderID             int    `json:"order_id"`
-	DeliveryPartnerName string `json:"delivery_partner_name"`
-	OrderDate           string `json:"order_date"`
-	OrderAddress        string `json:"order_address"`
-	PaymentType         string `json:"payment_type"`
-	PaidStatus          bool   `json:"paid_status"`
+	OrderID      int    `json:"order_id"`
+	OrderDate    string `json:"order_date"`
+	OrderAddress string `json:"order_address"`
+	PaymentType  string `json:"payment_type"`
+	PaidStatus   bool   `json:"paid_status"`
 }
 
 func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, error) {
@@ -329,10 +320,9 @@ func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, 
 
 	// SQL query to fetch the required details
 	query := `
-        SELECT so.id, dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
+        SELECT so.id,  so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
         FROM sales_order so
         JOIN address a ON so.address_id = a.id
-        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
         WHERE so.customer_id = $1
     `
 
@@ -346,7 +336,7 @@ func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, 
 	// Iterate through the result set
 	for rows.Next() {
 		var order OrderDetails
-		err := rows.Scan(&order.OrderID, &order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+		err := rows.Scan(&order.OrderID, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
 		if err != nil {
 			return nil, err
 		}
@@ -415,10 +405,9 @@ func (s *PostgresStore) GetOldestOrderForStore(store_id int) (OrderDetails, erro
 
 	// SQL query to fetch the oldest order details
 	query := `
-        SELECT dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
+        SELECT  so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
         FROM sales_order so
         JOIN address a ON so.address_id = a.id
-        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
         WHERE so.store_id = $1 AND so.order_status = 'received'
         ORDER BY so.order_date ASC
         LIMIT 1
@@ -426,7 +415,7 @@ func (s *PostgresStore) GetOldestOrderForStore(store_id int) (OrderDetails, erro
 
 	// Execute the query
 	row := s.db.QueryRow(query, store_id)
-	err := row.Scan(&order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+	err := row.Scan(&order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
 	if err != nil {
 		return OrderDetails{}, err
 	}
@@ -443,7 +432,6 @@ func (s *PostgresStore) GetReceivedOrdersForStore(store_id int) ([]OrderDetails,
         SELECT dp.name, so.order_date, CONCAT(a.street_address, ' ', a.line_one_address, ' ', a.line_two_address, ' ', a.city, ' ', a.state, ' ', a.zipcode), so.payment_type, so.paid
         FROM sales_order so
         JOIN address a ON so.address_id = a.id
-        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
         WHERE so.store_id = $1 AND so.order_status = 'received'
         ORDER BY so.order_date ASC
     `
@@ -458,7 +446,7 @@ func (s *PostgresStore) GetReceivedOrdersForStore(store_id int) ([]OrderDetails,
 	// Iterate through the result set
 	for rows.Next() {
 		var order OrderDetails
-		err := rows.Scan(&order.DeliveryPartnerName, &order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
+		err := rows.Scan(&order.OrderDate, &order.OrderAddress, &order.PaymentType, &order.PaidStatus)
 		if err != nil {
 			return nil, err
 		}

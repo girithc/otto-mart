@@ -59,7 +59,7 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) CreateTransaction(cart_id int) error {
+func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) error {
 	// Generate a unique merchant transaction ID
 	fmt.Println("Entered Create Transaction")
 	merchantTransactionID := uuid.NewString()
@@ -76,7 +76,7 @@ func (s *PostgresStore) CreateTransaction(cart_id int) error {
               FROM shopping_cart sc
               JOIN customer c ON sc.customer_id = c.id
               WHERE sc.id = $1`
-	err := s.db.QueryRow(query, cart_id).Scan(&cartID, &merchantUserID, &amount)
+	err := tx.QueryRow(query, cart_id).Scan(&cartID, &merchantUserID, &amount)
 	if err != nil {
 		return fmt.Errorf("error %d", err)
 	}
@@ -86,7 +86,7 @@ func (s *PostgresStore) CreateTransaction(cart_id int) error {
 
 	insertQuery := `INSERT INTO transaction (merchant_user_id, cart_id, merchant_transaction_id, amount, status)
                 VALUES ($1, $2, $3, $4, $5)`
-	_, err = s.db.Exec(insertQuery, merchantUserID, cartID, merchantTransactionID, amount, status)
+	_, err = tx.Exec(insertQuery, merchantUserID, cartID, merchantTransactionID, amount, status)
 
 	if err != nil {
 		// Check if the error is a pq.Error

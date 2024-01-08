@@ -100,10 +100,9 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (bool,
 }
 
 func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string) (bool, error) {
-
 	var storeID sql.NullInt64
 
-	//get cart items
+	// get cart items
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
 	rows, err := tx.Query(query, cart_id)
 	if err != nil {
@@ -236,18 +235,18 @@ func (s *PostgresStore) LockStock(cart_id int) (bool, error) {
 		return false, err
 	}
 
+	err = s.CreateTransaction(tx, cart_id)
+	if err != nil {
+		fmt.Print("Error in Creating Transaction: ", err)
+		return false, err
+	}
+
 	err = tx.Commit()
 	if err != nil {
 		return false, fmt.Errorf("error in committing transaction: %v", err)
 	}
 
 	// Transaction ends
-
-	err = s.CreateTransaction(cart_id)
-	if err != nil {
-		fmt.Print("Error in Creating Transaction: ", err)
-		return false, err
-	}
 
 	return true, nil
 }
@@ -272,7 +271,6 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 }
 
 func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
-
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {

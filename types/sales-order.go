@@ -53,20 +53,18 @@ type SalesOrderStoreAndOrder struct {
 }
 
 type Sales_Order_Cart struct {
-	ID                int               `json:"id"`
-	DeliveryPartnerID sql.NullInt64     `json:"delivery_partner_id"`
-	CartID            int               `json:"cart_id"`
-	StoreID           int               `json:"store_id"`
-	CustomerID        int               `json:"customer_id"`
-	AddressID         int               `json:"address_id"`
-	Paid              bool              `json:"paid"`
-	PaymentType       string            `json:"payment_type"`
-	OrderDate         time.Time         `json:"order_date"`
-	NewCartID         int               `json:"new_cart_id"`
-	DeliveryPartner   SODeliveryPartner `json:"delivery_partner"`
-	Products          []SOProduct       `json:"products"`
-	Store             SOStore           `json:"store"`
-	Address           SOAddress         `json:"address"`
+	ID          int         `json:"id"`
+	CartID      int         `json:"cart_id"`
+	StoreID     int         `json:"store_id"`
+	CustomerID  int         `json:"customer_id"`
+	AddressID   int         `json:"address_id"`
+	Paid        bool        `json:"paid"`
+	PaymentType string      `json:"payment_type"`
+	OrderDate   time.Time   `json:"order_date"`
+	NewCartID   int         `json:"new_cart_id"`
+	Products    []SOProduct `json:"products"`
+	Store       SOStore     `json:"store"`
+	Address     SOAddress   `json:"address"`
 }
 
 type SalesOrderIDCustomerID struct {
