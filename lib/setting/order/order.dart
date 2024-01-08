@@ -198,16 +198,9 @@ class Order {
   String? date;
   String? address;
   String? paymentType;
-  String? deliveryPartnerName;
   bool? paid;
 
-  Order(
-      {this.id,
-      this.date,
-      this.address,
-      this.paymentType,
-      this.deliveryPartnerName,
-      this.paid});
+  Order({this.id, this.date, this.address, this.paymentType, this.paid});
 
   factory Order.fromJson(Map<String, dynamic> json) {
     return Order(
@@ -215,7 +208,6 @@ class Order {
       date: json['order_date']?.toString() ?? 'N/A',
       address: json['order_address']?.toString() ?? 'N/A',
       paymentType: json['payment_type']?.toString() ?? 'N/A',
-      deliveryPartnerName: json['DeliveryPartnerName']?.toString() ?? 'N/A',
       paid: json['paid_status'] ?? false,
     );
   }
