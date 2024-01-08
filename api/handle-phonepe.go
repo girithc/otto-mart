@@ -35,22 +35,6 @@ func (s *Server) handlePhonePePaymentCallback(res http.ResponseWriter, req *http
 	return nil
 }
 
-func (s *Server) handlePhonePePaymentComplete(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.PhonePeCartId)
-
-	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error in Decoding req.body in handlePhonePePaymentInit()")
-		return err
-	}
-
-	records, err := s.store.PayStock(new_req.CartId)
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(res, http.StatusOK, records)
-}
-
 func (s *Server) handlePhonePePaymentInit(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.PhonePeCartId)
 

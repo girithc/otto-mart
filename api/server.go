@@ -77,7 +77,6 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
 
 	http.HandleFunc("/phonepe-payment-init", makeHTTPHandleFunc(s.handlePhonePe))
-	http.HandleFunc("/phonepe-payment-complete", makeHTTPHandleFunc(s.handlePhonePeComplete))
 	http.HandleFunc("/phonepe-callback", makeHTTPHandleFunc(s.handlePhonePeCallback))
 	http.HandleFunc("/phonepe-check-status", makeHTTPHandleFunc(s.handlePhonePeVerifyPayment))
 

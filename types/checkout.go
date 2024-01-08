@@ -11,6 +11,7 @@ type Checkout_Cart_Item struct {
 }
 
 type Checkout_Lock_Items struct {
-	Cart_Id int  `json:"cart_id"`
-	Cash    bool `json:"cash"`
+	Cart_Id int    `json:"cart_id"`
+	Cash    bool   `json:"cash"`
+	Sign    string `json:"sign"`
 }

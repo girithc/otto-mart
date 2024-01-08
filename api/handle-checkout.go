@@ -42,7 +42,7 @@ func (s *Server) handlePostCheckoutPayment(res http.ResponseWriter, req *http.Re
 	}
 
 	if new_req.Cash {
-		isPaid, err := s.store.PayStockCash(new_req.Cart_Id)
+		isPaid, err := s.store.PayStockCash(new_req.Cart_Id, new_req.Sign)
 		if err != nil {
 			return err
 		}
@@ -50,7 +50,7 @@ func (s *Server) handlePostCheckoutPayment(res http.ResponseWriter, req *http.Re
 		return WriteJSON(res, http.StatusOK, isPaid)
 	}
 
-	isPaid, err := s.store.PayStock(new_req.Cart_Id)
+	isPaid, err := s.store.PayStock(new_req.Cart_Id, new_req.Sign)
 	if err != nil {
 		return err
 	}

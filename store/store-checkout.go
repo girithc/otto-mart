@@ -66,13 +66,13 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 	return sign, nil
 }
 
-func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (string, error) {
+func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign string) (string, error) {
 	// Update the cart_lock record
 	updateCartLockQuery := `
         UPDATE cart_lock 
         SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
-        WHERE cart_id = $1 AND completed = 'started'`
-	_, err := tx.Exec(updateCartLockQuery, cartId)
+        WHERE cart_id = $1 AND completed = 'started' AND sign = $2`
+	_, err := tx.Exec(updateCartLockQuery, cartId, sign)
 	if err != nil {
 		return "", fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
 	}
@@ -80,7 +80,7 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool) (strin
 	var insertCartLockQuery string
 	if !cash {
 		// Calculate the expiration timestamp
-		expiresAt := time.Now().Add((1 * time.Minute) + (10 * time.Second))
+		expiresAt := time.Now().Add((1 * time.Minute) + (2 * time.Second))
 
 		// Insert a new cart_lock record
 		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'pay-verify', 'started', $2) RETURNING sign`
@@ -280,13 +280,13 @@ func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
 	return resp, nil
 }
 
-func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
+func (s *PostgresStore) PayStock(cart_id int, sign string) (bool, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
-	_, err = s.cartLockUpdate(tx, cart_id, false)
+	_, err = s.cartLockUpdate(tx, cart_id, false, sign)
 	if err != nil {
 		return false, err
 	}
@@ -299,14 +299,14 @@ func (s *PostgresStore) PayStock(cart_id int) (bool, error) {
 	return true, nil
 }
 
-func (s *PostgresStore) PayStockCash(cart_id int) (bool, error) {
+func (s *PostgresStore) PayStockCash(cart_id int, sign string) (bool, error) {
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
 		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
-	_, err = s.cartLockUpdate(tx, cart_id, true)
+	_, err = s.cartLockUpdate(tx, cart_id, true, sign)
 	if err != nil {
 		return false, err
 	}

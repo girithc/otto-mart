@@ -35,6 +35,14 @@ type PhonePeResponse struct {
 	Data    Data   `json:"data"`
 }
 
+type PhonePeResponsePlus struct {
+	Success bool   `json:"success"`
+	Code    string `json:"code"`
+	Message string `json:"message"`
+	Data    Data   `json:"data"`
+	Sign    string `json:"sign"`
+}
+
 type Data struct {
 	MerchantId            string             `json:"merchantId"`
 	MerchantTransactionId string             `json:"merchantTransactionId"`
