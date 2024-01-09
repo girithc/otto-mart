@@ -14,24 +14,39 @@ func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string) error {
 		return fmt.Errorf("error starting transaction: %w", err)
 	}
 
-	cartUnlock, err := s.EndCartLock(tx, cart_id)
+	fmt.Println("Entered EndCartLock")
+	alreadyCancelled, cartUnlock, err := s.EndCartLock(tx, cart_id, sign)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error ending cart lock: %w", err)
 	}
 
+	// Check if the cart lock was already cancelled and gracefully end if it's "done"
+	if alreadyCancelled == "done" {
+		err = tx.Commit()
+		if err != nil {
+			return fmt.Errorf("error committing transaction: %w", err)
+		}
+		fmt.Println("Exiting Cancel_Checkout - Cart Lock already cancelled")
+		return nil
+	}
+
 	if cartUnlock {
 		// Reset the locked quantities
+		fmt.Println("Entered ResetLockedQuantities")
+
 		err = s.ResetLockedQuantities(tx, cart_id)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("error resetting locked quantities: %w", err)
 		}
 
+		fmt.Println("Entered DeleteTransaction")
+
 		err = s.DeleteTransaction(tx, cart_id)
 		if err != nil {
 			tx.Rollback()
-			return fmt.Errorf("error resetting deleting transaction: %w", err)
+			return fmt.Errorf("error deleting transaction: %w", err)
 		}
 	}
 
@@ -60,28 +75,29 @@ func (s *PostgresStore) ResetLockedQuantities(tx *sql.Tx, cart_id int) error {
 	return err
 }
 
-func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int) (bool, error) {
+func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int, sign string) (string, bool, error) {
 	// Update the cart_lock record
-	query := `UPDATE cart_lock SET completed = 'ended', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started'`
-	res, err := tx.Exec(query, cartId)
+	query := `UPDATE cart_lock SET completed = 'ended', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND sign = $2`
+	res, err := tx.Exec(query, cartId, sign)
 	if err != nil {
 		tx.Rollback() // Rollback in case of any error
-		return false, fmt.Errorf("error updating cart_lock table: %w", err)
+		print(err)
+		return "", false, fmt.Errorf("error updating cart_lock table: %w", err)
 	}
 
 	// Check if any rows were affected
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
-		return false, fmt.Errorf("error getting rows affected: %w", err)
+		print(err)
+		return "", false, fmt.Errorf("error getting rows affected: %w", err)
 	}
 
 	if rowsAffected == 0 {
-		tx.Rollback()
-		return false, fmt.Errorf("no active cart_lock record found for cart_id %d", cartId)
+		return "done", false, nil
 	}
 
-	return true, nil
+	return "", true, nil
 }
 
 func (s *PostgresStore) Cancel_PhonePe_Checkout(cart_id int) error {

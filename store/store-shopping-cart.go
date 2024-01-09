@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -208,11 +209,16 @@ func (s *PostgresStore) DoesCartExist(cartID int) (bool, error) {
 func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 	cart := new(types.Shopping_Cart)
 
-	// Use sql.NullInt64 for order_id and store_id to handle NULL values
-	var orderID sql.NullInt64
-	var storeID sql.NullInt64
-	// Use sql.NullString for address to handle NULL values
-	var address sql.NullString
+	// Define variables for all columns in the shopping_cart table
+	var (
+		orderID sql.NullInt64
+		storeID sql.NullInt64
+		address sql.NullString
+		itemCost, deliveryFee, platformFee, smallOrderFee, rainFee,
+		highTrafficSurcharge, packagingFee, peakTimeSurcharge, numberOfItems,
+		subtotal, discounts int
+		createdAt time.Time
+	)
 
 	err := rows.Scan(
 		&cart.ID,
@@ -220,21 +226,33 @@ func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 		&orderID,
 		&storeID,
 		&cart.Active,
-		&address, // Scan into sql.NullString variable
-		&cart.Created_At,
+		&address,
+		&itemCost,
+		&deliveryFee,
+		&platformFee,
+		&smallOrderFee,
+		&rainFee,
+		&highTrafficSurcharge,
+		&packagingFee,
+		&peakTimeSurcharge,
+		&numberOfItems,
+		&subtotal,
+		&discounts,
+		&createdAt,
 	)
 
-	// If orderID has a valid value (i.e., it's not NULL), set it to cart.Order_Id
+	// Set values for nullable fields
 	if orderID.Valid {
 		cart.Order_Id = int(orderID.Int64)
 	}
 	if storeID.Valid {
 		cart.Store_Id = int(storeID.Int64)
 	}
-	// If address has a valid value (i.e., it's not NULL), set it to cart.Address
 	if address.Valid {
 		cart.Address = address.String
 	}
+	// Add the additional fields to the cart struct
+	cart.Created_At = createdAt
 
 	return cart, err
 }

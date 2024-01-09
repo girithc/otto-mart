@@ -1397,7 +1397,7 @@ func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) err
 
 func (s *Server) handleLockStock(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("POST", "create-shelf")
+		print_path("POST", "create-lock-stock")
 		return s.HandleLockStockCloudTask(res, req)
 	}
 

@@ -4,32 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/girithc/pronto-go/types"
 )
 
 func (s *Server) HandleCancelCheckoutCart(res http.ResponseWriter, req *http.Request) error {
-	var requestBody map[string]interface{}
-	if err := json.NewDecoder(req.Body).Decode(&requestBody); err != nil {
+	new_req := new(types.CancelCheckout)
+	print("Entered Create Category")
+
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in HandleCancelCheckoutCart()")
 		return err
 	}
 
-	cartID, exists := requestBody["cart_id"].(int)
-	if !exists {
-		http.Error(res, "cart_id is required", http.StatusBadRequest)
-		return fmt.Errorf("cart_id is required")
-	}
-
-	sign, exists := requestBody["sign"].(string)
-	if !exists {
-		http.Error(res, "cart_id is required", http.StatusBadRequest)
-		return fmt.Errorf("cart_id is required")
-	}
-
-	err := s.store.Cancel_Checkout(cartID, sign)
+	err := s.store.Cancel_Checkout(new_req.CartID, new_req.Sign)
 	if err != nil {
 		return err
 	}
 
-	res.WriteHeader(http.StatusOK)
-	res.Write([]byte("Success"))
-	return nil
+	return WriteJSON(res, http.StatusOK, nil)
 }
