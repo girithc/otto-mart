@@ -725,9 +725,9 @@ class _MyHomePageState extends State<MyHomePage>
                       gridDelegate:
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
-                        crossAxisSpacing: 5,
-                        mainAxisSpacing: 5,
-                        childAspectRatio: 0.7,
+                        crossAxisSpacing: 2,
+                        mainAxisSpacing: 4,
+                        childAspectRatio: 0.68,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
@@ -830,14 +830,14 @@ class _MyHomePageState extends State<MyHomePage>
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
+          borderRadius: BorderRadius.circular(6.0),
           border: Border.all(color: Colors.white),
           boxShadow: [
             BoxShadow(
-              color: Colors.pinkAccent.shade100,
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 2),
+              color: Colors.deepPurpleAccent.shade100,
+              spreadRadius: 0,
+              blurRadius: 1,
+              offset: const Offset(0, 4),
             ),
           ],
         ),

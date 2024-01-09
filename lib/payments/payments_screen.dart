@@ -10,8 +10,8 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class PaymentsPage extends StatefulWidget {
-  const PaymentsPage({super.key});
-
+  const PaymentsPage({super.key, required this.sign});
+  final String sign;
   @override
   State<PaymentsPage> createState() => _PaymentsPageState();
 }
@@ -47,9 +47,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
       );
   }
 
-  Future<bool> checkoutCancelItems(int cartId) async {
+  Future<bool> checkoutCancelItems(int cartId, String sign) async {
     const String apiUrl = '$baseUrl/checkout-cancel';
-    final Map<String, dynamic> payload = {'cart_id': cartId};
+    final Map<String, dynamic> payload = {
+      'cart_id': cartId,
+      'sign': sign,
+    };
 
     try {
       final response = await http.post(
@@ -61,17 +64,18 @@ class _PaymentsPageState extends State<PaymentsPage> {
       );
 
       if (response.statusCode == 200) {
-        // Assuming the server returns a simple true or false in the body
+        // Parse the JSON response into a LockStockResponse object
+        final jsonResponse = json.decode(response.body);
         return true;
       } else {
         // Handle the case when the server does not respond with a success code
-        print('Request failed with status: ${response.statusCode}.');
-        return false;
+        print('Request failed with status: ${response.body}.');
+        throw Exception('Failed to cancel checkout items');
       }
     } on Exception catch (e) {
       // Handle any exceptions here
       print('Caught exception: $e');
-      return false;
+      return false; // Re-throw the caught exception
     }
   }
 
@@ -142,7 +146,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             String? cartId = cart.cartId;
             if (cartId != null) {
               int cartIdInt = int.parse(cartId);
-              checkoutCancelItems(cartIdInt).then((success) {
+              checkoutCancelItems(cartIdInt, widget.sign).then((success) {
                 if (success) {
                   // If the checkout lock is successful, navigate to the PaymentsPage
                   Navigator.pushReplacement(

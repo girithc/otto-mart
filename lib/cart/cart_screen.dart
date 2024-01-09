@@ -23,7 +23,7 @@ class MyCart extends StatefulWidget {
 }
 
 class _MyCartState extends State<MyCart> {
-  Future<bool> checkoutLockItems(int cartId) async {
+  Future<LockStockResponse> checkoutLockItems(int cartId) async {
     const String apiUrl = '$baseUrl/checkout-lock-items';
     final Map<String, dynamic> payload = {'cart_id': cartId};
     print("Check-out-lock-items");
@@ -37,18 +37,18 @@ class _MyCartState extends State<MyCart> {
       );
 
       if (response.statusCode == 200) {
-        // Assuming the server returns a simple true or false in the body
-        return true;
+        // Parse the JSON response into a LockStockResponse object
+        final jsonResponse = json.decode(response.body);
+        return LockStockResponse.fromJson(jsonResponse);
       } else {
         // Handle the case when the server does not respond with a success code
-        print(
-            'Request failed with status: ${response.statusCode}. ${response.body}');
-        return false;
+        print('Request failed with status: ${response.statusCode}.');
+        throw Exception('Failed to cancel checkout items');
       }
     } on Exception catch (e) {
       // Handle any exceptions here
       print('Caught exception: $e');
-      return false;
+      throw Exception(e); // Re-throw the caught exception
     }
   }
 
@@ -214,12 +214,14 @@ class _MyCartState extends State<MyCart> {
                           if (cartId != null) {
                             int cartIdInt = int.parse(cartId);
                             checkoutLockItems(cartIdInt).then((success) {
-                              if (success) {
+                              if (success.lock) {
                                 // If the checkout lock is successful, navigate to the PaymentsPage
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const PaymentsPage(),
+                                    builder: (context) => PaymentsPage(
+                                      sign: success.sign,
+                                    ),
                                   ),
                                 );
                               } else {
@@ -793,5 +795,28 @@ class _CustomListItem extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class LockStockResponse {
+  final bool lock;
+  final String sign;
+
+  LockStockResponse({required this.lock, required this.sign});
+
+  // Factory constructor to create an instance from JSON.
+  factory LockStockResponse.fromJson(Map<String, dynamic> json) {
+    return LockStockResponse(
+      lock: json['lock'] as bool,
+      sign: json['sign'] as String,
+    );
+  }
+
+  // Method to convert the object to a JSON map.
+  Map<String, dynamic> toJson() {
+    return {
+      'lock': lock,
+      'sign': sign,
+    };
   }
 }
