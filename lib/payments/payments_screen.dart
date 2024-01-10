@@ -81,22 +81,25 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   Future<bool> processPayment(int cartId, bool cash) async {
     var headers = {'Content-Type': 'application/json'};
-    var request = http.Request('POST', Uri.parse('$baseUrl/checkout-payment'));
-    request.body = json.encode({"cart_id": cartId, "cash": cash});
-    request.headers.addAll(headers);
+    var url = Uri.parse('$baseUrl/checkout-payment');
+    var body =
+        json.encode({"cart_id": cartId, "cash": cash, "sign": widget.sign});
 
     try {
-      http.StreamedResponse response = await request.send();
+      var response = await http.post(url, headers: headers, body: body);
 
       if (response.statusCode == 200) {
-        print(await response.stream.bytesToString());
-        return true; // Payment is successful
+        var responseData = json.decode(response.body);
+        print(response.body);
+        bool isPaid =
+            responseData['isPaid'] ?? false; // Extracting the isPaid value
+        return isPaid; // Return the extracted boolean
       } else {
-        print(response.reasonPhrase);
+        print('Failed: ${response.reasonPhrase}');
         return false; // Payment failed
       }
     } catch (e) {
-      print('Error: $e');
+      print('Error during payment processing: $e');
       return false; // Error occurred, treat as failed payment
     }
   }
@@ -283,8 +286,18 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Payment failed'),
-                        backgroundColor: Colors.redAccent,
+                        content: Text(
+                          'Timeout: Payment Failed',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        backgroundColor: Colors.amberAccent,
+                      ),
+                    );
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyCart(),
                       ),
                     );
                   }
