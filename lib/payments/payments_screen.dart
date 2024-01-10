@@ -104,12 +104,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
     }
   }
 
-  Future<String> initiatePhonePePayment(int cartId) async {
+  Future<PaymentResult> initiatePhonePePayment(int cartId) async {
     var headers = {'Content-Type': 'application/json'};
     var request =
         http.Request('POST', Uri.parse('$baseUrl/phonepe-payment-init'));
-    // Replace with actual parameters
-    request.body = json.encode({"cart_id": cartId});
+    request.body = json.encode({"cart_id": cartId, "sign": widget.sign});
     request.headers.addAll(headers);
 
     try {
@@ -119,20 +118,30 @@ class _PaymentsPageState extends State<PaymentsPage> {
         var responseBody = await response.stream.bytesToString();
         var decodedResponse = json.decode(responseBody);
 
-        // Correct path to extract the URL
-        return decodedResponse['data']['instrumentResponse']['redirectInfo']
-            ['url'];
+        // Assuming the URL is correctly found in the response
+        print(responseBody);
+        String url = decodedResponse['data']['instrumentResponse']
+            ['redirectInfo']['url'];
+        String message = decodedResponse['message'];
+        bool isSuccess = decodedResponse['success'];
+
+        if (isSuccess) {
+          return PaymentResult(
+              url: url, isSuccess: isSuccess, merchantTransactionId: '');
+        } else {
+          return PaymentResult(
+              url: message, isSuccess: isSuccess, merchantTransactionId: '');
+        }
       } else {
-        // Handle non-200 responses
         var errorResponse = await response.stream.bytesToString();
-        // Log the error response or handle it as per your application's requirement
         print('Error response: $errorResponse');
-        return 'Error: Received status code ${response.statusCode}';
+        return PaymentResult(
+            url: 'Payment Error', isSuccess: false, merchantTransactionId: '');
       }
     } catch (e) {
-      // Handle exceptions
       print('Exception occurred: $e');
-      return 'Exception: $e';
+      return PaymentResult(
+          url: 'Exception: $e', isSuccess: false, merchantTransactionId: '');
     }
   }
 
@@ -263,15 +272,32 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
               if (_selectedPayment == 'PhonePe' && cartId != null) {
                 int cartIdInt = int.parse(cartId);
-                initiatePhonePePayment(cartIdInt).then((url) {
-                  if (url.isNotEmpty) {
+                initiatePhonePePayment(cartIdInt).then((response) {
+                  if (response.isSuccess) {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PhonePeWebView(url: url),
+                        builder: (context) => PhonePeWebView(url: response.url),
                       ),
                     );
-                  } else {}
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          response.url,
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                        backgroundColor: Colors.amberAccent,
+                      ),
+                    );
+
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyCart(),
+                      ),
+                    );
+                  }
                 });
               } else if (_selectedPayment == 'Cash' && cartId != null) {
                 int cartIdInt = int.parse(cartId);
@@ -333,4 +359,15 @@ class _PaymentsPageState extends State<PaymentsPage> {
       ),
     );
   }
+}
+
+class PaymentResult {
+  final String url;
+  final bool isSuccess;
+  final String merchantTransactionId;
+
+  PaymentResult(
+      {required this.url,
+      required this.isSuccess,
+      required this.merchantTransactionId});
 }

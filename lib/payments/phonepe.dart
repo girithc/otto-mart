@@ -7,6 +7,7 @@ import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/deprecated/cart.dart';
 import 'package:pronto/cart/order/place_order_screen.dart';
+import 'package:pronto/payments/verify.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:provider/provider.dart';
@@ -49,22 +50,14 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
           onNavigationRequest: (navigation) {
             final host = Uri.parse(navigation.url).host;
             if (host.contains('youtube.com')) {
-              /*
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Blocking navigation to $host',
-                  ),
-                ),
-              );
-              */
               processPayment().then((isPaid) => {
                     if (isPaid)
                       {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PlaceOrder(),
+                            builder: (context) =>
+                                const PaymentVerificationScreen(),
                           ),
                         )
                       }
@@ -73,7 +66,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SettingScreen(),
+                            builder: (context) => const PlaceOrder(),
                           ),
                         )
                       }
