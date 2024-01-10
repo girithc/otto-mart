@@ -43,30 +43,41 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          "merchantTransactionId": widget.merchantTransactionId,
+          "merchant_transaction_id": widget.merchantTransactionId,
           "cart_id": int.parse(cartId!),
           "phone": customerId
         }),
       );
 
       if (response.statusCode == 200) {
-        // Delay for 5 seconds before updating the UI
-        await Future.delayed(const Duration(seconds: 2));
+        // Decode the JSON response
+        final responseData = jsonDecode(response.body);
+        final phonePeStatus = PhonePeCheckStatus.fromJson(responseData);
 
-        setState(() {
-          displayText = 'Payment Verified';
-          displayIcon = const Icon(Icons.check_circle_outline,
-              color: Colors.green, size: 75);
-        });
+        // Use the data from the response
+        if (phonePeStatus.done) {
+          // Update UI for successful payment
+          setState(() {
+            displayText = 'Payment Verified: ₹${phonePeStatus.amount}';
+            displayIcon = const Icon(Icons.check_circle_outline,
+                color: Colors.green, size: 75);
+          });
 
-        // Additional 2-second delay before navigating to the homepage
-        await Future.delayed(const Duration(seconds: 2));
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (context) => const MyHomePage(
-                      title: "Otto Mart",
-                    )));
+          // Navigate to the homepage after a delay
+          await Future.delayed(const Duration(seconds: 2));
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                  builder: (context) => const MyHomePage(title: "Otto Mart")));
+        } else {
+          // Update UI for unsuccessful payment
+          setState(() {
+            displayText =
+                'Payment Verification Failed: ${phonePeStatus.status}';
+            displayIcon =
+                const Icon(Icons.error_outline, color: Colors.red, size: 75);
+          });
+        }
       } else {
         // Handle error or unsuccessful verification
       }
@@ -92,6 +103,23 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class PhonePeCheckStatus {
+  final String status;
+  final bool done;
+  final int amount;
+
+  PhonePeCheckStatus(
+      {required this.status, required this.done, required this.amount});
+
+  factory PhonePeCheckStatus.fromJson(Map<String, dynamic> json) {
+    return PhonePeCheckStatus(
+      status: json['status'],
+      done: json['done'],
+      amount: json['amount'],
     );
   }
 }
