@@ -124,10 +124,13 @@ class _PaymentsPageState extends State<PaymentsPage> {
             ['redirectInfo']['url'];
         String message = decodedResponse['message'];
         bool isSuccess = decodedResponse['success'];
+        String merchantTransactionId = decodedResponse['merchantTransactionId'];
 
         if (isSuccess) {
           return PaymentResult(
-              url: url, isSuccess: isSuccess, merchantTransactionId: '');
+              url: url,
+              isSuccess: isSuccess,
+              merchantTransactionId: merchantTransactionId);
         } else {
           return PaymentResult(
               url: message, isSuccess: isSuccess, merchantTransactionId: '');
@@ -277,7 +280,10 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PhonePeWebView(url: response.url),
+                        builder: (context) => PhonePeWebView(
+                          url: response.url,
+                          merchantTransactionId: response.merchantTransactionId,
+                        ),
                       ),
                     );
                   } else {

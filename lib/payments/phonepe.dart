@@ -16,8 +16,11 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 class PhonePeWebView extends StatefulWidget {
   final String url;
+  final String merchantTransactionId;
 
-  const PhonePeWebView({Key? key, required this.url}) : super(key: key);
+  const PhonePeWebView(
+      {Key? key, required this.url, required this.merchantTransactionId})
+      : super(key: key);
 
   @override
   State<PhonePeWebView> createState() => _PhonePeWebViewState();
@@ -56,8 +59,9 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const PaymentVerificationScreen(),
+                            builder: (context) => PaymentVerificationScreen(
+                                merchantTransactionId:
+                                    widget.merchantTransactionId),
                           ),
                         )
                       }

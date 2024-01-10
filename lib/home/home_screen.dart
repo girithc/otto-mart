@@ -1249,7 +1249,9 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    const PaymentVerificationScreen()));
+                                    const PaymentVerificationScreen(
+                                      merchantTransactionId: '',
+                                    )));
                       }),
                 ),
                 const Spacer(),
