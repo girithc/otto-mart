@@ -22,7 +22,7 @@ type PhonePeCheckStatus struct {
 	Amount int    `json:"amount"`
 }
 
-func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (PhonePeCheckStatus, error) {
+func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, merchantTransactionID string) (PhonePeCheckStatus, error) {
 	// check for s2s callback
 	// if received and paid
 	// success
@@ -47,7 +47,7 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (Ph
 
 	var response PhonePeCheckStatus
 
-	transaction, err := s.GetTransactionByCartId(cartID)
+	transaction, err := s.GetTransactionByCartId(cartID, merchantTransactionID)
 	if err != nil {
 		response.Done = false
 		response.Status = "transaction not found"
@@ -85,18 +85,18 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int) (Ph
 	return success, nil
 }
 
-func (s *PostgresStore) GetTransactionByCartId(cart_id int) (*types.Transaction, error) {
+func (s *PostgresStore) GetTransactionByCartId(cart_id int, merchantTransactionID string) (*types.Transaction, error) {
 	var transaction types.Transaction
 
 	// Updated query to fetch the latest transaction based on transaction_date
 	query := `
         SELECT merchant_transaction_id, merchant_id, response_code, status, amount 
         FROM transaction 
-        WHERE cart_id = $1 AND status != 'pending'
+        WHERE cart_id = $1 AND status != 'pending' AND merchant_transaction_id = $2
         ORDER BY transaction_date DESC 
         LIMIT 1`
 
-	err := s.db.QueryRow(query, cart_id).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode, &transaction.Status, &transaction.Amount)
+	err := s.db.QueryRow(query, cart_id, merchantTransactionID).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode, &transaction.Status, &transaction.Amount)
 	if err != nil {
 		return nil, err
 	}
@@ -343,6 +343,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 			respFinal.Message = response.Message
 			respFinal.Sign = sign
 			respFinal.Success = response.Success
+			respFinal.MerchantTransactionId = phonepe.MerchantTransactionId
 		}
 
 		return &respFinal, nil

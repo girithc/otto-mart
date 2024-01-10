@@ -36,11 +36,12 @@ type PhonePeResponse struct {
 }
 
 type PhonePeResponsePlus struct {
-	Success bool   `json:"success"`
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Data    Data   `json:"data"`
-	Sign    string `json:"sign"`
+	Success               bool   `json:"success"`
+	Code                  string `json:"code"`
+	Message               string `json:"message"`
+	Data                  Data   `json:"data"`
+	Sign                  string `json:"sign"`
+	MerchantTransactionId string `json:"merchantTransactionId"`
 }
 
 type Data struct {
@@ -122,6 +123,7 @@ type Transaction struct {
 }
 
 type VerifyPayment struct {
-	CustomerPhone string `json:"phone"`
-	CartID        int    `json:"cart_id"`
+	CustomerPhone         string `json:"phone"`
+	CartID                int    `json:"cart_id"`
+	MerchantTransactionId string `json:"merchant_transaction_id"`
 }

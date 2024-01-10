@@ -17,7 +17,7 @@ func (s *Server) PaymentVerify(res http.ResponseWriter, req *http.Request) error
 		fmt.Println("Error in Decoding req.body in handlePostCheckoutLockItems()")
 		return err
 	}
-	paymentVerified, err := s.store.PhonePeCheckStatus(new_req.CustomerPhone, new_req.CartID)
+	paymentVerified, err := s.store.PhonePeCheckStatus(new_req.CustomerPhone, new_req.CartID, new_req.MerchantTransactionId)
 	if err != nil {
 		return WriteJSON(res, http.StatusBadRequest, err)
 	}
