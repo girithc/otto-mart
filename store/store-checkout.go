@@ -66,15 +66,26 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 	return sign, nil
 }
 
-func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign string) (string, error) {
+func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign string) (string, bool, error) {
 	// Update the cart_lock record
 	updateCartLockQuery := `
         UPDATE cart_lock 
         SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
         WHERE cart_id = $1 AND completed = 'started' AND sign = $2`
-	_, err := tx.Exec(updateCartLockQuery, cartId, sign)
+	result, err := tx.Exec(updateCartLockQuery, cartId, sign)
 	if err != nil {
-		return "", fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
+		return "", false, fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
+	}
+
+	// Check if any rows were affected by the update
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return "", false, fmt.Errorf("failed to get rows affected: %s", err)
+	}
+
+	if rowsAffected == 0 {
+		// No rows were updated, return false
+		return "", false, nil
 	}
 
 	var insertCartLockQuery string
@@ -89,10 +100,10 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 		// Retrieve and return the sign value
 		var sign string
 		if err := row.Scan(&sign); err != nil {
-			return "", fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
+			return "", false, fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
 		}
 
-		return sign, nil
+		return sign, true, nil
 	} else {
 		// Insert a new cart_lock record
 		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed) VALUES ($1, 'paid', 'success') RETURNING sign`
@@ -101,10 +112,10 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 		// Retrieve and return the sign value
 		var sign string
 		if err := row.Scan(&sign); err != nil {
-			return "", fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
+			return "", false, fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
 		}
 
-		return sign, nil
+		return sign, true, nil
 	}
 }
 
@@ -286,7 +297,7 @@ func (s *PostgresStore) PayStock(cart_id int, sign string) (bool, error) {
 		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
-	_, err = s.cartLockUpdate(tx, cart_id, false, sign)
+	_, updated, err := s.cartLockUpdate(tx, cart_id, false, sign)
 	if err != nil {
 		return false, err
 	}
@@ -296,7 +307,12 @@ func (s *PostgresStore) PayStock(cart_id int, sign string) (bool, error) {
 		return false, fmt.Errorf("error committing transaction: %s", err)
 	}
 
-	return true, nil
+	if updated {
+		return true, nil
+	}
+
+	// timeout cart lock does not exist
+	return false, nil
 }
 
 func (s *PostgresStore) PayStockCash(cart_id int, sign string) (bool, error) {
@@ -306,24 +322,36 @@ func (s *PostgresStore) PayStockCash(cart_id int, sign string) (bool, error) {
 		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
-	_, err = s.cartLockUpdate(tx, cart_id, true, sign)
+	// Call cartLockUpdate to update the cart_lock record
+	_, updated, err := s.cartLockUpdate(tx, cart_id, true, sign)
 	if err != nil {
+		tx.Rollback() // Rollback the transaction on error
 		return false, err
 	}
 
-	// Start a transaction
-	success, err := s.CreateOrder(tx, cart_id, "cash")
-	if err != nil {
-		return success, err
+	if !updated {
+		// If cartLockUpdate didn't make any updates and return false
+		err = tx.Commit()
+		if err != nil {
+			return false, fmt.Errorf("error committing transaction: %s", err)
+		}
+		return false, nil
 	}
 
+	// Continue with the rest of your operations (e.g., CreateOrder)
+	success, err := s.CreateOrder(tx, cart_id, "cash")
+	if err != nil {
+		tx.Rollback() // Rollback the transaction on error
+		return false, err
+	}
+
+	// Commit the transaction if everything is successful
 	err = tx.Commit()
 	if err != nil {
 		return false, fmt.Errorf("error committing transaction: %s", err)
 	}
 
 	return success, nil
-	// If all operations are successful, commit the transaction
 }
 
 func (s *PostgresStore) MakeQuantitiesPermanent(cart_id int) error {
@@ -338,12 +366,6 @@ func (s *PostgresStore) MakeQuantitiesPermanent(cart_id int) error {
     WHERE item_store.id = quantities.item_id;
     `, cart_id)
 	return err
-}
-
-func isDeadlockError(err error) bool {
-	// This is a simple example. In a real-world scenario, you might want to check the error more thoroughly,
-	// maybe using specific error codes or more precise string matching.
-	return err.Error() == "deadlock detected"
 }
 
 func (s *PostgresStore) PrintItemStoreRecords(state string) error {

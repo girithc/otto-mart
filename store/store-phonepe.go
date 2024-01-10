@@ -3,6 +3,7 @@ package store
 import (
 	"bytes"
 	"crypto/sha256"
+	"database/sql"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -10,6 +11,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -219,11 +221,21 @@ func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
 }
 
 func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.PhonePeResponsePlus, error) {
+	/*
+		phonepe := &types.PhonePeInit{
+			MerchantId:        "PGTESTPAYUAT",
+			RedirectUrl:       "https://youtube.com/redirect-url",
+			RedirectMode:      "REDIRECT",
+			CallbackUrl:       "https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback",
+			PaymentInstrument: types.PaymentInstrument{Type: "PAY_PAGE"},
+		}
+	*/
+
 	phonepe := &types.PhonePeInit{
 		MerchantId:        "PGTESTPAYUAT",
 		RedirectUrl:       "https://youtube.com/redirect-url",
 		RedirectMode:      "REDIRECT",
-		CallbackUrl:       "https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback",
+		CallbackUrl:       fmt.Sprintf("https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback?cart_id=%d&sign=%s", cart_id, url.QueryEscape(sign)),
 		PaymentInstrument: types.PaymentInstrument{Type: "PAY_PAGE"},
 	}
 
@@ -248,6 +260,13 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 	// Execute the query
 	err := s.db.QueryRow(query, cart_id).Scan(&phonepe.MerchantTransactionId, &phonepe.MerchantUserId, &phonepe.MobileNumber, &amount)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// No rows found, return a custom error message
+			var respFinal types.PhonePeResponsePlus
+			respFinal.Success = false
+			respFinal.Message = "timeout error"
+			return &respFinal, nil
+		}
 		return nil, fmt.Errorf("error fetching data: %w", err)
 	}
 
@@ -305,28 +324,41 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 
 	// successful in initiating PhonePe Payment
 	// generated response url
+	if response.Success {
+		// reset timer
+		sign, updated, err := s.InitiatePayment(cart_id, sign)
+		if err != nil {
+			return nil, err
+		}
 
-	// reset timer
-	sign, err = s.InitiatePayment(cart_id, sign)
-	if err != nil {
-		return nil, err
+		var respFinal types.PhonePeResponsePlus
+		if !updated {
+			respFinal.Success = false
+			if sign == "no-stock" {
+				respFinal.Message = "timeout error"
+			}
+		} else {
+			respFinal.Code = response.Code
+			respFinal.Data = response.Data
+			respFinal.Message = response.Message
+			respFinal.Sign = sign
+			respFinal.Success = response.Success
+		}
+
+		return &respFinal, nil
+	} else {
+		var respFinal types.PhonePeResponsePlus
+		respFinal.Success = false
+		respFinal.Message = "payment error"
+		return &respFinal, nil
 	}
-
-	var respFinal types.PhonePeResponsePlus
-	respFinal.Code = response.Code
-	respFinal.Data = response.Data
-	respFinal.Message = response.Message
-	respFinal.Sign = sign
-	respFinal.Success = response.Success
-
-	return &respFinal, nil
 }
 
-func (s *PostgresStore) InitiatePayment(cart_id int, sign string) (string, error) {
+func (s *PostgresStore) InitiatePayment(cart_id int, sign string) (string, bool, error) {
 	// Begin a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
-		return "", fmt.Errorf("error starting transaction: %w", err)
+		return "", false, fmt.Errorf("error starting transaction: %w", err)
 	}
 
 	// Check for an existing cart_lock record and update it
@@ -335,11 +367,14 @@ func (s *PostgresStore) InitiatePayment(cart_id int, sign string) (string, error
 	err = tx.QueryRow(query, cart_id, sign).Scan(&lockID)
 	if err != nil {
 		tx.Rollback()
-		return "", fmt.Errorf("error updating cart_lock table: %w", err)
+		return "", false, fmt.Errorf("error updating cart_lock table: %w", err)
 	}
 	if lockID == 0 {
-		tx.Rollback()
-		return "", fmt.Errorf("no active cart_lock record found for cart_id %d", cart_id)
+		err = tx.Commit()
+		if err != nil {
+			return "", false, fmt.Errorf("error committing transaction: %w", err)
+		}
+		return "no-stock", false, nil
 	}
 
 	// Create a new cart_lock record for the payment phase
@@ -351,20 +386,20 @@ func (s *PostgresStore) InitiatePayment(cart_id int, sign string) (string, error
 	err = tx.QueryRow(query, cart_id).Scan(&signValue)
 	if err != nil {
 		tx.Rollback()
-		return "", fmt.Errorf("error creating new cart_lock record for payment and retrieving sign: %w", err)
+		return "", false, fmt.Errorf("error creating new cart_lock record for payment and retrieving sign: %w", err)
 	}
 
 	_ = s.CreateCloudTask(cart_id, "lock-stock-pay", signValue)
 	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {
-		return "", fmt.Errorf("error committing transaction: %w", err)
+		return "", false, fmt.Errorf("error committing transaction: %w", err)
 	}
 
-	return signValue, nil
+	return signValue, true, nil
 }
 
-func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentCallbackResult, error) {
+func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response string) (*types.PaymentCallbackResult, error) {
 	// Decode the base64 encoded response
 	decoded, err := base64.StdEncoding.DecodeString(response)
 	if err != nil {
@@ -426,12 +461,10 @@ func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentC
 		return nil, fmt.Errorf("unknown payment instrument type: %s", instrumentType)
 	}
 
-	// Extract cart_id from the transaction record
-	var cartID string
-	queryCartID := `SELECT cart_id FROM transaction WHERE merchant_transaction_id = $1`
-	err = s.db.QueryRow(queryCartID, paymentResponse.Data.MerchantTransactionId).Scan(&cartID)
+	// Start a transaction
+	tx, err := s.db.Begin()
 	if err != nil {
-		fmt.Printf("Error fetching cart ID: %v\n", err)
+		fmt.Printf("Error starting transaction: %v\n", err)
 		return nil, err
 	}
 
@@ -439,9 +472,10 @@ func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentC
 	updateCartLockQuery := `
     UPDATE cart_lock
     SET completed = 'success'
-    WHERE cart_id = $1 AND lock_type = 'pay-verify',`
-	_, err = s.db.Exec(updateCartLockQuery, cartID)
-	if err != nil {
+    WHERE cart_id = $1 AND lock_type = 'pay-verify' AND sign = $2`
+
+	if _, err = tx.Exec(updateCartLockQuery, cartID, sign); err != nil {
+		tx.Rollback()
 		fmt.Printf("Error updating cart lock record: %v\n", err)
 		return nil, err
 	}
@@ -450,8 +484,9 @@ func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentC
 	insertCartLockQuery := `
     INSERT INTO cart_lock (cart_id, lock_type, completed)
     VALUES ($1, 'paid', 'success')`
-	_, err = s.db.Exec(insertCartLockQuery, cartID)
-	if err != nil {
+
+	if _, err = tx.Exec(insertCartLockQuery, cartID); err != nil {
+		tx.Rollback()
 		fmt.Printf("Error inserting new cart lock record: %v\n", err)
 		return nil, err
 	}
@@ -462,15 +497,21 @@ func (s *PostgresStore) PhonePePaymentCallback(response string) (*types.PaymentC
     SET status = $1, 
         response_code = $2,
         payment_details = $3,
-		payment_method = $4,
-		merchant_id = $5,
-		payment_gateway_name = $6,
+        payment_method = $4,
+        merchant_id = $5,
+        payment_gateway_name = $6
     WHERE merchant_transaction_id = $7`
 
-	_, err = s.db.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
-		paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId)
-	if err != nil {
+	if _, err = tx.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
+		paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId); err != nil {
+		tx.Rollback()
 		fmt.Printf("Error updating transaction record: %v\n", err)
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		fmt.Printf("Error committing transaction: %v\n", err)
 		return nil, err
 	}
 
