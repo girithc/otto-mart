@@ -23,23 +23,23 @@ type PhonePeCheckStatus struct {
 }
 
 func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, merchantTransactionID string) (PhonePeCheckStatus, error) {
-	fmt.Println("PhonePeCheckStatus started")
+	println("PhonePeCheckStatus started")
 
 	var response PhonePeCheckStatus
 
-	fmt.Println("Fetching transaction")
+	println("Fetching transaction")
 	transaction, err := s.GetTransactionByCartId(cartID, merchantTransactionID)
 	if err != nil {
-		fmt.Println("Error fetching transaction:", err)
+		println("Error fetching transaction:", err)
 		response.Done = false
 		response.Status = "transaction not found"
 		response.Amount = 0
 		return response, fmt.Errorf("error fetching transaction: %w", err)
 	}
 
-	fmt.Println("Checking transaction response code")
+	println("Checking transaction response code")
 	if transaction.ResponseCode == "SUCCESS" {
-		fmt.Println("Transaction SUCCESS")
+		println("Transaction SUCCESS")
 		response.Done = true
 		response.Status = "SUCCESS"
 		response.Amount = transaction.Amount
@@ -47,36 +47,36 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 		return response, nil
 
 	} else if transaction.ResponseCode == "ZU" {
-		fmt.Println("Transaction ZU - potential refund")
+		println("Transaction ZU - potential refund")
 		response.Done = false
 		response.Status = "FAILED"
 		response.Amount = transaction.Amount
 		return response, nil
 	}
 
-	fmt.Println("Calling Check Status API")
+	println("Calling Check Status API")
 	trx, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId, transaction.Amount)
 	if err != nil {
-		fmt.Println("Error calling Check Status API:", err)
+		println("Error calling Check Status API:", err)
 		response.Status = "FAILED"
 		response.Done = false
 		response.Amount = 0
 		return response, err
 	}
 
-	fmt.Println("Checking trx response code")
+	println("Checking trx response code")
 	if trx.ResponseCode == "SUCCESS" {
-		fmt.Println("trx SUCCESS - beginning database transaction")
+		println("trx SUCCESS - beginning database transaction")
 		tx, err := s.db.Begin()
 		if err != nil {
-			fmt.Println("Error starting database transaction:", err)
+			println("Error starting database transaction:", err)
 			response.Done = false
 			response.Status = "FAILED"
 			response.Amount = 0
 			return response, fmt.Errorf("error starting transaction: %w", err)
 		}
 
-		fmt.Println("Setting transaction details")
+		println("Setting transaction details")
 		var payDetails TransactionDetails
 		payDetails.Status = trx.Status
 		payDetails.MerchantID = trx.MerchantID
@@ -87,40 +87,40 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 		payDetails.PaymentMethod = trx.PaymentMethod
 		payDetails.TransactionID = trx.TransactionID
 
-		fmt.Println("Completing transaction")
+		println("Completing transaction")
 		_, err = s.CompleteTransaction(tx, payDetails)
 		if err != nil {
-			fmt.Println("Error completing transaction:", err)
+			println("Error completing transaction:", err)
 			tx.Rollback()
 			return response, err
 		}
 
-		fmt.Println("Creating order")
+		println("Creating order")
 		_, err = s.CreateOrder(tx, cartID, transaction.PaymentMethod, transaction.MerchantTransactionId)
 		if err != nil {
-			fmt.Println("Error creating order:", err)
+			println("Error creating order:", err)
 			tx.Rollback() // Rollback the transaction on error
 			return response, err
 		}
 
-		fmt.Println("Committing transaction")
+		println("Committing transaction")
 		err = tx.Commit()
 		if err != nil {
-			fmt.Println("Error committing transaction:", err)
+			println("Error committing transaction:", err)
 			response.Done = false
 			response.Status = "FAILED"
 			response.Amount = 0
 			return response, fmt.Errorf("error committing transaction: %w", err)
 		}
 
-		fmt.Println("Transaction completed successfully")
+		println("Transaction completed successfully")
 		response.Done = true
 		response.Status = "SUCCESS"
 		response.Amount = transaction.Amount
 		response.PaymentMethod = trx.PaymentMethod
 		return response, nil
 	} else {
-		fmt.Println("trx response code not SUCCESS")
+		println("trx response code not SUCCESS")
 		response.Done = false
 		response.Status = "FAILED"
 		response.Amount = transaction.Amount
@@ -466,6 +466,8 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 	}
 
 	var paymentType PaymentType
+	var modeOfPayment string
+
 	err = json.Unmarshal(paymentData.PaymentInstrument, &paymentType)
 	if err != nil {
 		fmt.Printf("Error unmarshalling instrument type: %v\n", err)
@@ -479,6 +481,7 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 	switch instrumentType {
 	case "UPI":
 		var upi types.UPIPaymentInstrument
+		modeOfPayment = "upi"
 		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &upi)
 		if err != nil {
 			fmt.Printf("Error unmarshalling UPI payment instrument: %v\n", err)
@@ -487,6 +490,12 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		paymentInstrument = upi
 	case "CARD": // Assuming "CARD"  is the type for credit/debit cards
 		var card types.CardPaymentInstrument
+		modeOfPayment = card.CardType
+		if modeOfPayment == "CREDIT_CARD" {
+			modeOfPayment = "credit card"
+		} else {
+			modeOfPayment = "debit card"
+		}
 		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &card)
 		if err != nil {
 			fmt.Printf("Error unmarshalling CARD payment instrument: %v\n", err)
@@ -495,6 +504,7 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		paymentInstrument = card
 	case "NETBANKING": // Assuming "NETBANKING" is the type for net banking
 		var netBanking types.NetBankingPaymentInstrument
+		modeOfPayment = "net banking"
 		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &netBanking)
 		if err != nil {
 			fmt.Printf("Error unmarshalling NETBANKING payment instrument: %v\n", err)
@@ -542,7 +552,7 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 	payDetails.PaymentDetails = paymentInstrument
 	payDetails.ResponseCode = paymentResponse.Data.ResponseCode
 	payDetails.PaymentGatewayName = "PhonePe"
-	payDetails.PaymentMethod = instrumentType
+	payDetails.PaymentMethod = modeOfPayment
 	payDetails.TransactionID = paymentResponse.Data.TransactionId
 
 	_, err = s.CompleteTransaction(tx, payDetails)

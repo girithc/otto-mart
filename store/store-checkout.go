@@ -69,6 +69,7 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign string, merchantTransactionId string) (string, bool, error) {
 	var insertCartLockQuery string
 	if !cash {
+
 		// Update the cart_lock record
 		updateCartLockQuery := `
 		UPDATE cart_lock 
@@ -190,10 +191,10 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 	// Continue with your logic, now having defaultAddressID
 
 	var transactionID int
-	err = s.db.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 AND merchant_transaction_id = $2 AND status = 'COMPLETED'`, cart_id, merchantTransactionID).Scan(&transactionID)
+	err = s.db.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 AND merchant_transaction_id = $2`, cart_id, merchantTransactionID).Scan(&transactionID)
 	if err != nil {
 		// Handle the error, for example, no default address found or query failed
-		return true, fmt.Errorf("failed to transaction_id for cart_id %d: %s", cart_id, err)
+		return true, fmt.Errorf("failed to get transaction_id for cart_id %d: %s", cart_id, err)
 	}
 
 	_, err = tx.Exec(`
@@ -207,7 +208,7 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 	for _, checkout_cart_item := range cartItems {
 		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
 
-		res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+		res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE item_id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
 		if err != nil {
 			return true, err
 		}

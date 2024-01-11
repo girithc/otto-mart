@@ -24,7 +24,6 @@ func (s *Server) PaymentVerify(res http.ResponseWriter, req *http.Request) error
 	paymentVerified, err := s.store.PhonePeCheckStatus(new_req.CustomerPhone, new_req.CartID, new_req.MerchantTransactionId)
 	if err != nil {
 		print(err)
-		print(paymentVerified)
 		return WriteJSON(res, http.StatusBadRequest, paymentVerified)
 	}
 	return WriteJSON(res, http.StatusOK, paymentVerified)
