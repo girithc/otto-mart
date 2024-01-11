@@ -66,45 +66,69 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 	return sign, nil
 }
 
-func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign string) (string, bool, error) {
-	// Update the cart_lock record
-	updateCartLockQuery := `
-        UPDATE cart_lock 
-        SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
-        WHERE cart_id = $1 AND completed = 'started' AND sign = $2`
-	result, err := tx.Exec(updateCartLockQuery, cartId, sign)
-	if err != nil {
-		return "", false, fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
-	}
-
-	// Check if any rows were affected by the update
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return "", false, fmt.Errorf("failed to get rows affected: %s", err)
-	}
-
-	if rowsAffected == 0 {
-		// No rows were updated, return false
-		return "", false, nil
-	}
-
+func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign string, merchantTransactionId string) (string, bool, error) {
 	var insertCartLockQuery string
 	if !cash {
+		// Update the cart_lock record
+		updateCartLockQuery := `
+		UPDATE cart_lock 
+		SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
+		WHERE cart_id = $1 AND completed = 'started' AND sign = $2 AND lock_type = 'lock-stock-pay'`
+		result, err := tx.Exec(updateCartLockQuery, cartId, sign)
+		if err != nil {
+			return "", false, fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
+		}
+
+		// Check if any rows were affected by the update
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to get rows affected: %s", err)
+		}
+
+		if rowsAffected == 0 {
+			// No rows were updated, return false
+			return "", false, nil
+		}
+
 		// Calculate the expiration timestamp
 		expiresAt := time.Now().Add((1 * time.Minute) + (2 * time.Second))
 
+		lockType := "pay-verify"
 		// Insert a new cart_lock record
-		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, 'pay-verify', 'started', $2) RETURNING sign`
-		row := tx.QueryRow(insertCartLockQuery, cartId, expiresAt)
+		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, $2, 'started', $3) RETURNING sign`
+		row := tx.QueryRow(insertCartLockQuery, cartId, lockType, expiresAt)
 
 		// Retrieve and return the sign value
 		var sign string
 		if err := row.Scan(&sign); err != nil {
 			return "", false, fmt.Errorf("error retrieving sign value for cart %d: %s", cartId, err)
 		}
+		_ = s.CreateCloudTask(cartId, lockType, sign, merchantTransactionId)
 
 		return sign, true, nil
 	} else {
+
+		println("Cart Lock Update Cash")
+		updateCartLockQuery := `
+		UPDATE cart_lock 
+		SET completed = 'success', last_updated = CURRENT_TIMESTAMP 
+		WHERE cart_id = $1 AND completed = 'started' AND sign = $2 AND lock_type = 'lock-stock'`
+		result, err := tx.Exec(updateCartLockQuery, cartId, sign)
+		if err != nil {
+			return "", false, fmt.Errorf("failed to update cart_lock for cart %d: %s", cartId, err)
+		}
+
+		// Check if any rows were affected by the update
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return "", false, fmt.Errorf("failed to get rows affected: %s", err)
+		}
+
+		if rowsAffected == 0 {
+			// No rows were updated, return false
+			println("No Cart Lock Affected")
+			return "", false, nil
+		}
 		// Insert a new cart_lock record
 		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed) VALUES ($1, 'paid', 'success') RETURNING sign`
 		row := tx.QueryRow(insertCartLockQuery, cartId)
@@ -119,12 +143,12 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 	}
 }
 
-func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string) (bool, error) {
+func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string, merchantTransactionID string) (bool, error) {
 	var storeID sql.NullInt64
 
 	// get cart items
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
-	rows, err := tx.Query(query, cart_id)
+	rows, err := s.db.Query(query, cart_id)
 	if err != nil {
 		return true, err
 	}
@@ -144,7 +168,7 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string)
 
 	// Existing query to fetch customer_id, store_id, and address from shopping_cart
 	var customerID sql.NullInt64
-	err = tx.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
+	err = s.db.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
 	if err != nil {
 		return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
 	}
@@ -157,7 +181,7 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string)
 
 	// New query to get the default address ID for the customer
 	var defaultAddressID int
-	err = tx.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
+	err = s.db.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
 	if err != nil {
 		// Handle the error, for example, no default address found or query failed
 		return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
@@ -166,7 +190,7 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string)
 	// Continue with your logic, now having defaultAddressID
 
 	var transactionID int
-	err = tx.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 `, cart_id).Scan(&transactionID)
+	err = s.db.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 AND merchant_transaction_id = $2 AND status = 'COMPLETED'`, cart_id, merchantTransactionID).Scan(&transactionID)
 	if err != nil {
 		// Handle the error, for example, no default address found or query failed
 		return true, fmt.Errorf("failed to transaction_id for cart_id %d: %s", cart_id, err)
@@ -198,28 +222,29 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string)
 		}
 	}
 
+	println("Start Updating Shopping Cart")
+
 	_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
 	if err != nil {
 		return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
 	}
 
+	println("Insert Into Shopping Cart")
 	query = `insert into shopping_cart
 			(customer_id, active) 
 			values ($1, $2) returning id, customer_id, active, created_at
 			`
-	_, err = s.db.Query(
+	_, err = tx.Query(
 		query,
 		customerID,
 		true,
 	)
 	if err != nil {
+		println("Err Updating Shopping Cart ", err)
 		return true, err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return true, err
-	}
+	println("Completed Insert Into Shopping Cart")
 
 	return true, nil
 }
@@ -227,8 +252,9 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string)
 // /helper functions end
 
 type IsLockStock struct {
-	Lock bool   `json:"lock"`
-	Sign string `json:"sign"`
+	Lock                  bool   `json:"lock"`
+	Sign                  string `json:"sign"`
+	MerchantTransactionId string `json:"merchantTransactionId"`
 }
 
 func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
@@ -269,7 +295,7 @@ func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
 		return resp, err
 	}
 
-	err = s.CreateTransaction(tx, cart_id)
+	merchantTransactionID, err := s.CreateTransaction(tx, cart_id)
 	if err != nil {
 		fmt.Print("Error in Creating Transaction: ", err)
 		resp.Lock = false
@@ -277,7 +303,7 @@ func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
 		return resp, err
 	}
 
-	_ = s.CreateCloudTask(cart_id, "lock-stock", sign)
+	_ = s.CreateCloudTask(cart_id, "lock-stock", sign, merchantTransactionID)
 
 	err = tx.Commit()
 	if err != nil {
@@ -288,70 +314,115 @@ func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
 
 	resp.Lock = true
 	resp.Sign = sign
+	resp.MerchantTransactionId = merchantTransactionID
 	return resp, nil
 }
 
-func (s *PostgresStore) PayStock(cart_id int, sign string) (bool, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return false, fmt.Errorf("failed to start transaction: %s", err)
-	}
-
-	_, updated, err := s.cartLockUpdate(tx, cart_id, false, sign)
-	if err != nil {
-		return false, err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return false, fmt.Errorf("error committing transaction: %s", err)
-	}
-
-	if updated {
-		return true, nil
-	}
-
-	// timeout cart lock does not exist
-	return false, nil
+// PayStockResponse represents the response structure for PayStock.
+type PayStockResponse struct {
+	Sign   string `json:"sign"`
+	IsPaid bool   `json:"isPaid"`
 }
 
-func (s *PostgresStore) PayStockCash(cart_id int, sign string) (bool, error) {
-	// Start a transaction
+// PayStock processes the payment of stock.
+func (s *PostgresStore) PayStock(cart_id int, sign string, merchantTransactionId string) (PayStockResponse, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return false, fmt.Errorf("failed to start transaction: %s", err)
+		return PayStockResponse{}, fmt.Errorf("failed to start transaction: %s", err)
 	}
 
-	// Call cartLockUpdate to update the cart_lock record
-	_, updated, err := s.cartLockUpdate(tx, cart_id, true, sign)
+	sign, updated, err := s.cartLockUpdate(tx, cart_id, false, sign, merchantTransactionId)
 	if err != nil {
-		tx.Rollback() // Rollback the transaction on error
-		return false, err
+		tx.Rollback() // Ensure to rollback in case of an error
+		print("error in transaction: %s", err)
+		return PayStockResponse{IsPaid: updated}, nil
 	}
 
-	if !updated {
-		// If cartLockUpdate didn't make any updates and return false
-		err = tx.Commit()
-		if err != nil {
-			return false, fmt.Errorf("error committing transaction: %s", err)
-		}
-		return false, nil
-	}
-
-	// Continue with the rest of your operations (e.g., CreateOrder)
-	success, err := s.CreateOrder(tx, cart_id, "cash")
-	if err != nil {
-		tx.Rollback() // Rollback the transaction on error
-		return false, err
-	}
-
-	// Commit the transaction if everything is successful
 	err = tx.Commit()
 	if err != nil {
-		return false, fmt.Errorf("error committing transaction: %s", err)
+		print("error committing transaction: %s", err)
+		return PayStockResponse{IsPaid: updated}, nil
 	}
 
-	return success, nil
+	return PayStockResponse{
+		Sign:   sign,
+		IsPaid: updated,
+	}, nil
+}
+
+func (s *PostgresStore) PayStockCash(cart_id int, sign string, merchantTransactionID string) (IsPaid, error) {
+	print("Entered Pay Stock Cash")
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return IsPaid{false}, fmt.Errorf("failed to start transaction: %s", err)
+	}
+
+	println("Update Cart Lock Start")
+	_, updated, err := s.cartLockUpdate(tx, cart_id, true, sign, merchantTransactionID)
+	if err != nil {
+		tx.Rollback() // Rollback the transaction on error
+		return IsPaid{false}, err
+	}
+	println("Update Cart Lock End")
+	println("Cart Lock Updated: ", updated)
+
+	if !updated {
+		err = tx.Commit()
+		if err != nil {
+			return IsPaid{false}, fmt.Errorf("error committing transaction: %s", err)
+		}
+		return IsPaid{false}, nil
+	}
+
+	println("Start Payment Details")
+	var payDetails TransactionDetails
+	payDetails.Status = "COMPLETED"
+	payDetails.MerchantID = "PGTESTPAYUAT"
+	payDetails.MerchantTransactionID = merchantTransactionID
+	payDetails.PaymentDetails = nil
+	payDetails.ResponseCode = "SUCCESS"
+	payDetails.PaymentGatewayName = "Self-Service"
+	payDetails.PaymentMethod = "Cash"
+
+	println("Start Transaction")
+	_, err = s.CompleteTransaction(tx, payDetails)
+	if err != nil {
+		print("Enter Rollback for Transaction")
+		tx.Rollback()
+		return IsPaid{false}, err
+	}
+	println("End Transaction")
+
+	err = tx.Commit()
+	if err != nil {
+		return IsPaid{false}, fmt.Errorf("error committing transaction: %s", err)
+	}
+	println("Create Order Start")
+
+	tx, err = s.db.Begin()
+	if err != nil {
+		return IsPaid{false}, fmt.Errorf("failed to start transaction: %s", err)
+	}
+
+	success, err := s.CreateOrder(tx, cart_id, "cash", merchantTransactionID)
+	if err != nil {
+		println("Rollback for Order")
+		tx.Rollback()
+		return IsPaid{false}, err
+	}
+
+	print("Create Order End")
+	err = tx.Commit()
+	if err != nil {
+		return IsPaid{false}, fmt.Errorf("error committing transaction: %s", err)
+	}
+
+	return IsPaid{IsPaid: success}, nil
+}
+
+type IsPaid struct {
+	IsPaid bool `json:"isPaid"`
 }
 
 func (s *PostgresStore) MakeQuantitiesPermanent(cart_id int) error {

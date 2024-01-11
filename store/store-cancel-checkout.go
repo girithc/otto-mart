@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string) error {
+func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string, merchantTransactionID string, lockType string) error {
 	fmt.Println("Entered Cancel_Checkout")
 
 	// Begin a transaction
@@ -15,7 +15,7 @@ func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string) error {
 	}
 
 	fmt.Println("Entered EndCartLock")
-	alreadyCancelled, cartUnlock, err := s.EndCartLock(tx, cart_id, sign)
+	alreadyCancelled, cartUnlock, err := s.EndCartLock(tx, cart_id, sign, lockType)
 	if err != nil {
 		tx.Rollback()
 		return fmt.Errorf("error ending cart lock: %w", err)
@@ -43,11 +43,13 @@ func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string) error {
 
 		fmt.Println("Entered DeleteTransaction")
 
-		err = s.DeleteTransaction(tx, cart_id)
+		err = s.DeleteTransaction(tx, cart_id, merchantTransactionID)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("error deleting transaction: %w", err)
 		}
+
+		fmt.Println("Completed DeleteTransaction")
 	}
 
 	// Commit the transaction
@@ -61,24 +63,55 @@ func (s *PostgresStore) Cancel_Checkout(cart_id int, sign string) error {
 }
 
 func (s *PostgresStore) ResetLockedQuantities(tx *sql.Tx, cart_id int) error {
-	_, err := tx.Exec(`WITH quantities AS (
-        SELECT item_id, quantity 
-        FROM cart_item 
-        WHERE cart_id = $1
-    )
-    UPDATE item_store 
-    SET stock_quantity = stock_quantity + quantities.quantity, 
-        locked_quantity = locked_quantity - quantities.quantity
-    FROM quantities 
-    WHERE item_store.id = quantities.item_id;
-    `, cart_id)
-	return err
+	type ItemUpdate struct {
+		ItemID   int
+		Quantity int
+	}
+
+	// First, retrieve the item_id and quantity from cart_item for the given cart_id
+	var updates []ItemUpdate
+	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1`
+	rows, err := s.db.Query(query, cart_id)
+	if err != nil {
+		return fmt.Errorf("error querying cart_item table: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var update ItemUpdate
+		if err := rows.Scan(&update.ItemID, &update.Quantity); err != nil {
+			return fmt.Errorf("error scanning cart_item row: %w", err)
+		}
+		updates = append(updates, update)
+	}
+
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("error iterating over cart_item rows: %w", err)
+	}
+
+	// Now, batch update item_store for each item
+	for _, update := range updates {
+		updateQuery := `
+            UPDATE item_store 
+            SET stock_quantity = stock_quantity + $1, 
+                locked_quantity = locked_quantity - $1
+            WHERE id = $2
+        `
+		if _, err := tx.Exec(updateQuery, update.Quantity, update.ItemID); err != nil {
+			return fmt.Errorf("error updating item_store table for item_id %d: %w", update.ItemID, err)
+		}
+	}
+
+	return nil
 }
 
-func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int, sign string) (string, bool, error) {
+func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int, sign string, lockType string) (string, bool, error) {
 	// Update the cart_lock record
-	query := `UPDATE cart_lock SET completed = 'ended', last_updated = CURRENT_TIMESTAMP WHERE cart_id = $1 AND completed = 'started' AND sign = $2`
-	res, err := tx.Exec(query, cartId, sign)
+	query := `UPDATE cart_lock SET completed = 'ended', 
+	last_updated = CURRENT_TIMESTAMP 
+	WHERE cart_id = $1 AND completed = 'started' AND sign = $2 AND  lock_type = $3
+	`
+	res, err := tx.Exec(query, cartId, sign, lockType)
 	if err != nil {
 		tx.Rollback() // Rollback in case of any error
 		print(err)

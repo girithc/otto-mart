@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,9 +16,10 @@ import (
 )
 
 type PhonePeCheckStatus struct {
-	Status string `json:"status"`
-	Done   bool   `json:"done"`
-	Amount int    `json:"amount"`
+	Status        string `json:"status"`
+	Done          bool   `json:"done"`
+	Amount        int    `json:"amount"`
+	PaymentMethod string `json:"payment_method"`
 }
 
 func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, merchantTransactionID string) (PhonePeCheckStatus, error) {
@@ -60,7 +60,9 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 		response.Done = true
 		response.Status = "SUCCESS"
 		response.Amount = transaction.Amount
+		response.PaymentMethod = transaction.PaymentMethod
 		return response, nil
+
 	} else if transaction.ResponseCode == "ZU" {
 		// LOG POTENTIAL REFUND
 		response.Done = false
@@ -70,7 +72,7 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 	}
 
 	// If S2S callback not received, call Check Status API
-	success, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId, transaction.Amount)
+	trx, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId, transaction.Amount)
 	if err != nil {
 		// LOG POTENTIAL REFUND
 		response.Status = "FAILED"
@@ -79,10 +81,62 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 		return response, err
 	}
 
-	if success.Done {
-	}
+	if trx.ResponseCode == "SUCCESS" {
+		tx, err := s.db.Begin()
+		if err != nil {
+			response.Done = true
+			response.Status = "SUCCESS"
+			response.Amount = transaction.Amount
+			response.PaymentMethod = transaction.PaymentMethod
+			return response, fmt.Errorf("error starting transaction: %w", err)
+		}
 
-	return success, nil
+		var payDetails TransactionDetails
+		payDetails.Status = trx.Status
+		payDetails.MerchantID = trx.MerchantID
+		payDetails.MerchantTransactionID = trx.MerchantTransactionID
+		payDetails.PaymentDetails = trx.PaymentDetails
+		payDetails.ResponseCode = trx.ResponseCode
+		payDetails.PaymentGatewayName = trx.PaymentGatewayName
+		payDetails.PaymentMethod = trx.PaymentMethod
+		payDetails.TransactionID = trx.TransactionID
+
+		_, err = s.CompleteTransaction(tx, payDetails)
+		if err != nil {
+			response.Done = true
+			response.Status = "SUCCESS"
+			response.Amount = transaction.Amount
+			response.PaymentMethod = transaction.PaymentMethod
+			return response, err
+		}
+
+		_, err = s.CreateOrder(tx, cartID, transaction.PaymentMethod, transaction.MerchantTransactionId)
+		if err != nil {
+			tx.Rollback() // Rollback the transaction on error
+			return response, err
+		}
+
+		err = tx.Commit()
+		if err != nil {
+			response.Done = true
+			response.Status = "SUCCESS"
+			response.Amount = transaction.Amount
+			response.PaymentMethod = trx.PaymentMethod
+			return response, fmt.Errorf("error committing transaction: %w", err)
+		}
+
+		response.Done = true
+		response.Status = "SUCCESS"
+		response.Amount = transaction.Amount
+		response.PaymentMethod = trx.PaymentMethod
+		return response, nil
+	} else {
+		response.Done = false
+		response.Status = "FAILED"
+		response.Amount = transaction.Amount
+		response.PaymentMethod = trx.PaymentMethod
+		return response, nil
+	}
 }
 
 func (s *PostgresStore) GetTransactionByCartId(cart_id int, merchantTransactionID string) (*types.Transaction, error) {
@@ -90,13 +144,15 @@ func (s *PostgresStore) GetTransactionByCartId(cart_id int, merchantTransactionI
 
 	// Updated query to fetch the latest transaction based on transaction_date
 	query := `
-        SELECT merchant_transaction_id, merchant_id, response_code, status, amount 
+        SELECT merchant_transaction_id, merchant_id, response_code, status, amount, payment_method, 
+		payment_details, payment_gateway_name 
         FROM transaction 
-        WHERE cart_id = $1 AND status != 'pending' AND merchant_transaction_id = $2
+        WHERE cart_id = $1 AND status = 'COMPLETED' AND merchant_transaction_id = $2
         ORDER BY transaction_date DESC 
         LIMIT 1`
 
-	err := s.db.QueryRow(query, cart_id, merchantTransactionID).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode, &transaction.Status, &transaction.Amount)
+	err := s.db.QueryRow(query, cart_id, merchantTransactionID).Scan(&transaction.MerchantTransactionId, &transaction.MerchantId, &transaction.ResponseCode, &transaction.Status, &transaction.Amount,
+		&transaction.PaymentMethod, &transaction.PaymentDetails, &transaction.PaymentGatewayName)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +160,7 @@ func (s *PostgresStore) GetTransactionByCartId(cart_id int, merchantTransactionI
 	return &transaction, nil
 }
 
-func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId string, amout int) (PhonePeCheckStatus, error) {
+func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId string, amout int) (TransactionDetails, error) {
 	// Construct the URL
 	fmt.Println("Entered CallCheckStatusAPI")
 	url := fmt.Sprintf("https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/%s/%s", merchantId, merchantTransactionId)
@@ -114,8 +170,7 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 
-		var response PhonePeCheckStatus
-		response.Done = false
+		var response TransactionDetails
 		response.Status = "REQUEST ERROR"
 		return response, nil
 	}
@@ -128,8 +183,7 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println("Error executing request:", err)
-		var response PhonePeCheckStatus
-		response.Done = false
+		var response TransactionDetails
 		response.Status = "REQUEST_ERROR_2"
 		return response, nil
 	}
@@ -139,8 +193,7 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error reading response body:", err)
-		var response PhonePeCheckStatus
-		response.Done = false
+		var response TransactionDetails
 		response.Status = "REQUEST_ERROR_RESPONSE"
 		return response, nil
 	}
@@ -157,8 +210,7 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 	err = json.Unmarshal(bodyBytes, &response)
 	if err != nil {
 		fmt.Println("Error decoding response:", err)
-		var respCheckStatus PhonePeCheckStatus
-		respCheckStatus.Done = false
+		var respCheckStatus TransactionDetails
 		respCheckStatus.Status = "REQUEST_ERROR_RESPONSE"
 		return respCheckStatus, nil
 	}
@@ -170,19 +222,25 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 
 			// update transaction
 
-			var respCheckStatus PhonePeCheckStatus
-			respCheckStatus.Done = true
-			respCheckStatus.Status = "PAYMENT_SUCCESS"
-			respCheckStatus.Amount = response.Data.Amount
-			return respCheckStatus, nil
+			var payDetails TransactionDetails
+			payDetails.Status = response.Code
+			payDetails.MerchantID = response.Data.MerchantId
+			payDetails.MerchantTransactionID = response.Data.MerchantTransactionId
+			payDetails.PaymentDetails = response.Data.PaymentInstrument
+			payDetails.ResponseCode = response.Data.ResponseCode
+			payDetails.PaymentGatewayName = "PhonePe"
+			payDetails.PaymentMethod = "credit"
+			return payDetails, nil
 		}
-		var respCheckStatus PhonePeCheckStatus
-		respCheckStatus.Done = false
-		respCheckStatus.Status = "PAYMENT_PENDING"
-		respCheckStatus.Amount = response.Data.Amount
-		// update transaction
-
-		return respCheckStatus, nil
+		var payDetails TransactionDetails
+		payDetails.Status = response.Code
+		payDetails.MerchantID = "ERROR"
+		payDetails.MerchantTransactionID = "ERROR"
+		payDetails.PaymentDetails = "ERROR"
+		payDetails.ResponseCode = "ERROR"
+		payDetails.PaymentGatewayName = "PhonePe"
+		payDetails.PaymentMethod = "credit"
+		return payDetails, nil
 	} else {
 		// Handle failure scenarios
 		errMsg := fmt.Sprintf("API call failed: %s - %s", response.Code, response.Message)
@@ -190,12 +248,15 @@ func (s *PostgresStore) CallCheckStatusAPI(merchantId, merchantTransactionId str
 
 		// update transaction
 
-		var respCheckStatus PhonePeCheckStatus
-		respCheckStatus.Done = false
-		respCheckStatus.Status = response.Code
-		respCheckStatus.Amount = response.Data.Amount
-		// You can customize the error based on the response code if needed
-		return respCheckStatus, errors.New(errMsg)
+		var payDetails TransactionDetails
+		payDetails.Status = response.Code
+		payDetails.MerchantID = response.Data.MerchantId
+		payDetails.MerchantTransactionID = response.Data.MerchantTransactionId
+		payDetails.PaymentDetails = response.Data.PaymentInstrument
+		payDetails.ResponseCode = response.Data.ResponseCode
+		payDetails.PaymentGatewayName = "PhonePe"
+		payDetails.PaymentMethod = "credit"
+		return payDetails, nil
 	}
 }
 
@@ -220,17 +281,7 @@ func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
 	return nil
 }
 
-func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.PhonePeResponsePlus, error) {
-	/*
-		phonepe := &types.PhonePeInit{
-			MerchantId:        "PGTESTPAYUAT",
-			RedirectUrl:       "https://youtube.com/redirect-url",
-			RedirectMode:      "REDIRECT",
-			CallbackUrl:       "https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback",
-			PaymentInstrument: types.PaymentInstrument{Type: "PAY_PAGE"},
-		}
-	*/
-
+func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string, merchantTransactionID string) (*types.PhonePeResponsePlus, error) {
 	phonepe := &types.PhonePeInit{
 		MerchantId:        "PGTESTPAYUAT",
 		RedirectUrl:       "https://youtube.com/redirect-url",
@@ -326,7 +377,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 	// generated response url
 	if response.Success {
 		// reset timer
-		sign, updated, err := s.InitiatePayment(cart_id, sign)
+		sign, updated, err := s.InitiatePayment(cart_id, sign, merchantTransactionID)
 		if err != nil {
 			return nil, err
 		}
@@ -336,7 +387,9 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 			respFinal.Success = false
 			if sign == "no-stock" {
 				respFinal.Message = "timeout error"
+				return &respFinal, nil
 			}
+			return &respFinal, nil
 		} else {
 			respFinal.Code = response.Code
 			respFinal.Data = response.Data
@@ -344,9 +397,9 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 			respFinal.Sign = sign
 			respFinal.Success = response.Success
 			respFinal.MerchantTransactionId = phonepe.MerchantTransactionId
+			return &respFinal, nil
 		}
 
-		return &respFinal, nil
 	} else {
 		var respFinal types.PhonePeResponsePlus
 		respFinal.Success = false
@@ -355,7 +408,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string) (*types.Pho
 	}
 }
 
-func (s *PostgresStore) InitiatePayment(cart_id int, sign string) (string, bool, error) {
+func (s *PostgresStore) InitiatePayment(cart_id int, sign string, merchantTransactionID string) (string, bool, error) {
 	// Begin a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -390,7 +443,7 @@ func (s *PostgresStore) InitiatePayment(cart_id int, sign string) (string, bool,
 		return "", false, fmt.Errorf("error creating new cart_lock record for payment and retrieving sign: %w", err)
 	}
 
-	_ = s.CreateCloudTask(cart_id, "lock-stock-pay", signValue)
+	_ = s.CreateCloudTask(cart_id, "lock-stock-pay", signValue, merchantTransactionID)
 	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {
@@ -492,21 +545,43 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		return nil, err
 	}
 
-	// Prepare and execute the SQL update query
-	updateQuery := `
-    UPDATE transaction
-    SET status = $1, 
-        response_code = $2,
-        payment_details = $3,
-        payment_method = $4,
-        merchant_id = $5,
-        payment_gateway_name = $6
-    WHERE merchant_transaction_id = $7`
+	var payDetails TransactionDetails
+	payDetails.Status = paymentResponse.Data.State
+	payDetails.MerchantID = paymentResponse.Data.MerchantId
+	payDetails.MerchantTransactionID = paymentResponse.Data.MerchantTransactionId
+	payDetails.PaymentDetails = paymentInstrument
+	payDetails.ResponseCode = paymentResponse.Data.ResponseCode
+	payDetails.PaymentGatewayName = "PhonePe"
+	payDetails.PaymentMethod = instrumentType
+	payDetails.TransactionID = paymentResponse.Data.TransactionId
 
-	if _, err = tx.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
-		paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId); err != nil {
-		tx.Rollback()
-		fmt.Printf("Error updating transaction record: %v\n", err)
+	_, err = s.CompleteTransaction(tx, payDetails)
+	if err != nil {
+		return nil, err
+	}
+
+	/*
+			// Prepare and execute the SQL update query
+			updateQuery := `
+		    UPDATE transaction
+		    SET status = $1,
+		        response_code = $2,
+		        payment_details = $3,
+		        payment_method = $4,
+		        merchant_id = $5,
+		        payment_gateway_name = $6
+		    WHERE merchant_transaction_id = $7`
+
+			if _, err = tx.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
+				paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId); err != nil {
+				tx.Rollback()
+				fmt.Printf("Error updating transaction record: %v\n", err)
+				return nil, err
+			}
+	*/
+	_, err = s.CreateOrder(tx, cartID, payDetails.PaymentMethod, payDetails.MerchantTransactionID)
+	if err != nil {
+		tx.Rollback() // Rollback the transaction on error
 		return nil, err
 	}
 

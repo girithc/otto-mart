@@ -269,7 +269,6 @@ func (s *PostgresStore) Get_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_It
 }
 
 func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_Item_Item_List, error) {
-	print("Entered Get_Items_List_From_Cart_Items_By_Cart_Id")
 	rows, err := s.db.Query(`
         SELECT 
             i.id, 
@@ -303,7 +302,6 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
 }
 
 func (s *PostgresStore) Get_Items_List_From_Active_Cart_By_Customer_Id(customer_id int) (*types.CartItemResponse, error) {
-	print("Entered Get_Items_List_From_Active_Cart_By_Customer_Id")
 	query := `
         WITH item_images AS (
             SELECT item_id, MIN(image_url) as main_image

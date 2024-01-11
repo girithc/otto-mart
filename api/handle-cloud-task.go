@@ -7,9 +7,10 @@ import (
 )
 
 type CloudTaskPayload struct {
-	CartID   int    `json:"cart_id"`
-	LockType string `json:"lock_type"`
-	Sign     string `json:"sign"`
+	CartID                int    `json:"cart_id"`
+	LockType              string `json:"lock_type"`
+	Sign                  string `json:"sign"`
+	MerchantTransactionID string `json:"merchantTransactionId"`
 }
 
 func (s *Server) HandleLockStockCloudTask(res http.ResponseWriter, req *http.Request) error {
@@ -27,7 +28,7 @@ func (s *Server) HandleLockStockCloudTask(res http.ResponseWriter, req *http.Req
 	fmt.Printf("Received Cloud Task with Cart ID: %d and Lock Type: %s\n", payload.CartID, payload.LockType)
 
 	// Your existing logic
-	err = s.store.Cancel_Checkout(payload.CartID, payload.Sign)
+	err = s.store.Cancel_Checkout(payload.CartID, payload.Sign, payload.MerchantTransactionID, payload.LockType)
 	if err != nil {
 		return WriteJSON(res, http.StatusInternalServerError, err)
 	}

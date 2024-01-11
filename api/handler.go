@@ -656,34 +656,7 @@ func (s *Server) handleCheckoutLockItems(res http.ResponseWriter, req *http.Requ
 func (s *Server) handleCheckoutPayment(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "checkout-payment")
-
-		// Read and store the request body
-		bodyBytes, err := io.ReadAll(req.Body)
-		if err != nil {
-			return err // or handle this error accordingly
-		}
-
-		// You can then create a new request body from bodyBytes to pass to your handler
-		newReq := &http.Request{
-			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
-			// ... copy other needed fields from the original request
-		}
-
-		// Spawn a goroutine to handle the checkout process
-		go func() {
-			err := s.handlePostCheckoutPayment(res, newReq)
-			if err != nil {
-				// Handle the error, e.g., log it
-				fmt.Printf("Error handling checkout: %s\n", err)
-			}
-		}()
-
-		// Return an acknowledgment to the user immediately or some placeholder response
-		// Example:
-		res.WriteHeader(http.StatusOK)
-		res.Write([]byte("Payment initiated, please wait..."))
-
-		return nil
+		return s.handlePostCheckoutPayment(res, req)
 	}
 	return nil
 }

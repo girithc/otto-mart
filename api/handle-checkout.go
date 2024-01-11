@@ -11,7 +11,7 @@ import (
 func (s *Server) handlePostCheckoutLockItems(res http.ResponseWriter, req *http.Request) error {
 	fmt.Println("Entered handlePostCheckoutLockItems")
 
-	new_req := new(types.Checkout_Lock_Items)
+	new_req := new(types.Checkout_Init)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in handlePostCheckoutLockItems()")
@@ -42,18 +42,18 @@ func (s *Server) handlePostCheckoutPayment(res http.ResponseWriter, req *http.Re
 	}
 
 	if new_req.Cash {
-		isPaid, err := s.store.PayStockCash(new_req.Cart_Id, new_req.Sign)
+		isPaid, err := s.store.PayStockCash(new_req.Cart_Id, new_req.Sign, new_req.MerchantTransactionId)
 		if err != nil {
-			return err
+			return WriteJSON(res, http.StatusBadRequest, isPaid)
 		}
 
 		return WriteJSON(res, http.StatusOK, isPaid)
 	}
 
-	isPaid, err := s.store.PayStock(new_req.Cart_Id, new_req.Sign)
+	response, err := s.store.PayStock(new_req.Cart_Id, new_req.Sign, new_req.MerchantTransactionId)
 	if err != nil {
 		return err
 	}
 
-	return WriteJSON(res, http.StatusOK, isPaid)
+	return WriteJSON(res, http.StatusOK, response)
 }

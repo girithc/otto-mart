@@ -3,8 +3,9 @@ package types
 import "encoding/json"
 
 type PhonePeCartId struct {
-	CartId int    `json:"cart_id"`
-	Sign   string `json:"sign"`
+	CartId                int    `json:"cart_id"`
+	Sign                  string `json:"sign"`
+	MerchantTransactionID string `json:"merchantTransactionId"`
 }
 
 type PhonePeCartIdStatus struct {
@@ -115,11 +116,14 @@ type TempInstrumentType struct {
 }
 
 type Transaction struct {
-	MerchantTransactionId string `json:"merchant_transaction_id"`
-	MerchantId            string `json:"merchant_id"`
-	ResponseCode          string `json:"response_code"`
-	Status                string `json:"status"`
-	Amount                int    `json:"amount"`
+	MerchantTransactionId string      `json:"merchant_transaction_id"`
+	MerchantId            string      `json:"merchant_id"`
+	ResponseCode          string      `json:"response_code"`
+	Status                string      `json:"status"`
+	Amount                int         `json:"amount"`
+	PaymentMethod         string      `json:"payment_method"`
+	PaymentDetails        interface{} `json:"payment_details"`
+	PaymentGatewayName    string      `json:"payment_gateway_name"`
 }
 
 type VerifyPayment struct {

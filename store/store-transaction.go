@@ -59,7 +59,7 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) error {
+func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) (string, error) {
 	// Generate a unique merchant transaction ID
 	fmt.Println("Entered Create Transaction")
 	merchantTransactionID := uuid.NewString()
@@ -78,7 +78,7 @@ func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) error {
               WHERE sc.id = $1`
 	err := tx.QueryRow(query, cart_id).Scan(&cartID, &merchantUserID, &amount)
 	if err != nil {
-		return fmt.Errorf("error %d", err)
+		return "", fmt.Errorf("error %d", err)
 	}
 
 	// Define the transaction status (e.g., 'pending', 'completed', etc.)
@@ -94,20 +94,56 @@ func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) error {
 			// Check if the error code is for a unique violation
 			if pqErr.Code == "23505" {
 				// Handle the unique constraint violation
-				return fmt.Errorf("unique constraint violation: %v", err)
+				return "", fmt.Errorf("unique constraint violation: %v", err)
 			}
 		}
 		// Handle other errors
-		return fmt.Errorf("error %d", err)
+		return "", fmt.Errorf("error %d", err)
 	}
 
-	return nil
+	return merchantTransactionID, nil
 }
 
-func (s *PostgresStore) DeleteTransaction(tx *sql.Tx, cartID int) error {
+// TransactionDetails represents the details of the transaction.
+type TransactionDetails struct {
+	Status                string
+	ResponseCode          string
+	PaymentDetails        interface{}
+	PaymentMethod         string
+	MerchantID            string
+	PaymentGatewayName    string
+	MerchantTransactionID string
+	TransactionID         string
+}
+
+// CompleteTransaction updates a transaction and returns the updated details.
+func (s *PostgresStore) CompleteTransaction(tx *sql.Tx, paymentDetails TransactionDetails) (bool, error) {
+	// Prepare and execute the SQL update query
+	updateQuery := `
+    UPDATE transaction
+    SET status = $1, 
+        response_code = $2,
+        payment_details = $3,
+        payment_method = $4,
+        merchant_id = $5,
+        payment_gateway_name = $6,
+		transaction_id = $7
+    WHERE merchant_transaction_id = $8`
+
+	if _, err := tx.Exec(updateQuery, paymentDetails.Status, paymentDetails.ResponseCode,
+		paymentDetails.PaymentDetails, paymentDetails.PaymentMethod, paymentDetails.MerchantID,
+		paymentDetails.PaymentGatewayName, paymentDetails.TransactionID, paymentDetails.MerchantTransactionID); err != nil {
+		fmt.Printf("Error updating transaction record: %v\n", err)
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (s *PostgresStore) DeleteTransaction(tx *sql.Tx, cartID int, merchantTransactionID string) error {
 	// Delete transactions related to the fetched sales_order_id
-	deleteQuery := `DELETE FROM transaction WHERE cart_id = $1 AND status = 'pending' `
-	_, err := tx.Exec(deleteQuery, cartID)
+	deleteQuery := `DELETE FROM transaction WHERE cart_id = $1 AND status = 'pending' AND merchant_transaction_id  = $2`
+	_, err := tx.Exec(deleteQuery, cartID, merchantTransactionID)
 	if err != nil {
 		return fmt.Errorf("error deleting transaction for cartID %d: %w", cartID, err)
 	}

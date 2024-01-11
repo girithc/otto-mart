@@ -109,8 +109,6 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 		return err
 	}
 
-	print("Number of Items ", numberOfItems)
-
 	// Calculate delivery fee based on item cost
 	switch {
 	case itemCost <= 99:

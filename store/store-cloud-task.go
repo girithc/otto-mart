@@ -61,7 +61,7 @@ func createHTTPTaskWithToken(projectID, locationID, queueID, url, email string, 
 	return createdTask, nil
 }
 
-func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string) error {
+func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string, merchantTransactionID string) error {
 	email := "quickstart-service-account@hip-well-400702.iam.gserviceaccount.com"
 
 	var delayTime int
@@ -71,9 +71,10 @@ func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string
 
 		// Prepare the payload
 		payload := map[string]interface{}{
-			"cart_id":   cartID,
-			"lock_type": lockType,
-			"sign":      sign,
+			"cart_id":               cartID,
+			"lock_type":             lockType,
+			"sign":                  sign,
+			"merchantTransactionId": merchantTransactionID,
 		}
 
 		// Create Task with Token and JSON payload

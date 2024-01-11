@@ -58,7 +58,7 @@ func (s *Server) handlePhonePePaymentInit(res http.ResponseWriter, req *http.Req
 		return err
 	}
 
-	records, err := s.store.PhonePePaymentInit(new_req.CartId, new_req.Sign)
+	records, err := s.store.PhonePePaymentInit(new_req.CartId, new_req.Sign, new_req.MerchantTransactionID)
 	if err != nil {
 		return err
 	}
