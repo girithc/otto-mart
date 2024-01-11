@@ -23,40 +23,23 @@ type PhonePeCheckStatus struct {
 }
 
 func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, merchantTransactionID string) (PhonePeCheckStatus, error) {
-	// check for s2s callback
-	// if received and paid
-	// success
-	// if received and failed
-	// payment fail
-	// if not received
-	// send check status api
-	// repeat the process
-
-	//if status pending
-	//follow guidelines.
-	/*
-		Check Status API - Reconciliation [MANDATORY]
-		If the payment status is Pending, then Check Status API should be called in the following interval:
-		The first status check at 20-25 seconds post transaction start, then
-		Every 3 seconds once for the next 30 seconds,
-		Every 6 seconds once for the next 60 seconds,
-		Every 10 seconds for the next 60 seconds,
-		Every 30 seconds for the next 60 seconds, and then
-		Every 1 min until timeout (20 mins).
-	*/
+	fmt.Println("PhonePeCheckStatus started")
 
 	var response PhonePeCheckStatus
 
+	fmt.Println("Fetching transaction")
 	transaction, err := s.GetTransactionByCartId(cartID, merchantTransactionID)
 	if err != nil {
+		fmt.Println("Error fetching transaction:", err)
 		response.Done = false
 		response.Status = "transaction not found"
 		response.Amount = 0
 		return response, fmt.Errorf("error fetching transaction: %w", err)
 	}
 
-	// Check if S2S callback has been received
+	fmt.Println("Checking transaction response code")
 	if transaction.ResponseCode == "SUCCESS" {
+		fmt.Println("Transaction SUCCESS")
 		response.Done = true
 		response.Status = "SUCCESS"
 		response.Amount = transaction.Amount
@@ -64,33 +47,36 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 		return response, nil
 
 	} else if transaction.ResponseCode == "ZU" {
-		// LOG POTENTIAL REFUND
+		fmt.Println("Transaction ZU - potential refund")
 		response.Done = false
 		response.Status = "FAILED"
 		response.Amount = transaction.Amount
 		return response, nil
 	}
 
-	// If S2S callback not received, call Check Status API
+	fmt.Println("Calling Check Status API")
 	trx, err := s.CallCheckStatusAPI(transaction.MerchantId, transaction.MerchantTransactionId, transaction.Amount)
 	if err != nil {
-		// LOG POTENTIAL REFUND
+		fmt.Println("Error calling Check Status API:", err)
 		response.Status = "FAILED"
 		response.Done = false
 		response.Amount = 0
 		return response, err
 	}
 
+	fmt.Println("Checking trx response code")
 	if trx.ResponseCode == "SUCCESS" {
+		fmt.Println("trx SUCCESS - beginning database transaction")
 		tx, err := s.db.Begin()
 		if err != nil {
-			response.Done = true
-			response.Status = "SUCCESS"
-			response.Amount = transaction.Amount
-			response.PaymentMethod = transaction.PaymentMethod
+			fmt.Println("Error starting database transaction:", err)
+			response.Done = false
+			response.Status = "FAILED"
+			response.Amount = 0
 			return response, fmt.Errorf("error starting transaction: %w", err)
 		}
 
+		fmt.Println("Setting transaction details")
 		var payDetails TransactionDetails
 		payDetails.Status = trx.Status
 		payDetails.MerchantID = trx.MerchantID
@@ -101,36 +87,40 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 		payDetails.PaymentMethod = trx.PaymentMethod
 		payDetails.TransactionID = trx.TransactionID
 
+		fmt.Println("Completing transaction")
 		_, err = s.CompleteTransaction(tx, payDetails)
 		if err != nil {
-			response.Done = true
-			response.Status = "SUCCESS"
-			response.Amount = transaction.Amount
-			response.PaymentMethod = transaction.PaymentMethod
+			fmt.Println("Error completing transaction:", err)
+			tx.Rollback()
 			return response, err
 		}
 
+		fmt.Println("Creating order")
 		_, err = s.CreateOrder(tx, cartID, transaction.PaymentMethod, transaction.MerchantTransactionId)
 		if err != nil {
+			fmt.Println("Error creating order:", err)
 			tx.Rollback() // Rollback the transaction on error
 			return response, err
 		}
 
+		fmt.Println("Committing transaction")
 		err = tx.Commit()
 		if err != nil {
-			response.Done = true
-			response.Status = "SUCCESS"
-			response.Amount = transaction.Amount
-			response.PaymentMethod = trx.PaymentMethod
+			fmt.Println("Error committing transaction:", err)
+			response.Done = false
+			response.Status = "FAILED"
+			response.Amount = 0
 			return response, fmt.Errorf("error committing transaction: %w", err)
 		}
 
+		fmt.Println("Transaction completed successfully")
 		response.Done = true
 		response.Status = "SUCCESS"
 		response.Amount = transaction.Amount
 		response.PaymentMethod = trx.PaymentMethod
 		return response, nil
 	} else {
+		fmt.Println("trx response code not SUCCESS")
 		response.Done = false
 		response.Status = "FAILED"
 		response.Amount = transaction.Amount
