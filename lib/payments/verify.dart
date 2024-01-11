@@ -49,6 +49,9 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
         }),
       );
 
+      print(response.statusCode);
+      print(response.body);
+
       if (response.statusCode == 200) {
         // Decode the JSON response
         final responseData = jsonDecode(response.body);
@@ -63,12 +66,10 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
                 color: Colors.green, size: 75);
           });
 
-          // Navigate to the homepage after a delay
-          await Future.delayed(const Duration(seconds: 2));
           Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                  builder: (context) => const MyHomePage(title: "Otto Mart")));
+                  builder: (context) => OrderConfirmed(newOrder: true)));
         } else {
           // Update UI for unsuccessful payment
           setState(() {
@@ -111,15 +112,19 @@ class PhonePeCheckStatus {
   final String status;
   final bool done;
   final int amount;
+  final String payment_method;
 
   PhonePeCheckStatus(
-      {required this.status, required this.done, required this.amount});
+      {required this.status,
+      required this.done,
+      required this.amount,
+      required this.payment_method});
 
   factory PhonePeCheckStatus.fromJson(Map<String, dynamic> json) {
     return PhonePeCheckStatus(
-      status: json['status'],
-      done: json['done'],
-      amount: json['amount'],
-    );
+        status: json['status'],
+        done: json['done'],
+        amount: json['amount'],
+        payment_method: json['payment_method']);
   }
 }

@@ -17,9 +17,13 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 class PhonePeWebView extends StatefulWidget {
   final String url;
   final String merchantTransactionId;
+  final String sign;
 
   const PhonePeWebView(
-      {Key? key, required this.url, required this.merchantTransactionId})
+      {Key? key,
+      required this.url,
+      required this.sign,
+      required this.merchantTransactionId})
       : super(key: key);
 
   @override
@@ -53,8 +57,8 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
           onNavigationRequest: (navigation) {
             final host = Uri.parse(navigation.url).host;
             if (host.contains('youtube.com')) {
-              processPayment().then((isPaid) => {
-                    if (isPaid)
+              processPayment().then((response) => {
+                    if (response.isPaid)
                       {
                         Navigator.push(
                           context,
@@ -67,10 +71,18 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
                       }
                     else
                       {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Payment Verification 400.'),
+                            backgroundColor: Colors.redAccent,
+                          ),
+                        ),
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PlaceOrder(),
+                            builder: (context) => PaymentVerificationScreen(
+                                merchantTransactionId:
+                                    widget.merchantTransactionId),
                           ),
                         )
                       }
@@ -127,12 +139,17 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
     }
   }
 
-  Future<bool> processPayment() async {
+  Future<PayStockResponse> processPayment() async {
     String? cartId = await storage.read(key: 'cartId');
     int cartIdInt = int.parse(cartId!);
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse('$baseUrl/checkout-payment'));
-    request.body = json.encode({"cart_id": cartIdInt, "cash": false});
+    request.body = json.encode({
+      "cart_id": cartIdInt,
+      "cash": false,
+      "sign": widget.sign,
+      "merchant_transaction_id": widget.merchantTransactionId
+    });
     request.headers.addAll(headers);
 
     try {
@@ -142,14 +159,22 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
           headers: headers);
 
       if (response.statusCode == 200) {
-        return true; // Payment is successful
+        final responseJson = json.decode(response.body);
+        final payStockResponse = PayStockResponse.fromJson(responseJson);
+
+        // Use the PayStockResponse here as needed, for example:
+        print(
+            "Sign: ${payStockResponse.sign}, IsPaid: ${payStockResponse.isPaid}");
+
+        return payStockResponse; // Return true if payment is successful
       } else {
         print(response.reasonPhrase);
-        return false; // Payment failed
+        return PayStockResponse(sign: "", isPaid: false); // Payment failed
       }
     } catch (e) {
       print('Error: $e');
-      return false; // Error occurred, treat as failed payment
+      return PayStockResponse(
+          sign: "", isPaid: false); // Error occurred, treat as failed payment
     }
   }
 
@@ -225,6 +250,20 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
         ),
       ),
       body: WebViewWidget(controller: _controller),
+    );
+  }
+}
+
+class PayStockResponse {
+  final String sign;
+  final bool isPaid;
+
+  PayStockResponse({required this.sign, required this.isPaid});
+
+  factory PayStockResponse.fromJson(Map<String, dynamic> json) {
+    return PayStockResponse(
+      sign: json['sign'],
+      isPaid: json['isPaid'],
     );
   }
 }

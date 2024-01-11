@@ -216,11 +216,13 @@ class _MyCartState extends State<MyCart> {
                             checkoutLockItems(cartIdInt).then((success) {
                               if (success.lock) {
                                 // If the checkout lock is successful, navigate to the PaymentsPage
-                                Navigator.pushReplacement(
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => PaymentsPage(
                                       sign: success.sign,
+                                      merchantTransactionID:
+                                          success.merchantTransactionID,
                                     ),
                                   ),
                                 );
@@ -801,14 +803,19 @@ class _CustomListItem extends StatelessWidget {
 class LockStockResponse {
   final bool lock;
   final String sign;
+  final String merchantTransactionID;
 
-  LockStockResponse({required this.lock, required this.sign});
+  LockStockResponse(
+      {required this.lock,
+      required this.sign,
+      required this.merchantTransactionID});
 
   // Factory constructor to create an instance from JSON.
   factory LockStockResponse.fromJson(Map<String, dynamic> json) {
     return LockStockResponse(
       lock: json['lock'] as bool,
       sign: json['sign'] as String,
+      merchantTransactionID: json['merchantTransactionId'] as String,
     );
   }
 
@@ -817,6 +824,7 @@ class LockStockResponse {
     return {
       'lock': lock,
       'sign': sign,
+      'merchantTransactionId': merchantTransactionID
     };
   }
 }

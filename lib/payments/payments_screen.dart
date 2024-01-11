@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/payments/phonepe.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
@@ -10,8 +11,10 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
 class PaymentsPage extends StatefulWidget {
-  const PaymentsPage({super.key, required this.sign});
+  const PaymentsPage(
+      {super.key, required this.sign, required this.merchantTransactionID});
   final String sign;
+  final String merchantTransactionID;
   @override
   State<PaymentsPage> createState() => _PaymentsPageState();
 }
@@ -51,7 +54,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
     const String apiUrl = '$baseUrl/checkout-cancel';
     final Map<String, dynamic> payload = {
       'cart_id': cartId,
-      'sign': sign,
+      'sign': widget.sign,
+      'merchantTransactionId': widget.merchantTransactionID,
+      'lock_type': 'lock-stock'
     };
 
     try {
@@ -82,8 +87,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Future<bool> processPayment(int cartId, bool cash) async {
     var headers = {'Content-Type': 'application/json'};
     var url = Uri.parse('$baseUrl/checkout-payment');
-    var body =
-        json.encode({"cart_id": cartId, "cash": cash, "sign": widget.sign});
+    var body = json.encode({
+      "cart_id": cartId,
+      "cash": cash,
+      "sign": widget.sign,
+      "merchant_transaction_id": widget.merchantTransactionID
+    });
 
     try {
       var response = await http.post(url, headers: headers, body: body);
@@ -95,7 +104,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             responseData['isPaid'] ?? false; // Extracting the isPaid value
         return isPaid; // Return the extracted boolean
       } else {
-        print('Failed: ${response.reasonPhrase}');
+        print('Failed: ${response.reasonPhrase} ${response.body}');
         return false; // Payment failed
       }
     } catch (e) {
@@ -108,7 +117,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
     var headers = {'Content-Type': 'application/json'};
     var request =
         http.Request('POST', Uri.parse('$baseUrl/phonepe-payment-init'));
-    request.body = json.encode({"cart_id": cartId, "sign": widget.sign});
+    request.body = json.encode({
+      "cart_id": cartId,
+      "sign": widget.sign,
+      "merchantTransactionId": widget.merchantTransactionID
+    });
     request.headers.addAll(headers);
 
     try {
@@ -124,27 +137,38 @@ class _PaymentsPageState extends State<PaymentsPage> {
             ['redirectInfo']['url'];
         String message = decodedResponse['message'];
         bool isSuccess = decodedResponse['success'];
+        String sign = decodedResponse['sign'];
         String merchantTransactionId = decodedResponse['merchantTransactionId'];
 
         if (isSuccess) {
           return PaymentResult(
               url: url,
               isSuccess: isSuccess,
+              sign: sign,
               merchantTransactionId: merchantTransactionId);
         } else {
           return PaymentResult(
-              url: message, isSuccess: isSuccess, merchantTransactionId: '');
+              url: message,
+              isSuccess: isSuccess,
+              sign: sign,
+              merchantTransactionId: '');
         }
       } else {
         var errorResponse = await response.stream.bytesToString();
         print('Error response: $errorResponse');
         return PaymentResult(
-            url: 'Payment Error', isSuccess: false, merchantTransactionId: '');
+            url: 'Payment Error',
+            isSuccess: false,
+            sign: '',
+            merchantTransactionId: '');
       }
     } catch (e) {
       print('Exception occurred: $e');
       return PaymentResult(
-          url: 'Exception: $e', isSuccess: false, merchantTransactionId: '');
+          url: 'Exception: $e',
+          isSuccess: false,
+          sign: '',
+          merchantTransactionId: '');
     }
   }
 
@@ -161,6 +185,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
             String? cartId = cart.cartId;
             if (cartId != null) {
               int cartIdInt = int.parse(cartId);
+              print('CartID: $cartIdInt');
               checkoutCancelItems(cartIdInt, widget.sign).then((success) {
                 if (success) {
                   // If the checkout lock is successful, navigate to the PaymentsPage
@@ -277,11 +302,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
                 int cartIdInt = int.parse(cartId);
                 initiatePhonePePayment(cartIdInt).then((response) {
                   if (response.isSuccess) {
-                    Navigator.pushReplacement(
+                    Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => PhonePeWebView(
                           url: response.url,
+                          sign: response.sign,
                           merchantTransactionId: response.merchantTransactionId,
                         ),
                       ),
@@ -312,7 +338,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PlaceOrder(),
+                        builder: (context) => OrderConfirmed(newOrder: true),
                       ),
                     );
                   } else {
@@ -370,10 +396,12 @@ class _PaymentsPageState extends State<PaymentsPage> {
 class PaymentResult {
   final String url;
   final bool isSuccess;
+  final String sign;
   final String merchantTransactionId;
 
   PaymentResult(
       {required this.url,
       required this.isSuccess,
+      required this.sign,
       required this.merchantTransactionId});
 }
