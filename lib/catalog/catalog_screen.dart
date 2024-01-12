@@ -491,7 +491,7 @@ class ListItem2 extends StatelessWidget {
                   child: Center(
                     child: Image.network(
                       image,
-                      height: 120,
+                      height: MediaQuery.of(context).size.height * 0.16,
                       fit: BoxFit.cover,
                       errorBuilder: (BuildContext context, Object exception,
                           StackTrace? stackTrace) {
@@ -580,9 +580,6 @@ class ListItem2 extends StatelessWidget {
                             decoration: TextDecoration.lineThrough,
                             decorationColor: Colors.black54,
                           ),
-                        ),
-                        const SizedBox(
-                          width: 2,
                         ),
                         itemIndexInCart != -1
                             ? Container(

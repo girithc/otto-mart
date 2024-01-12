@@ -837,7 +837,7 @@ class _MyHomePageState extends State<MyHomePage>
               color: Colors.deepPurpleAccent.shade100,
               spreadRadius: 0,
               blurRadius: 1,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 2),
             ),
           ],
         ),

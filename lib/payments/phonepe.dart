@@ -113,7 +113,12 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
 
   Future<bool> checkoutCancelItems(int cartId) async {
     const String apiUrl = '$baseUrl/checkout-cancel';
-    final Map<String, dynamic> payload = {'cart_id': cartId};
+    final Map<String, dynamic> payload = {
+      'cart_id': cartId,
+      'sign': widget.sign,
+      'merchantTransactionId': widget.merchantTransactionId,
+      'lock_type': 'lock-stock-pay'
+    };
 
     try {
       final response = await http.post(
@@ -125,17 +130,18 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
       );
 
       if (response.statusCode == 200) {
-        // Assuming the server returns a simple true or false in the body
+        // Parse the JSON response into a LockStockResponse object
+        final jsonResponse = json.decode(response.body);
         return true;
       } else {
         // Handle the case when the server does not respond with a success code
-        print('Request failed with status: ${response.statusCode}.');
-        return false;
+        print('Request failed with status: ${response.body}.');
+        throw Exception('Failed to cancel checkout items');
       }
     } on Exception catch (e) {
       // Handle any exceptions here
       print('Caught exception: $e');
-      return false;
+      return false; // Re-throw the caught exception
     }
   }
 
