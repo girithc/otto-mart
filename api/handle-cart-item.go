@@ -17,6 +17,9 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 		return err
 	}
 
+	println("CartId: ", new_req.CartId)
+	println("ItemId: ", new_req.ItemId)
+	println("Quantity: ", new_req.Quantity)
 	cart, err := s.store.Add_Cart_Item(new_req.CartId, new_req.ItemId, new_req.Quantity)
 	if err != nil {
 		return err

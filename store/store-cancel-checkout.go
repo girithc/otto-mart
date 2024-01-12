@@ -92,14 +92,15 @@ func (s *PostgresStore) ResetLockedQuantities(tx *sql.Tx, cart_id int) error {
 	// Now, batch update item_store for each item
 	for _, update := range updates {
 		updateQuery := `
-            UPDATE item_store 
-            SET stock_quantity = stock_quantity + $1, 
-                locked_quantity = locked_quantity - $1
-            WHERE id = $2
-        `
+    UPDATE item_store 
+    SET stock_quantity = stock_quantity + $1, 
+        locked_quantity = locked_quantity - $1
+    WHERE id = $2 AND locked_quantity >= $1
+`
 		if _, err := tx.Exec(updateQuery, update.Quantity, update.ItemID); err != nil {
 			return fmt.Errorf("error updating item_store table for item_id %d: %w", update.ItemID, err)
 		}
+
 	}
 
 	return nil

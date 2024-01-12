@@ -161,6 +161,8 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
 			return true, err
 		}
+		println("cart Item ID", checkout_cart_item.Item_Id)
+		println("cartID ", cart_id)
 		cartItems = append(cartItems, checkout_cart_item)
 	}
 	if err = rows.Err(); err != nil {
