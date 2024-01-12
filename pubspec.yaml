@@ -86,6 +86,7 @@ flutter:
     - assets/images/store.png
     - assets/images/welcome.png
     - assets/icon/icon.jpeg
+    - assets/icon/phonepe.png
     - assets/pin.json
 
   # To add assets to your application, add an assets section, like this:

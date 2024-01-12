@@ -252,143 +252,215 @@ class _PaymentsPageState extends State<PaymentsPage> {
       ),
       body: Column(
         children: [
-          ListTile(
-            title: const Text('PhonePe'),
-            leading: Radio(
-              value: 'PhonePe',
-              groupValue: _selectedPayment,
-              onChanged: (String? value) {
-                setState(() {
-                  _selectedPayment = value;
-                });
-              },
-            ),
-            onTap: () {
-              setState(() {
-                _selectedPayment = 'PhonePe';
-              });
-            },
+          SizedBox(
+            height: 50,
           ),
-          ListTile(
-            title: const Text('Cash on Delivery'),
-            leading: Radio(
-              value: 'Cash',
-              groupValue: _selectedPayment,
-              onChanged: (String? value) {
-                setState(() {
-                  _selectedPayment = value;
-                });
-              },
-            ),
+          InkWell(
             onTap: () {
-              setState(() {
-                _selectedPayment = 'Cash on Delivery';
+              String? cartId = cart.cartId;
+              int cartIdInt = int.parse(cartId!);
+              initiatePhonePePayment(cartIdInt).then((response) {
+                if (response.isSuccess) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => PhonePeWebView(
+                        url: response.url,
+                        sign: response.sign,
+                        merchantTransactionId: response.merchantTransactionId,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        response.url,
+                        style: const TextStyle(color: Colors.black),
+                      ),
+                      backgroundColor: Colors.amberAccent,
+                    ),
+                  );
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyCart(),
+                    ),
+                  );
+                }
               });
             },
+            child: Container(
+              margin:
+                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: const LinearGradient(
+                  colors: [
+                    Color.fromARGB(255, 107, 53, 255),
+                    Colors.deepPurpleAccent,
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: Offset(0, 3), // changes position of shadow
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4.0),
+                        child:
+                            Image.asset('assets/icon/phonepe.png', height: 40),
+                      ),
+                    ),
+                    const SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          const SizedBox(height: 2),
+                          const Text(
+                            'PhonePe',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 10),
+                          _paymentMethodRow(
+                              Icons.currency_rupee_outlined, 'UPI'),
+                          _paymentMethodRow(
+                              Icons.credit_card_outlined, 'Credit Card'),
+                          _paymentMethodRow(
+                              Icons.credit_card_outlined, 'Debit Card'),
+                          _paymentMethodRow(
+                              Icons.account_balance_outlined, 'Net Banking'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: () {
+              String? cartId = cart.cartId;
+              int cartIdInt = int.parse(cartId!);
+              processPayment(cartIdInt, true).then((isPaid) {
+                if (isPaid) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => OrderConfirmed(newOrder: true),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Timeout: Payment Failed',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                      backgroundColor: Colors.amberAccent,
+                    ),
+                  );
+
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyCart(),
+                    ),
+                  );
+                }
+              }).catchError((error) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $error'),
+                    backgroundColor: Colors.redAccent,
+                  ),
+                );
+              });
+            },
+            child: Container(
+              margin: const EdgeInsets.all(8.0),
+              decoration: BoxDecoration(
+                color: Colors.white, // Set the background color to white
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey
+                        .withOpacity(0.5), // Shadow color with some opacity
+                    spreadRadius: 0, // Shadow spread radius
+                    blurRadius: 6, // Shadow blur radius
+                    offset: Offset(0, 3), // Shadow position
+                  ),
+                ],
+              ),
+              child: const Padding(
+                padding: EdgeInsets.all(12.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Padding(
+                        padding: EdgeInsets.all(4.0),
+                        child: Icon(Icons.money_outlined),
+                      ),
+                    ),
+                    SizedBox(width: 16.0),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          SizedBox(height: 2),
+                          Text(
+                            'Cash On Delivery',
+                            style: TextStyle(
+                                color: Colors.black,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w400),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        surfaceTintColor: Colors.white,
-        child: Container(
-          color: Colors.white,
-          alignment: Alignment.bottomCenter,
-          child: ElevatedButton(
-            onPressed: () {
-              String? cartId = cart.cartId;
+    );
+  }
 
-              if (_selectedPayment == 'PhonePe' && cartId != null) {
-                int cartIdInt = int.parse(cartId);
-                initiatePhonePePayment(cartIdInt).then((response) {
-                  if (response.isSuccess) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PhonePeWebView(
-                          url: response.url,
-                          sign: response.sign,
-                          merchantTransactionId: response.merchantTransactionId,
-                        ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          response.url,
-                          style: const TextStyle(color: Colors.black),
-                        ),
-                        backgroundColor: Colors.amberAccent,
-                      ),
-                    );
-
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyCart(),
-                      ),
-                    );
-                  }
-                });
-              } else if (_selectedPayment == 'Cash' && cartId != null) {
-                int cartIdInt = int.parse(cartId);
-                processPayment(cartIdInt, true).then((isPaid) {
-                  if (isPaid) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OrderConfirmed(newOrder: true),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Timeout: Payment Failed',
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        backgroundColor: Colors.amberAccent,
-                      ),
-                    );
-
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyCart(),
-                      ),
-                    );
-                  }
-                }).catchError((error) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $error'),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.pinkAccent,
-              foregroundColor: Colors.white,
-              textStyle: Theme.of(context).textTheme.titleLarge,
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.electric_bike_outlined),
-                SizedBox(width: 10),
-                Text('Pay'),
-              ],
-            ),
+  // Helper method to create a row with an icon and text
+  Widget _paymentMethodRow(IconData icon, String text) {
+    return Row(
+      children: <Widget>[
+        Icon(icon, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
           ),
         ),
-      ),
+      ],
     );
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
@@ -295,6 +296,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
     //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
+    int randomNumber = 8 + Random().nextInt(9);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -683,7 +685,7 @@ class _MyHomePageState extends State<MyHomePage>
                                       ),
                                       child: Center(
                                         child: Text(
-                                          "Delivery in 10 minutes",
+                                          "Delivery in $randomNumber minutes",
                                           style: GoogleFonts.cantoraOne(
                                               fontSize: 24,
                                               fontStyle: FontStyle.italic,
@@ -845,18 +847,20 @@ class _MyHomePageState extends State<MyHomePage>
         padding: const EdgeInsets.only(left: 2, right: 2, bottom: 1),
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Image.network(
                 image,
                 fit: BoxFit.cover,
-                height: 69.0,
+                height: MediaQuery.of(context).size.height * 0.1,
               ),
               Text(
                 categoryName,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    height: 1.1), // Adjusting the line spacing here
+                    height: 1.3,
+                    fontSize: 15), // Adjusting the line spacing here
               ),
             ],
           ),
@@ -1239,20 +1243,12 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   decoration: const BoxDecoration(
                       // Background color of the container
                       shape: BoxShape.circle,
-                      color: Colors.deepPurpleAccent // Circular shape
+                      color: Colors.transparent // Circular shape
                       ),
                   child: IconButton(
                       icon: const Icon(Icons.electric_bolt_rounded),
-                      color: Colors.white, // Icon color
-                      onPressed: () {
-                        Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const PaymentVerificationScreen(
-                                      merchantTransactionId: '',
-                                    )));
-                      }),
+                      color: Colors.transparent, // Icon color
+                      onPressed: () {}),
                 ),
                 const Spacer(),
                 Container(
