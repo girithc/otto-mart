@@ -252,7 +252,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
       ),
       body: Column(
         children: [
-          SizedBox(
+          const SizedBox(
             height: 50,
           ),
           InkWell(
@@ -293,7 +293,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
             },
             child: Container(
               margin:
-                  const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
+              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 6.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 gradient: const LinearGradient(
@@ -307,7 +308,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 1,
                     blurRadius: 5,
-                    offset: Offset(0, 3), // changes position of shadow
+                    offset: const Offset(0, 3), // changes position of shadow
                   ),
                 ],
               ),
@@ -321,7 +322,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                       child: Padding(
                         padding: const EdgeInsets.all(4.0),
                         child:
-                            Image.asset('assets/icon/phonepe.png', height: 40),
+                            Image.asset('assets/icon/phonepe.png', height: 50),
                       ),
                     ),
                     const SizedBox(width: 16.0),
@@ -334,7 +335,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                             'PhonePe',
                             style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 24,
+                                fontSize: 25,
                                 fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 10),
@@ -404,7 +405,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                         .withOpacity(0.5), // Shadow color with some opacity
                     spreadRadius: 0, // Shadow spread radius
                     blurRadius: 6, // Shadow blur radius
-                    offset: Offset(0, 3), // Shadow position
+                    offset: const Offset(0, 3), // Shadow position
                   ),
                 ],
               ),
@@ -429,7 +430,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
                           Text(
                             'Cash On Delivery',
                             style: TextStyle(
-                                color: Colors.black,
+                                color: Colors.black87,
                                 fontSize: 22,
                                 fontWeight: FontWeight.w400),
                           ),
@@ -448,19 +449,22 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   // Helper method to create a row with an icon and text
   Widget _paymentMethodRow(IconData icon, String text) {
-    return Row(
-      children: <Widget>[
-        Icon(icon, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w400,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
