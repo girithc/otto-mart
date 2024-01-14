@@ -22,7 +22,7 @@ class PaymentsPage extends StatefulWidget {
 class _PaymentsPageState extends State<PaymentsPage> {
   late final WebViewController controller;
   var loadingPercentage = 0;
-  String? _selectedPayment = 'PhonePe';
+  final String _selectedPayment = 'PhonePe';
 
   @override
   void initState() {
@@ -261,7 +261,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
               int cartIdInt = int.parse(cartId!);
               initiatePhonePePayment(cartIdInt).then((response) {
                 if (response.isSuccess) {
-                  Navigator.push(
+                  Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(
                       builder: (context) => PhonePeWebView(
@@ -294,7 +294,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
             child: Container(
               margin:
                   const EdgeInsets.symmetric(vertical: 10.0, horizontal: 8.0),
-              padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 6.0),
+              padding:
+                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 6.0),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 gradient: const LinearGradient(
@@ -450,7 +451,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
   // Helper method to create a row with an icon and text
   Widget _paymentMethodRow(IconData icon, String text) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 4),
+      margin: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: <Widget>[
           Icon(icon, color: Colors.white, size: 20),

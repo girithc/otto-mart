@@ -60,7 +60,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
               processPayment().then((response) => {
                     if (response.isPaid)
                       {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => PaymentVerificationScreen(
@@ -77,7 +77,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
                             backgroundColor: Colors.redAccent,
                           ),
                         ),
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (context) => PaymentVerificationScreen(

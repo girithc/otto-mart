@@ -216,7 +216,7 @@ class _MyCartState extends State<MyCart> {
                             checkoutLockItems(cartIdInt).then((success) {
                               if (success.lock) {
                                 // If the checkout lock is successful, navigate to the PaymentsPage
-                                Navigator.push(
+                                Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => PaymentsPage(
