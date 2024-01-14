@@ -14,6 +14,7 @@ import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/payments/verify.dart';
+import 'package:pronto/plan/plan.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
@@ -747,8 +748,7 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
       bottomNavigationBar: Container(
-        padding:
-            const EdgeInsets.only(bottom: 22, top: 10, left: 15, right: 15),
+        padding: const EdgeInsets.only(bottom: 22, top: 0, left: 15, right: 15),
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white, width: 1),
@@ -780,14 +780,55 @@ class _MyHomePageState extends State<MyHomePage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white, // Background color
                 surfaceTintColor: Colors.white,
-                elevation: 4.0,
+                elevation: 0.0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Squarish shape
                 ),
               ),
-              child: const Text(
-                'Home',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.home_outlined,
+                      size: 20, color: Colors.black87), // Icon for Home
+                  SizedBox(width: 8),
+                  Text('Home',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87)),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to Cart
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyPlan()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white, // Background color
+                surfaceTintColor: Colors.white,
+                elevation: 0.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Squarish shape
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.repeat_outlined,
+                      size: 20, color: Colors.black87), // Icon for Repeat
+                  SizedBox(width: 8),
+                  Text('Repeat',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87)),
+                ],
               ),
             ),
             ElevatedButton(
@@ -801,14 +842,27 @@ class _MyHomePageState extends State<MyHomePage>
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white, // Background color
                 surfaceTintColor: Colors.white,
-                elevation: 4.0,
+                elevation: 0.0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Squarish shape
                 ),
               ),
-              child: const Text(
-                'Cart',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.shopping_cart_outlined,
+                    size: 20,
+                    color: Colors.black87,
+                  ), // Icon for Cart
+                  SizedBox(width: 8),
+                  Text('Cart',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87)),
+                ],
               ),
             ),
           ],
@@ -860,7 +914,7 @@ class _MyHomePageState extends State<MyHomePage>
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                     height: 1.3,
-                    fontSize: 15), // Adjusting the line spacing here
+                    fontSize: 14), // Adjusting the line spacing here
               ),
             ],
           ),

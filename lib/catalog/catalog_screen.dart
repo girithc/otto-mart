@@ -271,13 +271,11 @@ class _ListOfItemsState extends State<ListOfItems> {
           // Second section consuming 8 columns
           Expanded(
             flex: 8,
-            child: SizedBox(
-              child: ItemCatalog(
-                categoryId: widget.categories.isNotEmpty
-                    ? (categoryId == 0 ? widget.categories[0].id : categoryId)
-                    : 0,
-                storeId: storeId == 0 ? 1 : storeId,
-              ),
+            child: ItemCatalog(
+              categoryId: widget.categories.isNotEmpty
+                  ? (categoryId == 0 ? widget.categories[0].id : categoryId)
+                  : 0,
+              storeId: storeId == 0 ? 1 : storeId,
             ),
           ),
         ],
