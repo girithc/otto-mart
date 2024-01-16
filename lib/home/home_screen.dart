@@ -417,7 +417,7 @@ class _MyHomePageState extends State<MyHomePage>
                                                             child: Text(
                                                               "Select Address",
                                                               style: TextStyle(
-                                                                  fontSize: 24),
+                                                                  fontSize: 20),
                                                             ),
                                                           ),
                                                         ),
@@ -602,13 +602,16 @@ class _MyHomePageState extends State<MyHomePage>
                                                                 const EdgeInsets
                                                                     .symmetric(
                                                               horizontal:
-                                                                  35, // Slightly more horizontal padding
+                                                                  30, // Slightly more horizontal padding
                                                               vertical:
-                                                                  18, // Slightly more vertical padding
+                                                                  15, // Slightly more vertical padding
                                                             ),
                                                           ),
                                                           child: const Text(
-                                                              "Deliver To Address"),
+                                                            "Deliver To Address",
+                                                            style: TextStyle(
+                                                                fontSize: 20),
+                                                          ),
                                                         ),
                                                         const SizedBox(
                                                           height: 5,
@@ -708,11 +711,11 @@ class _MyHomePageState extends State<MyHomePage>
                               alignment: Alignment
                                   .centerLeft, // Align text to the left
                               padding: const EdgeInsets.only(
-                                  left: 16, top: 8.0, bottom: 2.0),
+                                  left: 16, top: 8.0, bottom: 4.0),
                               child: const Text(
                                 'Explore By Categories',
                                 style: TextStyle(
-                                  fontSize: 20,
+                                  fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -730,7 +733,7 @@ class _MyHomePageState extends State<MyHomePage>
                         crossAxisCount: 4,
                         crossAxisSpacing: 2,
                         mainAxisSpacing: 4,
-                        childAspectRatio: 0.68,
+                        childAspectRatio: 0.66,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
@@ -790,8 +793,8 @@ class _MyHomePageState extends State<MyHomePage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.home_outlined,
-                      size: 20, color: Colors.black87), // Icon for Home
-                  SizedBox(width: 8),
+                      size: 15, color: Colors.black87), // Icon for Home
+                  SizedBox(width: 4),
                   Text('Home',
                       style: TextStyle(
                           fontSize: 15,
@@ -821,8 +824,8 @@ class _MyHomePageState extends State<MyHomePage>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.repeat_outlined,
-                      size: 20, color: Colors.black87), // Icon for Repeat
-                  SizedBox(width: 8),
+                      size: 15, color: Colors.black87), // Icon for Repeat
+                  SizedBox(width: 4),
                   Text('Repeat',
                       style: TextStyle(
                           fontSize: 15,
@@ -853,10 +856,10 @@ class _MyHomePageState extends State<MyHomePage>
                 children: [
                   Icon(
                     Icons.shopping_cart_outlined,
-                    size: 20,
+                    size: 15,
                     color: Colors.black87,
                   ), // Icon for Cart
-                  SizedBox(width: 8),
+                  SizedBox(width: 4),
                   Text('Cart',
                       style: TextStyle(
                           fontSize: 15,
@@ -884,37 +887,45 @@ class _MyHomePageState extends State<MyHomePage>
         )
       },
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(6.0),
-          border: Border.all(color: Colors.white),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.deepPurpleAccent.shade100,
-              spreadRadius: 0,
-              blurRadius: 1,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        padding: const EdgeInsets.only(left: 2, right: 2, bottom: 1),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.only(left: 2, right: 2, bottom: 0),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.network(
-                image,
-                fit: BoxFit.cover,
-                height: MediaQuery.of(context).size.height * 0.1,
+              Container(
+                height: MediaQuery.of(context).size.height * 0.11,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6.0),
+                  border: Border.all(color: Colors.white),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      spreadRadius: 0,
+                      blurRadius: 1,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Image.network(
+                  image,
+                  fit: BoxFit.cover,
+                  height: MediaQuery.of(context).size.height * 0.12,
+                ),
               ),
-              Text(
-                categoryName,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    height: 1.3,
-                    fontSize: 14), // Adjusting the line spacing here
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.04,
+                child: Text(
+                  categoryName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      height: 1.3,
+                      fontSize: 12,
+                      fontWeight:
+                          FontWeight.bold), // Adjusting the line spacing here
+                ),
               ),
             ],
           ),
@@ -977,7 +988,7 @@ class _MyHomePageState extends State<MyHomePage>
                       child: const Center(
                         child: Text(
                           "Select Address",
-                          style: TextStyle(fontSize: 24),
+                          style: TextStyle(fontSize: 20),
                         ),
                       ),
                     ),
@@ -1111,6 +1122,7 @@ class _MyHomePageState extends State<MyHomePage>
                       ),
                       child: const Text(
                         "Deliver To Address",
+                        style: TextStyle(fontSize: 28),
                       ),
                     ),
                     const SizedBox(

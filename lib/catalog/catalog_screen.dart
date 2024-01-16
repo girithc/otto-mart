@@ -97,33 +97,6 @@ class _CatalogPageState extends State<CatalogPage> {
             // Expand the Row to fill the available space
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              /*
-              Flexible(
-                flex: 5,
-                child: CarouselSlider(
-                  options: CarouselOptions(
-                      autoPlay: true,
-                      enlargeCenterPage: true,
-                      aspectRatio: 3.5,
-                      autoPlayInterval: const Duration(seconds: 3),
-                      viewportFraction: 0.95),
-                  items: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 1"),
-                      ),
-                    ),
-
-                    // Add more items as needed
-                  ],
-                ),
-              ),
-              */
               Flexible(
                 flex: 4,
                 child: ElevatedButton(
@@ -251,6 +224,7 @@ class _ListOfItemsState extends State<ListOfItems> {
                 //shadowColor: Colors.grey,
                 margin: EdgeInsets.zero,
                 padding: EdgeInsets.zero,
+                color: Colors.white,
                 child: ListView.builder(
                   itemCount: widget.categories.length,
                   itemBuilder: (context, index) {
@@ -334,6 +308,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      color: Colors.white,
       padding: EdgeInsets.zero,
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -473,6 +448,15 @@ class ListItem2 extends StatelessWidget {
               color: Colors.white,
               border: Border.all(color: Colors.white, width: 1.0),
               borderRadius: BorderRadius.circular(3.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey
+                      .withOpacity(0.1), // Shadow color with some opacity
+                  spreadRadius: 2, // Extent of the shadow
+                  blurRadius: 3, // Blur effect
+                  offset: const Offset(0, 2), // Changes position of shadow
+                ),
+              ],
             ),
             margin: index == 0
                 ? const EdgeInsets.only(

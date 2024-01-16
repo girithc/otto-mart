@@ -75,8 +75,8 @@ class _MyPlanState extends State<MyPlan> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.home_outlined,
-                      size: 20, color: Colors.black87), // Icon for Home
-                  SizedBox(width: 8),
+                      size: 15, color: Colors.black87), // Icon for Home
+                  SizedBox(width: 4),
                   Text('Home',
                       style: TextStyle(
                           fontSize: 15,
@@ -106,8 +106,8 @@ class _MyPlanState extends State<MyPlan> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.repeat_outlined,
-                      size: 20, color: Colors.black87), // Icon for Repeat
-                  SizedBox(width: 8),
+                      size: 15, color: Colors.black87), // Icon for Repeat
+                  SizedBox(width: 4),
                   Text('Repeat',
                       style: TextStyle(
                           fontSize: 15,
@@ -138,10 +138,10 @@ class _MyPlanState extends State<MyPlan> {
                 children: [
                   Icon(
                     Icons.shopping_cart_outlined,
-                    size: 20,
+                    size: 15,
                     color: Colors.black87,
                   ), // Icon for Cart
-                  SizedBox(width: 8),
+                  SizedBox(width: 4),
                   Text('Cart',
                       style: TextStyle(
                           fontSize: 15,
