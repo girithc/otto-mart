@@ -16,6 +16,8 @@ func (s *PostgresStore) CreateStoreTable(tx *sql.Tx) error {
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
 		address VARCHAR(200) NOT NULL,
+		latitude DECIMAL(10,8),  
+        longitude DECIMAL(11,8), 
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		created_by INT	
 	)`
