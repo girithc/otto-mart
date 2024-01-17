@@ -631,7 +631,7 @@ class _MyHomePageState extends State<MyHomePage>
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius:
-                                              BorderRadius.circular(4.0),
+                                              BorderRadius.circular(8.0),
                                           border: Border.all(
                                               color: Colors.deepPurpleAccent),
                                           boxShadow: const [
@@ -674,7 +674,7 @@ class _MyHomePageState extends State<MyHomePage>
                                           fit: BoxFit.cover,
                                         ),
                                         borderRadius:
-                                            BorderRadius.circular(4.0),
+                                            BorderRadius.circular(8.0),
                                         border: Border.all(
                                             color: Colors.deepPurpleAccent),
                                         boxShadow: const [
@@ -896,16 +896,16 @@ class _MyHomePageState extends State<MyHomePage>
             children: [
               Container(
                 height: MediaQuery.of(context).size.height * 0.11,
+                padding: EdgeInsets.all(1.5),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(6.0),
+                  borderRadius: BorderRadius.circular(10.0),
                   border: Border.all(color: Colors.white),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.shade300,
+                      color: Colors.grey.shade400,
                       spreadRadius: 0,
                       blurRadius: 1,
-                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -1375,13 +1375,13 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
             Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(4.0),
+                borderRadius: BorderRadius.circular(6.0),
                 boxShadow: const [
                   BoxShadow(
                     color: Colors.deepPurpleAccent,
                     spreadRadius: 1,
-                    blurRadius: 3,
-                    offset: Offset(0, 3),
+                    blurRadius: 2,
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
