@@ -29,7 +29,7 @@ class LoginStatusProvider with ChangeNotifier {
       return;
     }
     final Map<String, dynamic> requestData = {
-      "phone": int.parse(phone),
+      "phone": phone,
     };
 
     final http.Response response = await http.post(

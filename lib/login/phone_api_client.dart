@@ -9,7 +9,7 @@ class CustomerApiClient {
 
   Future<Customer> loginCustomer() async {
     final Map<String, dynamic> requestData = {
-      "phone": int.parse(phone),
+      "phone": phone,
     };
 
     final http.Response response = await http.post(
@@ -33,7 +33,7 @@ class CustomerApiClient {
 class Customer {
   final int id;
   final String name;
-  final int phone;
+  final String phone;
   final String address;
   final String createdAt;
   final int cartId;

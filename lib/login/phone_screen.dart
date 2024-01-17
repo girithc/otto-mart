@@ -54,9 +54,7 @@ class _MyPhoneState extends State<MyPhone> {
     try {
       // Send the HTTP request to send OTP
       var url = Uri.parse('$baseUrl/send-otp');
-      final Map<String, dynamic> requestData = {
-        "phone": int.parse(phoneNumber)
-      };
+      final Map<String, dynamic> requestData = {"phone": phoneNumber};
       var response = await http.post(
         url,
         body: jsonEncode(requestData),
@@ -195,6 +193,7 @@ class _MyPhoneState extends State<MyPhone> {
                               ),
                             );
                           } else if (value == "test") {
+                            print("TEST");
                             Navigator.push(
                               context,
                               MaterialPageRoute(

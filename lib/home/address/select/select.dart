@@ -96,7 +96,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     }
   }
 
-  Future<Address?> setDefaultAddress(int addressId) async {
+  Future<AddressResponse?> setDefaultAddress(int addressId) async {
     print("Enter Set Default address");
     final Map<String, String> headers = {
       "Content-Type": "application/json",
@@ -120,13 +120,14 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
-            // Explicitly cast the response to Map<String, dynamic>
-            return Address.fromJson(Map<String, dynamic>.from(decodedResponse));
+            // Parse and return AddressResponse
+            return AddressResponse.fromJson(
+                Map<String, dynamic>.from(decodedResponse));
           } else if (decodedResponse is List) {
             // Handle the case where the response is a List
-            final List<Address> items = (decodedResponse)
-                .map(
-                    (item) => Address.fromJson(Map<String, dynamic>.from(item)))
+            final List<AddressResponse> items = (decodedResponse)
+                .map((item) =>
+                    AddressResponse.fromJson(Map<String, dynamic>.from(item)))
                 .toList();
             return items.isNotEmpty ? items[0] : null;
           }
@@ -386,8 +387,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                 showAddress = false;
                 setDefaultAddress(addresses[selectedAddressIndex! - 2].id)
                     .then((address) {
-                  if (address != null) {
-                    cart.deliveryAddress = address;
+                  if (address?.address != null) {
+                    cart.deliveryAddress = address!.address;
                   }
                 });
                 snackBarMessage =
@@ -461,3 +462,22 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 }
 
 // Define other necessary classes/models like Address, etc.
+
+class AddressResponse {
+  final Address address;
+  final bool deliverable;
+  final int storeId;
+
+  AddressResponse(
+      {required this.address,
+      required this.deliverable,
+      required this.storeId});
+
+  factory AddressResponse.fromJson(Map<String, dynamic> json) {
+    return AddressResponse(
+      address: Address.fromJson(json),
+      deliverable: json['deliverable'] as bool,
+      storeId: json['store_id'] as int,
+    );
+  }
+}

@@ -808,37 +808,6 @@ class _MyHomePageState extends State<MyHomePage>
                 // Navigate to Cart
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MyPlan()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Background color
-                surfaceTintColor: Colors.white,
-                elevation: 0.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Squarish shape
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.repeat_outlined,
-                      size: 15, color: Colors.black87), // Icon for Repeat
-                  SizedBox(width: 4),
-                  Text('Repeat',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
-                ],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to Cart
-                Navigator.push(
-                  context,
                   MaterialPageRoute(builder: (context) => const MyCart()),
                 );
               },
@@ -896,7 +865,7 @@ class _MyHomePageState extends State<MyHomePage>
             children: [
               Container(
                 height: MediaQuery.of(context).size.height * 0.11,
-                padding: EdgeInsets.all(1.5),
+                padding: const EdgeInsets.all(1.5),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10.0),

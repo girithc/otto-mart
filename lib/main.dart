@@ -183,7 +183,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
       return false;
     }
     final Map<String, dynamic> requestData = {
-      "phone": int.parse(phone),
+      "phone": phone,
     };
 
     final http.Response response = await http.post(

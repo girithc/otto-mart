@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
+import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
+import 'package:pronto/catalog/catalog_screen.dart';
+import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/home/tab/tab.dart';
 import 'package:pronto/login/login_status_provider.dart';
@@ -23,15 +27,102 @@ class MyPlan extends StatefulWidget {
 }
 
 class _MyPlanState extends State<MyPlan> {
+  final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
+  List<Category> categories = [];
+  final Logger _logger = Logger();
+  bool isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCategories();
+  }
+
+  Future<void> fetchCategories() async {
+    try {
+      final fetchedCategories = await apiClient.fetchCategories();
+      setState(() {
+        categories = fetchedCategories;
+      });
+    } catch (err) {
+      _logger.e('(home)fetchCategories error $err');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>();
+    //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
+    int randomNumber = 8 + Random().nextInt(9);
+
     return Scaffold(
-      appBar: const RepeatAppBar(
-        title: 'Otto Mart',
-      ),
-      body: const Center(
-        child: Text('Coming Soon'),
-      ),
+      appBar: const HomeScreenAppBar(),
+      body: isLoading
+          ? const CircularProgressIndicator()
+          : CustomScrollView(
+              // <-- Using CustomScrollView
+              slivers: <Widget>[
+                SliverToBoxAdapter(
+                  child: Consumer<CartModel>(
+                    builder: (context, cart, child) {
+                      return Column(
+                        children: [
+                          // Your other body content
+                          Container(
+                            alignment:
+                                Alignment.centerLeft, // Align text to the left
+                            padding: const EdgeInsets.only(
+                                left: 16, top: 16.0, bottom: 16.0),
+                            child: const Text(
+                              'No Favourite Items',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            alignment:
+                                Alignment.centerLeft, // Align text to the left
+                            padding: const EdgeInsets.only(
+                                left: 16, top: 8.0, bottom: 4.0),
+                            child: const Text(
+                              'Explore By Categories',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  sliver: SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      crossAxisSpacing: 2,
+                      mainAxisSpacing: 4,
+                      childAspectRatio: 0.66,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) {
+                        return _buildCategoryContainer(
+                            context,
+                            categories[index].id,
+                            categories[index].name,
+                            categories[index].image);
+                      },
+                      childCount: categories.length,
+                    ),
+                  ),
+                ),
+              ],
+            ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.only(bottom: 22, top: 0, left: 15, right: 15),
         margin: const EdgeInsets.only(bottom: 0),
@@ -90,37 +181,6 @@ class _MyPlanState extends State<MyPlan> {
                 // Navigate to Cart
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MyPlan()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Background color
-                surfaceTintColor: Colors.white,
-                elevation: 0.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Squarish shape
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.repeat_outlined,
-                      size: 15, color: Colors.black87), // Icon for Repeat
-                  SizedBox(width: 4),
-                  Text('Repeat',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
-                ],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to Cart
-                Navigator.push(
-                  context,
                   MaterialPageRoute(builder: (context) => const MyCart()),
                 );
               },
@@ -153,7 +213,6 @@ class _MyPlanState extends State<MyPlan> {
           ],
         ),
       ),
-
       /*
       Container(
         padding:
@@ -217,6 +276,66 @@ class _MyPlanState extends State<MyPlan> {
         ),
       ),
       */
+    );
+  }
+
+  Widget _buildCategoryContainer(
+      BuildContext context, int categoryID, String categoryName, String image) {
+    return GestureDetector(
+      onTap: () => {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) =>
+                MyCatalog(categoryID: categoryID, categoryName: categoryName),
+          ),
+        )
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.only(left: 2, right: 2, bottom: 0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                height: MediaQuery.of(context).size.height * 0.11,
+                padding: const EdgeInsets.all(1.5),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.white),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade400,
+                      spreadRadius: 0,
+                      blurRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Image.network(
+                  image,
+                  fit: BoxFit.cover,
+                  height: MediaQuery.of(context).size.height * 0.12,
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.04,
+                child: Text(
+                  categoryName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      height: 1.3,
+                      fontSize: 12,
+                      fontWeight:
+                          FontWeight.bold), // Adjusting the line spacing here
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
