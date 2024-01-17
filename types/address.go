@@ -17,6 +17,23 @@ type Address struct {
 	Created_At       time.Time `json:"created_at"`
 }
 
+type Default_Address struct {
+	Id               int       `json:"id"`
+	Customer_Id      int       `json:"customer_id"`
+	Street_Address   string    `json:"street_address"`
+	Line_One_Address string    `json:"line_one"`
+	Line_Two_Address string    `json:"line_two"`
+	City             string    `json:"city"`
+	State            string    `json:"state"`
+	Zipcode          string    `json:"zip"`
+	Is_Default       bool      `json:"is_default"`
+	Latitude         float64   `json:"latitude"`
+	Longitude        float64   `json:"longitude"`
+	Created_At       time.Time `json:"created_at"`
+	Deliverable      bool      `json:"deliverable"`
+	StoreId          int       `json:"store_id"`
+}
+
 type Create_Address struct {
 	Customer_Id      int     `json:"customer_id"`
 	Street_Address   string  `json:"street_address"`
@@ -34,9 +51,9 @@ type Address_Customer_Id struct {
 }
 
 type MakeDefaultAddress struct {
-	Address_Id	int `json:"address_id"`
-	Customer_Id int `json:"customer_id"`
-	Is_Default     bool `json:"is_default"`
+	Address_Id  int  `json:"address_id"`
+	Customer_Id int  `json:"customer_id"`
+	Is_Default  bool `json:"is_default"`
 }
 
 type Delete_Address struct {

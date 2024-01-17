@@ -22,7 +22,13 @@ func (s *Server) handleSendOtpMSG91(res http.ResponseWriter, req *http.Request) 
 		return err
 	}
 
-	result, err := s.store.SendOtpMSG91(new_req.Phone)
+	phoneInt, err := strconv.Atoi(new_req.Phone)
+	if err != nil {
+		// Handle the error if the phone number is not a valid integer
+		return fmt.Errorf("invalid phone number format: %v", err)
+	}
+
+	result, err := s.store.SendOtpMSG91(phoneInt)
 	if err != nil {
 		return err
 	}
@@ -81,7 +87,7 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 		fmt.Println("Shopping Cart Created ", user.Cart_Id)
 
 		// Generate JWT token
-		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
+		tokenString, err := generateJWT(user.Phone)
 		if err != nil {
 			return err
 		}
@@ -99,7 +105,7 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 		fmt.Println("User Exists")
 
 		// Generate JWT token
-		tokenString, err := generateJWT(strconv.Itoa(user.Phone))
+		tokenString, err := generateJWT(user.Phone)
 		if err != nil {
 			return err
 		}

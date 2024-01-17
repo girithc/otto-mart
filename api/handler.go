@@ -49,7 +49,6 @@ func (s *Server) handleCustomer(res http.ResponseWriter, req *http.Request) erro
 
 		// Wait for the result and return it
 		return <-resultChan
-
 	}
 	return nil
 }

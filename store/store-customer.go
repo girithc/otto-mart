@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
@@ -155,7 +154,7 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 		}
 	}()
 
-	phoneNumberStr := strconv.Itoa(user.Phone)
+	phoneNumberStr := user.Phone
 
 	// Create the customer
 	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at, merchant_user_id`
@@ -220,7 +219,7 @@ func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 	return customers, nil
 }
 
-func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_Cart, error) {
+func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_With_Cart, error) {
 	fmt.Println("Started Get_Customer_By_Phone")
 	query := `
         SELECT c.*, sc.id AS shopping_cart_id, sc.store_id
@@ -228,15 +227,15 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_C
         LEFT JOIN shopping_cart sc ON c.id = sc.customer_id AND sc.active = true
         WHERE c.phone = $1
     `
-	phoneNumberStr := strconv.Itoa(phone)
+	phoneNumberStr := phone
 
 	row := s.db.QueryRow(query, phoneNumberStr)
 
 	fmt.Println("I Query Successful")
 
 	var customer types.Customer_With_Cart
-	var storeID sql.NullInt64 // using NullInt64 for store_id
-
+	var storeID sql.NullInt64
+	var cartID sql.NullInt64
 	var merchantUserID sql.NullString
 
 	err := row.Scan(
@@ -246,7 +245,7 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_C
 		&customer.Address,
 		&merchantUserID,
 		&customer.Created_At,
-		&customer.Cart_Id,
+		&cartID,
 		&storeID,
 	)
 
@@ -259,14 +258,35 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone int) (*types.Customer_With_C
 	}
 
 	if storeID.Valid {
-		customer.Store_Id = int(storeID.Int64) // If not null, assign to customer.Store_Id
+		customer.Store_Id = int(storeID.Int64)
 	}
 
-	switch {
-	case err == sql.ErrNoRows:
+	if err == sql.ErrNoRows {
 		return nil, nil
-	case err != nil:
+	} else if err != nil {
 		return nil, err
+	}
+
+	// Check if a shopping cart exists, if not, create one
+	if !cartID.Valid {
+		tx, err := s.db.Begin()
+		if err != nil {
+			return nil, err
+		}
+
+		insertCartQuery := `INSERT INTO shopping_cart (customer_id, active, store_id) VALUES ($1, $2, $3) RETURNING id`
+		err = tx.QueryRow(insertCartQuery, customer.ID, true, 1).Scan(&customer.Cart_Id)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		// Commit the transaction
+		if err := tx.Commit(); err != nil {
+			return nil, err
+		}
+	} else {
+		customer.Cart_Id = int(cartID.Int64)
 	}
 
 	return &customer, nil

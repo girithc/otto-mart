@@ -32,7 +32,7 @@ type Customer struct {
 type Customer_With_Cart struct {
 	ID             int       `json:"id"`
 	Name           string    `json:"name"`
-	Phone          int       `json:"phone"`
+	Phone          string    `json:"phone"`
 	Address        string    `json:"address"`
 	MerchantUserID string    `json:"merchant_user_id"`
 	Created_At     time.Time `json:"created_at"`
@@ -41,7 +41,7 @@ type Customer_With_Cart struct {
 }
 
 type Create_Customer struct {
-	Phone int `json:"phone"`
+	Phone string `json:"phone"`
 }
 
 type Update_Customer struct {
@@ -56,7 +56,7 @@ type Delete_User struct {
 	Phone int `json:"phone"`
 }
 
-func New_Customer(phone int) (*Create_Customer, error) {
+func New_Customer(phone string) (*Create_Customer, error) {
 	return &Create_Customer{
 		Phone: phone,
 	}, nil

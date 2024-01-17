@@ -4,17 +4,17 @@
     {
       "label": "Docker Build",
       "type": "shell",
-      "command": "docker build -t asia.gcr.io/hip-well-400702/myapp:version1 ."
+      "command": "docker build -t asia.gcr.io/seismic-ground-410711/ottomart:version1.0.1 ."
     },
     {
       "label": "Docker Push",
       "type": "shell",
-      "command": "docker push asia.gcr.io/hip-well-400702/myapp:version1"
+      "command": "docker push asia.gcr.io/seismic-ground-410711/ottomart:version1.0.1"
     },
     {
       "label": "GCloud Deploy",
       "type": "shell",
-      "command": "gcloud run deploy pronto-go --image asia.gcr.io/hip-well-400702/myapp:version1 --set-env-vars=INSTANCE_CONNECTION_NAME='hip-well-400702:asia-south1:quickstart-instance',DB_NAME='quickstart_db',DB_USER='postgres',DB_PASSWORD='bUwbyrtejdy2nocvib' --service-account='quickstart-service-account@hip-well-400702.iam.gserviceaccount.com' --allow-unauthenticated"
+      "command": "gcloud run deploy otto-mart --image asia.gcr.io/seismic-ground-410711/ottomart:version1.0.1 --set-env-vars=INSTANCE_CONNECTION_NAME='seismic-ground-410711:asia-south1:otto',DB_NAME='otto-db',DB_USER='postgres',DB_PASSWORD='zeqpor-mudtym-fuxpA9' --service-account='admin-service-account@seismic-ground-410711.iam.gserviceaccount.com' --allow-unauthenticated"
     },
     {
       "label": "Build and Deploy",

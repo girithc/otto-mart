@@ -53,17 +53,6 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			log.Fatalf("Error on sql.Open: %v", err)
 		}
 
-		/*
-				connStr := "host=host.docker.internal user=postgres dbname=prontodb password=g190201 sslmode=disable"
-				db, err := sql.Open("postgres", connStr)
-				if err != nil {
-					log.Fatalf("Error on sql.Open: %v", err)
-				}
-
-			if err := db.Ping(); err != nil {
-				log.Fatalf("Error on db.Ping(). Db connection error: %v", err)
-			}
-		*/
 		return &PostgresStore{
 			db:            db,
 			cancelFuncs:   make(map[int]context.CancelFunc), // Already initialized cancelFuncs map

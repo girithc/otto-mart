@@ -62,7 +62,7 @@ func createHTTPTaskWithToken(projectID, locationID, queueID, url, email string, 
 }
 
 func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string, merchantTransactionID string) error {
-	email := "quickstart-service-account@hip-well-400702.iam.gserviceaccount.com"
+	email := "admin-service-account@seismic-ground-410711.iam.gserviceaccount.com"
 
 	var delayTime int
 
@@ -78,7 +78,7 @@ func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string
 		}
 
 		// Create Task with Token and JSON payload
-		if task, err := createHTTPTaskWithToken("hip-well-400702", "asia-south1", "lock-stock-9", "https://pronto-go-3ogvsx3vlq-el.a.run.app/lock-stock", email, payload, delayTime); err != nil {
+		if task, err := createHTTPTaskWithToken("seismic-ground-410711", "asia-south1", "lock-stock", "https://otto-mart-2cta4tgbnq-el.a.run.app/lock-stock", email, payload, delayTime); err != nil {
 			fmt.Printf("Failed to create Task with token: %v\n", err)
 		} else {
 			fmt.Println("Task with token created successfully", task.GetName())
@@ -94,7 +94,7 @@ func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string
 		}
 
 		// Create Task with Token and JSON payload
-		if task, err := createHTTPTaskWithToken("hip-well-400702", "asia-south1", "lock-stock-9", "https://pronto-go-3ogvsx3vlq-el.a.run.app/lock-stock", email, payload, delayTime); err != nil {
+		if task, err := createHTTPTaskWithToken("seismic-ground-410711", "asia-south1", "lock-stock", "https://otto-mart-2cta4tgbnq-el.a.run.app/lock-stock", email, payload, delayTime); err != nil {
 			fmt.Printf("Failed to create Task with token: %v\n", err)
 		} else {
 			fmt.Println("Task with token created successfully", task.GetName())

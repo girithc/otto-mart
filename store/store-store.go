@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/girithc/pronto-go/types"
@@ -14,7 +15,7 @@ func (s *PostgresStore) CreateStoreTable(tx *sql.Tx) error {
 
 	query := `create table if not exists store (
 		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL,
+		name VARCHAR(100) UNIQUE NOT NULL,
 		address VARCHAR(200) NOT NULL,
 		latitude DECIMAL(10,8),  
         longitude DECIMAL(11,8), 
@@ -30,26 +31,30 @@ func (s *PostgresStore) CreateStoreTable(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) Create_Store(st *types.Store) (*types.Store, error) {
-	query := `insert into store
-	(name, address, created_by) 
-	values ($1, $2, $3) returning id, name, address, created_at, created_by
-	`
-	rows, err := s.db.Query(
-		query,
-		st.Name,
-		st.Address,
-		st.Created_By)
+	// Check if a store with the same name already exists
+	checkQuery := `SELECT id, name, address, created_at, created_by FROM store WHERE name = $1`
+	row := s.db.QueryRow(checkQuery, st.Name)
+	existingStore := &types.Store{}
+	err := row.Scan(&existingStore.ID, &existingStore.Name, &existingStore.Address, &existingStore.Created_At, &existingStore.Created_By)
 
-	fmt.Println("CheckPoint 1")
-
-	if err != nil {
+	if err == nil {
+		// Store with the same name exists, return the existing store
+		return existingStore, nil
+	} else if err != sql.ErrNoRows {
+		// An error occurred other than "no rows in result set"
 		return nil, err
 	}
 
-	fmt.Println("CheckPoint 2")
+	// If no existing store is found, proceed to create a new one
+	insertQuery := `INSERT INTO store (name, address, created_by) 
+                    VALUES ($1, $2, $3) RETURNING id, name, address, created_at, created_by`
+	rows, err := s.db.Query(insertQuery, st.Name, st.Address, st.Created_By)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
 	stores := []*types.Store{}
-
 	for rows.Next() {
 		store, err := scan_Into_Store(rows)
 		if err != nil {
@@ -58,8 +63,9 @@ func (s *PostgresStore) Create_Store(st *types.Store) (*types.Store, error) {
 		stores = append(stores, store)
 	}
 
-	fmt.Println("CheckPoint 3")
-
+	if len(stores) == 0 {
+		return nil, errors.New("no store was created")
+	}
 	return stores[0], nil
 }
 

@@ -124,7 +124,7 @@ func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int, is_default
 	return addresses, nil
 }
 
-func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_default bool) (*types.Address, error) {
+func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_default bool) (*types.Default_Address, error) {
 	// Begin a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -145,13 +145,21 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	}
 
 	// Query the updated default address for the customer
-	var addr types.Address
+	var addr types.Default_Address
 	err = tx.QueryRow(`SELECT * FROM address WHERE customer_id = $1 AND is_default = true`, customer_id).Scan(
 		&addr.Id, &addr.Customer_Id, &addr.Latitude, &addr.Longitude, &addr.Street_Address,
 		&addr.Line_One_Address, &addr.Line_Two_Address, &addr.City, &addr.State, &addr.Zipcode, &addr.Is_Default, &addr.Created_At,
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// Find a store with the same latitude and longitude
+	err = tx.QueryRow(`SELECT id FROM store WHERE latitude = $1 AND longitude = $2 LIMIT 1`, addr.Latitude, addr.Longitude).Scan(&addr.StoreId)
+	if err != nil {
+		addr.Deliverable = false
+	} else {
+		addr.Deliverable = true
 	}
 
 	// If everything has proceeded without errors, commit the transaction
@@ -162,7 +170,6 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 
 	return &addr, nil
 }
-
 
 func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.Address, error) {
 	tx, err := s.db.Begin()
