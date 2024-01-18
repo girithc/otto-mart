@@ -1181,6 +1181,14 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 	return nil
 }
 
+func (s *Server) handleDeliverTo(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "brand")
+		return s.handleDeliverToAddress(res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 	workerPool := s.workerPool
 

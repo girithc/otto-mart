@@ -12,12 +12,12 @@ func (s *Server) Handle_Create_Address(res http.ResponseWriter, req *http.Reques
 	new_req := new(types.Create_Address)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in Handle_Create_Address()")
-		return err
+		return WriteJSON(res, http.StatusBadRequest, err)
 	}
 
 	addr, err := s.store.Create_Address(new_req)
 	if err != nil {
-		return err
+		return WriteJSON(res, http.StatusBadRequest, err)
 	}
 
 	return WriteJSON(res, http.StatusOK, addr)
@@ -60,7 +60,22 @@ func (s *Server) handleMakeDefaultAddress(res http.ResponseWriter, req *http.Req
 		return err
 	}
 
-	addrs, err := s.store.MakeDefaultAddress(new_req.Customer_Id, new_req.Address_Id , true)
+	addrs, err := s.store.MakeDefaultAddress(new_req.Customer_Id, new_req.Address_Id, true)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, addrs)
+}
+
+func (s *Server) handleDeliverToAddress(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliverToAddress)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in Handle_Get_Address_By_Customer_Id()")
+		return err
+	}
+
+	addrs, err := s.store.DeliverToAddress(new_req.Customer_Id, new_req.Address_Id)
 	if err != nil {
 		return err
 	}

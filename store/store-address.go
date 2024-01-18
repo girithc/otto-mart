@@ -30,60 +30,44 @@ func (s *PostgresStore) CreateAddressTable(tx *sql.Tx) error {
 		return err
 	}
 
-	// Now, add the partial unique index
-	indexQuery := `
-    CREATE UNIQUE INDEX IF NOT EXISTS idx_one_default_address_per_customer 
-    ON address (customer_id) WHERE (is_default IS TRUE)
-    `
-
-	_, err = tx.Exec(indexQuery)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
 func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Address, error) {
-	tx, err := s.db.Begin()
+	// Retrieve customer_id using the provided phone number
+	var customerID int
+
+	println("CustomerID: ", addr.Customer_Id)
+	err := s.db.QueryRow(`SELECT id FROM customer WHERE phone = $1`, addr.Customer_Id).Scan(&customerID)
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback() // Rollback in case of panic
-		}
-	}()
-
-	print("Befopre update")
 	// First, set all other addresses for this customer to is_default=false
 	updateQuery := `UPDATE address SET is_default=false WHERE customer_id=$1 AND is_default=true`
-	_, err = tx.Exec(updateQuery, addr.Customer_Id)
+	_, err = s.db.Exec(updateQuery, customerID)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
-	print("After update")
+
+	println("Set address to false")
 
 	// Insert the new address and set is_default=true
 	query := `INSERT INTO address (customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9,  true) 
-        RETURNING id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
-	row := tx.QueryRow(query, addr.Customer_Id, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true) 
+              RETURNING id,  street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
+	row := s.db.QueryRow(query, customerID, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude)
+
+	println("insert new address")
 
 	address := &types.Address{}
-	err = row.Scan(&address.Id, &address.Customer_Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Is_Default, &address.Latitude, &address.Longitude, &address.Created_At)
+	err = row.Scan(&address.Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Is_Default, &address.Latitude, &address.Longitude, &address.Created_At)
 	if err != nil {
-		tx.Rollback()
 		return nil, err
 	}
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
-
+	address.Customer_Id = customerID
+	println("done executing")
 	return address, nil
 }
 
@@ -169,6 +153,47 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	}
 
 	return &addr, nil
+}
+
+func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.Deliverable, error) {
+	var deliverable types.Deliverable
+
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback() // Rollback in case of panic
+		}
+	}()
+
+	// Get the latitude and longitude of the address
+	var latitude, longitude float64
+	err = tx.QueryRow(`SELECT latitude, longitude FROM address WHERE id = $1`, addressId).Scan(&latitude, &longitude)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Find a store with the same latitude and longitude
+	err = tx.QueryRow(`SELECT id FROM store WHERE latitude = $1 AND longitude = $2 LIMIT 1`, latitude, longitude).Scan(&deliverable.StoreId)
+	if err != nil {
+		// If no store is found, set deliverable to false
+		deliverable.Deliverable = false
+	} else {
+		// If a store is found, set deliverable to true
+		deliverable.Deliverable = true
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &deliverable, nil
 }
 
 func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.Address, error) {
