@@ -95,14 +95,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const MyHomePage(
-                  title: 'Otto Mart',
-                ),
-              ),
-            );
+            Navigator.pop(context);
           },
         ),
       ),

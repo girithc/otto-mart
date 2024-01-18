@@ -162,7 +162,7 @@ class TypingAnimation extends StatefulWidget {
 
 class _TypingAnimationState extends State<TypingAnimation> {
   List<String> words = [
-    "Tata Tea",
+    "Tata Sampann",
     "Coffee",
     "Atta",
     "Mango",

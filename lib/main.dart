@@ -64,6 +64,18 @@ final GoRouter _router = GoRouter(
       },
     ),
     GoRoute(
+      path: '/coming-soon',
+      builder: (BuildContext context, GoRouterState state) {
+        return const MyPlan();
+      },
+    ),
+    GoRoute(
+      path: '/select-address',
+      builder: (BuildContext context, GoRouterState state) {
+        return const AddressSelectionWidget();
+      },
+    ),
+    GoRoute(
       path: '/verify/:number/:istester',
       builder: (BuildContext context, GoRouterState state) {
         final number = state.pathParameters['number'];

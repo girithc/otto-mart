@@ -242,7 +242,6 @@ class CartModel extends ChangeNotifier {
       //_logger.e('Response: $response');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
-          //print("Response Not Empty ${response.contentLength}");
           final List<dynamic> jsonData = json.decode(response.body);
           final List<Address> items =
               jsonData.map((item) => Address.fromJson(item)).toList();
@@ -278,22 +277,23 @@ class CartModel extends ChangeNotifier {
       String? state,
       double latitude,
       double longitude) async {
+    const storage = FlutterSecureStorage();
+    final phone = await storage.read(key: 'phone');
+
+    if (phone == null) {
+      _logger.e('Customer ID not found in Secure Storage');
+      return false;
+    }
+
     final url = Uri.parse('$baseUrl/address');
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
 
-    int? parsedCustomerId;
-    try {
-      parsedCustomerId = int.parse(customerId);
-      //print("CustomerID: $parsedCustomerId");
-    } catch (e) {
-      _logger.e('Failed to parse customerId: $customerId, error: $e');
-      return false; // if we can't parse customerId, it makes sense to return early
-    }
+    print("Post Delivery $phone");
 
     final body = <String, dynamic>{
-      'customer_id': parsedCustomerId,
+      'customer_id': phone,
       'street_address': flatBuildingName,
       'line_one': lineOne,
       'line_two': lineTwo,
@@ -321,7 +321,7 @@ class CartModel extends ChangeNotifier {
         }
       } else {
         _logger.e(
-            'HTTP POST request failed with status code ${response.statusCode}');
+            'HTTP POST request failed with status code ${response.statusCode} ${response.body}');
         return false;
       }
     } catch (error) {

@@ -25,6 +25,13 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   late LatLng _draggedLatlng;
   String _draggedAddress_one = "";
   String _draggedAddress_two = "";
+  String _locality = "";
+  String _thoroughfare = "";
+  String _subthoroughfare = "";
+  String _sublocality = "";
+  String _postalCode = "";
+  String _adminArea = "";
+  String _subAdminArea = "";
 
   @override
   void initState() {
@@ -50,7 +57,8 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
         _draggedLatlng = _defaultLatLng;
         _cameraPosition = CameraPosition(target: _defaultLatLng, zoom: 17.5);
         _gotoSpecificPosition(
-            LatLng(_defaultLatLng.latitude, _defaultLatLng.longitude));
+                LatLng(_defaultLatLng.latitude, _defaultLatLng.longitude))
+            as String;
         print("LatLang $_defaultLatLng");
       });
     }
@@ -64,178 +72,68 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       ),
       body: _buildBody(),
       bottomNavigationBar: BottomAppBar(
-          height: 150,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              ListTile(
-                contentPadding: const EdgeInsets.all(0),
-                minVerticalPadding: 0,
-                title: Text(
-                  _draggedAddress_one + _draggedAddress_two,
-                  style: const TextStyle(height: 1.2),
-                ),
-                leading: GestureDetector(
-                  onTap: () {
-                    // Action to perform when leading is pressed
-                    _gotoUserCurrentPosition();
-                  },
-                  child: const CircleAvatar(
-                    child: Icon(Icons.location_city_outlined),
-                  ),
-                ),
-                trailing: GestureDetector(
-                  onTap: () {
-                    // Action to perform when trailing is pressed
-                    _gotoUserCurrentPosition();
-                  },
-                  child: const CircleAvatar(
-                    child: Icon(
-                      Icons.check,
-                      size: 25,
-                    ),
-                  ),
-                ),
+        height: 150,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            ListTile(
+              contentPadding: const EdgeInsets.all(0),
+              minVerticalPadding: 0,
+              title: Text(
+                _draggedAddress_one + _draggedAddress_two,
+                style: const TextStyle(height: 1.2),
               ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ReconfirmAddressInit(
-                        coordinates: _defaultLatLng,
-                        lineOneAddress: _draggedAddress_one,
-                        lineTwoAddress: _draggedAddress_two,
-                      ),
-                    ),
-                  );
+              leading: GestureDetector(
+                onTap: () {
+                  // Action to perform when leading is pressed
+                  _gotoUserCurrentPosition();
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6200EE),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 65, vertical: 10),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  "Confirm Address",
-                  style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold),
-                ),
-              )
-            ],
-          )),
-      /*
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Stack(
-                  children: <Widget>[
-                    Positioned.fill(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: <Color>[
-                              Color(0xFF0D47A1),
-                              Color(0xFF1976D2),
-                              Color(0xFF42A5F5),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.all(8.0),
-                        textStyle: const TextStyle(fontSize: 18),
-                      ),
-                      onPressed: () {},
-                      child: const Text('Customer Address India'),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(
-                width: 5,
-              ),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: Stack(
-                  children: <Widget>[
-                    Positioned.fill(
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: <Color>[
-                              Color(0xFF42A5F5),
-                              Color(0xFF1976D2),
-                              Color(0xFF0D47A1),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    TextButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.all(8.0),
-                        textStyle: const TextStyle(fontSize: 18),
-                      ),
-                      onPressed: () {
-                        _gotoUserCurrentPosition();
-                      },
-                      child: const Icon(
-                        Icons.location_on,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              SizedBox(
-                width: MediaQuery.of(context).size.width * 0.75,
-                height: MediaQuery.of(context).size.height * 0.1,
-                child: FloatingActionButton(
-                  heroTag: "confirm",
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReconfirmAddress(
-                          coordinates: _defaultLatLng,
-                          lineOneAddress: _draggedAddress_one,
-                          lineTwoAddress: _draggedAddress_two,
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Center(
-                    child: Text(
-                      "Confirm Address",
-                      style: TextStyle(fontSize: 22),
-                      textAlign: TextAlign.center,
-                    ),
+                child: const CircleAvatar(
+                  child: Icon(
+                    Icons.location_city_outlined,
                   ),
                 ),
               ),
-            ],
-          ),
-        ],
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReconfirmAddressInit(
+                      coordinates: _defaultLatLng,
+                      lineOneAddress: _draggedAddress_one,
+                      lineTwoAddress: _draggedAddress_two,
+                      locality: _locality,
+                      sublocality: _sublocality,
+                      thoroughfare: _thoroughfare,
+                      subthoroughfare: _subthoroughfare,
+                      administrativeArea: _adminArea,
+                      subAdministrativeArea: _subAdminArea,
+                      postalCode: _postalCode,
+                    ),
+                  ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6200EE),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 65, vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                "Confirm Address",
+                style: TextStyle(
+                    fontSize: 22,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold),
+              ),
+            )
+          ],
+        ),
       ),
-      */
     );
   }
 
@@ -295,7 +193,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     List<Placemark> placemarks =
         await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark address = placemarks[0];
-    print("Placemarks: $placemarks");
+    print("Placemarks: ${placemarks[0].locality} ");
     print("Address: $address");
 
     setState(() {
@@ -304,7 +202,15 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       _draggedAddress_two = address.locality!.isNotEmpty
           ? "${address.subLocality}, ${address.locality}, ${address.administrativeArea}"
           : "${address.administrativeArea}";
+      _locality = address.locality!;
+      _thoroughfare = address.thoroughfare!;
+      _subthoroughfare = address.subThoroughfare!;
+      _sublocality = address.subLocality!;
+      _postalCode = address.postalCode!;
+      _adminArea = address.administrativeArea!;
+      _subAdminArea = address.subAdministrativeArea!;
     });
+    return null;
   }
 
   Future _gotoUserCurrentPosition() async {

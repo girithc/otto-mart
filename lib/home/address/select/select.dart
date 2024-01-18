@@ -117,6 +117,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       );
 
       if (response.statusCode == 200) {
+        print(response.body.toString());
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
@@ -141,6 +142,41 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     return null;
   }
 
+  Future<DeliverableResponse?> deliverToAddress(int addressId) async {
+    final Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+    };
+
+    final Map<String, dynamic> body = {
+      "customer_id": int.parse(customerId),
+      "address_id": addressId,
+    };
+
+    try {
+      final http.Response response = await http.post(
+        Uri.parse("$baseUrl/deliver-to"),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        print(response.body.toString());
+        if (response.body.isNotEmpty) {
+          final decodedResponse = json.decode(response.body);
+          return DeliverableResponse.fromJson(decodedResponse);
+        }
+      } else {
+        print("Delivered To Error");
+        print("Error: ${response.reasonPhrase}");
+        print("Error: ${response.body}");
+      }
+    } catch (e) {
+      print("Exception occurred: $e");
+    }
+    return null;
+  }
+
   // Add other methods as needed, like fetchAddresses, setDefaultAddress, etc.
 
   @override
@@ -151,8 +187,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurpleAccent,
         title: const Text(
-          'Address',
-          style: TextStyle(color: Colors.white),
+          'Select Address',
+          style: TextStyle(color: Colors.white, fontSize: 20),
         ),
         leading: Container(),
       ),
@@ -179,11 +215,14 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           children: [
             // Title
             _buildAdvertisement(),
+            /*
             _buildTitleSection(),
+            */
             Expanded(
               child: Container(
                 margin: const EdgeInsets.only(
                     bottom: 10, top: 5, left: 5, right: 5),
+                padding: const EdgeInsets.symmetric(vertical: 10.0),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15), // Rounded corners
@@ -208,7 +247,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                 ),
               ),
             ),
-
+            const SizedBox(
+              height: 5,
+            ),
             _buildActionButton(),
           ],
         ),
@@ -218,7 +259,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
   Widget _buildAdvertisement() {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.2,
+      height: MediaQuery.of(context).size.height * 0.30,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -262,7 +303,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           child: const Center(
             child: Text(
               "Select Address",
-              style: TextStyle(fontSize: 22),
+              style: TextStyle(fontSize: 20),
             ),
           ),
         ),
@@ -294,8 +335,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
   Widget _buildAddressList() {
     var cart = context.watch<CartModel>();
-    print("length : ${addresses.length}");
-
     selectedAddressIndex = 0; // Assuming current address is initially selected
 
     return StatefulBuilder(
@@ -308,9 +347,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             if (index == 0) {
               // "Add New Address" tile
               return ListTile(
-                leading: const Icon(Icons.add, size: 25),
+                minVerticalPadding: 12,
+                leading: const Icon(Icons.add, size: 20),
                 title: const Text("Add New Address",
-                    style: TextStyle(fontSize: 20)),
+                    style: TextStyle(fontSize: 16)),
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -325,18 +365,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   modalSetState(() {
                     selectedAddressIndex = index;
                   });
-                  print("selectedAddressIndex: $selectedAddressIndex");
-                  // Debug print statement
-                  if (selectedAddressIndex! > 1) {
-                    // Ensure the index is for an address and not for the "Add New Address" tile
-                    Address selectedAddress =
-                        addresses[selectedAddressIndex! - 2];
-                    print(
-                        "Selected Address ID: ${selectedAddress.id}, Street Address: ${selectedAddress.streetAddress}");
-                  } else if (selectedAddressIndex == 1) {
-                    print(
-                        "Selected Address ID: ${cart.deliveryAddress.id}, Street Address: ${cart.deliveryAddress.streetAddress}");
-                  }
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -347,14 +375,18 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                     ),
                   ),
                   child: ListTile(
+                    minVerticalPadding: 12,
                     leading: index == 1
-                        ? const Icon(Icons.home)
+                        ? const Icon(
+                            Icons.home,
+                            size: 20,
+                          )
                         : null, // Icon for current address
                     title: Text(
                       index == 1
-                          ? cart.deliveryAddress.streetAddress
-                          : addresses[index - 2].streetAddress,
-                      style: const TextStyle(fontSize: 20, color: Colors.black),
+                          ? "${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}, ${cart.deliveryAddress.lineTwo}"
+                          : "${addresses[index - 2].streetAddress}, ${addresses[index - 2].lineOne}, ${addresses[index - 2].lineTwo}",
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ),
                 ),
@@ -380,31 +412,72 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         onPressed: () async {
           try {
             String snackBarMessage;
+            bool deliverable = true;
             print("Button Press: SelectedAddressindex $selectedAddressIndex");
             if (selectedAddressIndex != null) {
               if (selectedAddressIndex! > 1) {
                 print("1a Branch");
                 showAddress = false;
-                setDefaultAddress(addresses[selectedAddressIndex! - 2].id)
-                    .then((address) {
-                  if (address?.address != null) {
-                    cart.deliveryAddress = address!.address;
-                  }
-                });
-                snackBarMessage =
-                    'Delivery address set to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
+                setDefaultAddress(addresses[selectedAddressIndex! - 2].id).then(
+                  (address) async {
+                    if (!mounted) return;
 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(snackBarMessage),
-                    backgroundColor: Colors.green,
-                  ),
+                    if (address?.address != null) {
+                      cart.deliveryAddress = address!.address;
+                    }
+                    if (!address!.deliverable) {
+                      print('Not Deliverable');
+                      deliverable = false;
+                    }
+
+                    if (deliverable) {
+                      snackBarMessage =
+                          'Delivery address set to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(snackBarMessage),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      print('Go To Home');
+                      await storage.write(
+                          key: 'storeId', value: address.storeId.toString());
+                      context.push('/home');
+                    } else {
+                      snackBarMessage =
+                          'Not deliverable to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(snackBarMessage),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                      await storage.delete(key: 'storeId');
+                      print('Coming Soon');
+                      context.push('/coming-soon');
+                    }
+                  },
                 );
-                context.go('/home');
               } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
                 print("1b Branch");
 
-                context.go('/home');
+                deliverToAddress(cart.deliveryAddress.id).then(
+                  (resp) async => {
+                    if (resp!.deliverable)
+                      {
+                        await storage.write(
+                            key: 'storeId', value: resp.storeId.toString()),
+                        context.push('/home')
+                      }
+                    else
+                      {
+                        await storage.delete(key: 'storeId'),
+                        context.push('/coming-soon')
+                      }
+                  },
+                );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
@@ -415,7 +488,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
               }
             } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
               print("2nd Branch");
-              context.go('/home');
+              context.push('/home');
             } else {
               print("3rd Branch");
 
@@ -453,9 +526,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             borderRadius: BorderRadius.circular(20),
           ),
           elevation: 5,
-          padding: const EdgeInsets.symmetric(horizontal: 35, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
         ),
-        child: const Text("Deliver To Address", style: TextStyle(fontSize: 24)),
+        child: const Text("Deliver To Address", style: TextStyle(fontSize: 20)),
       ),
     );
   }
@@ -476,6 +549,23 @@ class AddressResponse {
   factory AddressResponse.fromJson(Map<String, dynamic> json) {
     return AddressResponse(
       address: Address.fromJson(json),
+      deliverable: json['deliverable'] as bool,
+      storeId: json['store_id'] as int,
+    );
+  }
+}
+
+class DeliverableResponse {
+  final bool deliverable;
+  final int storeId;
+
+  DeliverableResponse({
+    required this.deliverable,
+    required this.storeId,
+  });
+
+  factory DeliverableResponse.fromJson(Map<String, dynamic> json) {
+    return DeliverableResponse(
       deliverable: json['deliverable'] as bool,
       storeId: json['store_id'] as int,
     );

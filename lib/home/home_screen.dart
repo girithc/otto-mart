@@ -317,6 +317,7 @@ class _MyHomePageState extends State<MyHomePage>
                           children: [
                             // Your other body content
                             Container(
+                              color: Colors.white,
                               padding: const EdgeInsets.all(2),
                               height: 60,
                               child: Row(
@@ -325,9 +326,10 @@ class _MyHomePageState extends State<MyHomePage>
                                     flex: 15, // Flex 3 for the address
                                     child: GestureDetector(
                                       onTap: () {
+                                        context.push('/select-address');
                                         // Reset selectedAddressIndex before opening the bottom sheet
+                                        /*
                                         selectedAddressIndex = null;
-
                                         getAllAddresses().then((_) {
                                           // When getAllAddresses completes execution
                                           showModalBottomSheet(
@@ -624,6 +626,7 @@ class _MyHomePageState extends State<MyHomePage>
                                             },
                                           );
                                         });
+                                        */
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -633,27 +636,42 @@ class _MyHomePageState extends State<MyHomePage>
                                           borderRadius:
                                               BorderRadius.circular(8.0),
                                           border: Border.all(
-                                              color: Colors.deepPurpleAccent),
+                                              color: Colors.white, width: 1),
                                           boxShadow: const [
                                             BoxShadow(
                                               color: Color.fromARGB(
                                                   255, 248, 219, 253),
-                                              spreadRadius: 1,
+                                              spreadRadius: 2,
                                               blurRadius: 3,
                                               offset: Offset(0, 3),
                                             ),
                                           ],
                                         ), // No background color for the first child
                                         child: Center(
-                                          child: Text(
-                                            cart.deliveryAddress.streetAddress,
-                                            style: GoogleFonts.cantoraOne(
-                                                fontSize: 15,
-                                                fontStyle: FontStyle.normal,
-                                                color: Colors.black),
-                                            overflow: TextOverflow.ellipsis,
-                                            maxLines: 2,
-                                            softWrap: false,
+                                          child: Row(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.center,
+                                            children: [
+                                              const Icon(
+                                                Icons
+                                                    .location_on, // Location marker icon
+                                                color: Colors
+                                                    .deepPurpleAccent, // You can adjust the color as needed
+                                                size:
+                                                    20, // You can adjust the size as needed
+                                              ),
+                                              Text(
+                                                cart.deliveryAddress
+                                                    .streetAddress,
+                                                style: GoogleFonts.cantoraOne(
+                                                    fontSize: 18,
+                                                    fontStyle: FontStyle.normal,
+                                                    color: Colors.black),
+                                                overflow: TextOverflow.ellipsis,
+                                                maxLines: 2,
+                                                softWrap: false,
+                                              ),
+                                            ],
                                           ),
                                         ),
                                       ),
@@ -703,10 +721,13 @@ class _MyHomePageState extends State<MyHomePage>
                               ),
                             ),
 
-                            Highlights(
-                                customerId: customerId,
-                                phone: phone,
-                                promos: promotions), // Pass retrieved values
+                            promotions.isNotEmpty
+                                ? Highlights(
+                                    customerId: customerId,
+                                    phone: phone,
+                                    promos: promotions)
+                                : Container(
+                                    height: 40), // Pass retrieved values
                             Container(
                               alignment: Alignment
                                   .centerLeft, // Align text to the left
@@ -858,6 +879,7 @@ class _MyHomePageState extends State<MyHomePage>
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
         padding: const EdgeInsets.only(left: 2, right: 2, bottom: 0),
+        color: Colors.white,
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,

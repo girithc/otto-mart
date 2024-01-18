@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
+import 'package:pronto/plan/plan.dart';
 import 'package:pronto/setting/order/order.dart';
 import 'package:pronto/payments/phonepe.dart';
 import 'package:provider/provider.dart';
@@ -19,12 +20,13 @@ class SettingScreen extends StatefulWidget {
 class _SettingScreenState extends State<SettingScreen> {
   DrawerSections _currentSection = DrawerSections.profile;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final storage = const FlutterSecureStorage();
 
   Future<void> signOutUser(BuildContext context) async {
     // Clear the data in "customerId" key
     if (ModalRoute.of(context)?.isActive == true) {
       //print("Signing Out User");
-      const storage = FlutterSecureStorage();
+
       await storage.delete(key: 'customerId');
       await storage.delete(key: 'cartId');
       await storage.delete(key: 'phone');
@@ -45,12 +47,12 @@ class _SettingScreenState extends State<SettingScreen> {
             return AlertDialog(
               backgroundColor:
                   Colors.deepPurpleAccent, // Set the background color
-              title: Text(
+              title: const Text(
                 'Confirm',
                 style:
                     TextStyle(color: Colors.white), // White text for the title
               ),
-              content: Text(
+              content: const Text(
                 'Are you sure you want to delete your profile?',
                 style: TextStyle(
                     color: Colors.white,
@@ -68,7 +70,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       ),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Cancel',
                     style: TextStyle(
                         color: Colors
@@ -87,7 +89,7 @@ class _SettingScreenState extends State<SettingScreen> {
                       ),
                     ),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Delete',
                     style: TextStyle(color: Colors.deepPurpleAccent),
                   ),
@@ -126,19 +128,38 @@ class _SettingScreenState extends State<SettingScreen> {
               ),
             ),
           ),
-          onTap: () {
-            Navigator.pushReplacement(
+          onTap: () async {
+            final storeId = await storage.read(key: 'storeId');
+            if (storeId == null || storeId.isEmpty) {
+              // If storeId is null or empty, navigate to MyPlan widget
+              print("StoreId is  empty: $storeId");
+              context.go('/coming-soon');
+            } else {
+              print("StoreId is not empty: $storeId");
+              // If storeId is not null, navigate to MyHomePage
+              Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                    builder: (context) => const MyHomePage(
-                          title: 'Pronto',
-                        )));
+                  builder: (context) => const MyHomePage(
+                    title: 'Otto Mart',
+                  ),
+                ),
+              );
+            }
           },
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {
-            context.go('/home');
+          onPressed: () async {
+            final storeId = await storage.read(key: 'storeId');
+            if (storeId == null || storeId.isEmpty) {
+              // If storeId is null or empty, navigate to MyPlan widget
+              context.go('/coming-soon');
+            } else {
+              print("StoreId is not empty: $storeId");
+              // If storeId is not null, navigate to MyHomePage
+              context.go('/home');
+            }
           },
         ),
       ),
@@ -204,146 +225,91 @@ class _SettingScreenState extends State<SettingScreen> {
         return SingleChildScrollView(
           child: Column(
             children: [
-              // ... your existing code for order details ...
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const MyOrdersPage()),
-                  );
-                },
-                child: Container(
-                  height: MediaQuery.of(context).size.height * 0.14,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.indigoAccent.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
-                  ),
-                  child: Center(
+              const SizedBox(height: 10),
+              ListTile(
+                  minVerticalPadding: 25,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const MyOrdersPage()),
+                    );
+                  },
+                  title: Center(
                     child: Text(
                       'Orders',
-                      style: GoogleFonts.robotoMono(fontSize: 18),
+                      style: GoogleFonts.robotoMono(fontSize: 20),
                     ),
                   ),
-                ),
+                  tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2),
+                    side: BorderSide(
+                        color: Colors.grey.withOpacity(0.5), width: 2),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+              const SizedBox(
+                height: 10,
               ),
-
-              GestureDetector(
-                onTap: () {
-                  signOutUser(context).then(
-                    (value) => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const MyPhone()),
-                    ),
-                  );
-                },
-                child: Container(
-                  height: MediaQuery.of(context).size.height * 0.14,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset: const Offset(0, 3),
+              ListTile(
+                  minVerticalPadding: 10,
+                  onTap: () {
+                    signOutUser(context).then(
+                      (value) => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyPhone()),
                       ),
-                    ],
-                  ),
-                  child: Center(
+                    );
+                  },
+                  title: Center(
                     child: Text(
                       'Sign Out',
                       style: GoogleFonts.robotoMono(
                           fontSize: 18, color: Colors.black),
                     ),
                   ),
-                ),
-              ),
-              GestureDetector(
-                onTap: () {
-                  _showConfirmationDialog(context).then((confirmed) {
-                    if (confirmed) {
-                      signOutUser(context).then(
-                        (value) => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyPhone()),
-                        ),
-                      );
-                    }
-                  });
-                },
-                child: Container(
-                  height: MediaQuery.of(context).size.height * 0.07,
-                  margin:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                  tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2),
+                    side: BorderSide(
+                        color: Colors.grey.withOpacity(0.5), width: 2),
                   ),
-                  child: Center(
+                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+              const SizedBox(height: 10),
+              ListTile(
+                  minVerticalPadding: 10,
+                  onTap: () {
+                    _showConfirmationDialog(context).then((confirmed) {
+                      if (confirmed) {
+                        signOutUser(context).then(
+                          (value) => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyPhone()),
+                          ),
+                        );
+                      }
+                    });
+                  },
+                  title: Center(
                     child: Text(
                       'Delete User',
                       style: GoogleFonts.robotoMono(
                           fontSize: 18, color: Colors.black),
                     ),
                   ),
-                ),
-              ),
+                  tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2),
+                    side: BorderSide(
+                        color: Colors.grey.withOpacity(0.5), width: 2),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
             ],
           ),
         );
 
-      /*
-        Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _currentSection = DrawerSections.orders;
-                    });
-                  },
-                  child: const Text('Orders')),
-              ElevatedButton(
-                  onPressed: () {
-                    signOutUser(context).then(
-                      (value) => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyPhone())),
-                    );
-                  },
-                  child: const Text('Log Out'),),
-            ],
-          ),
-        );
-        */
       case DrawerSections.wallet:
         return const Center(child: Text('Wallet Section'));
       case DrawerSections.orders:
