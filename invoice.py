@@ -3,6 +3,8 @@ import pytesseract
 import cv2
 import tempfile
 import os
+import re
+import pandas as pd
 
 # Convert PDF to list of images
 def pdf_to_img(pdf_path):
@@ -16,7 +18,6 @@ def ocr_images(images):
         width, height = img.size
         scale_factor = 3
         img = img.resize((width * scale_factor, height * scale_factor))
-
 
         # Save the PIL image as a temporary file
         temp_image = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
@@ -40,8 +41,25 @@ def ocr_images(images):
 
     return text
 
+# Parse the OCR text to extract structured data
+def parse_data(ocr_text):
+    # Define a regex pattern for the data lines
+    pattern = r'(\d+)\.(\d+)\s+(.*?)\s+(\d+x\d+gm|\d+ MI)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)'
+    matches = re.findall(pattern, ocr_text)
+
+    print(matches)
+    # Convert matches to a structured format
+    data = []
+
+    
+    return data
+
 # Use the functions
 pdf_path = '/Users/girithc/work/py/vendor.pdf'
 images = pdf_to_img(pdf_path)
 ocr_text = ocr_images(images)
-print(ocr_text)
+parsed_data = parse_data(ocr_text)
+
+# Convert the data to a DataFrame for better visualization and further processing
+df = pd.DataFrame(parsed_data)
+print(df)
