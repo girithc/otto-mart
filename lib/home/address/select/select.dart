@@ -188,8 +188,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         backgroundColor: Colors.deepPurpleAccent,
         title: const Text(
           'Select Address',
-          style: TextStyle(color: Colors.white, fontSize: 20),
+          style: TextStyle(color: Colors.white),
         ),
+        centerTitle: true,
         leading: Container(),
       ),
       body: Container(

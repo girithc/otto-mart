@@ -11,8 +11,10 @@ import 'package:pronto/utils/constants.dart';
 
 class ConfirmAddressInit extends StatefulWidget {
   final String placeId;
+  final LatLng? paramLatLng;
 
-  const ConfirmAddressInit({Key? key, required this.placeId}) : super(key: key);
+  const ConfirmAddressInit({Key? key, required this.placeId, this.paramLatLng})
+      : super(key: key);
 
   @override
   State<ConfirmAddressInit> createState() => _ConfirmAddressInitState();
@@ -45,7 +47,11 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     _draggedLatlng = _defaultLatLng;
     _cameraPosition = CameraPosition(target: _defaultLatLng, zoom: 17.5);
     //_gotoUserCurrentPosition();
-    _setInitialMapLocationFromPlaceId();
+    if (widget.placeId.isNotEmpty) {
+      _setInitialMapLocationFromPlaceId();
+    } else {
+      _cameraPosition = CameraPosition(target: widget.paramLatLng!, zoom: 17.5);
+    }
   }
 
   Future<void> _setInitialMapLocationFromPlaceId() async {
@@ -69,9 +75,12 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Confirm Address"),
+        centerTitle: true,
       ),
       body: _buildBody(),
       bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        surfaceTintColor: Colors.white,
         height: 150,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -89,8 +98,10 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
                   _gotoUserCurrentPosition();
                 },
                 child: const CircleAvatar(
+                  backgroundColor: Color(0xFF6200EE),
                   child: Icon(
                     Icons.location_city_outlined,
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -193,8 +204,8 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     List<Placemark> placemarks =
         await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark address = placemarks[0];
-    print("Placemarks: ${placemarks[0].locality} ");
-    print("Address: $address");
+    //print("Placemarks: ${placemarks[0].locality} ");
+    //print("Address: $address");
 
     setState(() {
       //_draggedAddress = addressStr;
@@ -230,7 +241,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     LocationPermission locationPermission;
     bool isLocationServiceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!isLocationServiceEnabled) {
-      print("user don't enable location permission");
+      print("user did not enable location permission");
     }
 
     locationPermission = await Geolocator.checkPermission();
@@ -242,7 +253,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     }
 
     if (locationPermission == LocationPermission.deniedForever) {
-      print("user denied permission forever");
+      print("user denied permission");
     }
 
     return await Geolocator.getCurrentPosition(
@@ -250,7 +261,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   }
 
   Future<LatLng?> getLocationFromPlaceId(String placeId) async {
-    print("PlaceId: $placeId");
+    //print("PlaceId: $placeId");
     var url =
         "https://maps.googleapis.com/maps/api/geocode/json?place_id=$placeId&key=$modApikey";
 
@@ -262,7 +273,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       if (data["status"] == "OK") {
         final lat = data["results"][0]["geometry"]["location"]["lat"];
         final lng = data["results"][0]["geometry"]["location"]["lng"];
-        print("Lat $lat Long $lng");
+        //print("Lat $lat Long $lng");
         return LatLng(lat, lng);
       }
     } else {

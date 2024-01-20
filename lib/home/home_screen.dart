@@ -666,7 +666,7 @@ class _MyHomePageState extends State<MyHomePage>
                                                 style: GoogleFonts.cantoraOne(
                                                     fontSize: 18,
                                                     fontStyle: FontStyle.normal,
-                                                    color: Colors.black),
+                                                    color: Colors.black87),
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 2,
                                                 softWrap: false,

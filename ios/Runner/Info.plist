@@ -36,7 +36,7 @@
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>2.0.3</string>
+	<string>2.0.4</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>ppemerchantsdkv1</string>

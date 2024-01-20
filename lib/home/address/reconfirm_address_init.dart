@@ -53,7 +53,11 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
 
     return Scaffold(
       key: _scaffoldMessengerKey, // Use this key for ScaffoldMessenger
-      appBar: AppBar(title: const Text('Address Details')),
+      appBar: AppBar(
+        title: const Text('Address Details'),
+        surfaceTintColor: Colors.white,
+        centerTitle: true,
+      ),
       body: FormBuilder(
         key: _formKey,
         child: ListView(

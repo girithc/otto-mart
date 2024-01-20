@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pronto/cart/address/worker/debouncer.dart';
 import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
@@ -25,16 +27,13 @@ class _AddressScreenState extends State<AddressScreen> {
   final _debouncer = Debouncer(milliseconds: 500); // Adjust the delay as needed
 
   void placeAutocomplete(String query) async {
-    //print("Entered placeAutocomplete");
-    //print("ApiKey: $apiKey");
-
     Uri uri =
         Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
       "input": query,
       "key": modApikey,
     });
 
-    print('Api Key: $modApikey');
+    //print('Api Key: $modApikey');
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -45,15 +44,41 @@ class _AddressScreenState extends State<AddressScreen> {
           PlaceAutoCompleteResponse.parseAutocompleteResult(response);
 
       String? predictions = result.predictions?[0].description;
-      print("Prediction[0].description  $predictions");
+      //print("Prediction[0].description  $predictions");
 
       if (result.predictions != null) {
         setState(() {
           placePredictions = result.predictions!;
-          //print("PlacePredictions.length  ${placePredictions.length}");
         });
       }
     }
+  }
+
+  Future<Position> _determinePosition() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled');
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permission denied');
+      }
+    }
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error('Location permisssions are permanently denied');
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    return position;
   }
 
   @override
@@ -61,19 +86,26 @@ class _AddressScreenState extends State<AddressScreen> {
     //var cart = context.watch<CartModel>();
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Delivery Address"),
+        foregroundColor: Colors.black,
+        title: const Text(
+          "Delivery Address",
+        ),
+        backgroundColor: Colors.white,
+        surfaceTintColor: Colors.white,
+        centerTitle: true,
       ),
       body: SingleChildScrollView(
           padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).viewInsets.bottom,
           ),
-          child: SizedBox(
+          child: Container(
+            color: Colors.white,
             width: MediaQuery.of(context).size.width * 0.95,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 10),
+                const SizedBox(height: 18),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -89,29 +121,46 @@ class _AddressScreenState extends State<AddressScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                  ),
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
+                      Position position = await _determinePosition();
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const MyCart(),
+                          builder: (context) => ConfirmAddressInit(
+                            placeId: '',
+                            paramLatLng:
+                                LatLng(position.latitude, position.longitude),
+                          ),
                         ),
-                      ); // Close the address bottom sheet
+                      );
+                      // Close the address bottom sheet
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.greenAccent,
+                      backgroundColor: Colors.grey.shade200,
                       foregroundColor: Colors.black87,
                       elevation: 0,
-                      fixedSize: const Size(double.infinity, 40),
+                      fixedSize: const Size(double.infinity, 45),
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
                       ),
                     ),
-                    child: const Text('Current Location'),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.near_me_outlined),
+                        SizedBox(
+                          width: 10,
+                        ),
+                        Text('Current Location'),
+                      ],
+                    ),
                   ),
                 ),
                 SizedBox(
@@ -120,7 +169,6 @@ class _AddressScreenState extends State<AddressScreen> {
                   child: ListView.builder(
                     itemCount: placePredictions.length,
                     itemBuilder: (context, index) {
-                      //print("Description: ${placePredictions[index].description}");
                       return LocationListTile(
                         location: placePredictions[index].description!,
                         press: () {
