@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"math"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -155,6 +156,24 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	return &addr, nil
 }
 
+// Haversine formula to calculate the distance between two lat/long coordinates
+func haversineDistance(lat1, lon1, lat2, lon2 float64) float64 {
+	var earthRadius float64 = 6371 // Earth radius in km
+
+	latRad1 := lat1 * math.Pi / 180
+	latRad2 := lat2 * math.Pi / 180
+
+	difLat := (lat2 - lat1) * math.Pi / 180
+	difLon := (lon2 - lon1) * math.Pi / 180
+
+	a := math.Sin(difLat/2)*math.Sin(difLat/2) + math.Cos(latRad1)*math.Cos(latRad2)*math.Sin(difLon/2)*math.Sin(difLon/2)
+	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+	distance := earthRadius * c
+
+	return distance
+}
+
 func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.Deliverable, error) {
 	var deliverable types.Deliverable
 
@@ -170,22 +189,31 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 		}
 	}()
 
-	// Get the latitude and longitude of the address
-	var latitude, longitude float64
-	err = tx.QueryRow(`SELECT latitude, longitude FROM address WHERE id = $1`, addressId).Scan(&latitude, &longitude)
+	// Get the latitude and longitude of the customer's address
+	var custLatitude, custLongitude float64
+	err = tx.QueryRow(`SELECT latitude, longitude FROM address WHERE id = $1`, addressId).Scan(&custLatitude, &custLongitude)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	// Find a store with the same latitude and longitude
-	err = tx.QueryRow(`SELECT id FROM store WHERE latitude = $1 AND longitude = $2 LIMIT 1`, latitude, longitude).Scan(&deliverable.StoreId)
+	// Get the latitude and longitude of the store
+	var storeLatitude, storeLongitude float64
+	// Assuming storeId is known, replace 'storeId' with actual store ID variable or parameter
+	err = tx.QueryRow(`SELECT latitude, longitude FROM store WHERE id = $1`, 1).Scan(&storeLatitude, &storeLongitude)
 	if err != nil {
-		// If no store is found, set deliverable to false
-		deliverable.Deliverable = false
-	} else {
-		// If a store is found, set deliverable to true
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Calculate the distance using the Haversine formula
+	distance := haversineDistance(custLatitude, custLongitude, storeLatitude, storeLongitude)
+
+	// Check if the distance is within 1 km
+	if distance <= 1 {
 		deliverable.Deliverable = true
+	} else {
+		deliverable.Deliverable = false
 	}
 
 	// Commit the transaction

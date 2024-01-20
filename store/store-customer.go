@@ -185,12 +185,15 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 	var cartId int
 	err = tx.QueryRow(query, customer.ID, true, 1).Scan(&customer.Cart_Id, &customer.Store_Id)
 	if err != nil {
+		print(err)
 		return nil, err
 	}
 	customer.Cart_Id = cartId
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
+		print(err)
+
 		return nil, err
 	}
 

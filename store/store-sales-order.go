@@ -753,7 +753,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone str
 	}
 
 	// 3. Update the order status to 'transit'
-	orderStatusQuery := `UPDATE sales_order SET order_status = 'transit' WHERE id = $1 AND order_status = 'accepted'`
+	orderStatusQuery := `UPDATE sales_order SET order_status = 'packed' WHERE id = $1 AND order_status = 'accepted'`
 	_, err = tx.Exec(orderStatusQuery, salesOrderId)
 	if err != nil {
 		return info, err

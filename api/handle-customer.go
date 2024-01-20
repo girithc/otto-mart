@@ -72,6 +72,9 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 
 	user, err := s.store.Get_Customer_By_Phone(new_user.Phone)
 	if err != nil {
+		print("Get Customer Error")
+		print(err)
+
 		return err
 	}
 
@@ -81,6 +84,8 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 
 		user, err := s.store.Create_Customer(new_req)
 		if err != nil {
+			print("Create Customer Error")
+			print(err)
 			return err
 		}
 
@@ -118,6 +123,7 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 			Expires: expirationTime,
 		})
 
+		print(user)
 		return WriteJSON(res, http.StatusOK, user)
 	}
 }
