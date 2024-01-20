@@ -50,7 +50,7 @@ func (s *PostgresStore) CreatePacker(phone string) (*Packer, error) {
 	var newPacker Packer
 	err = s.db.QueryRow(insertQuery, phone).Scan(&newPacker.ID, &newPacker.Name, &newPacker.Phone, &newPacker.Address, &newPacker.CreatedAt)
 	if err != nil {
-		return nil, fmt.Errorf("error creating new packer: %w", err)
+		return nil, fmt.Errorf("error creating new packer: %w %s", err, phone)
 	}
 
 	return &newPacker, nil

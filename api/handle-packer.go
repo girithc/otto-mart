@@ -18,8 +18,7 @@ func (s *Server) HandlePackerLogin(res http.ResponseWriter, req *http.Request) e
 		return err
 	}
 
-	str := fmt.Sprintf("%d", new_req.Phone)
-	new_user, err := s.store.CreatePacker(str)
+	new_user, err := s.store.CreatePacker(new_req.Phone)
 	if err != nil {
 		return err
 	}

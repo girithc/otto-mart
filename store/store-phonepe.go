@@ -276,7 +276,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string, merchantTra
 		MerchantId:        "PGTESTPAYUAT",
 		RedirectUrl:       "https://youtube.com/redirect-url",
 		RedirectMode:      "REDIRECT",
-		CallbackUrl:       fmt.Sprintf("https://pronto-go-3ogvsx3vlq-el.a.run.app/phonepe-callback?cart_id=%d&sign=%s", cart_id, url.QueryEscape(sign)),
+		CallbackUrl:       fmt.Sprintf("https://otto-mart-2cta4tgbnq-el.a.run.app/phonepe-callback?cart_id=%d&sign=%s", cart_id, url.QueryEscape(sign)),
 		PaymentInstrument: types.PaymentInstrument{Type: "PAY_PAGE"},
 	}
 
