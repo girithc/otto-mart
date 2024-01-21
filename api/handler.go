@@ -7,75 +7,70 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
-	"github.com/girithc/pronto-go/worker"
 )
 
-// Store
+type HandlerFunc func(http.ResponseWriter, *http.Request) error
+
+func (s *Server) goRoutineWrapper(handler HandlerFunc, res http.ResponseWriter, req *http.Request) error {
+	resultChan := make(chan error, 1) // Create a channel to capture the result
+
+	// Start a new Go routine to handle the task
+	go func() {
+		err := handler(res, req)
+		resultChan <- err // Send the result error to the channel
+	}()
+
+	// Wait for the result from the Go routine and return it
+	return <-resultChan
+}
 
 func (s *Server) handleCustomer(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
-
 	if req.Method == "POST" {
-		print_path("POST", "customer")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.HandleVerifyCustomerLogin(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		print_path("POST", "cusromer")
+		return s.goRoutineWrapper(s.HandleVerifyCustomerLogin, res, req)
 
 	} else if req.Method == "GET" {
-		print_path("POST", "login-customer")
+		print_path("GET", "customer")
 		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
+		// Start a new Go routine to handle the task
+		go func() {
 			err := s.HandleGetCustomers(res, req)
-			return worker.Result{Error: err}
-		}
+			resultChan <- err // Send the result error to the channel
+		}()
 
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
+		// Wait for the result from the Go routine and return it
 		return <-resultChan
 	}
+
 	return nil
 }
 
 func (s *Server) handleLoginCustomer(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("POST", "login-customer")
-		return s.HandleCustomerLogin(res, req)
+		print_path("POST", "customer-login")
+		return s.goRoutineWrapper(s.HandleCustomerLogin, res, req)
 	}
 	return nil
 }
 
 func (s *Server) handleLoginPacker(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("POST", "login-packer")
-		return s.HandlePackerLogin(res, req)
+		print_path("POST", "packer-login")
+		return s.goRoutineWrapper(s.HandlePackerLogin, res, req)
 	}
+
 	return nil
 }
 
 func (s *Server) handleShoppingCart(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
 		print_path("GET", "shopping_cart")
-		return s.Handle_Get_All_Active_Shopping_Carts(res, req)
+		return s.goRoutineWrapper(s.Handle_Get_All_Active_Shopping_Carts, res, req)
+
 	} else if req.Method == "POST" {
 		print_path("POST", "shopping_cart")
-		return s.Handle_Get_Shopping_Cart_By_Customer_Id(res, req)
+		return s.goRoutineWrapper(s.Handle_Get_Shopping_Cart_By_Customer_Id, res, req)
 	}
 
 	return nil
@@ -123,7 +118,8 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
 
 	} else if req.Method == "DELETE" {
 		print_path("DELETE", "cart-item")
-		return s.Handle_Delete_Cart_item(res, req)
+		return s.goRoutineWrapper(s.Handle_Delete_Cart_item, res, req)
+		//return s.Handle_Delete_Cart_item(res, req)
 	} else if req.Method == "GET" {
 		print_path("GET", "cart-item")
 	}
@@ -143,16 +139,16 @@ func (s *Server) handleStoreClient(res http.ResponseWriter, req *http.Request) e
 func (s *Server) handleStoreManager(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
 		fmt.Println("[GET] - Store(s)")
-		return s.Handle_Get_Stores(res, req)
+		return s.goRoutineWrapper(s.Handle_Get_Stores, res, req)
 	} else if req.Method == "POST" {
 		fmt.Println("[POST] - Store")
-		return s.Handle_Create_Store(res, req)
+		return s.goRoutineWrapper(s.Handle_Create_Store, res, req)
 	} else if req.Method == "PUT" {
 		fmt.Println("[PUT] - Store")
-		return s.Handle_Update_Store(res, req)
+		return s.goRoutineWrapper(s.Handle_Update_Store, res, req)
 	} else if req.Method == "DELETE" {
 		fmt.Println("[DELETE] - Store")
-		return s.Handle_Delete_Store(res, req)
+		return s.goRoutineWrapper(s.Handle_Delete_Store, res, req)
 	}
 
 	return fmt.Errorf("no matching path")
@@ -161,48 +157,23 @@ func (s *Server) handleStoreManager(res http.ResponseWriter, req *http.Request) 
 // Higher Level Category
 
 func (s *Server) handleHigherLevelCategory(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "GET" {
 		print_path("GET", "higher_level_category")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.Handle_Get_Higher_Level_Categories(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Get_Higher_Level_Categories, res, req)
 
 	} else if req.Method == "POST" {
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.Handle_Create_Higher_Level_Category(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Create_Higher_Level_Category, res, req)
 
 	} else if req.Method == "PUT" {
 		print_path("PUT", "higher_level_category")
-		return s.Handle_Update_Higher_Level_Category(res, req)
+		return s.goRoutineWrapper(s.Handle_Update_Higher_Level_Category, res, req)
 
 	} else if req.Method == "DELETE" {
 		print_path("DELETE", "higher_level_category")
-		return s.Handle_Delete_Higher_Level_Category(res, req)
+		return s.goRoutineWrapper(s.Handle_Delete_Higher_Level_Category, res, req)
 	}
 
 	return nil
@@ -210,49 +181,24 @@ func (s *Server) handleHigherLevelCategory(res http.ResponseWriter, req *http.Re
 
 // Category
 func (s *Server) handleCategory(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool // Access the WorkerPool from the Server instance
 
 	if req.Method == "GET" {
 		print_path("GET", "category")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.Handle_Get_Categories(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Get_Categories, res, req)
 
 	} else if req.Method == "POST" {
 		print_path("POST", "category")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.Handle_Create_Category(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Create_Category, res, req)
 
 	} else if req.Method == "PUT" {
 		print_path("PUT", "category")
-		return s.Handle_Update_Category(res, req)
+		return s.goRoutineWrapper(s.Handle_Update_Category, res, req)
 
 	} else if req.Method == "DELETE" {
 		print_path("DELETE", "category")
-		return s.Handle_Delete_Category(res, req)
+		return s.goRoutineWrapper(s.Handle_Delete_Category, res, req)
 	}
 
 	fmt.Println("Returning Nil")
@@ -262,7 +208,7 @@ func (s *Server) handleCategory(res http.ResponseWriter, req *http.Request) erro
 func (s *Server) handleGetCategory(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
 		print_path("[GET]", "get-category")
-		return s.HandleGetCategoryList(res, req)
+		return s.goRoutineWrapper(s.HandleGetCategoryList, res, req)
 	}
 	return nil
 }
@@ -270,7 +216,7 @@ func (s *Server) handleGetCategory(res http.ResponseWriter, req *http.Request) e
 func (s *Server) handleGetBrand(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
 		print_path("[GET]", "get-brand")
-		return s.HandleGetBrandList(res, req)
+		return s.goRoutineWrapper(s.HandleGetBrandList, res, req)
 	}
 	return nil
 }
@@ -280,22 +226,22 @@ func (s *Server) handleCategoryHigherLevelMapping(res http.ResponseWriter, req *
 	if req.Method == "GET" {
 
 		print_path("GET", "category_higher_level_mapping")
-		return s.Handle_Get_Category_Higher_Level_Mappings(res, req)
+		return s.goRoutineWrapper(s.Handle_Get_Category_Higher_Level_Mappings, res, req)
 
 	} else if req.Method == "POST" {
 
 		print_path("POST", "category_higher_level_mapping")
-		return s.Handle_Create_Category_Higher_Level_Mapping(res, req)
+		return s.goRoutineWrapper(s.Handle_Create_Category_Higher_Level_Mapping, res, req)
 
 	} else if req.Method == "PUT" {
 
 		print_path("PUT", "category_higher_level_mapping")
-		return s.Handle_Update_Category_Higher_Level_Mapping(res, req)
+		return s.goRoutineWrapper(s.Handle_Update_Category_Higher_Level_Mapping, res, req)
 
 	} else if req.Method == "DELETE" {
 
 		print_path("DELETE", "category_higher_level_mapping")
-		return s.Handle_Delete_Category_Higher_Level_Mapping(res, req)
+		return s.goRoutineWrapper(s.Handle_Delete_Category_Higher_Level_Mapping, res, req)
 
 	}
 
@@ -303,13 +249,10 @@ func (s *Server) handleCategoryHigherLevelMapping(res http.ResponseWriter, req *
 }
 
 func (s *Server) handleItemStore(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	// add address or get address by customer id
 	if req.Method == "POST" {
 		print_path("POST", "item_store")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
 		// Check the content of the request body to determine which handler to invoke
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -328,42 +271,25 @@ func (s *Server) handleItemStore(res http.ResponseWriter, req *http.Request) err
 			return err
 		}
 
-		// Define the task based on the request content
-		var task func() worker.Result
-
 		// Check if only 'customer_id' is present in the request body
 		if _, exists := requestBody["cart_id"]; exists {
 			if len(requestBody) == 1 {
-				task = func() worker.Result {
-					err := s.handleRemoveLockedQuantities(res, newReq)
-					return worker.Result{Error: err}
-				}
-			} else if len(requestBody) == 2 { // is default
-				task = func() worker.Result {
-					err := s.handleUnlockLockQuantities(res, newReq)
-					return worker.Result{Error: err}
-				}
+				return s.goRoutineWrapper(s.handleRemoveLockedQuantities, res, newReq)
+
+			} else if len(requestBody) == 2 {
+				return s.goRoutineWrapper(s.handleUnlockLockQuantities, res, newReq)
+
 			}
 		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
 	}
 
 	return nil
 }
 
 func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "item_update")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		// Check the content of the request body to determine which handler to invoke
 		bodyBytes, err := io.ReadAll(req.Body)
@@ -383,43 +309,28 @@ func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) er
 			return err
 		}
 
-		// Define the task based on the request content
-		var task func() worker.Result
-
 		// Check if only 'customer_id' is present in the request body
 
 		if len(requestBody) == 2 { // is default
 			if _, barcodeOk := requestBody["barcode"].(string); barcodeOk {
-				task = func() worker.Result {
-					err := s.HandleUpdateItemBarcode(res, newReq)
-					return worker.Result{Error: err}
-				}
+
+				return s.goRoutineWrapper(s.HandleUpdateItemBarcode, res, newReq)
+
 			} else if _, addStockOk := requestBody["add_stock"].(float64); addStockOk {
-				task = func() worker.Result {
-					err := s.HandleUpdateItemAddStock(res, newReq)
-					return worker.Result{Error: err}
-				}
+
+				return s.goRoutineWrapper(s.HandleUpdateItemAddStock, res, newReq)
+
 			}
 		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
 	}
 
 	return nil
 }
 
 func (s *Server) handleItemAddStock(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "item_add_stock")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		// Check the content of the request body to determine which handler to invoke
 		bodyBytes, err := io.ReadAll(req.Body)
@@ -438,64 +349,33 @@ func (s *Server) handleItemAddStock(res http.ResponseWriter, req *http.Request) 
 		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
 			return err
 		}
-
-		// Define the task based on the request content
-		var task func() worker.Result
-
 		// Check if only 'customer_id' is present in the request body
 
 		if len(requestBody) == 3 { // is default
 			if _, addStockOk := requestBody["add_stock"].(float64); addStockOk {
 				if _, itemIdOk := requestBody["item_id"].(float64); itemIdOk {
 					if _, storeIdOk := requestBody["store_id"].(float64); storeIdOk {
-						task = func() worker.Result {
-							err := s.HandleItemAddStockByStore(res, newReq)
-							return worker.Result{Error: err}
-						}
+
+						return s.goRoutineWrapper(s.HandleItemAddStockByStore, res, newReq)
+
 					}
 				}
 			}
 		}
 
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
 	}
-
 	return nil
 }
 
 // Item
 func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "GET" {
 		print_path("GET", "item")
-
-		// Create a channel to capture the results of multiple runs
-		resultChan := make(chan error, 1)
-
-		// Define the task function to run
-		task := func() worker.Result {
-			err := s.Handle_Get_Items(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Collect all results and return the first one (since you're using a buffer of size 1)
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Get_Items, res, req)
 
 	} else if req.Method == "POST" {
 		print_path("POST", "item_store")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		// Check the content of the request body to determine which handler to invoke
 		bodyBytes, err := io.ReadAll(req.Body)
@@ -514,65 +394,34 @@ func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
 			return err
 		}
-
-		// Define the task based on the request content
-		var task func() worker.Result
-
 		// Check if only 'customer_id' is present in the request body
 
 		if len(requestBody) == 1 {
-			task = func() worker.Result {
-				err := s.HandleAddStockToItem(res, newReq)
-				return worker.Result{Error: err}
-			}
+			return s.goRoutineWrapper(s.HandleAddStockToItem, res, newReq)
 		} else { // is default
-			task = func() worker.Result {
-				err := s.Handle_Create_Item(res, newReq)
-				return worker.Result{Error: err}
-			}
+			return s.goRoutineWrapper(s.Handle_Create_Item, res, newReq)
+
 		}
 
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
 	} else if req.Method == "PUT" {
 		print_path("PUT", "item")
-		return s.Handle_Update_Item(res, req)
+		return s.goRoutineWrapper(s.Handle_Update_Item, res, req)
 
 	} else if req.Method == "DELETE" {
 		print_path("DELETE", "item")
-		return s.Handle_Delete_Item(res, req)
+		return s.goRoutineWrapper(s.Handle_Delete_Item, res, req)
 	}
 
 	return nil
 }
 
 func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "search item")
 
-		// Create a channel to capture the results of multiple runs
-		resultChan := make(chan error, 1)
+		return s.goRoutineWrapper(s.Handle_Post_Search_Items, res, req)
 
-		// Define the task function to run
-		task := func() worker.Result {
-			err := s.Handle_Post_Search_Items(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Collect all results and return the first one (since you're using a buffer of size 1)
-		return <-resultChan
 	}
 
 	return nil
@@ -581,7 +430,7 @@ func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) er
 func (s *Server) handleItemAddQuick(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "item-add-quick")
-		return s.HandleItemAddQuick(res, req)
+		return s.goRoutineWrapper(s.HandleItemAddQuick, res, req)
 	}
 
 	return nil
@@ -590,7 +439,7 @@ func (s *Server) handleItemAddQuick(res http.ResponseWriter, req *http.Request) 
 func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")
-		return s.GetRecentSalesOrderByStore(res, req)
+		return s.goRoutineWrapper(s.GetRecentSalesOrderByStore, res, req)
 	}
 	return nil
 }
@@ -598,7 +447,7 @@ func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Reques
 func (s *Server) handlePackerFetchItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-fetch-item")
-		return s.PackerFetchItem(res, req)
+		return s.goRoutineWrapper(s.PackerFetchItem, res, req)
 	}
 	return nil
 }
@@ -606,7 +455,7 @@ func (s *Server) handlePackerFetchItem(res http.ResponseWriter, req *http.Reques
 func (s *Server) handlePackerGetAllItems(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-get-all-items")
-		return s.PackerGetAllPackedItems(res, req)
+		return s.goRoutineWrapper(s.PackerGetAllPackedItems, res, req)
 	}
 	return nil
 }
@@ -614,15 +463,7 @@ func (s *Server) handlePackerGetAllItems(res http.ResponseWriter, req *http.Requ
 func (s *Server) handlePackerPackItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack-item")
-		return s.PackerPackItem(res, req)
-	}
-	return nil
-}
-
-func (s *Server) handlePackerCompletePacking(res http.ResponseWriter, req *http.Request) error {
-	if req.Method == "POST" {
-		print_path("POST", "packer-complete-packing")
-		return s.PackerPackItem(res, req)
+		return s.goRoutineWrapper(s.PackerPackItem, res, req)
 	}
 	return nil
 }
@@ -638,7 +479,7 @@ func (s *Server) handlePackerCancelOrder(res http.ResponseWriter, req *http.Requ
 func (s *Server) handlePackerAllocateSpace(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-allocate-space")
-		return s.PackerAllocateSpace(res, req)
+		return s.goRoutineWrapper(s.PackerAllocateSpace, res, req)
 	}
 	return nil
 }
@@ -646,7 +487,7 @@ func (s *Server) handlePackerAllocateSpace(res http.ResponseWriter, req *http.Re
 func (s *Server) handleCheckoutLockItems(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "checkout-lock-items")
-		return s.handlePostCheckoutLockItems(res, req)
+		return s.goRoutineWrapper(s.handlePostCheckoutLockItems, res, req)
 	}
 
 	return nil
@@ -655,91 +496,36 @@ func (s *Server) handleCheckoutLockItems(res http.ResponseWriter, req *http.Requ
 func (s *Server) handleCheckoutPayment(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "checkout-payment")
-		return s.handlePostCheckoutPayment(res, req)
+		return s.goRoutineWrapper(s.handlePostCheckoutPayment, res, req)
 	}
 	return nil
 }
 
 func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "cancel-checkout")
 
-		// Create a channel to capture the results of multiple runs
-		resultChan := make(chan error, 1)
+		return s.goRoutineWrapper(s.HandleCancelCheckoutCart, res, req)
 
-		// Define the task function to run
-		task := func() worker.Result {
-			err := s.HandleCancelCheckoutCart(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Collect all results and return the first one (since you're using a buffer of size 1)
-		return <-resultChan
 	}
 
 	return nil
 }
 
 func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("[POST]", "delivery_partner")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.Handle_Delivery_Partner_Login(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Delivery_Partner_Login, res, req)
 
 	} else if req.Method == "PUT" {
 		print_path("[PUT]", "delivery_partner")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.Handle_Delivery_Partner_FCM_Token(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Delivery_Partner_FCM_Token, res, req)
 
 	} else if req.Method == "GET" {
 		print_path("[GET]", "delivery_partner")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.Handle_Get_Delivery_Partners(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Get_Delivery_Partners, res, req)
 
 	}
 	return nil
@@ -747,19 +533,19 @@ func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Reques
 
 func (s *Server) handleDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("[POST]", "delivery_partner_login")
-		return s.HandlePostDeliveryPartnerLogin(res, req)
+		print_path("POST", "delivery-partner-login")
+
+		return s.goRoutineWrapper(s.HandlePostDeliveryPartnerLogin, res, req)
+
 	}
+
 	return nil
 }
 
 func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_check_order")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
 			return err
@@ -778,27 +564,14 @@ func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *h
 		}
 
 		if len(requestBody) == 1 {
-			var task func() worker.Result
-
 			if _, ok := requestBody["phone"]; ok {
-				// If the key is delivery_partner_id
-				task = func() worker.Result {
-					// Adjust the handler function to handle requests with delivery_partner_id
-					err = s.handleCheckAssignedOrder(res, newReq)
-					return worker.Result{Error: err}
-				}
+
+				return s.goRoutineWrapper(s.handleCheckAssignedOrder, res, newReq)
+
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
-
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
-
-			// Wait for the result and return it
-			return <-resultChan
 		}
 	}
 
@@ -806,11 +579,9 @@ func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *h
 }
 
 func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_move_order")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -830,17 +601,13 @@ func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *ht
 		}
 
 		if len(requestBody) == 3 {
-			var task func() worker.Result
 
 			if _, ok := requestBody["status"]; ok {
 				if _, ok := requestBody["order_id"]; ok {
 					if _, ok := requestBody["phone"]; ok {
 						// If the key is delivery_partner_id
-						task = func() worker.Result {
-							// Adjust the handler function to handle requests with delivery_partner_id
-							err = s.handleCheckAssignedOrder(res, newReq)
-							return worker.Result{Error: err}
-						}
+						return s.goRoutineWrapper(s.handleCheckAssignedOrder, res, newReq)
+
 					}
 				}
 			} else {
@@ -848,13 +615,6 @@ func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *ht
 				return errors.New("invalid parameter in request body")
 			}
 
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
-
-			// Wait for the result and return it
-			return <-resultChan
 		}
 	}
 
@@ -862,28 +622,14 @@ func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *ht
 }
 
 func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "GET" {
 		print_path("GET", "sales_order")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.Handle_Get_Sales_Orders(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.Handle_Get_Sales_Orders, res, req)
 
 	} else if req.Method == "POST" {
 		print_path("POST", "sales_order")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -904,67 +650,37 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-			var task func() worker.Result
 
 			if _, ok := requestBody["delivery_partner_id"]; ok {
 				// If the key is delivery_partner_id
 				print_path("POST", "sales_order delivery_partner_id")
-				task = func() worker.Result {
-					var err error
-					// Adjust the handler function to handle requests with delivery_partner_id
-					err = s.handleGetOrdersByDeliveryPartnerId(res, newReq)
-					return worker.Result{Error: err}
-				}
+				return s.goRoutineWrapper(s.handleGetOrdersByDeliveryPartnerId, res, newReq)
+
 			} else if _, ok := requestBody["customer_id"]; ok {
 				// If the key is customer_id
 				print_path("POST", "sales_order customer_id")
-				task = func() worker.Result {
-					var err error
-					// Adjust the handler function to handle requests with customer_id
-					err = s.handleGetOrdersByCustomerId(res, newReq)
-					return worker.Result{Error: err}
-				}
+
+				// Adjust the handler function to handle requests with customer_id
+				return s.goRoutineWrapper(s.handleGetOrdersByCustomerId, res, newReq)
+
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
 
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
-
-			// Wait for the result and return it
-			return <-resultChan
 		} else if len(requestBody) == 2 {
-			task := func() worker.Result {
-				var err error
-				// You might want to pass the decoded body to the handler function
-				// Adjust the handleGetAssignedOrders function accordingly
-				err = s.handleOrdersByCartIdCustomerId(res, newReq)
-				return worker.Result{Error: err}
-			}
 
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
+			return s.goRoutineWrapper(s.handleOrdersByCartIdCustomerId, res, newReq)
 
-			// Wait for the result and return it
-			return <-resultChan
 		}
-
 	}
-
 	return nil
 }
 
 func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "store_sales_order")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -985,27 +701,15 @@ func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Reques
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-			var task func() worker.Result
 
 			if _, ok := requestBody["store_id"]; ok {
-				task = func() worker.Result {
-					var err error
-					// Adjust the handler function to handle requests with delivery_partner_id
-					err = s.handleReceivedOrderByStore(res, newReq)
-					return worker.Result{Error: err}
-				}
+
+				return s.goRoutineWrapper(s.handleReceivedOrderByStore, res, newReq)
+
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
-
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
-
-			// Wait for the result and return it
-			return <-resultChan
 		} else if len(requestBody) == 2 {
 			if _, ok := requestBody["store_id"]; !ok {
 				return errors.New("missing store_id in request body")
@@ -1013,21 +717,8 @@ func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Reques
 			if _, ok := requestBody["order_id"]; !ok {
 				return errors.New("missing order_id in request body")
 			}
-			task := func() worker.Result {
-				var err error
-				// You might want to pass the decoded body to the handler function
-				// Adjust the handleGetAssignedOrders function accordingly
-				err = s.handleOrderItemsByStoreAndOrderId(res, newReq)
-				return worker.Result{Error: err}
-			}
+			return s.goRoutineWrapper(s.handleOrderItemsByStoreAndOrderId, res, newReq)
 
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
-
-			// Wait for the result and return it
-			return <-resultChan
 		}
 		return errors.New("invalid parameter in request body")
 	}
@@ -1036,11 +727,9 @@ func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "store_sales_order")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		bodyBytes, err := io.ReadAll(req.Body)
 		if err != nil {
@@ -1061,27 +750,16 @@ func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Reques
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-			var task func() worker.Result
 
 			if _, ok := requestBody["store_id"]; ok {
-				task = func() worker.Result {
-					var err error
-					// Adjust the handler function to handle requests with delivery_partner_id
-					err = s.handleReceivedOrderByStore(res, newReq)
-					return worker.Result{Error: err}
-				}
+
+				return s.goRoutineWrapper(s.handleReceivedOrderByStore, res, newReq)
+
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
 
-			// Start the task in a worker and pass a callback to capture the result
-			workerPool.StartWorker(task, func(result worker.Result) {
-				resultChan <- result.Error // Send the result error to the channel
-			})
-
-			// Wait for the result and return it
-			return <-resultChan
 		}
 		return errors.New("invalid parameter in request body")
 	}
@@ -1092,19 +770,17 @@ func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Reques
 func (s *Server) handleSalesOrderDetails(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "store_sales_order")
-		return s.handleSalesOrderDetailsPOST(res, req)
+		return s.goRoutineWrapper(s.handleSalesOrderDetailsPOST, res, req)
 	}
 
 	return nil
 }
 
 func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	// add address or get address by customer id
 	if req.Method == "POST" {
 		print_path("POST", "address")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
 		// Check the content of the request body to determine which handler to invoke
 		bodyBytes, err := io.ReadAll(req.Body)
@@ -1123,156 +799,68 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
 			return err
 		}
-
-		// Define the task based on the request content
-		var task func() worker.Result
-
 		// Check if only 'customer_id' is present in the request body
 		if _, exists := requestBody["customer_id"]; exists {
 			if len(requestBody) == 1 {
-				task = func() worker.Result {
-					err := s.Handle_Get_Address_By_Customer_Id(res, newReq)
-					return worker.Result{Error: err}
-				}
-			} else if len(requestBody) == 2 { // is default
-				task = func() worker.Result {
-					err := s.handleGetDefaultAddress(res, newReq)
-					return worker.Result{Error: err}
-				}
+				return s.goRoutineWrapper(s.Handle_Get_Address_By_Customer_Id, res, newReq)
+
+			} else if len(requestBody) == 2 {
+				return s.goRoutineWrapper(s.handleGetDefaultAddress, res, newReq)
+
 			} else if len(requestBody) == 3 {
-				task = func() worker.Result {
-					err := s.handleMakeDefaultAddress(res, newReq)
-					return worker.Result{Error: err}
-				}
+				return s.goRoutineWrapper(s.handleMakeDefaultAddress, res, newReq)
+
 			} else {
 				print("Create Address")
-				task = func() worker.Result {
-					err := s.Handle_Create_Address(res, newReq)
-					return worker.Result{Error: err}
-				}
+				return s.goRoutineWrapper(s.Handle_Create_Address, res, newReq)
+
 			}
 		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
 	} else if req.Method == "DELETE" {
 		print_path("DELETE", "address")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.handleDeleteAddress(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
-
+		return s.goRoutineWrapper(s.handleDeleteAddress, res, req)
 	}
 	return nil
 }
 
 func (s *Server) handleDeliverTo(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("POST", "brand")
-		return s.handleDeliverToAddress(res, req)
+		print_path("POST", "deliver-to")
+		return s.goRoutineWrapper(s.handleDeliverToAddress, res, req)
+
 	}
+
 	return nil
 }
 
 func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "brand")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.handleCreateBrand(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.handleCreateBrand, res, req)
 
 	} else if req.Method == "GET" {
 		print_path("GET", "brand")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.handleGetBrands(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.handleGetBrands, res, req)
 
 	}
 	return nil
 }
 
 func (s *Server) handlePhonePeVerifyPayment(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 	if req.Method == "POST" {
 		print_path("POST", "phonepe-check-status")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.handlePhonePeCheckStatus(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
-
+		return s.goRoutineWrapper(s.handlePhonePeCheckStatus, res, req)
 	}
 
 	return nil
 }
 
 func (s *Server) handlePhonePeCallback(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "phonepe-callback")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.handlePhonePePaymentCallback(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.handlePhonePePaymentCallback, res, req)
 
 	}
 
@@ -1280,24 +868,10 @@ func (s *Server) handlePhonePeCallback(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) handlePhonePe(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "phonepe")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
-
-		task := func() worker.Result {
-			err := s.handlePhonePePaymentInit(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.handlePhonePePaymentInit, res, req)
 
 	}
 
@@ -1307,31 +881,18 @@ func (s *Server) handlePhonePe(res http.ResponseWriter, req *http.Request) error
 func (s *Server) handlePaymentVerify(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "payment-verify")
-		return s.PaymentVerify(res, req)
+		return s.goRoutineWrapper(s.PaymentVerify, res, req)
 	}
 
 	return nil
 }
 
 func (s *Server) handleSendOtp(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
 
 	if req.Method == "POST" {
 		print_path("POST", "send-otp")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.handleSendOtpMSG91(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.handleSendOtpMSG91, res, req)
 
 	}
 
@@ -1339,24 +900,10 @@ func (s *Server) handleSendOtp(res http.ResponseWriter, req *http.Request) error
 }
 
 func (s *Server) handleVerifyOtp(res http.ResponseWriter, req *http.Request) error {
-	workerPool := s.workerPool
-
 	if req.Method == "POST" {
 		print_path("POST", "verify-otp")
-		resultChan := make(chan error, 1) // Create a channel to capture the result
 
-		task := func() worker.Result {
-			err := s.handleVerifyOtpMSG91(res, req)
-			return worker.Result{Error: err}
-		}
-
-		// Start the task in a worker and pass a callback to capture the result
-		workerPool.StartWorker(task, func(result worker.Result) {
-			resultChan <- result.Error // Send the result error to the channel
-		})
-
-		// Wait for the result and return it
-		return <-resultChan
+		return s.goRoutineWrapper(s.handleVerifyOtpMSG91, res, req)
 
 	}
 
@@ -1366,10 +913,10 @@ func (s *Server) handleVerifyOtp(res http.ResponseWriter, req *http.Request) err
 func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "create-shelf")
-		return s.HandleCreateShelf(res, req)
+		return s.goRoutineWrapper(s.HandleCreateShelf, res, req)
 	} else if req.Method == "GET" {
 		print_path("GET", "get-shelf")
-		return s.HandleGetShelf(res, req)
+		return s.goRoutineWrapper(s.HandleGetShelf, res, req)
 	}
 
 	return nil
@@ -1378,7 +925,7 @@ func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) err
 func (s *Server) handleLockStock(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "create-lock-stock")
-		return s.HandleLockStockCloudTask(res, req)
+		return s.goRoutineWrapper(s.HandleLockStockCloudTask, res, req)
 	}
 
 	return nil
