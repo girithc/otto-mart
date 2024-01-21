@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:master/pack/scanner.dart';
 import 'package:master/shelf/shelf.dart';
 import 'package:master/store/item-detail/item-detail.dart';
 import 'package:master/pack/checklist.dart';
 import 'package:master/stock/add-stock.dart';
 import 'package:master/store/stores.dart';
 import 'package:master/utils/constants.dart';
+import 'package:master/utils/login/page/phone.dart';
 import 'package:master/utils/login/provider/loginProvider.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -31,57 +33,26 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Scooter Animation',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const OpeningPageAnimation(),
-      debugShowCheckedModeBanner: false, // Add this line
-    );
-  }
-}
-
-class OpeningPageAnimation extends StatefulWidget {
-  const OpeningPageAnimation({Key? key}) : super(key: key);
-
-  @override
-  _OpeningPageAnimationState createState() => _OpeningPageAnimationState();
-}
-
-class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
-  late double _begin;
-  late double _end;
-
-  @override
-  void initState() {
-    super.initState();
-    _begin = -0.5;
-    _end = 1;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Delayed execution to ensure the context is fully established
-    Future.delayed(Duration.zero, () {
-      Provider.of<LoginProvider>(context, listen: false).checkLogin(context);
-    });
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: _begin, end: _end),
-          duration: const Duration(seconds: 3, milliseconds: 20),
-          builder: (BuildContext context, double position, Widget? child) {
-            return Transform.translate(
-              offset: Offset(position * MediaQuery.of(context).size.width, 0),
-              child: Transform.scale(
-                scale: 0.75,
-                child: child!,
-              ),
-            );
-          },
-          onEnd:
-              () {}, // Removed navigation as it's handled in the LoginProvider now
-          child: Image.asset('assets/scooter.avif'),
-        ),
+      home: FutureBuilder<bool>(
+        // Assuming checkLogin() is an asynchronous method that returns a Future<bool>
+        future: Provider.of<LoginProvider>(context, listen: false).checkLogin(),
+        builder: (context, snapshot) {
+          // Check if the future is complete
+          if (snapshot.connectionState == ConnectionState.done) {
+            // If the user is logged in
+            if (snapshot.data == true) {
+              return const MyHomePage(title: 'Home Page');
+            } else {
+              // If the user is not logged in
+              return const PhonePage();
+            }
+          } else {
+            // Show loading indicator while waiting for login check
+            return const CircularProgressIndicator();
+          }
+        },
       ),
+      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -381,6 +352,44 @@ class _InventoryManagementState extends State<InventoryManagement> {
             ),
           ),
           const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const Scanner(),
+                ),
+              );
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.1,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15), // Rounded borders
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Scanner',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
           GestureDetector(
             onTap: () {
               Navigator.push(

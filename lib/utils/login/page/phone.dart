@@ -52,9 +52,7 @@ class _PhonePageState extends State<PhonePage> {
     try {
       // Send the HTTP request to send OTP
       var url = Uri.parse('$baseUrl/login-packer');
-      final Map<String, dynamic> requestData = {
-        "phone": int.parse(phoneNumber)
-      };
+      final Map<String, dynamic> requestData = {"phone": phoneNumber};
       var response = await http.post(
         url,
         body: jsonEncode(requestData),
@@ -65,6 +63,7 @@ class _PhonePageState extends State<PhonePage> {
         return jsonResponse['phone'];
       } else {
         // Handle HTTP request error
+        print(response.body);
         return 'error';
       }
     } catch (error) {

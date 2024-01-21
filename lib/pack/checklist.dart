@@ -188,15 +188,15 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
             child: ListBody(
               children: <Widget>[
                 Text('Order ID: ${allocationInfo.salesOrderId}'),
-                Text('Row: ${allocationInfo.row}'),
-                Text('Column: ${allocationInfo.column}'),
+                Text(
+                    'Shelf Name ${allocationInfo.column}${allocationInfo.row}'),
                 Text('Shelf ID: ${allocationInfo.shelfId}'),
               ],
             ),
           ),
           actions: <Widget>[
             TextButton(
-              child: const Text('Cancel'),
+              child: const Text('Complete'),
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
                 Navigator.pushReplacement(
