@@ -675,9 +675,11 @@ func (s *PostgresStore) AddStockToItem() ([]*types.Get_Item, error) {
 }
 
 type StockUpdateInfo struct {
-	ItemID     int    `json:"item_id"`
-	ItemName   string `json:"item_name"`
-	AddedStock int    `json:"added_stock"`
+	ItemID        int    `json:"item_id"`
+	ItemName      string `json:"item_name"`
+	AddedStock    int    `json:"added_stock"`
+	StockQuantity int    `json:"stock_quantity"`
+	StoreId       int    `json:"store_id"`
 }
 
 func (s *PostgresStore) AddStockToItemByStore(item_id int, store_id int, stock int) (StockUpdateInfo, error) {
@@ -703,11 +705,11 @@ func (s *PostgresStore) AddStockToItemByStore(item_id int, store_id int, stock i
 	}
 
 	// Prepare the SQL query to retrieve the updated information
-	selectQuery := `SELECT i.name, istore.item_id FROM item i INNER JOIN item_store istore ON i.id = istore.item_id WHERE istore.item_id = $1 AND istore.store_id = $2`
+	selectQuery := `SELECT i.name, istore.item_id, istore.stock_quantity FROM item i INNER JOIN item_store istore ON i.id = istore.item_id WHERE istore.item_id = $1 AND istore.store_id = $2`
 
 	// Query the item name and item id
 	row := tx.QueryRow(selectQuery, item_id, store_id)
-	err = row.Scan(&stockInfo.ItemName, &stockInfo.ItemID)
+	err = row.Scan(&stockInfo.ItemName, &stockInfo.ItemID, &stockInfo.StockQuantity)
 	if err != nil {
 		// If there is an error, rollback the transaction
 		tx.Rollback()
@@ -721,8 +723,54 @@ func (s *PostgresStore) AddStockToItemByStore(item_id int, store_id int, stock i
 
 	// Add the stock to the struct since it's not part of the SELECT query
 	stockInfo.AddedStock = stock
+	stockInfo.StoreId = store_id
 
 	return stockInfo, nil
+}
+
+type ItemAdd struct {
+	ID            int      `json:"id"`
+	Name          string   `json:"name"`
+	Brand         string   `json:"brand"`
+	Quantity      int      `json:"quantity"`
+	Barcode       string   `json:"barcode"`
+	Unit          string   `json:"unit"`
+	StoreID       int      `json:"store_id"`
+	StockQuantity int      `json:"stock_quantity"`
+	ImageURLs     []string `json:"image_urls"`
+}
+
+func (s *PostgresStore) GetItemAdd(barcode string, storeId int) (*ItemAdd, error) {
+	var item ItemAdd
+
+	// SQL query to join item, item_store, and item_image tables
+	query := `
+        SELECT i.id, i.name, b.name, i.quantity, i.barcode, i.unit_of_quantity, 
+               istore.store_id, istore.stock_quantity, array_agg(ii.image_url)
+        FROM item i
+        JOIN item_store istore ON i.id = istore.item_id
+        JOIN item_image ii ON i.id = ii.item_id
+        JOIN brand b ON i.brand_id = b.id
+        WHERE i.barcode = $1 AND istore.store_id = $2
+        GROUP BY i.id, b.name, istore.store_id, istore.stock_quantity
+    `
+
+	row := s.db.QueryRow(query, barcode, storeId)
+	var imageURLs []string
+	err := row.Scan(&item.ID, &item.Name, &item.Brand, &item.Quantity, &item.Barcode,
+		&item.Unit, &item.StoreID, &item.StockQuantity, pq.Array(&imageURLs))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			println("No Item Found")
+			return nil, fmt.Errorf("no item found with barcode %s at store %d", barcode, storeId)
+		}
+		println("Error ", err)
+
+		return nil, fmt.Errorf("error querying item: %w", err)
+	}
+
+	item.ImageURLs = imageURLs
+	return &item, nil
 }
 
 func (s *PostgresStore) AddBarcodeToItem(barcode string, item_id int) (bool, error) {
@@ -940,7 +988,6 @@ func (s *PostgresStore) CreateItemAddQuick(params types.ItemAddQuick) (ItemAddQu
 
 	response.Success = true // Set success to true as the transaction is committed successfully
 	return response, nil
-
 }
 
 type ItemAddQuickResponse struct {

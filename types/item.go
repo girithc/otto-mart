@@ -98,6 +98,11 @@ type AddItemStockStore struct {
 	StoreId  int `json:"store_id"`
 }
 
+type GetItemAdd struct {
+	Barcode string `json:"barcode"`
+	StoreId int    `json:"store_id"`
+}
+
 type Delete_Item struct {
 	ID int `json:"id"`
 }

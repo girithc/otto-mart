@@ -119,7 +119,7 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
 	} else if req.Method == "DELETE" {
 		print_path("DELETE", "cart-item")
 		return s.goRoutineWrapper(s.Handle_Delete_Cart_item, res, req)
-		//return s.Handle_Delete_Cart_item(res, req)
+		// return s.Handle_Delete_Cart_item(res, req)
 	} else if req.Method == "GET" {
 		print_path("GET", "cart-item")
 	}
@@ -157,16 +157,13 @@ func (s *Server) handleStoreManager(res http.ResponseWriter, req *http.Request) 
 // Higher Level Category
 
 func (s *Server) handleHigherLevelCategory(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "GET" {
 		print_path("GET", "higher_level_category")
 
 		return s.goRoutineWrapper(s.Handle_Get_Higher_Level_Categories, res, req)
 
 	} else if req.Method == "POST" {
-
 		return s.goRoutineWrapper(s.Handle_Create_Higher_Level_Category, res, req)
-
 	} else if req.Method == "PUT" {
 		print_path("PUT", "higher_level_category")
 		return s.goRoutineWrapper(s.Handle_Update_Higher_Level_Category, res, req)
@@ -181,7 +178,6 @@ func (s *Server) handleHigherLevelCategory(res http.ResponseWriter, req *http.Re
 
 // Category
 func (s *Server) handleCategory(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "GET" {
 		print_path("GET", "category")
 
@@ -249,7 +245,6 @@ func (s *Server) handleCategoryHigherLevelMapping(res http.ResponseWriter, req *
 }
 
 func (s *Server) handleItemStore(res http.ResponseWriter, req *http.Request) error {
-
 	// add address or get address by customer id
 	if req.Method == "POST" {
 		print_path("POST", "item_store")
@@ -275,10 +270,8 @@ func (s *Server) handleItemStore(res http.ResponseWriter, req *http.Request) err
 		if _, exists := requestBody["cart_id"]; exists {
 			if len(requestBody) == 1 {
 				return s.goRoutineWrapper(s.handleRemoveLockedQuantities, res, newReq)
-
 			} else if len(requestBody) == 2 {
 				return s.goRoutineWrapper(s.handleUnlockLockQuantities, res, newReq)
-
 			}
 		}
 	}
@@ -287,7 +280,6 @@ func (s *Server) handleItemStore(res http.ResponseWriter, req *http.Request) err
 }
 
 func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "item_update")
 
@@ -313,13 +305,9 @@ func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) er
 
 		if len(requestBody) == 2 { // is default
 			if _, barcodeOk := requestBody["barcode"].(string); barcodeOk {
-
 				return s.goRoutineWrapper(s.HandleUpdateItemBarcode, res, newReq)
-
 			} else if _, addStockOk := requestBody["add_stock"].(float64); addStockOk {
-
 				return s.goRoutineWrapper(s.HandleUpdateItemAddStock, res, newReq)
-
 			}
 		}
 	}
@@ -328,7 +316,6 @@ func (s *Server) handleItemUpdate(res http.ResponseWriter, req *http.Request) er
 }
 
 func (s *Server) handleItemAddStock(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "item_add_stock")
 
@@ -355,10 +342,14 @@ func (s *Server) handleItemAddStock(res http.ResponseWriter, req *http.Request) 
 			if _, addStockOk := requestBody["add_stock"].(float64); addStockOk {
 				if _, itemIdOk := requestBody["item_id"].(float64); itemIdOk {
 					if _, storeIdOk := requestBody["store_id"].(float64); storeIdOk {
-
 						return s.goRoutineWrapper(s.HandleItemAddStockByStore, res, newReq)
-
 					}
+				}
+			}
+		} else if len(requestBody) == 2 {
+			if _, barcodeOk := requestBody["barcode"].(string); barcodeOk {
+				if _, storeIdOk := requestBody["store_id"].(float64); storeIdOk {
+					return s.goRoutineWrapper(s.HandleGetItemAddByStore, res, newReq)
 				}
 			}
 		}
@@ -369,7 +360,6 @@ func (s *Server) handleItemAddStock(res http.ResponseWriter, req *http.Request) 
 
 // Item
 func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "GET" {
 		print_path("GET", "item")
 		return s.goRoutineWrapper(s.Handle_Get_Items, res, req)
@@ -400,7 +390,6 @@ func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 			return s.goRoutineWrapper(s.HandleAddStockToItem, res, newReq)
 		} else { // is default
 			return s.goRoutineWrapper(s.Handle_Create_Item, res, newReq)
-
 		}
 
 	} else if req.Method == "PUT" {
@@ -416,7 +405,6 @@ func (s *Server) handleItem(res http.ResponseWriter, req *http.Request) error {
 }
 
 func (s *Server) handleSearchItem(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "search item")
 
@@ -502,7 +490,6 @@ func (s *Server) handleCheckoutPayment(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "cancel-checkout")
 
@@ -514,7 +501,6 @@ func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request
 }
 
 func (s *Server) handleDeliveryPartner(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("[POST]", "delivery_partner")
 		return s.goRoutineWrapper(s.Handle_Delivery_Partner_Login, res, req)
@@ -543,7 +529,6 @@ func (s *Server) handleDeliveryPartnerLogin(res http.ResponseWriter, req *http.R
 }
 
 func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_check_order")
 		bodyBytes, err := io.ReadAll(req.Body)
@@ -565,9 +550,7 @@ func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *h
 
 		if len(requestBody) == 1 {
 			if _, ok := requestBody["phone"]; ok {
-
 				return s.goRoutineWrapper(s.handleCheckAssignedOrder, res, newReq)
-
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
@@ -579,7 +562,6 @@ func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *h
 }
 
 func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_move_order")
 
@@ -601,20 +583,17 @@ func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *ht
 		}
 
 		if len(requestBody) == 3 {
-
 			if _, ok := requestBody["status"]; ok {
 				if _, ok := requestBody["order_id"]; ok {
 					if _, ok := requestBody["phone"]; ok {
 						// If the key is delivery_partner_id
 						return s.goRoutineWrapper(s.handleCheckAssignedOrder, res, newReq)
-
 					}
 				}
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
-
 		}
 	}
 
@@ -622,7 +601,6 @@ func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *ht
 }
 
 func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "GET" {
 		print_path("GET", "sales_order")
 
@@ -650,7 +628,6 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-
 			if _, ok := requestBody["delivery_partner_id"]; ok {
 				// If the key is delivery_partner_id
 				print_path("POST", "sales_order delivery_partner_id")
@@ -667,18 +644,14 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
-
 		} else if len(requestBody) == 2 {
-
 			return s.goRoutineWrapper(s.handleOrdersByCartIdCustomerId, res, newReq)
-
 		}
 	}
 	return nil
 }
 
 func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "store_sales_order")
 
@@ -701,11 +674,8 @@ func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Reques
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-
 			if _, ok := requestBody["store_id"]; ok {
-
 				return s.goRoutineWrapper(s.handleReceivedOrderByStore, res, newReq)
-
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
@@ -727,7 +697,6 @@ func (s *Server) handleStoreSalesOrder(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "store_sales_order")
 
@@ -750,16 +719,12 @@ func (s *Server) handleSalesOrderStore(res http.ResponseWriter, req *http.Reques
 
 		// Check if the body has exactly 2 keys
 		if len(requestBody) == 1 {
-
 			if _, ok := requestBody["store_id"]; ok {
-
 				return s.goRoutineWrapper(s.handleReceivedOrderByStore, res, newReq)
-
 			} else {
 				// Handle the case where the key is neither delivery_partner_id nor customer_id
 				return errors.New("invalid parameter in request body")
 			}
-
 		}
 		return errors.New("invalid parameter in request body")
 	}
@@ -777,7 +742,6 @@ func (s *Server) handleSalesOrderDetails(res http.ResponseWriter, req *http.Requ
 }
 
 func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error {
-
 	// add address or get address by customer id
 	if req.Method == "POST" {
 		print_path("POST", "address")
@@ -803,13 +767,10 @@ func (s *Server) handleAddress(res http.ResponseWriter, req *http.Request) error
 		if _, exists := requestBody["customer_id"]; exists {
 			if len(requestBody) == 1 {
 				return s.goRoutineWrapper(s.Handle_Get_Address_By_Customer_Id, res, newReq)
-
 			} else if len(requestBody) == 2 {
 				return s.goRoutineWrapper(s.handleGetDefaultAddress, res, newReq)
-
 			} else if len(requestBody) == 3 {
 				return s.goRoutineWrapper(s.handleMakeDefaultAddress, res, newReq)
-
 			} else {
 				print("Create Address")
 				return s.goRoutineWrapper(s.Handle_Create_Address, res, newReq)
@@ -834,7 +795,6 @@ func (s *Server) handleDeliverTo(res http.ResponseWriter, req *http.Request) err
 }
 
 func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "brand")
 		return s.goRoutineWrapper(s.handleCreateBrand, res, req)
@@ -857,7 +817,6 @@ func (s *Server) handlePhonePeVerifyPayment(res http.ResponseWriter, req *http.R
 }
 
 func (s *Server) handlePhonePeCallback(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "phonepe-callback")
 		return s.goRoutineWrapper(s.handlePhonePePaymentCallback, res, req)
@@ -868,7 +827,6 @@ func (s *Server) handlePhonePeCallback(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) handlePhonePe(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "phonepe")
 		return s.goRoutineWrapper(s.handlePhonePePaymentInit, res, req)
@@ -888,7 +846,6 @@ func (s *Server) handlePaymentVerify(res http.ResponseWriter, req *http.Request)
 }
 
 func (s *Server) handleSendOtp(res http.ResponseWriter, req *http.Request) error {
-
 	if req.Method == "POST" {
 		print_path("POST", "send-otp")
 
