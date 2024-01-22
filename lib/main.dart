@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:master/pack/scanner.dart';
+import 'package:master/quick-add/add-item.dart';
 import 'package:master/shelf/shelf.dart';
 import 'package:master/store/item-detail/item-detail.dart';
 import 'package:master/pack/checklist.dart';
@@ -217,6 +218,33 @@ class _InventoryManagementState extends State<InventoryManagement> {
     }
   }
 
+  Future<void> itemAddQuick() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+      setState(() {
+        _scanBarcodeResult = barcodeScanRes;
+      });
+      //_showBarcodeResultDialog(barcodeScanRes);
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    if (_scanBarcodeResult != '-1') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => AddItemScreen(
+                  barcode: barcodeScanRes,
+                )),
+      );
+    }
+
+    if (!mounted) return;
+  }
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -255,6 +283,34 @@ class _InventoryManagementState extends State<InventoryManagement> {
                         color: Colors.black,
                         fontWeight: FontWeight.normal),
                   ),
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onTap: itemAddQuick,
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.15,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15), // Rounded borders
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Add+ Item',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.black,
+                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
