@@ -140,6 +140,8 @@ func scan_Into_Store(rows *sql.Rows) (*types.Store, error) {
 		&store.ID,
 		&store.Name,
 		&store.Address,
+		&store.Latitude,  // Added to scan latitude
+		&store.Longitude, // Added to scan longitude
 		&store.Created_At,
 		&store.Created_By,
 	)
