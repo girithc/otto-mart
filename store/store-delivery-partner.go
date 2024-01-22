@@ -69,15 +69,15 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 }
 
 func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, error) {
-	// Define the query to retrieve the first assigned order for the specified delivery partner phone number
+	// Define the query
 	query := `
-    SELECT so.id, so.delivery_partner_id, so.store_id,
-	       so.order_date, so.order_status, so.order_dp_status
-    FROM sales_order so
-    JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
-    WHERE dp.phone = $1
-    ORDER BY so.order_date ASC
-    LIMIT 1
+        SELECT so.id, so.delivery_partner_id, so.store_id,
+               so.order_date, so.order_status, so.order_dp_status
+        FROM sales_order so
+        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+        WHERE dp.phone = $1
+        ORDER BY so.order_date ASC
+        LIMIT 1
     `
 
 	// Variable to hold the order details
@@ -86,6 +86,40 @@ func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, err
 	// Execute the query
 	err := s.db.QueryRow(query, phone).Scan(&order.ID, &order.DeliveryPartnerID, &order.StoreID, &order.OrderDate, &order.OrderStatus, &order.DeliveryPartnerStatus)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			// No order assigned, attempt to assign an order
+			cartID, err := s.GetOldestUnassignedOrder()
+			if err != nil {
+				return nil, err
+			}
+			if cartID > 0 {
+				assigned, assignErr := s.AssignDeliveryPartnerToSalesOrder(cartID)
+				if assigned && assignErr == nil {
+					// Fetch the newly assigned order
+					query := `
+				SELECT so.id, so.delivery_partner_id, so.store_id,
+					so.order_date, so.order_status, so.order_dp_status
+				FROM sales_order so
+				JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+				WHERE dp.phone = $1
+				ORDER BY so.order_date ASC
+				LIMIT 1
+    `
+
+					// Variable to hold the order details
+					order := &OrderAssigned{}
+					err := s.db.QueryRow(query, phone).Scan(&order.ID, &order.DeliveryPartnerID, &order.StoreID, &order.OrderDate, &order.OrderStatus, &order.DeliveryPartnerStatus)
+					if err != nil {
+						return nil, err
+					}
+					return order, nil
+				}
+
+				return nil, assignErr
+			}
+			return nil, nil
+
+		}
 		return nil, err
 	}
 
@@ -312,7 +346,6 @@ func (s *PostgresStore) DeliveryPartnerLogin(phone string) (*DeliveryPartner, er
 }
 
 func (s *PostgresStore) AssignDeliveryPartnerToSalesOrder(cart_id int) (bool, error) {
-
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -349,5 +382,26 @@ func (s *PostgresStore) AssignDeliveryPartnerToSalesOrder(cart_id int) (bool, er
 	}
 
 	return true, nil
+}
 
+func (s *PostgresStore) GetOldestUnassignedOrder() (int, error) {
+	var cartID int
+	query := `
+        SELECT cart_id 
+        FROM sales_order
+        WHERE delivery_partner_id IS NULL
+        ORDER BY order_date ASC
+        LIMIT 1
+    `
+
+	err := s.db.QueryRow(query).Scan(&cartID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// No unassigned orders
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	return cartID, nil
 }
