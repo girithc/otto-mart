@@ -44,7 +44,9 @@ def ocr_images(images):
 # Parse the OCR text to extract structured data
 def parse_data(ocr_text):
     # Define a regex pattern for the data lines
-    pattern = r'(\d+)\.(\d+)\s+(.*?)\s+(\d+x\d+gm|\d+ MI)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)'
+#    pattern = r'(\d+)\.(\d+)\s+(.*?)\s+(\d+x\d+gm|\d+ MI)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)\s+(\d+\.\d+)'
+    pattern = r'(\d+)\.(\d+)\s+(.*?)\s+(\d+x\d+gm|\d+ MI)(?:\s+(\d+\.\d+))?\s+(?:\s*(\d+\.\d+))?\s+(?:\s*(\d+))?\s+(?:\s*(\d+\.\d+))?(\d+\.\d+)\s+(?:\s*(\d+\.\d+))?(\d+\.\d+)\s+(?:\s*(\d+\.\d+))?(\d+\.\d+)'
+
     matches = re.findall(pattern, ocr_text)
 
     print(matches)
@@ -55,7 +57,7 @@ def parse_data(ocr_text):
     return data
 
 # Use the functions
-pdf_path = '/Users/girithc/work/py/vendor.pdf'
+pdf_path = '/Users/girithc/work/py-invoice/vendor.pdf'
 images = pdf_to_img(pdf_path)
 ocr_text = ocr_images(images)
 parsed_data = parse_data(ocr_text)
