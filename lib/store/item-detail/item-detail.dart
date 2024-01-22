@@ -132,7 +132,7 @@ class ItemDetailApiClient {
     );
 
     if (response.statusCode == 200) {
-      print("Packer Item $response");
+      print("Packer Item ${response.body}");
       final jsonData = json.decode(response.body);
       final PackerItemResponse packerItemResponse =
           PackerItemResponse.fromJson(jsonData);

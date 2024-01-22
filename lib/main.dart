@@ -6,6 +6,7 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:master/pack/scanner.dart';
 import 'package:master/quick-add/add-item.dart';
+import 'package:master/quick-add/listen-barcode.dart';
 import 'package:master/shelf/shelf.dart';
 import 'package:master/store/item-detail/item-detail.dart';
 import 'package:master/pack/checklist.dart';
@@ -218,33 +219,6 @@ class _InventoryManagementState extends State<InventoryManagement> {
     }
   }
 
-  Future<void> itemAddQuick() async {
-    String barcodeScanRes;
-    try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
-      setState(() {
-        _scanBarcodeResult = barcodeScanRes;
-      });
-      //_showBarcodeResultDialog(barcodeScanRes);
-    } on PlatformException {
-      barcodeScanRes = 'Failed to get platform version';
-      // TODO
-    }
-
-    if (_scanBarcodeResult != '-1') {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => AddItemScreen(
-                  barcode: barcodeScanRes,
-                )),
-      );
-    }
-
-    if (!mounted) return;
-  }
-
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -287,8 +261,15 @@ class _InventoryManagementState extends State<InventoryManagement> {
               ),
             ),
           ),
+          const SizedBox(height: 10),
           GestureDetector(
-            onTap: itemAddQuick,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ListenBarcodePage()),
+              );
+            },
             child: Container(
               height: MediaQuery.of(context).size.height * 0.15,
               width: MediaQuery.of(context).size.width * 0.85,
@@ -319,7 +300,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
           GestureDetector(
             onTap: scanBarcode,
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.2,
+              height: MediaQuery.of(context).size.height * 0.1,
               width: MediaQuery.of(context).size.width * 0.85,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15), // Rounded borders

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:master/store/item-detail/api.dart';
@@ -20,6 +21,8 @@ class ItemDetails extends StatefulWidget {
 
 class _ItemDetailsState extends State<ItemDetails> {
   bool isDataFetched = false; // Flag to indicate whether data is fetched
+  bool isListeningForBarcode = false;
+
   final ItemDetailApiClient apiClient = ItemDetailApiClient();
   List<Item> items = [];
 
@@ -58,7 +61,7 @@ class _ItemDetailsState extends State<ItemDetails> {
     }
   }
 
-  Future<void> _showEditBarcodeDialog() async {
+  Future<void> _showEditBarcodeDialog(context) async {
     TextEditingController barcodeEditController =
         TextEditingController(text: _imageController.text);
 
@@ -98,6 +101,23 @@ class _ItemDetailsState extends State<ItemDetails> {
         );
       },
     );
+  }
+
+  void onBarcodeScanned(String scannedBarcode) {
+    if (isListeningForBarcode) {
+      setState(() {
+        _barcodeController.text = scannedBarcode;
+        isListeningForBarcode = false;
+      });
+      addBarcode().then(
+        (success) => {
+          Navigator.of(context).pop(),
+          if (!success) {_showErrorDialog('Error in saving barcode.')}
+        },
+      );
+
+      if (!mounted) return;
+    }
   }
 
   final TextEditingController _nameController = TextEditingController();
@@ -253,7 +273,15 @@ class _ItemDetailsState extends State<ItemDetails> {
           actions: <Widget>[
             title == "Barcode"
                 ? TextButton(
-                    onPressed: scanBarcode, child: const Text('Change'))
+                    child: isListeningForBarcode
+                        ? const Text('Barcode')
+                        : const Text('Change'),
+                    onPressed: () {
+                      setState(() {
+                        isListeningForBarcode = !isListeningForBarcode;
+                      });
+                    },
+                  )
                 : const SizedBox.shrink(),
             TextButton(
               child: const Text('Cancel'),
@@ -344,64 +372,69 @@ class _ItemDetailsState extends State<ItemDetails> {
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Center(
-          child: isDataFetched
-              ? Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      _buildCustomTextField(
-                        controller: _nameController,
-                        icon: Icons.person,
-                        hintText: 'Enter Item Name',
-                        labelText: 'Item Name',
-                      ),
-                      _buildCustomTextField(
-                        controller: _stockQuantityController,
-                        icon: Icons.shopping_bag_outlined,
-                        hintText: 'Enter Stock Quantity',
-                        labelText: 'Stock Quantity',
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildCustomTextField(
-                              controller: _priceController,
-                              icon: Icons.attach_money_outlined,
-                              hintText: 'Enter Item Price',
-                              labelText: 'Item Price',
+        child: BarcodeKeyboardListener(
+          onBarcodeScanned: (String code) {
+            if (isListeningForBarcode) onBarcodeScanned(code);
+          },
+          child: Center(
+            child: isDataFetched
+                ? Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _buildCustomTextField(
+                          controller: _nameController,
+                          icon: Icons.person,
+                          hintText: 'Enter Item Name',
+                          labelText: 'Item Name',
+                        ),
+                        _buildCustomTextField(
+                          controller: _stockQuantityController,
+                          icon: Icons.shopping_bag_outlined,
+                          hintText: 'Enter Stock Quantity',
+                          labelText: 'Stock Quantity',
+                        ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildCustomTextField(
+                                controller: _priceController,
+                                icon: Icons.attach_money_outlined,
+                                hintText: 'Enter Item Price',
+                                labelText: 'Item Price',
+                              ),
                             ),
-                          ),
-                          const SizedBox(
-                              width: 8), // Spacing between two text fields
-                          Expanded(
-                            child: _buildCustomTextField(
-                              controller:
-                                  _priceController, // Duplicate controller for demonstration
-                              icon: Icons.attach_money_outlined,
-                              hintText: 'Enter MRP Price',
-                              labelText: 'MRP Price',
+                            const SizedBox(
+                                width: 8), // Spacing between two text fields
+                            Expanded(
+                              child: _buildCustomTextField(
+                                controller:
+                                    _priceController, // Duplicate controller for demonstration
+                                icon: Icons.attach_money_outlined,
+                                hintText: 'Enter MRP Price',
+                                labelText: 'MRP Price',
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      _buildCustomTextField(
-                        controller: _barcodeController,
-                        icon: Icons.barcode_reader,
-                        hintText: 'Barcode',
-                        labelText: 'Barcode',
-                      ),
-                      _buildCustomTextField(
-                        controller: _imageController,
-                        icon: Icons.image_outlined,
-                        hintText: 'Enter Image Link',
-                        labelText: 'Image',
-                      ),
-                    ],
-                  ),
-                )
-              : const CircularProgressIndicator(), // Show a loading indicator when data is being fetched
+                          ],
+                        ),
+                        _buildCustomTextField(
+                          controller: _barcodeController,
+                          icon: Icons.barcode_reader,
+                          hintText: 'Barcode',
+                          labelText: 'Barcode',
+                        ),
+                        _buildCustomTextField(
+                          controller: _imageController,
+                          icon: Icons.image_outlined,
+                          hintText: 'Enter Image Link',
+                          labelText: 'Image',
+                        ),
+                      ],
+                    ),
+                  )
+                : const CircularProgressIndicator(), // Show a loading indicator when data is being fetched
+          ),
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
+import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -106,33 +107,19 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
-  String? _scanBarcodeResult;
   final ItemDetailApiClient apiClient = ItemDetailApiClient();
 
-  Future<void> scanBarcode() async {
+  Future<void> scanBarcode(String code) async {
     String barcodeScanRes;
     String? packerId = await _storage.read(key: "packerId");
     String? storeId = await _storage.read(key: "storeId");
 
-    try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
-      setState(() {
-        _scanBarcodeResult = barcodeScanRes;
-      });
-      //_showBarcodeResultDialog(barcodeScanRes);
-    } on PlatformException {
-      barcodeScanRes = 'Failed to get platform version';
-      // TODO
-    }
-
-    if (_scanBarcodeResult != '-1') {
+    if (code != '-1') {
       apiClient
           .fetchItemFromBarcodeInSalesOrder(
-              _scanBarcodeResult!, packerId!, widget.orderId, storeId!)
+              code, packerId!, widget.orderId, "1")
           .then((item) {
         setState(() {
-          print("Return value: $item");
           widget.prePackedItems = item.itemList; // Storing the response
           // Calculate the sum of quantities
           widget.totalQuantity =
@@ -146,27 +133,13 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
-  Future<void> scanBarcodeAssignSpace() async {
-    String barcodeScanRes;
+  Future<void> scanBarcodeAssignSpace(String code) async {
     String? packerId = await _storage.read(key: "packerId");
     String? storeId = await _storage.read(key: "storeId");
 
-    try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
-      setState(() {
-        _scanBarcodeResult = barcodeScanRes;
-      });
-    } on PlatformException {
-      barcodeScanRes = 'Failed to get platform version';
-      // TODO: Handle platform exception here
-    }
-
-    if (_scanBarcodeResult != '-1') {
-      apiClient
-          .orderAssignSpace(
-              _scanBarcodeResult!, packerId!, widget.orderId, storeId!)
-          .then((allocationInfo) {
+    if (code != '-1') {
+      apiClient.orderAssignSpace("A1", packerId!, widget.orderId, "1").then(
+          (allocationInfo) {
         // Show the allocation details in a dialog
         _showAllocationDetailsDialog(allocationInfo);
       }, onError: (error) {
@@ -268,166 +241,175 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         ),
         backgroundColor: Colors.deepPurpleAccent,
       ),
-      body: widget.packedItems.isEmpty
-          ? const Center(child: CircularProgressIndicator())
-          : ListView.builder(
-              itemCount: widget.packedItems.length,
-              itemBuilder: (context, index) {
-                PackedItem item = widget.packedItems[index];
-                int? quantityPacked = widget.prePackedItems
-                    .firstWhere(
-                      (result) => result.itemId == item.itemId,
-                      orElse: () => PackerItemDetail(
-                          itemId: 0,
-                          orderId: 0,
-                          packerId: 0,
-                          quantity:
-                              0), // Return null to match the type PackerItemDetail?
-                    )
-                    .quantity;
+      body: BarcodeKeyboardListener(
+        onBarcodeScanned: (code) async {
+          widget.allPacked
+              ? await scanBarcodeAssignSpace(code)
+              : await scanBarcode(code);
+        },
+        child: widget.packedItems.isEmpty
+            ? const Center(child: CircularProgressIndicator())
+            : ListView.builder(
+                itemCount: widget.packedItems.length,
+                itemBuilder: (context, index) {
+                  PackedItem item = widget.packedItems[index];
+                  int? quantityPacked = widget.prePackedItems
+                      .firstWhere(
+                        (result) => result.itemId == item.itemId,
+                        orElse: () => PackerItemDetail(
+                            itemId: 0,
+                            orderId: 0,
+                            packerId: 0,
+                            quantity:
+                                0), // Return null to match the type PackerItemDetail?
+                      )
+                      .quantity;
 
-                print("Quantity Packed $quantityPacked");
-                return Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: <Widget>[
-                            // Leading widget
+                  print("Quantity Packed $quantityPacked");
+                  return Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: <Widget>[
+                              // Leading widget
 
-                            Column(
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    if (item.imageURLs.isNotEmpty) {
-                                      showDialog(
-                                        context: context,
-                                        builder: (BuildContext context) {
-                                          return AlertDialog(
-                                            content: Image.network(
-                                              item.imageURLs.first,
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width *
-                                                  0.7, // Use screen width for the image
-                                              height:
-                                                  300, // Adjust height as needed
-                                            ),
-                                            actions: <Widget>[
-                                              Center(
-                                                child: TextButton(
-                                                  onPressed: () => Navigator.of(
-                                                          context)
-                                                      .pop(), // Close the dialog
-                                                  style: ButtonStyle(
-                                                    backgroundColor:
-                                                        MaterialStateProperty
-                                                            .all<Color>(
-                                                                Colors.white),
-                                                  ),
-                                                  child: const Text(
-                                                    'Cancel',
-                                                    style: TextStyle(
-                                                        color: Colors.black,
-                                                        fontSize:
-                                                            20), // Optional: Change text color if needed
+                              Column(
+                                children: [
+                                  GestureDetector(
+                                    onTap: () {
+                                      if (item.imageURLs.isNotEmpty) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (BuildContext context) {
+                                            return AlertDialog(
+                                              content: Image.network(
+                                                item.imageURLs.first,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.7, // Use screen width for the image
+                                                height:
+                                                    300, // Adjust height as needed
+                                              ),
+                                              actions: <Widget>[
+                                                Center(
+                                                  child: TextButton(
+                                                    onPressed: () => Navigator
+                                                            .of(context)
+                                                        .pop(), // Close the dialog
+                                                    style: ButtonStyle(
+                                                      backgroundColor:
+                                                          MaterialStateProperty
+                                                              .all<Color>(
+                                                                  Colors.white),
+                                                    ),
+                                                    child: const Text(
+                                                      'Cancel',
+                                                      style: TextStyle(
+                                                          color: Colors.black,
+                                                          fontSize:
+                                                              20), // Optional: Change text color if needed
+                                                    ),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
-                                          );
-                                        },
-                                      );
-                                    }
-                                  },
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${item.itemQuantity}x',
-                                        style: const TextStyle(fontSize: 25),
-                                      ),
-                                      item.imageURLs.isNotEmpty
-                                          ? Padding(
-                                              padding: const EdgeInsets.only(
-                                                  left: 8.0),
-                                              child: Image.network(
-                                                item.imageURLs.first,
-                                                height: 90,
-                                                width: 100,
-                                              ),
-                                            )
-                                          : const SizedBox(
-                                              width: 40, height: 40),
-                                    ],
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      }
+                                    },
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          '${item.itemQuantity}x',
+                                          style: const TextStyle(fontSize: 25),
+                                        ),
+                                        item.imageURLs.isNotEmpty
+                                            ? Padding(
+                                                padding: const EdgeInsets.only(
+                                                    left: 8.0),
+                                                child: Image.network(
+                                                  item.imageURLs.first,
+                                                  height: 90,
+                                                  width: 100,
+                                                ),
+                                              )
+                                            : const SizedBox(
+                                                width: 40, height: 40),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(
-                                  height: 2.0,
-                                ),
-                                const Center(
-                                  child: Text(
-                                    'Aisle 1A',
-                                    style: TextStyle(fontSize: 20),
+                                  const SizedBox(
+                                    height: 2.0,
                                   ),
-                                )
-                              ],
-                            ),
-                            // Spacer to push the trailing widget to the end
+                                  const Center(
+                                    child: Text(
+                                      'Aisle 1A',
+                                      style: TextStyle(fontSize: 20),
+                                    ),
+                                  )
+                                ],
+                              ),
+                              // Spacer to push the trailing widget to the end
 
-                            // Title and subtitle
-                            Row(
-                              children: <Widget>[
-                                SizedBox(
-                                  width: 180,
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        item.name,
-                                        style: const TextStyle(fontSize: 18),
-                                      ), // Display item name
-                                      Text(
-                                        '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
-                                        style: const TextStyle(fontSize: 18),
-                                      ), // Display brand and quantity
-                                    ],
+                              // Title and subtitle
+                              Row(
+                                children: <Widget>[
+                                  SizedBox(
+                                    width: 180,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          item.name,
+                                          style: const TextStyle(fontSize: 18),
+                                        ), // Display item name
+                                        Text(
+                                          '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
+                                          style: const TextStyle(fontSize: 18),
+                                        ), // Display brand and quantity
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              6.0), // Adjust the radius as needed
-                          child: SizedBox(
-                            height: 30,
-                            child: LinearProgressIndicator(
-                              value: (quantityPacked ?? 0) / item.itemQuantity,
-                              valueColor: const AlwaysStoppedAnimation<Color>(
-                                  Colors.blue),
+                                ],
+                              ),
+                            ],
+                          ),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                                6.0), // Adjust the radius as needed
+                            child: SizedBox(
+                              height: 30,
+                              child: LinearProgressIndicator(
+                                value:
+                                    (quantityPacked ?? 0) / item.itemQuantity,
+                                valueColor: const AlwaysStoppedAnimation<Color>(
+                                    Colors.blue),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(8.0),
         child: widget.allPacked
             ? FloatingActionButton.extended(
                 heroTag: 'packItemButton', // Unique tag for this FAB
 
-                onPressed: scanBarcodeAssignSpace,
+                onPressed: () {},
                 backgroundColor: Colors.deepPurpleAccent,
                 label: const Text(
                   'Complete Packing',
@@ -443,12 +425,12 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                 children: <Widget>[
                   // First FAB
 
-                  FloatingActionButton.extended(
+                  const FloatingActionButton.extended(
                     heroTag: 'scanItemButton', // Unique tag for this FAB
 
-                    onPressed: scanBarcode,
+                    onPressed: null, //scanBarcode,
                     backgroundColor: Colors.deepPurpleAccent,
-                    label: const Text(
+                    label: Text(
                       'Scan Item',
                       style: TextStyle(
                         fontSize: 28,
