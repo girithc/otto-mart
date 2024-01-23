@@ -226,54 +226,6 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
           ],
         ),
       ),
-      /*
-      floatingActionButton: Align(
-        alignment: Alignment.bottomCenter,
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.8,
-          height: MediaQuery.of(context).size.height * 0.1,
-          child: FloatingActionButton(
-            onPressed: () async {
-              if (_formKey.currentState!.saveAndValidate()) {
-                var formData = _formKey.currentState!.value;
-                if (formData['flatBuildingName'].isEmpty) {
-                  _scaffoldMessengerKey.currentState!.showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Please fill out the Flat No. and Building Name.'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                  return;
-                }
-                bool isSuccess = await cartModel.postDeliveryAddress(
-                    formData['flatBuildingName'],
-                    formData['lineOneAddress'],
-                    formData['lineTwoAddress'],
-                    formData['city'],
-                    formData['zipCode'],
-                    formData['stateName'],
-                    widget.coordinates.latitude,
-                    widget.coordinates.longitude);
-
-                if (isSuccess) {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                        builder: (context) => const AddressSelectionWidget()),
-                  );
-                }
-              }
-            },
-            child: const Text(
-              'Add Address',
-              style: TextStyle(
-                fontSize: 20,
-              ),
-            ),
-          ),
-        ),
-      ),
-      */
     );
   }
 }
