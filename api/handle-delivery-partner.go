@@ -120,6 +120,21 @@ func (s *Server) handleCheckAssignedOrder(res http.ResponseWriter, req *http.Req
 	return WriteJSON(res, http.StatusOK, order)
 }
 
+func (s *Server) DeliveryPartnerAcceptOrder(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerAcceptOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerAcceptOrder()")
+		return err
+	}
+
+	order, err := s.store.DeliveryPartnerAcceptOrder(new_req.Phone, new_req.SalesOrderId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
 func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.DeliveryPartnerPhone)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
@@ -135,7 +150,6 @@ func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *ht
 
 	if user != nil {
 		return WriteJSON(res, http.StatusOK, user)
-
 	}
 
 	new_user, err := s.store.DeliveryPartnerLogin(new_req.Phone)
@@ -143,5 +157,4 @@ func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *ht
 		return err
 	}
 	return WriteJSON(res, http.StatusOK, new_user)
-
 }

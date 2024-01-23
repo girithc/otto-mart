@@ -134,67 +134,73 @@ type OrderAssigned struct {
 	OrderStatus           string    `json:"order_status"`
 	DeliveryPartnerStatus string    `json:"order_dp_status"`
 }
+type OrderAccepted_DP struct {
+	ID                    int       `json:"id"`
+	DeliveryPartnerID     int       `json:"delivery_partner_id"`
+	StoreID               int       `json:"store_id"`
+	StoreName             string    `json:"store_name"`
+	StoreAddress          string    `json:"store_address"`
+	OrderDate             time.Time `json:"order_date"`
+	OrderStatus           string    `json:"order_status"`
+	DeliveryPartnerStatus string    `json:"order_dp_status"`
+}
 
-func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted, error) {
-	// Update the order status to reflect acceptance by the delivery partner
-	acceptOrderQuery := `
-    UPDATE sales_order
-    SET order_dp_status = 'accepted'
-    WHERE id = $1 AND delivery_partner_id = (
-        SELECT id FROM delivery_partner WHERE phone = $2
-    ) RETURNING customer_id, store_id, payment_type, paid, cart_id;`
+func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted_DP, error) {
+	// Verify that no delivery partner is currently assigned
+	checkOrderQuery := `SELECT delivery_partner_id FROM sales_order WHERE id = $1;`
+	var existingDeliveryPartnerID int
+	err := s.db.QueryRow(checkOrderQuery, order_id).Scan(&existingDeliveryPartnerID)
+	if err != nil {
+		return nil, err
+	}
+	if existingDeliveryPartnerID != 0 {
+		return nil, fmt.Errorf("order already has a delivery partner assigned")
+	}
 
-	var customerID, storeID, cartID int
-	var paymentMethod string
-	var isPaid bool
-	err := s.db.QueryRow(acceptOrderQuery, order_id, phone).Scan(&customerID, &storeID, &paymentMethod, &isPaid, &cartID)
+	// Get delivery partner ID from phone number
+	dpIDQuery := `SELECT id FROM delivery_partner WHERE phone = $1;`
+	var deliveryPartnerID int
+	err = s.db.QueryRow(dpIDQuery, phone).Scan(&deliveryPartnerID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch customer details
-	customerQuery := `SELECT name, phone, address FROM customer WHERE id = $1;`
-	orderAccepted := &OrderAccepted{}
-	err = s.db.QueryRow(customerQuery, customerID).Scan(&orderAccepted.CustomerName, &orderAccepted.CustomerPhone, &orderAccepted.CustomerAddress)
+	// Assign delivery partner to sales order
+	assignOrderQuery := `
+        UPDATE sales_order
+        SET delivery_partner_id = $2, order_dp_status = 'accepted'
+        WHERE id = $1
+        RETURNING store_id, order_date, order_status;`
+
+	var storeID int
+	var orderDate time.Time
+	var orderStatus string
+	err = s.db.QueryRow(assignOrderQuery, order_id, deliveryPartnerID).Scan(&storeID, &orderDate, &orderStatus)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch store address
-	storeQuery := `SELECT address FROM store WHERE id = $1;`
-	err = s.db.QueryRow(storeQuery, storeID).Scan(&orderAccepted.StoreAddress)
+	// Fetch store details
+	storeQuery := `SELECT name, address FROM store WHERE id = $1;`
+	var storeName, storeAddress string
+	err = s.db.QueryRow(storeQuery, storeID).Scan(&storeName, &storeAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	// Fetch the total quantity of items in the order
-	quantityQuery := `SELECT SUM(quantity) FROM cart_item WHERE cart_id = $1;`
-	var totalQuantity int
-	err = s.db.QueryRow(quantityQuery, cartID).Scan(&totalQuantity)
-	if err != nil {
-		return nil, err
-	}
-	orderAccepted.NumberOfItems = totalQuantity
-
-	// Fetch subtotal from shopping_cart if payment method is cash
-	if paymentMethod == "cash" {
-		subtotalQuery := `SELECT subtotal FROM shopping_cart WHERE id = $1;`
-		err = s.db.QueryRow(subtotalQuery, cartID).Scan(&orderAccepted.OrderAmount)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		orderAccepted.OrderAmount = 0
+	// Create and return the accepted order details
+	acceptedOrder := &OrderAccepted_DP{
+		ID:                    order_id,
+		DeliveryPartnerID:     deliveryPartnerID,
+		StoreID:               storeID,
+		StoreName:             storeName,
+		StoreAddress:          storeAddress,
+		OrderDate:             orderDate,
+		OrderStatus:           orderStatus,
+		DeliveryPartnerStatus: "accepted",
 	}
 
-	// Set payment method and payment status
-	orderAccepted.PaymentMethod = paymentMethod
-	orderAccepted.IsPaid = isPaid
-
-	// Add logic to get the number of items in the order
-	// Assuming you have a way to get this, for example, a query or a function
-
-	return orderAccepted, nil
+	return acceptedOrder, nil
 }
 
 type OrderAccepted struct {

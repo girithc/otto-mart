@@ -561,40 +561,10 @@ func (s *Server) handleDeliveryPartnerCheckOrder(res http.ResponseWriter, req *h
 	return nil
 }
 
-func (s *Server) handleDeliveryPartnerMoveOrder(res http.ResponseWriter, req *http.Request) error {
+func (s *Server) handleDeliveryPartnerAcceptOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
-		print_path("POST", "delivery_partner_move_order")
-
-		bodyBytes, err := io.ReadAll(req.Body)
-		if err != nil {
-			return err
-		}
-
-		// You can then create a new request body from bodyBytes to pass to your handler
-		newReq := &http.Request{
-			Body: io.NopCloser(bytes.NewBuffer(bodyBytes)),
-			// ... copy other needed fields from the original request
-		}
-
-		// Assuming that the request body is in JSON format, let's unmarshal it into a map
-		var requestBody map[string]interface{}
-		if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
-			return err
-		}
-
-		if len(requestBody) == 3 {
-			if _, ok := requestBody["status"]; ok {
-				if _, ok := requestBody["order_id"]; ok {
-					if _, ok := requestBody["phone"]; ok {
-						// If the key is delivery_partner_id
-						return s.goRoutineWrapper(s.handleCheckAssignedOrder, res, newReq)
-					}
-				}
-			} else {
-				// Handle the case where the key is neither delivery_partner_id nor customer_id
-				return errors.New("invalid parameter in request body")
-			}
-		}
+		print_path("POST", "delivery_partner_accept_order")
+		return s.goRoutineWrapper(s.DeliveryPartnerAcceptOrder, res, req)
 	}
 
 	return nil
