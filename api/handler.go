@@ -570,6 +570,15 @@ func (s *Server) handleDeliveryPartnerAcceptOrder(res http.ResponseWriter, req *
 	return nil
 }
 
+func (s *Server) handleDeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "delivery_partner_pickup_order")
+		return s.goRoutineWrapper(s.DeliveryPartnerPickupOrder, res, req)
+	}
+
+	return nil
+}
+
 func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "GET" {
 		print_path("GET", "sales_order")

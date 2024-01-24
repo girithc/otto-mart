@@ -135,6 +135,26 @@ func (s *Server) DeliveryPartnerAcceptOrder(res http.ResponseWriter, req *http.R
 	return WriteJSON(res, http.StatusOK, order)
 }
 
+func (s *Server) DeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerAcceptOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerPickupOrder()")
+		return err
+	}
+
+	order, err := s.store.DeliveryPartnerPickupOrder(new_req.Phone, new_req.SalesOrderId)
+	if err != nil {
+		return err
+	}
+
+	// Check if order is nil and err is nil, indicating no order changed
+	if order == nil && err == nil {
+		return WriteJSON(res, http.StatusNotModified, map[string]string{"message": "No order changed"})
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
 func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.DeliveryPartnerPhone)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

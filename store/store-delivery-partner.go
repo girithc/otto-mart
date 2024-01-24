@@ -146,36 +146,36 @@ type OrderAccepted_DP struct {
 }
 
 func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted_DP, error) {
-	// Verify that no delivery partner is currently assigned
-	checkOrderQuery := `SELECT delivery_partner_id FROM sales_order WHERE id = $1;`
-	var existingDeliveryPartnerID int
-	err := s.db.QueryRow(checkOrderQuery, order_id).Scan(&existingDeliveryPartnerID)
-	if err != nil {
-		return nil, err
-	}
-	if existingDeliveryPartnerID != 0 {
-		return nil, fmt.Errorf("order already has a delivery partner assigned")
-	}
-
 	// Get delivery partner ID from phone number
 	dpIDQuery := `SELECT id FROM delivery_partner WHERE phone = $1;`
 	var deliveryPartnerID int
-	err = s.db.QueryRow(dpIDQuery, phone).Scan(&deliveryPartnerID)
+	err := s.db.QueryRow(dpIDQuery, phone).Scan(&deliveryPartnerID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Assign delivery partner to sales order
+	// Verify that the delivery partner assigned is the one making the request
+	checkOrderQuery := `SELECT delivery_partner_id FROM sales_order WHERE id = $1;`
+	var existingDeliveryPartnerID sql.NullInt64 // Using sql.NullInt64 to handle null values
+	err = s.db.QueryRow(checkOrderQuery, order_id).Scan(&existingDeliveryPartnerID)
+	if err != nil {
+		return nil, err
+	}
+	if !existingDeliveryPartnerID.Valid || existingDeliveryPartnerID.Int64 != int64(deliveryPartnerID) {
+		return nil, fmt.Errorf("order is not assigned to this delivery partner")
+	}
+
+	// Proceed with updating the order as the delivery partner matches
 	assignOrderQuery := `
         UPDATE sales_order
-        SET delivery_partner_id = $2, order_dp_status = 'accepted'
+        SET order_dp_status = 'accepted'
         WHERE id = $1
-        RETURNING store_id, order_date, order_status;`
+        RETURNING store_id, order_date, order_status, order_dp_status;`
 
 	var storeID int
 	var orderDate time.Time
-	var orderStatus string
-	err = s.db.QueryRow(assignOrderQuery, order_id, deliveryPartnerID).Scan(&storeID, &orderDate, &orderStatus)
+	var orderStatus, orderDPStatus string
+	err = s.db.QueryRow(assignOrderQuery, order_id).Scan(&storeID, &orderDate, &orderStatus, &orderDPStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -197,10 +197,62 @@ func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (
 		StoreAddress:          storeAddress,
 		OrderDate:             orderDate,
 		OrderStatus:           orderStatus,
-		DeliveryPartnerStatus: "accepted",
+		DeliveryPartnerStatus: orderDPStatus,
 	}
 
 	return acceptedOrder, nil
+}
+
+type PickupOrderInfo struct {
+	CustomerName   string    `json:"customer_name"`
+	CustomerPhone  string    `json:"customer_phone"`
+	Latitude       float64   `json:"latitude"`
+	Longitude      float64   `json:"longitude"`
+	LineOneAddress string    `json:"line_one_address"`
+	LineTwoAddress string    `json:"line_two_address"`
+	StreetAddress  string    `json:"street_address"`
+	OrderDate      time.Time `json:"order_date"`
+	OrderStatus    string    `json:"order_status"`
+}
+
+func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (*PickupOrderInfo, error) {
+	var info PickupOrderInfo
+
+	// Get delivery partner ID from phone number
+	var deliveryPartnerID int
+	err := s.db.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Updated query to include latitude, longitude, line one and line two address
+	query := `
+    SELECT c.name, c.phone, a.latitude, a.longitude, a.line_one_address, a.line_two_address, a.street_address, so.order_date, so.order_status
+    FROM sales_order so
+    INNER JOIN shopping_cart sc ON so.cart_id = sc.id
+    INNER JOIN address a ON sc.address_id = a.id
+    INNER JOIN customer c ON so.customer_id = c.id
+    WHERE so.id = $1 AND so.delivery_partner_id = $2 AND so.order_dp_status = 'accepted';`
+
+	err = s.db.QueryRow(query, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.Latitude, &info.Longitude, &info.LineOneAddress, &info.LineTwoAddress, &info.StreetAddress, &info.OrderDate, &info.OrderStatus)
+	if err != nil {
+		return nil, err
+	}
+
+	// Evaluate order status
+	switch info.OrderStatus {
+	case "dispatched":
+		// Return the information for dispatched orders
+		println("Order Not Dispatched")
+		return &info, nil
+	case "packed":
+		// Return nil for packed orders as they are not yet ready for pickup
+		println("Order Not Dispatched")
+		return nil, nil
+	default:
+		// For any other status, return an error indicating the order is not ready for pickup
+		return nil, fmt.Errorf("order status: %s", info.OrderStatus)
+	}
 }
 
 type OrderAccepted struct {
