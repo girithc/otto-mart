@@ -117,7 +117,7 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
               ),
               initialValue:
                   '${widget.subthoroughfare}, ${widget.subthoroughfare}, ${widget.sublocality}',
-              enabled: false,
+              readOnly: true,
             ),
             const SizedBox(height: 25),
             FormBuilderTextField(
@@ -135,7 +135,7 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
                 ),
               ),
               initialValue: widget.lineOneAddress,
-              enabled: false, // Makes the field uneditable
+              readOnly: true,
             ),
             const SizedBox(height: 25),
             FormBuilderTextField(
@@ -153,7 +153,7 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
                 ),
               ),
               initialValue: widget.lineTwoAddress,
-              enabled: false, // Makes the field uneditable
+              readOnly: true,
             ),
             const SizedBox(height: 25),
             FormBuilderTextField(
@@ -172,7 +172,7 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
                 ),
               ),
               initialValue: widget.postalCode,
-              enabled: false,
+              readOnly: true,
             ),
             const SizedBox(height: 50),
             ElevatedButton(
