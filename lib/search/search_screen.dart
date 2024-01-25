@@ -62,7 +62,7 @@ class SearchPage extends StatelessWidget {
                 MaterialPageRoute(builder: (context) => const MyCart()));
           },
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.deepPurpleAccent,
+            backgroundColor: Colors.pinkAccent,
             foregroundColor: Colors.white,
             textStyle: const TextStyle(
               fontSize: 20,

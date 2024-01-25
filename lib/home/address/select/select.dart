@@ -37,6 +37,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     // Initialize your data here
   }
 
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
   Future<void> retrieveCustomerInfo() async {
     print("Enter retreive");
     String? storedCustomerId = await storage.read(key: 'customerId');
@@ -442,12 +447,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                       snackBarMessage =
                           'Delivery address set to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(snackBarMessage),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
                       print('Go To Home');
                       await storage.write(
                           key: 'storeId', value: address.storeId.toString());
@@ -456,12 +455,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                       snackBarMessage =
                           'Not deliverable to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
 
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(snackBarMessage),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
                       await storage.delete(key: 'storeId');
                       print('Coming Soon');
                       context.push('/coming-soon');

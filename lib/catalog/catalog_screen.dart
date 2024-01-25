@@ -113,7 +113,7 @@ class _CatalogPageState extends State<CatalogPage> {
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurpleAccent,
+              backgroundColor: Colors.pinkAccent,
               foregroundColor: Colors.white,
               textStyle: const TextStyle(
                 fontSize: 20,
