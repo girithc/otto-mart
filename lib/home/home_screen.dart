@@ -326,7 +326,7 @@ class _MyHomePageState extends State<MyHomePage>
                                     flex: 15, // Flex 3 for the address
                                     child: GestureDetector(
                                       onTap: () {
-                                        context.push('/select-address');
+                                        context.go('/select-address');
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -355,21 +355,27 @@ class _MyHomePageState extends State<MyHomePage>
                                               const Icon(
                                                 Icons
                                                     .location_on, // Location marker icon
-                                                color: Colors
-                                                    .deepPurpleAccent, // You can adjust the color as needed
-                                                size:
-                                                    20, // You can adjust the size as needed
+                                                color: Colors.deepPurpleAccent,
+                                                size: 20,
                                               ),
-                                              Text(
-                                                cart.deliveryAddress
-                                                    .streetAddress,
-                                                style: GoogleFonts.cantoraOne(
-                                                    fontSize: 18,
-                                                    fontStyle: FontStyle.normal,
-                                                    color: Colors.black),
-                                                overflow: TextOverflow.ellipsis,
-                                                maxLines: 2,
-                                                softWrap: false,
+                                              const SizedBox(
+                                                  width:
+                                                      8), // Provides a gap between the icon and the text
+                                              Expanded(
+                                                // Makes the text widget flexible
+                                                child: Text(
+                                                  cart.deliveryAddress
+                                                      .streetAddress,
+                                                  style: GoogleFonts.cantoraOne(
+                                                      fontSize: 18,
+                                                      fontStyle:
+                                                          FontStyle.normal,
+                                                      color: Colors.black),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  maxLines:
+                                                      1, // Ensures the text does not wrap to more than one line
+                                                ),
                                               ),
                                             ],
                                           ),

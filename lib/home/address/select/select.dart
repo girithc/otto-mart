@@ -117,7 +117,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       );
 
       if (response.statusCode == 200) {
+        print(">>>>>>>>>>>>>>");
         print(response.body.toString());
+        print(">>>>>>>>>>>>>>");
+
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
@@ -153,6 +156,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       "address_id": addressId,
     };
 
+    print("AddressID: $addressId");
+
     try {
       final http.Response response = await http.post(
         Uri.parse("$baseUrl/deliver-to"),
@@ -161,7 +166,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       );
 
       if (response.statusCode == 200) {
+        print(">>>>>>>>>>>>>>");
         print(response.body.toString());
+        print(">>>>>>>>>>>>>>");
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           return DeliverableResponse.fromJson(decodedResponse);
