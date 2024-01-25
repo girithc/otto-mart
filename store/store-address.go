@@ -137,7 +137,6 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 		return nil, err
 	}
 
-	// Query the updated default address for the customer
 	var addr types.Default_Address
 	err = tx.QueryRow(`SELECT * FROM address WHERE customer_id = $1 AND is_default = true`, customer_id).Scan(
 		&addr.Id, &addr.Customer_Id, &addr.Latitude, &addr.Longitude, &addr.Street_Address,
@@ -147,15 +146,70 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 		return nil, err
 	}
 
-	// Find a store with the same latitude and longitude
-	err = tx.QueryRow(`SELECT id FROM store WHERE latitude = $1 AND longitude = $2 LIMIT 1`, addr.Latitude, addr.Longitude).Scan(&addr.StoreId)
+	var nearestStoreID int
+	minHDistance := math.MaxFloat64
+
+	// Retrieve all stores
+	rows, err := tx.Query(`SELECT id, latitude, longitude FROM store`)
 	if err != nil {
-		addr.Deliverable = false
-	} else {
-		addr.Deliverable = true
+		tx.Rollback()
+		return nil, err
+	}
+	defer rows.Close()
+
+	// Iterate over all stores to find the nearest one
+	for rows.Next() {
+		var storeID int
+		var storeLat, storeLon float64
+
+		err := rows.Scan(&storeID, &storeLat, &storeLon)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		// Calculate Haversine distance for each store
+		hDistance := haversineDistance(addr.Latitude, addr.Longitude, storeLat, storeLon)
+
+		// Check if this store is within the 1 km delivery radius
+		const deliveryRadius = 1.0 // Delivery radius in km
+		if hDistance <= deliveryRadius && hDistance < minHDistance {
+			minHDistance = hDistance
+			nearestStoreID = storeID
+		}
 	}
 
-	// If everything has proceeded without errors, commit the transaction
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Determine if the address is deliverable based on Haversine distance
+	addr.Deliverable = nearestStoreID != 0
+	addr.StoreId = nearestStoreID
+	addr.HDistance = minHDistance
+
+	// Calculate PostGIS distance for the nearest store
+	var pgDistance float64
+	if addr.Deliverable {
+		err = tx.QueryRow(`
+            SELECT ST_Distance(
+                ST_MakePoint(latitude, longitude)::geography, 
+                ST_MakePoint($1, $2)::geography
+            )
+            FROM store
+            WHERE id = $3
+        `, addr.Latitude, addr.Longitude, nearestStoreID).Scan(&pgDistance)
+
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+		addr.PGDistance = pgDistance / 1000 // Convert to kilometers if needed
+	}
+
+	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
@@ -198,55 +252,88 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 	}()
 
 	// Get the latitude and longitude of the customer's address
-	var custLocation string
-	err = tx.QueryRow(`SELECT ST_AsText(ST_MakePoint(latitude, longitude)) FROM address WHERE id = $1`, addressId).Scan(&custLocation)
+	var custLat, custLon float64
+	err = tx.QueryRow(`SELECT latitude, longitude FROM address WHERE id = $1`, addressId).Scan(&custLat, &custLon)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	// Find the nearest store within 1km
-	var storeID int
-	var storeName string
-	err = tx.QueryRow(`
-        SELECT id, name 
-        FROM store 
-        WHERE ST_DWithin(
-            ST_MakePoint(latitude, longitude)::geography, 
-            ST_GeomFromText($1)::geography, 
-            1000
-        )
-        ORDER BY ST_Distance(
-            ST_MakePoint(latitude, longitude)::geography, 
-            ST_GeomFromText($1)::geography
-        )
-        LIMIT 1
-    `, custLocation).Scan(&storeID, &storeName)
+	// Initialize variables to find the nearest store
+	var nearestStoreID int
+	minHDistance := math.MaxFloat64
 
+	// Retrieve all stores
+	rows, err := tx.Query(`SELECT id, latitude, longitude FROM store`)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
+	defer rows.Close()
 
-	// If a store is found
-	if storeID != 0 {
+	// Iterate over all stores to find the nearest one
+	for rows.Next() {
+		var storeID int
+		var storeLat, storeLon float64
+
+		err := rows.Scan(&storeID, &storeLat, &storeLon)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
+
+		// Calculate Haversine distance for each store
+		hDistance := haversineDistance(custLat, custLon, storeLat, storeLon)
+
+		// Check if this store is the nearest one so far
+		if hDistance < minHDistance {
+			minHDistance = hDistance
+			nearestStoreID = storeID
+		}
+	}
+
+	// Check for errors from iterating over rows
+	if err := rows.Err(); err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	// Use Haversine distance to determine if the address is deliverable
+	const deliveryRadius = 1.0 // Delivery radius in km
+	if minHDistance <= deliveryRadius {
 		deliverable.Deliverable = true
-		deliverable.StoreId = storeID
+		deliverable.StoreId = nearestStoreID
 	} else {
 		deliverable.Deliverable = false
 		tx.Commit()
 		return &deliverable, nil
 	}
 
+	// Calculate PostGIS distance for the nearest store
+	var pgDistance float64
+	err = tx.QueryRow(`
+        SELECT ST_Distance(
+            ST_MakePoint(latitude, longitude)::geography, 
+            ST_MakePoint($1, $2)::geography
+        )
+        FROM store
+        WHERE id = $3
+    `, custLat, custLon, nearestStoreID).Scan(&pgDistance)
+
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
 	// Check for an active shopping cart
 	var cartId int
-	err = tx.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND store_id = $2 AND active = true LIMIT 1`, customerId, storeID).Scan(&cartId)
+	err = tx.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND store_id = $2 AND active = true LIMIT 1`, customerId, nearestStoreID).Scan(&cartId)
 
 	// If an active shopping cart is not found, create one
 	if err != nil {
 		if err == sql.ErrNoRows {
 			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active) VALUES ($1, $2, true) RETURNING id`
-			err = tx.QueryRow(createCartQuery, customerId, storeID).Scan(&cartId)
+			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID).Scan(&cartId)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
@@ -263,6 +350,8 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 	}
 
 	deliverable.CartId = cartId
+	deliverable.HDistance = minHDistance
+	deliverable.PGDistance = pgDistance / 1000 // Convert to kilometers if needed
 
 	return &deliverable, nil
 }

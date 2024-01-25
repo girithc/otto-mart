@@ -32,6 +32,8 @@ type Default_Address struct {
 	Created_At       time.Time `json:"created_at"`
 	Deliverable      bool      `json:"deliverable"`
 	StoreId          int       `json:"store_id"`
+	HDistance        float64   `json:"h_distance"`
+	PGDistance       float64   `json:"gis_distance"`
 }
 
 type Create_Address struct {
@@ -62,9 +64,11 @@ type DeliverToAddress struct {
 }
 
 type Deliverable struct {
-	Deliverable bool `json:"deliverable"`
-	StoreId     int  `json:"store_id"`
-	CartId      int  `json:"cart_id"`
+	Deliverable bool    `json:"deliverable"`
+	StoreId     int     `json:"store_id"`
+	CartId      int     `json:"cart_id"`
+	HDistance   float64 `json:"h_distance"`
+	PGDistance  float64 `json:"gis_distance"`
 }
 
 type Delete_Address struct {
