@@ -89,8 +89,6 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 			return err
 		}
 
-		fmt.Println("Shopping Cart Created ", user.Cart_Id)
-
 		// Generate JWT token
 		tokenString, err := generateJWT(user.Phone)
 		if err != nil {

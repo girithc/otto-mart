@@ -8,25 +8,33 @@ import (
 )
 
 func (s *PostgresStore) CreateAddressTable(tx *sql.Tx) error {
+	// Check if the PostGIS extension exists and create it if it doesn't
+	postgisQuery := `CREATE EXTENSION IF NOT EXISTS postgis;`
+
+	_, err := tx.Exec(postgisQuery)
+	if err != nil {
+		return err
+	}
+
 	// Create the address table without the partial unique constraint
 	tableQuery := `
     CREATE TABLE IF NOT EXISTS address (
-		id SERIAL PRIMARY KEY,
-		customer_id INTEGER REFERENCES customer(id) ON DELETE CASCADE,
-		latitude DECIMAL(10, 8),
-		longitude DECIMAL(11, 8),
-		street_address TEXT NOT NULL,
-		line_one_address TEXT NOT NULL,
-		line_two_address TEXT NOT NULL,
-		city VARCHAR(50),
-		state VARCHAR(50),
-		zipcode VARCHAR(10),
-		is_default BOOLEAN NOT NULL DEFAULT false,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	)
+        id SERIAL PRIMARY KEY,
+        customer_id INTEGER REFERENCES customer(id) ON DELETE CASCADE,
+        latitude DECIMAL(10, 8),
+        longitude DECIMAL(11, 8),
+        street_address TEXT NOT NULL,
+        line_one_address TEXT NOT NULL,
+        line_two_address TEXT NOT NULL,
+        city VARCHAR(50),
+        state VARCHAR(50),
+        zipcode VARCHAR(10),
+        is_default BOOLEAN NOT NULL DEFAULT false,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
     `
 
-	_, err := tx.Exec(tableQuery)
+	_, err = tx.Exec(tableQuery)
 	if err != nil {
 		return err
 	}

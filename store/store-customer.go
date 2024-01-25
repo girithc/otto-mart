@@ -141,7 +141,7 @@ func (s *PostgresStore) VerifyOtpMSG91(phone int, otp int) (*types.VerifyOTPResp
 }
 
 // Combined Create_Customer and Create_Shopping_Cart
-func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer_With_Cart, error) {
+func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer_Login, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at, merchant_user_id`
 	row := tx.QueryRow(query, "", phoneNumberStr, "")
 
-	customer := &types.Customer_With_Cart{}
+	customer := &types.Customer_Login{}
 	var merchantUserID sql.NullString
 
 	err = row.Scan(
@@ -180,15 +180,17 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 		customer.MerchantUserID = "" // or keep as a default value if needed
 	}
 
-	// Create the shopping cart
-	query = `INSERT INTO shopping_cart (customer_id, active, store_id) VALUES ($1, $2, $3) RETURNING id, store_id`
-	var cartId int
-	err = tx.QueryRow(query, customer.ID, true, 1).Scan(&customer.Cart_Id, &customer.Store_Id)
-	if err != nil {
-		print(err)
-		return nil, err
-	}
-	customer.Cart_Id = cartId
+	/*
+		// Create the shopping cart
+		query = `INSERT INTO shopping_cart (customer_id, active, store_id) VALUES ($1, $2, $3) RETURNING id, store_id`
+		var cartId int
+		err = tx.QueryRow(query, customer.ID, true, 1).Scan(&customer.Cart_Id, &customer.Store_Id)
+		if err != nil {
+			print(err)
+			return nil, err
+		}
+		customer.Cart_Id = cartId
+	*/
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
@@ -222,13 +224,12 @@ func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 	return customers, nil
 }
 
-func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_With_Cart, error) {
+func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_Login, error) {
 	fmt.Println("Started Get_Customer_By_Phone")
 	query := `
-        SELECT c.*, sc.id AS shopping_cart_id, sc.store_id
-        FROM customer c
-        LEFT JOIN shopping_cart sc ON c.id = sc.customer_id AND sc.active = true
-        WHERE c.phone = $1
+        SELECT *
+        FROM customer
+        WHERE phone = $1
     `
 	phoneNumberStr := phone
 
@@ -236,9 +237,7 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_Wit
 
 	fmt.Println("I Query Successful")
 
-	var customer types.Customer_With_Cart
-	var storeID sql.NullInt64
-	var cartID sql.NullInt64
+	var customer types.Customer_Login
 	var merchantUserID sql.NullString
 
 	err := row.Scan(
@@ -248,8 +247,6 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_Wit
 		&customer.Address,
 		&merchantUserID,
 		&customer.Created_At,
-		&cartID,
-		&storeID,
 	)
 
 	fmt.Println("II Row Scan Successful")
@@ -260,36 +257,20 @@ func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_Wit
 		customer.MerchantUserID = "" // or keep as a default value if needed
 	}
 
-	if storeID.Valid {
-		customer.Store_Id = int(storeID.Int64)
-	}
-
 	if err == sql.ErrNoRows {
 		return nil, nil
 	} else if err != nil {
 		return nil, err
 	}
 
-	// Check if a shopping cart exists, if not, create one
-	if !cartID.Valid {
-		tx, err := s.db.Begin()
-		if err != nil {
-			return nil, err
-		}
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
 
-		insertCartQuery := `INSERT INTO shopping_cart (customer_id, active, store_id) VALUES ($1, $2, $3) RETURNING id`
-		err = tx.QueryRow(insertCartQuery, customer.ID, true, 1).Scan(&customer.Cart_Id)
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-
-		// Commit the transaction
-		if err := tx.Commit(); err != nil {
-			return nil, err
-		}
-	} else {
-		customer.Cart_Id = int(cartID.Int64)
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
 	}
 
 	return &customer, nil
