@@ -64,6 +64,7 @@ type DeliverToAddress struct {
 type Deliverable struct {
 	Deliverable bool `json:"deliverable"`
 	StoreId     int  `json:"store_id"`
+	CartId      int  `json:"cart_id"`
 }
 
 type Delete_Address struct {

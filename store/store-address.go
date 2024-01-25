@@ -190,36 +190,71 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 	}()
 
 	// Get the latitude and longitude of the customer's address
-	var custLatitude, custLongitude float64
-	err = tx.QueryRow(`SELECT latitude, longitude FROM address WHERE id = $1`, addressId).Scan(&custLatitude, &custLongitude)
+	var custLocation string
+	err = tx.QueryRow(`SELECT ST_AsText(ST_MakePoint(latitude, longitude)) FROM address WHERE id = $1`, addressId).Scan(&custLocation)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	// Get the latitude and longitude of the store
-	var storeLatitude, storeLongitude float64
-	// Assuming storeId is known, replace 'storeId' with actual store ID variable or parameter
-	err = tx.QueryRow(`SELECT latitude, longitude FROM store WHERE id = $1`, 1).Scan(&storeLatitude, &storeLongitude)
+	// Find the nearest store within 1km
+	var storeID int
+	var storeName string
+	err = tx.QueryRow(`
+        SELECT id, name 
+        FROM store 
+        WHERE ST_DWithin(
+            ST_MakePoint(latitude, longitude)::geography, 
+            ST_GeomFromText($1)::geography, 
+            1000
+        )
+        ORDER BY ST_Distance(
+            ST_MakePoint(latitude, longitude)::geography, 
+            ST_GeomFromText($1)::geography
+        )
+        LIMIT 1
+    `, custLocation).Scan(&storeID, &storeName)
+
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	// Calculate the distance using the Haversine formula
-	distance := haversineDistance(custLatitude, custLongitude, storeLatitude, storeLongitude)
-
-	// Check if the distance is within 1 km
-	if distance <= 1 {
+	// If a store is found
+	if storeID != 0 {
 		deliverable.Deliverable = true
+		deliverable.StoreId = storeID
 	} else {
 		deliverable.Deliverable = false
+		tx.Commit()
+		return &deliverable, nil
+	}
+
+	// Check for an active shopping cart
+	var cartId int
+	err = tx.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND store_id = $2 AND active = true LIMIT 1`, customerId, storeID).Scan(&cartId)
+
+	// If an active shopping cart is not found, create one
+	if err != nil {
+		if err == sql.ErrNoRows {
+			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active) VALUES ($1, $2, true) RETURNING id`
+			err = tx.QueryRow(createCartQuery, customerId, storeID).Scan(&cartId)
+			if err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+		} else {
+			tx.Rollback()
+			return nil, err
+		}
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
+
+	deliverable.CartId = cartId
 
 	return &deliverable, nil
 }
