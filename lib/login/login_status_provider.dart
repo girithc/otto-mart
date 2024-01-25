@@ -45,7 +45,6 @@ class LoginStatusProvider with ChangeNotifier {
       final Customer customer = Customer.fromJson(responseBody);
       await storage.write(key: 'customerId', value: customer.id.toString());
       await storage.write(key: 'phone', value: customer.phone.toString());
-      await storage.write(key: 'cartId', value: customer.cartId.toString());
       isLoggedIn = true;
       notifyListeners();
     } else {

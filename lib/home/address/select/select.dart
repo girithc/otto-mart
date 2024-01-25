@@ -470,6 +470,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                       {
                         await storage.write(
                             key: 'storeId', value: resp.storeId.toString()),
+                        await storage.write(
+                            key: 'cartId', value: resp.cartId.toString()),
                         context.push('/home')
                       }
                     else
@@ -559,16 +561,16 @@ class AddressResponse {
 class DeliverableResponse {
   final bool deliverable;
   final int storeId;
+  final int cartId;
 
-  DeliverableResponse({
-    required this.deliverable,
-    required this.storeId,
-  });
+  DeliverableResponse(
+      {required this.deliverable, required this.storeId, required this.cartId});
 
   factory DeliverableResponse.fromJson(Map<String, dynamic> json) {
     return DeliverableResponse(
       deliverable: json['deliverable'] as bool,
       storeId: json['store_id'] as int,
+      cartId: json['cart_id'] as int,
     );
   }
 }

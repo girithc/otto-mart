@@ -69,7 +69,6 @@ class _MyVerifyState extends State<MyVerify> {
       // Store the user's credentials securely
       await storage.write(key: 'customerId', value: customer.id.toString());
       await storage.write(key: 'phone', value: customer.phone.toString());
-      await storage.write(key: 'cartId', value: customer.cartId.toString());
 
       Provider.of<LoginStatusProvider>(context, listen: false)
           .updateLoginStatus(true, customer.id.toString());

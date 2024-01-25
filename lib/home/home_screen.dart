@@ -297,7 +297,7 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
     //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
-    int randomNumber = 8 + Random().nextInt(9);
+    int randomNumber = 3 + Random().nextInt(5);
 
     return Scaffold(
       key: _scaffoldKey,
@@ -327,323 +327,23 @@ class _MyHomePageState extends State<MyHomePage>
                                     child: GestureDetector(
                                       onTap: () {
                                         context.push('/select-address');
-                                        // Reset selectedAddressIndex before opening the bottom sheet
-                                        /*
-                                        selectedAddressIndex = null;
-                                        getAllAddresses().then((_) {
-                                          // When getAllAddresses completes execution
-                                          showModalBottomSheet(
-                                            context: context,
-                                            isDismissible:
-                                                true, // Prevent dismissing by tapping outside
-                                            enableDrag: false,
-                                            builder: (BuildContext context) {
-                                              return StatefulBuilder(
-                                                builder: (BuildContext context,
-                                                    StateSetter modalSetState) {
-                                                  return Container(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            10),
-                                                    height:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .height *
-                                                            0.5,
-                                                    width:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .width *
-                                                            0.90,
-                                                    decoration:
-                                                        const BoxDecoration(
-                                                      // other decoration properties like color, border, etc.
-                                                      color: Colors.white,
-                                                      borderRadius:
-                                                          BorderRadius.only(
-                                                        topLeft: Radius.circular(
-                                                            10), // Adjust the radius as needed
-                                                        topRight: Radius.circular(
-                                                            10), // Adjust the radius as needed
-                                                      ),
-                                                    ),
-                                                    child: Column(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      crossAxisAlignment:
-                                                          CrossAxisAlignment
-                                                              .center,
-                                                      children: [
-                                                        Container(
-                                                          width: MediaQuery.of(
-                                                                      context)
-                                                                  .size
-                                                                  .width *
-                                                              0.80,
-                                                          padding:
-                                                              const EdgeInsets
-                                                                  .symmetric(
-                                                                  vertical: 12,
-                                                                  horizontal:
-                                                                      30),
-                                                          decoration:
-                                                              BoxDecoration(
-                                                            color: Colors
-                                                                .white, // Grey background
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                        10), // Rounded corners
-                                                            border: Border.all(
-                                                              color: Colors
-                                                                  .deepPurpleAccent, // Border color
-                                                              width:
-                                                                  1.0, // Border width
-                                                            ),
-                                                            boxShadow: [
-                                                              BoxShadow(
-                                                                color: Colors
-                                                                    .black
-                                                                    .withOpacity(
-                                                                        0.2), // Shadow color
-                                                                spreadRadius: 1,
-                                                                blurRadius: 5,
-                                                                offset: const Offset(
-                                                                    0,
-                                                                    3), // Changes position of shadow
-                                                              ),
-                                                            ],
-                                                          ),
-                                                          child: const Center(
-                                                            child: Text(
-                                                              "Select Address",
-                                                              style: TextStyle(
-                                                                  fontSize: 20),
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                            height: 5),
-                                                        Expanded(
-                                                          child:
-                                                              isLoadingGetAddress
-                                                                  ? ListView
-                                                                      .builder(
-                                                                      itemCount:
-                                                                          5, // Display 5 skeleton items for example
-                                                                      itemBuilder:
-                                                                          (BuildContext context,
-                                                                              int index) {
-                                                                        return Padding(
-                                                                          padding: const EdgeInsets
-                                                                              .symmetric(
-                                                                              vertical: 10.0,
-                                                                              horizontal: 15.0),
-                                                                          child:
-                                                                              Container(
-                                                                            height:
-                                                                                20.0, // Height of the skeleton item
-                                                                            width:
-                                                                                double.infinity,
-                                                                            color:
-                                                                                Colors.grey[300], // Light grey color for the skeleton
-                                                                          ),
-                                                                        );
-                                                                      },
-                                                                    )
-                                                                  : ListView
-                                                                      .builder(
-                                                                      itemCount:
-                                                                          addresses.length +
-                                                                              2, // Two more than the addresses for the 'add' option and the current address
-                                                                      itemBuilder:
-                                                                          (BuildContext context,
-                                                                              int index) {
-                                                                        if (index ==
-                                                                            0) {
-                                                                          return ListTile(
-                                                                            // <-- You missed the return here
-                                                                            leading:
-                                                                                const Icon(Icons.add), // An add icon
-                                                                            title:
-                                                                                const Text("Add New Address"),
-                                                                            onTap:
-                                                                                () {
-                                                                              Navigator.of(context).pushReplacement(MaterialPageRoute(
-                                                                                builder: (context) => const AddressScreen(),
-                                                                              ));
-                                                                            },
-                                                                          );
-                                                                        } else if (index ==
-                                                                            1) {
-                                                                          // Display the current address
-                                                                          return ListTile(
-                                                                            leading:
-                                                                                const Text("Current"),
-                                                                            title:
-                                                                                Text(
-                                                                              cart.deliveryAddress.streetAddress,
-                                                                              style: const TextStyle(color: Colors.black),
-                                                                            ),
-                                                                          );
-                                                                        } else {
-                                                                          return RadioListTile<
-                                                                              int>(
-                                                                            value:
-                                                                                index - 2,
-                                                                            groupValue:
-                                                                                selectedAddressIndex,
-                                                                            onChanged:
-                                                                                (int? value) {
-                                                                              modalSetState(() {
-                                                                                selectedAddressIndex = value;
-                                                                              });
-                                                                            },
-                                                                            title:
-                                                                                Text(addresses[index - 2].streetAddress),
-                                                                          );
-                                                                        }
-                                                                      },
-                                                                    ),
-                                                        ),
-                                                        ElevatedButton(
-                                                          onPressed: () async {
-                                                            try {
-                                                              String
-                                                                  snackBarMessage;
-                                                              if (selectedAddressIndex !=
-                                                                      null &&
-                                                                  selectedAddressIndex! <
-                                                                      addresses
-                                                                          .length) {
-                                                                showAddress =
-                                                                    false;
-                                                                setDefaultAddress(
-                                                                        addresses[selectedAddressIndex!]
-                                                                            .id)
-                                                                    .then(
-                                                                        (address) {
-                                                                  if (address !=
-                                                                      null) {
-                                                                    cart.deliveryAddress =
-                                                                        address;
-                                                                  }
-                                                                });
-                                                                snackBarMessage =
-                                                                    'Delivery address set to: ${addresses[selectedAddressIndex!].streetAddress}';
-                                                                Navigator.pop(
-                                                                    context);
-                                                                ScaffoldMessenger.of(
-                                                                        context)
-                                                                    .showSnackBar(
-                                                                  SnackBar(
-                                                                    content: Text(
-                                                                        snackBarMessage),
-                                                                    backgroundColor:
-                                                                        Colors
-                                                                            .green,
-                                                                  ),
-                                                                );
-                                                              } else {
-                                                                snackBarMessage =
-                                                                    'No Address Selected';
-                                                                if (!mounted) {
-                                                                  return; // Check if the widget is still mounted
-                                                                }
-                                                                showDialog(
-                                                                    context:
-                                                                        context,
-                                                                    builder:
-                                                                        (context) {
-                                                                      Future.delayed(
-                                                                          const Duration(
-                                                                              seconds: 1),
-                                                                          () {
-                                                                        Navigator.of(context)
-                                                                            .pop(true);
-                                                                      });
-                                                                      return const AlertDialog(
-                                                                        title: Text(
-                                                                            'No Address Selected'),
-                                                                      );
-                                                                    });
-                                                              }
-
-                                                              // Close the bottom sheet
-                                                            } catch (error) {
-                                                              ScaffoldMessenger
-                                                                      .of(context)
-                                                                  .showSnackBar(
-                                                                const SnackBar(
-                                                                  content: Text(
-                                                                      'Failed to set default address'),
-                                                                  backgroundColor:
-                                                                      Colors
-                                                                          .red,
-                                                                ),
-                                                              );
-                                                            }
-                                                          },
-                                                          style: ElevatedButton
-                                                              .styleFrom(
-                                                            foregroundColor:
-                                                                Colors.white,
-                                                            backgroundColor: Colors
-                                                                .deepPurpleAccent, // Button color
-                                                            shape:
-                                                                RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius
-                                                                      .circular(
-                                                                          8), // Smaller rounded corners for a squarish look
-                                                            ),
-                                                            elevation:
-                                                                5, // Floating effect
-                                                            padding:
-                                                                const EdgeInsets
-                                                                    .symmetric(
-                                                              horizontal:
-                                                                  30, // Slightly more horizontal padding
-                                                              vertical:
-                                                                  15, // Slightly more vertical padding
-                                                            ),
-                                                          ),
-                                                          child: const Text(
-                                                            "Deliver To Address",
-                                                            style: TextStyle(
-                                                                fontSize: 20),
-                                                          ),
-                                                        ),
-                                                        const SizedBox(
-                                                          height: 5,
-                                                        )
-                                                      ],
-                                                    ),
-                                                  );
-                                                },
-                                              );
-                                            },
-                                          );
-                                        });
-                                        */
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
-                                            horizontal: 5, vertical: 0),
+                                            horizontal: 6, vertical: 0),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8.0),
                                           border: Border.all(
-                                              color: Colors.white, width: 1),
-                                          boxShadow: const [
+                                              color: Colors.deepPurpleAccent,
+                                              width: 1),
+                                          boxShadow: [
                                             BoxShadow(
-                                              color: Color.fromARGB(
-                                                  255, 248, 219, 253),
+                                              color: Colors.grey.shade300,
                                               spreadRadius: 2,
                                               blurRadius: 3,
-                                              offset: Offset(0, 3),
+                                              offset: const Offset(0, 3),
                                             ),
                                           ],
                                         ), // No background color for the first child
@@ -666,7 +366,7 @@ class _MyHomePageState extends State<MyHomePage>
                                                 style: GoogleFonts.cantoraOne(
                                                     fontSize: 18,
                                                     fontStyle: FontStyle.normal,
-                                                    color: Colors.black87),
+                                                    color: Colors.black),
                                                 overflow: TextOverflow.ellipsis,
                                                 maxLines: 2,
                                                 softWrap: false,
@@ -682,38 +382,49 @@ class _MyHomePageState extends State<MyHomePage>
                                     child: Container(),
                                   ),
                                   Expanded(
-                                    flex: 42, // Flex 7 for the main content
+                                    flex: 42, // Flex 42 for the main content
                                     child: Container(
+                                      padding: const EdgeInsets.only(
+                                          left: 5.0, top: 6, bottom: 6),
                                       decoration: BoxDecoration(
-                                        image: const DecorationImage(
-                                          image: AssetImage(
-                                              "assets/images/store.png"),
-                                          opacity: 0.9,
-                                          fit: BoxFit.cover,
-                                        ),
+                                        color: Colors.white,
                                         borderRadius:
                                             BorderRadius.circular(8.0),
-                                        border: Border.all(
-                                            color: Colors.deepPurpleAccent),
-                                        boxShadow: const [
+                                        boxShadow: [
                                           BoxShadow(
-                                            color: Color.fromARGB(
-                                                255, 248, 219, 253),
-                                            spreadRadius: 1,
+                                            color: Colors.grey.shade300,
+                                            spreadRadius: 2,
                                             blurRadius: 3,
-                                            offset: Offset(0, 3),
+                                            offset: const Offset(0, 3),
                                           ),
                                         ],
                                       ),
-                                      child: Center(
-                                        child: Text(
-                                          "Delivery in $randomNumber minutes",
-                                          style: GoogleFonts.cantoraOne(
-                                              fontSize: 24,
-                                              fontStyle: FontStyle.italic,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white),
-                                        ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment
+                                            .spaceEvenly, // Align content to the start of the Row
+
+                                        children: [
+                                          // Spacing between icon and text
+                                          Expanded(
+                                            // Wrap the text with Expanded to fill the remaining space
+                                            child: Text(
+                                              "Delivery in $randomNumber min",
+                                              style: GoogleFonts.cantoraOne(
+                                                  fontSize: 24,
+                                                  fontStyle: FontStyle.italic,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.black),
+                                              maxLines:
+                                                  1, // Ensures the text does not wrap to more than one line
+                                              // Add ellipsis when text overflows
+                                            ),
+                                          ),
+                                          Image.asset(
+                                            "assets/images/scooter.jpg", // Path to your scooter image
+                                            height:
+                                                50, // Set an appropriate height for the icon
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -736,9 +447,9 @@ class _MyHomePageState extends State<MyHomePage>
                               child: const Text(
                                 'Explore By Categories',
                                 style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
                               ),
                             ),
                           ],
@@ -914,8 +625,8 @@ class _MyHomePageState extends State<MyHomePage>
                   style: const TextStyle(
                       height: 1.3,
                       fontSize: 12,
-                      fontWeight:
-                          FontWeight.bold), // Adjusting the line spacing here
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black), // Adjusting the line spacing here
                 ),
               ),
             ],

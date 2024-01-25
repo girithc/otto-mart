@@ -87,89 +87,76 @@ class _CatalogPageState extends State<CatalogPage> {
         categoryName: widget.categoryName,
       ),
       body: ListOfItems(categories: categories),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
+      bottomNavigationBar: Material(
+        elevation: 4.0,
         child: Container(
           margin: EdgeInsets.zero,
-          child: Row(
-            // Expand the Row to fill the available space
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Flexible(
-                flex: 4,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    const storage = FlutterSecureStorage();
+          padding:
+              const EdgeInsets.only(bottom: 25, left: 10, right: 10, top: 10),
+          child: ElevatedButton(
+            onPressed: () async {
+              const storage = FlutterSecureStorage();
 
-                    // Read the cartId from storage
-                    String? cartId = await storage.read(key: 'cartId');
+              // Read the cartId from storage
+              String? cartId = await storage.read(key: 'cartId');
 
-                    // Check if cartId is null
-                    if (cartId == null) {
-                      // If cartId is null, navigate to MyPhone()
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyPhone()),
-                      );
-                    } else {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const MyCart()));
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pinkAccent,
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: cart.numberOfItems > 0
-                      ? (cart.numberOfItems > 1
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.shopping_cart_outlined),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text('${cart.numberOfItems.toString()} Items'),
-                              ],
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.shopping_cart_outlined),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text('${cart.numberOfItems.toString()} Item'),
-                              ],
-                            ))
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.shopping_cart_outlined),
-                            SizedBox(
-                              width: 10,
-                            ), // Add your desired icon here
-                            // Add some spacing between the icon and text
-                            Text('Cart'),
-                          ],
-                        ),
-                ),
+              // Check if cartId is null
+              if (cartId == null) {
+                // If cartId is null, navigate to MyPhone()
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MyPhone()),
+                );
+              } else {
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => const MyCart()));
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurpleAccent,
+              foregroundColor: Colors.white,
+              textStyle: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
               ),
-            ],
+              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10.0),
+              ),
+            ),
+            child: cart.numberOfItems > 0
+                ? (cart.numberOfItems > 1
+                    ? Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.shopping_cart_outlined),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Text('${cart.numberOfItems.toString()} Items'),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.shopping_cart_outlined),
+                          const SizedBox(
+                            width: 10,
+                          ),
+                          Text('${cart.numberOfItems.toString()} Item'),
+                        ],
+                      ))
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.shopping_cart_outlined),
+                      SizedBox(
+                        width: 10,
+                      ), // Add your desired icon here
+                      // Add some spacing between the icon and text
+                      Text('Cart'),
+                    ],
+                  ),
           ),
         ),
       ),
@@ -359,15 +346,40 @@ class CategoryItem extends StatelessWidget {
             categoryID: categoryID, storeID: 1, categoryName: categoryName));
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        color: isSelected
-            ? const Color.fromRGBO(206, 157, 255, 1)
-            : Colors.transparent,
+        margin: const EdgeInsets.symmetric(vertical: 5),
+        padding: const EdgeInsets.symmetric(vertical: 18),
+        decoration: BoxDecoration(
+          gradient: isSelected
+              ? LinearGradient(
+                  begin: Alignment.centerRight,
+                  end: Alignment.centerLeft,
+                  colors: [
+                    Colors.pinkAccent,
+                    Colors.pinkAccent.shade200,
+                    Colors.white,
+                  ],
+                  stops: const [
+                    0.8,
+                    0.9,
+                    1.0
+                  ], // Adjust these stops for smooth transition
+                )
+              : null, // No gradient when not selected
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(15),
+            bottomRight: Radius.circular(15),
+          ),
+        ),
         child: Center(
           child: Text(
             categoryName,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: Colors.black),
+            style: isSelected
+                ? const TextStyle(
+                    fontSize: 14,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500)
+                : const TextStyle(fontSize: 14, color: Colors.black),
           ),
         ),
       ),
@@ -682,7 +694,7 @@ class ListItem2 extends StatelessWidget {
           ),
           Positioned(
             top: 5, // Adjust the position as needed
-            left: 5, // Adjust the position as needed
+            left: 2, // Adjust the position as needed
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
               decoration: BoxDecoration(
@@ -717,9 +729,9 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      elevation: 4.0,
+      elevation: 2.0,
       child: Container(
-        padding: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.only(top: 5),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(
           border: Border.all(

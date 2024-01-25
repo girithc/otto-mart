@@ -52,101 +52,60 @@ class SearchPage extends StatelessWidget {
           ? const SearchItemList()
           : const TypingAnimation(),
       //: const SearchTemplate(),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        child: Container(
-          margin: EdgeInsets.zero,
-          child: Row(
-            // Expand the Row to fill the available space
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              /*
-              Expanded(
-                flex: 5,
-                child: CarouselSlider(
-                  options: CarouselOptions(
-                      autoPlay: false,
-                      enlargeCenterPage: true,
-                      aspectRatio: 3.5,
-                      viewportFraction: 0.95),
-                  items: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        border: Border.all(color: Colors.pinkAccent),
-                        borderRadius: BorderRadius.circular(4.0),
-                      ),
-                      child: const Center(
-                        child: Text("Offer 1"),
-                      ),
-                    ),
-
-                    // Add more items as needed
+      bottomNavigationBar: Container(
+        padding:
+            const EdgeInsets.only(bottom: 25, left: 10, right: 10, top: 10),
+        margin: EdgeInsets.zero,
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const MyCart()));
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurpleAccent,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.0),
+            ),
+          ),
+          child: cart.numberOfItems > 0
+              ? (cart.numberOfItems > 1
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text('${cart.numberOfItems.toString()} Items'),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text('${cart.numberOfItems.toString()} Item'),
+                      ],
+                    ))
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_cart_outlined),
+                    SizedBox(
+                      width: 10,
+                    ), // Add your desired icon here
+                    // Add some spacing between the icon and text
+                    Text('Cart'),
                   ],
                 ),
-              ),
-              */
-              Flexible(
-                flex: 5,
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyCart()));
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pinkAccent,
-                    foregroundColor: Colors.white,
-                    textStyle: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  child: cart.numberOfItems > 0
-                      ? (cart.numberOfItems > 1
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.shopping_cart_outlined),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text('${cart.numberOfItems.toString()} Items'),
-                              ],
-                            )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Icons.shopping_cart_outlined),
-                                const SizedBox(
-                                  width: 10,
-                                ),
-                                Text('${cart.numberOfItems.toString()} Item'),
-                              ],
-                            ))
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.shopping_cart_outlined),
-                            SizedBox(
-                              width: 10,
-                            ), // Add your desired icon here
-                            // Add some spacing between the icon and text
-                            Text('Cart'),
-                          ],
-                        ),
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

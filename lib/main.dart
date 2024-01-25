@@ -211,7 +211,6 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
       final Customer customer = Customer.fromJson(responseBody);
       await storage.write(key: 'customerId', value: customer.id.toString());
       await storage.write(key: 'phone', value: customer.phone.toString());
-      await storage.write(key: 'cartId', value: customer.cartId.toString());
       isLoggedIn = true;
       return true;
     } else {

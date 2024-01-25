@@ -235,10 +235,10 @@ class _SettingScreenState extends State<SettingScreen> {
                           builder: (context) => const MyOrdersPage()),
                     );
                   },
-                  title: Center(
+                  title: const Center(
                     child: Text(
                       'Orders',
-                      style: GoogleFonts.robotoMono(fontSize: 20),
+                      style: TextStyle(fontSize: 20, color: Colors.black),
                     ),
                   ),
                   tileColor: Colors.white,
@@ -262,11 +262,10 @@ class _SettingScreenState extends State<SettingScreen> {
                       ),
                     );
                   },
-                  title: Center(
+                  title: const Center(
                     child: Text(
                       'Sign Out',
-                      style: GoogleFonts.robotoMono(
-                          fontSize: 18, color: Colors.black),
+                      style: TextStyle(fontSize: 18, color: Colors.black),
                     ),
                   ),
                   tileColor: Colors.white,
@@ -292,11 +291,10 @@ class _SettingScreenState extends State<SettingScreen> {
                       }
                     });
                   },
-                  title: Center(
+                  title: const Center(
                     child: Text(
                       'Delete User',
-                      style: GoogleFonts.robotoMono(
-                          fontSize: 18, color: Colors.black),
+                      style: TextStyle(fontSize: 18, color: Colors.black),
                     ),
                   ),
                   tileColor: Colors.white,
