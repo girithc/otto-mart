@@ -207,6 +207,38 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 			return nil, err
 		}
 		addr.PGDistance = pgDistance / 1000 // Convert to kilometers if needed
+	} else {
+		err = tx.Commit()
+		if err != nil {
+			return nil, err
+		}
+		return &addr, nil
+	}
+
+	var cartId int
+	err = tx.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND store_id = $2 AND active = true LIMIT 1`, customer_id, nearestStoreID).Scan(&cartId)
+
+	// If an active shopping cart is not found, create one
+	if err != nil {
+		if err == sql.ErrNoRows {
+			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active, address_id) VALUES ($1, $2, true, $3) RETURNING id`
+			err = tx.QueryRow(createCartQuery, customer_id, nearestStoreID, address_id).Scan(&cartId)
+			if err != nil {
+				tx.Rollback()
+				return nil, err
+			}
+		} else {
+			tx.Rollback()
+			return nil, err
+		}
+	} else {
+		// Update the address_id of the shopping cart
+		updateCartQuery := `UPDATE shopping_cart SET address_id = $1 WHERE id = $2`
+		_, err = tx.Exec(updateCartQuery, address_id, cartId)
+		if err != nil {
+			tx.Rollback()
+			return nil, err
+		}
 	}
 
 	// Commit the transaction
@@ -214,6 +246,8 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	if err != nil {
 		return nil, err
 	}
+
+	addr.CartId = cartId
 
 	return &addr, nil
 }
@@ -332,13 +366,21 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 	// If an active shopping cart is not found, create one
 	if err != nil {
 		if err == sql.ErrNoRows {
-			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active) VALUES ($1, $2, true) RETURNING id`
-			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID).Scan(&cartId)
+			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active, address_id) VALUES ($1, $2, true, $3) RETURNING id`
+			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID, addressId).Scan(&cartId)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
 			}
 		} else {
+			tx.Rollback()
+			return nil, err
+		}
+	} else {
+		// Update the address_id of the shopping cart
+		updateCartQuery := `UPDATE shopping_cart SET address_id = $1 WHERE id = $2`
+		_, err = tx.Exec(updateCartQuery, addressId, cartId)
+		if err != nil {
 			tx.Rollback()
 			return nil, err
 		}

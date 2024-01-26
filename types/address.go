@@ -34,6 +34,7 @@ type Default_Address struct {
 	StoreId          int       `json:"store_id"`
 	HDistance        float64   `json:"h_distance"`
 	PGDistance       float64   `json:"gis_distance"`
+	CartId           int       `json:"cart_id"`
 }
 
 type Create_Address struct {
