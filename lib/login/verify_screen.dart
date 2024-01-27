@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -25,26 +26,33 @@ class MyVerify extends StatefulWidget {
 class _MyVerifyState extends State<MyVerify> {
   late CustomerApiClient apiClient; // Declare apiClient here
   late Customer customer;
+
   final Logger _logger = Logger();
   final storage = const FlutterSecureStorage();
-  bool isLoggedIn = false;
-
   final pinController = TextEditingController();
   final focusNode = FocusNode();
   final formKey = GlobalKey<FormState>();
+
   bool isPinCorrect = false; // State variable to track pin correctness
+  bool isLoggedIn = false;
+
+  Timer? _timer;
+  int _start = 60; // Countdown time in seconds
 
   @override
   void initState() {
     super.initState();
     apiClient = CustomerApiClient(widget.number);
     checkLoginStatus();
+    startTimer();
   }
 
   @override
   void dispose() {
     pinController.dispose();
     focusNode.dispose();
+    _timer?.cancel();
+
     super.dispose();
   }
 
@@ -55,6 +63,39 @@ class _MyVerifyState extends State<MyVerify> {
     setState(() {
       isLoggedIn = customerId != null;
     });
+  }
+
+  void startTimer() {
+    const oneSec = Duration(seconds: 1);
+    _timer = Timer.periodic(
+      oneSec,
+      (Timer timer) {
+        if (_start == 0) {
+          setState(() {
+            timer.cancel();
+          });
+        } else {
+          setState(() {
+            _start--;
+          });
+        }
+      },
+    );
+  }
+
+  void resendOTP() {
+    // Implement the logic to resend OTP
+    // After sending the OTP, restart the timer
+    setState(() {
+      _start = 60; // Reset timer to 60 seconds
+    });
+    startTimer();
+    // Show a message to the user that OTP has been resent
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('OTP has been resent.'),
+      ),
+    );
   }
 
   Future<bool> loginCustomer() async {
@@ -161,86 +202,185 @@ class _MyVerifyState extends State<MyVerify> {
               const SizedBox(
                 height: 20,
               ),
-              Pinput(
-                onChanged: (value) {
-                  bool correct = value == '1234';
-                  if (isPinCorrect != correct) {
-                    setState(() {
-                      isPinCorrect = correct;
-                    });
-                  }
-                },
-                controller: pinController,
-                focusNode: focusNode,
-                keyboardType: TextInputType.number, // Restrict to number input
-                androidSmsAutofillMethod:
-                    AndroidSmsAutofillMethod.smsUserConsentApi,
-                listenForMultipleSmsOnAndroid: true,
-                defaultPinTheme: defaultPinTheme,
-                separatorBuilder: (index) => const SizedBox(width: 8),
-                validator: (value) {
-                  if (value?.length == 4) {
-                    setState(() {
-                      isPinCorrect = true; // Set flag to true if pin is correct
-                    });
-                    return null;
-                  } else {
-                    setState(() {
-                      isPinCorrect =
-                          false; // Set flag to false if pin is incorrect
-                    });
-                    return null; // Validation message
-                  }
-                },
-                // onClipboardFound: (value) {
-                //   debugPrint('onClipboardFound: $value');
-                //   pinController.setText(value);
-                // },
-                hapticFeedbackType: HapticFeedbackType.lightImpact,
-                onCompleted: (pin) {
-                  debugPrint('onCompleted: $pin');
-                },
-                cursor: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.only(bottom: 9),
-                      width: 22,
-                      height: 1,
-                      color: focusedBorderColor,
+              AutofillGroup(
+                child: Pinput(
+                  onChanged: (value) {
+                    if (value.length == 4) {
+                      widget.isTester
+                          ? loginCustomer().then((isSuccess) {
+                              if (isSuccess) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(),
+                                  ),
+                                );
+                              } else {
+                                // Show an error message to the user or handle the failure appropriately.
+                              }
+                            })
+                          : null;
+
+                      String otp = pinController.text;
+                      isPinCorrect
+                          ? verifyOTP(widget.number, otp).then((value) {
+                              if (value == 'success') {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                  content: Text('OTP verified'),
+                                  backgroundColor: Colors.green,
+                                ));
+                                loginCustomer().then((isSuccess) {
+                                  if (isSuccess) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const AddressSelectionWidget(),
+                                      ),
+                                    );
+                                  } else {
+                                    // Show an error message to the user or handle the failure appropriately.
+                                  }
+                                });
+                              } else {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                  content: Text('OTP Invalid'),
+                                  backgroundColor: Colors.deepOrangeAccent,
+                                ));
+                              }
+                            })
+                          : null;
+                    }
+                  },
+                  controller: pinController,
+                  focusNode: focusNode,
+                  keyboardType:
+                      TextInputType.number, // Restrict to number input
+                  androidSmsAutofillMethod:
+                      AndroidSmsAutofillMethod.smsUserConsentApi,
+                  autofillHints: const [
+                    AutofillHints.oneTimeCode
+                  ], // Suggest iOS this is for OTP
+                  defaultPinTheme: defaultPinTheme,
+                  separatorBuilder: (index) => const SizedBox(width: 8),
+                  validator: (value) {
+                    if (value?.length == 4) {
+                      setState(() {
+                        isPinCorrect =
+                            true; // Set flag to true if pin is correct
+                      });
+                      return null;
+                    } else {
+                      setState(() {
+                        isPinCorrect =
+                            false; // Set flag to false if pin is incorrect
+                      });
+                      return null; // Validation message
+                    }
+                  },
+                  // onClipboardFound: (value) {
+                  //   debugPrint('onClipboardFound: $value');
+                  //   pinController.setText(value);
+                  // },
+                  hapticFeedbackType: HapticFeedbackType.lightImpact,
+                  onCompleted: (pin) {
+                    debugPrint('onCompleted: $pin');
+                    widget.isTester
+                        ? loginCustomer().then((isSuccess) {
+                            if (isSuccess) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AddressSelectionWidget(),
+                                ),
+                              );
+                            } else {
+                              // Show an error message to the user or handle the failure appropriately.
+                            }
+                          })
+                        : null;
+
+                    String otp = pinController.text;
+                    isPinCorrect
+                        ? verifyOTP(widget.number, otp).then((value) {
+                            if (value == 'success') {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text('OTP verified'),
+                                backgroundColor: Colors.green,
+                              ));
+                              loginCustomer().then((isSuccess) {
+                                if (isSuccess) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AddressSelectionWidget(),
+                                    ),
+                                  );
+                                } else {
+                                  // Show an error message to the user or handle the failure appropriately.
+                                }
+                              });
+                            } else {
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(const SnackBar(
+                                content: Text('OTP Invalid'),
+                                backgroundColor: Colors.deepOrangeAccent,
+                              ));
+                            }
+                          })
+                        : null; // Button is disabled if isPinCorrect is false
+                  },
+                  cursor: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 9),
+                        width: 22,
+                        height: 1,
+                        color: focusedBorderColor,
+                      ),
+                    ],
+                  ),
+                  focusedPinTheme: defaultPinTheme.copyWith(
+                    decoration: defaultPinTheme.decoration!.copyWith(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: focusedBorderColor),
                     ),
-                  ],
-                ),
-                focusedPinTheme: defaultPinTheme.copyWith(
-                  decoration: defaultPinTheme.decoration!.copyWith(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: focusedBorderColor),
                   ),
-                ),
-                submittedPinTheme: defaultPinTheme.copyWith(
-                  decoration: defaultPinTheme.decoration!.copyWith(
-                    color: isPinCorrect
-                        ? Colors.lightGreenAccent
-                        : fillColor, // Change color based on pin correctness
-                    borderRadius: BorderRadius.circular(19),
-                    border: Border.all(color: focusedBorderColor),
+                  submittedPinTheme: defaultPinTheme.copyWith(
+                    decoration: defaultPinTheme.decoration!.copyWith(
+                      color: isPinCorrect
+                          ? Colors.lightGreenAccent
+                          : fillColor, // Change color based on pin correctness
+                      borderRadius: BorderRadius.circular(19),
+                      border: Border.all(color: focusedBorderColor),
+                    ),
                   ),
-                ),
-                errorPinTheme: defaultPinTheme.copyBorderWith(
-                  border: Border.all(color: Colors.redAccent),
+                  errorPinTheme: defaultPinTheme.copyBorderWith(
+                    border: Border.all(color: Colors.redAccent),
+                  ),
                 ),
               ),
               const SizedBox(
                 height: 20,
               ),
-              SizedBox(
+              Container(
                 width: double.infinity,
-                height: 45,
+                margin: const EdgeInsets.symmetric(horizontal: 15),
+                height: 55,
                 child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurpleAccent,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10))),
+                      backgroundColor: Colors.deepPurpleAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                     onPressed: () {
                       widget.isTester
                           ? loginCustomer().then((isSuccess) {
@@ -298,6 +438,24 @@ class _MyVerifyState extends State<MyVerify> {
                           fontSize: 16),
                     )),
               ),
+              Container(
+                margin: const EdgeInsets.only(top: 20, left: 12),
+                alignment: Alignment.centerLeft,
+                child: (_start > 0)
+                    ? Text(
+                        "Resend OTP: $_start seconds",
+                        style: const TextStyle(
+                            color: Colors.deepPurple,
+                            fontWeight: FontWeight.bold),
+                      )
+                    : TextButton(
+                        onPressed: () => resendOTP(),
+                        child: const Text(
+                          "Resend OTP",
+                          style: TextStyle(color: Colors.deepPurple),
+                        ),
+                      ),
+              ),
               Row(
                 children: [
                   TextButton(
@@ -311,7 +469,9 @@ class _MyVerifyState extends State<MyVerify> {
                       },
                       child: Text(
                         "Edit Phone Number ${widget.number} ? ",
-                        style: const TextStyle(color: Colors.deepPurple),
+                        style: const TextStyle(
+                          color: Colors.deepPurple,
+                        ),
                       ))
                 ],
               )

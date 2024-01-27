@@ -13,8 +13,9 @@ import 'package:provider/provider.dart';
 // Import other necessary packages
 
 class AddressSelectionWidget extends StatefulWidget {
-  const AddressSelectionWidget({Key? key}) : super(key: key);
-
+  const AddressSelectionWidget({this.flag = false, Key? key}) : super(key: key);
+  final bool
+      flag; // Make `flag` final to follow best practices for immutable widget properties
   @override
   State<AddressSelectionWidget> createState() => _AddressSelectionWidgetState();
 }

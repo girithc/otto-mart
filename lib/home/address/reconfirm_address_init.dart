@@ -202,7 +202,9 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
                   if (isSuccess) {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                          builder: (context) => const AddressSelectionWidget()),
+                          builder: (context) => const AddressSelectionWidget(
+                                flag: true,
+                              )),
                     );
                   }
                 }

@@ -118,8 +118,13 @@ class _MyPhoneState extends State<MyPhone> {
                   height: 30,
                 ),
                 SizedBox(
-                  height: 80, // Increased height for larger input boxes
+                  height: 80, // Increased height for a larger input area
                   child: Pinput(
+                    separatorBuilder: (index) => Container(
+                      height: 80,
+                      width: 2,
+                      color: Colors.transparent, // Use a transparent separator
+                    ),
                     length: 10, // Set the length of the input
                     controller: phoneNumberController,
                     pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
@@ -127,24 +132,38 @@ class _MyPhoneState extends State<MyPhone> {
                       // Handle submission logic here
                     },
                     defaultPinTheme: PinTheme(
-                      width: 60, // Increased width for larger input boxes
-                      height: 60, // Increased height for larger input boxes
+                      width: 70, // Increased width for larger input boxes
+                      height:
+                          60, // Add some spacing around each input box for the floating effect
+                      padding: EdgeInsets.zero,
                       decoration: BoxDecoration(
-                        color: Colors.white, // Uniform color for each input box
+                        color: Colors
+                            .deepPurpleAccent, // Uniform color for each input box
                         border: Border.all(
                           color: Colors.deepPurpleAccent, // Border color
-                          width: 2, // Border width
+                          width: 1, // Border width
                         ),
                         borderRadius:
-                            BorderRadius.circular(10), // More rounded borders
+                            BorderRadius.circular(25), // More rounded borders
+                        boxShadow: [
+                          // Shadow for the floating effect
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 1,
+                            blurRadius: 5,
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
+                          ),
+                        ],
                       ),
                       textStyle: const TextStyle(
                         fontSize: 26, // Larger font size for better visibility
-                        color: Colors.black, // Text color
+                        color: Colors.white, // Text color
                       ),
                     ),
                     focusedPinTheme: PinTheme(
-                      width: 60,
+                      width:
+                          70, // Keep the width consistent with defaultPinTheme
                       height: 60,
                       decoration: BoxDecoration(
                         color:
@@ -154,7 +173,18 @@ class _MyPhoneState extends State<MyPhone> {
                               Colors.greenAccent, // Border color when focused
                           width: 2,
                         ),
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(
+                            10), // Consistent border radius with defaultPinTheme
+                        boxShadow: [
+                          // Enhanced shadow for the floating effect when focused
+                          BoxShadow(
+                            color: Colors.greenAccent.withOpacity(0.5),
+                            spreadRadius: 2,
+                            blurRadius: 8,
+                            offset: const Offset(
+                                0, 4), // changes position of shadow
+                          ),
+                        ],
                       ),
                       textStyle: const TextStyle(
                         fontSize: 28,
@@ -243,7 +273,7 @@ class _MyPhoneState extends State<MyPhone> {
                       MaterialPageRoute(builder: (context) => const Terms()),
                     );
                   },
-                  child: const Text('Terms Of Use'),
+                  child: const Text('Terms'),
                 ),
               ),
               Expanded(
