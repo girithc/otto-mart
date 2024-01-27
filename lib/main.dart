@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:master/pack/scanner.dart';
-import 'package:master/quick-add/add-item.dart';
 import 'package:master/quick-add/listen-barcode.dart';
 import 'package:master/shelf/shelf.dart';
 import 'package:master/store/item-detail/item-detail.dart';
