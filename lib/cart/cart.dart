@@ -377,7 +377,7 @@ class CartModel extends ChangeNotifier {
     }
   }
 
-  void addItemToCart(CartItem item) {
+  Future<void> addItemToCart(CartItem item) async {
     //print("Add Item To Cart: $cartId");
     final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
     final headers = <String, String>{
@@ -385,11 +385,10 @@ class CartModel extends ChangeNotifier {
       // Add any other headers you need
     };
 
-    print("CartID: $cartId");
-    //print('CartId $cartId');
-    //print('ProductId ${item.productId}');
+    String? cartID = await storage.read(key: 'cartId');
+
     final body = <String, dynamic>{
-      'cart_id': int.parse(cartId!),
+      'cart_id': int.parse(cartID!),
       'item_id': int.parse(item.productId),
       'quantity': 1,
       // Add any other parameters you need
@@ -421,15 +420,17 @@ class CartModel extends ChangeNotifier {
     });
   }
 
-  void removeItem({required String itemId}) {
+  Future<void> removeItem({required String itemId}) async {
     //print("Remove Item From Cart");
     final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
     final headers = <String, String>{
       'Content-Type': 'application/json',
       // Add any other headers you need
     };
+    String? cartID = await storage.read(key: 'cartId');
+
     final body = <String, dynamic>{
-      'cart_id': int.parse(cartId!),
+      'cart_id': int.parse(cartID!),
       'item_id': int.parse(itemId),
       'quantity': -1,
       // Add any other parameters you need

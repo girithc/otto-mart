@@ -209,7 +209,7 @@ class _ListOfItemsState extends State<ListOfItems> {
               child: Container(
                 //surfaceTintColor: Colors.white,
                 //shadowColor: Colors.grey,
-                margin: EdgeInsets.zero,
+                margin: EdgeInsets.symmetric(vertical: 5),
                 padding: EdgeInsets.zero,
                 color: Colors.white,
                 child: ListView.builder(
@@ -346,7 +346,7 @@ class CategoryItem extends StatelessWidget {
             categoryID: categoryID, storeID: 1, categoryName: categoryName));
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 5),
+        margin: const EdgeInsets.symmetric(vertical: 12),
         padding: const EdgeInsets.symmetric(vertical: 18),
         decoration: BoxDecoration(
           gradient: isSelected
