@@ -449,11 +449,16 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                           'Delivery address set to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
 
                       print('Go To Home');
-                      await storage.write(
-                          key: 'storeId', value: address.storeId.toString());
-                      await storage.write(
-                          key: 'cartId', value: address.cartId.toString());
-                      context.push('/home');
+                      await storage
+                          .write(
+                              key: 'storeId', value: address.storeId.toString())
+                          .then((value) => {
+                                storage
+                                    .write(
+                                        key: 'cartId',
+                                        value: address.cartId.toString())
+                                    .then((value) => {context.push('/home')})
+                              });
                     } else {
                       snackBarMessage =
                           'Not deliverable to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
@@ -471,11 +476,16 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   (resp) async => {
                     if (resp!.deliverable)
                       {
-                        await storage.write(
-                            key: 'storeId', value: resp.storeId.toString()),
-                        await storage.write(
-                            key: 'cartId', value: resp.cartId.toString()),
-                        context.push('/home')
+                        await storage
+                            .write(
+                                key: 'storeId', value: resp.storeId.toString())
+                            .then((value) => {
+                                  storage
+                                      .write(
+                                          key: 'cartId',
+                                          value: resp.cartId.toString())
+                                      .then((value) => {context.push('/home')})
+                                })
                       }
                     else
                       {

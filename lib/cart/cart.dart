@@ -385,6 +385,7 @@ class CartModel extends ChangeNotifier {
       // Add any other headers you need
     };
 
+    print("CartID: $cartId");
     //print('CartId $cartId');
     //print('ProductId ${item.productId}');
     final body = <String, dynamic>{
