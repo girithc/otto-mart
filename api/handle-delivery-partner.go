@@ -144,7 +144,12 @@ func (s *Server) DeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.R
 
 	order, err := s.store.DeliveryPartnerPickupOrder(new_req.Phone, new_req.SalesOrderId)
 	if err != nil {
-		return err
+		if osErr, ok := err.(*OrderStatusError); ok {
+			// Handle the specific OrderStatusError
+			return WriteJSON(res, http.StatusLocked, map[string]string{"error": osErr.Error()})
+		}
+		// Handle other types of errors
+		return WriteJSON(res, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
 
 	// Check if order is nil and err is nil, indicating no order changed
@@ -153,6 +158,29 @@ func (s *Server) DeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.R
 	}
 
 	return WriteJSON(res, http.StatusOK, order)
+}
+
+func (s *Server) DeliveryPartnerDispatchOrder(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerDispatchOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerDispatchOrder()")
+		return err
+	}
+
+	order, err := s.store.DeliveryPartnerDispatchOrder(new_req.Phone, new_req.SalesOrderId)
+	if err != nil {
+		return WriteJSON(res, http.StatusBadRequest, order)
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
+type OrderStatusError struct {
+	Status string
+}
+
+func (e *OrderStatusError) Error() string {
+	return fmt.Sprintf("order status: %s", e.Status)
 }
 
 func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {

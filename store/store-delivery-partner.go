@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -251,8 +252,69 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
 		return nil, nil
 	default:
 		// For any other status, return an error indicating the order is not ready for pickup
-		return nil, fmt.Errorf("order status: %s", info.OrderStatus)
+		return nil, &OrderStatusError{Status: info.OrderStatus}
 	}
+}
+
+func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int) (*DeliveryPartnerDispatchResult, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Verify the sales order's current status is 'packed' and fetch cart_id and packer_id
+	var currentStatus string
+	err = tx.QueryRow("SELECT order_status FROM sales_order WHERE id = $1", order_id).Scan(&currentStatus)
+	if err != nil {
+		return nil, err
+	}
+	if currentStatus != "packed" {
+		return nil, errors.New("order is not in packed status")
+	}
+
+	// Verify the delivery partner ID and retrieve delivery partner name
+	var deliveryPartnerName string
+	var deliveryPartnerIDFromDB int
+	err = tx.QueryRow("SELECT id, name FROM Delivery_Partner WHERE phone = $1", phone).Scan(&deliveryPartnerIDFromDB, &deliveryPartnerName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the order_status to 'dispatched'
+	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1", order_id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Return the dispatch result
+	result := &DeliveryPartnerDispatchResult{
+		DeliveryPartnerName: deliveryPartnerName,
+		SalesOrderID:        order_id,
+		OrderStatus:         "dispatched",
+	}
+
+	return result, nil
+}
+
+type DeliveryPartnerDispatchResult struct {
+	DeliveryPartnerName string `json:"delivery_partner_name"`
+	SalesOrderID        int    `json:"sales_order_id"`
+	OrderStatus         string `json:"order_status"`
+}
+
+type OrderStatusError struct {
+	Status string
+}
+
+func (e *OrderStatusError) Error() string {
+	return fmt.Sprintf("order status: %s", e.Status)
 }
 
 type OrderAccepted struct {

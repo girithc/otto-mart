@@ -35,6 +35,11 @@ type DeliveryPartnerAcceptOrder struct {
 	SalesOrderId int    `json:"sales_order_id"`
 }
 
+type DeliveryPartnerDispatchOrder struct {
+	Phone        string `json:"phone"`
+	SalesOrderId int    `json:"sales_order_id"`
+}
+
 type Update_Delivery_Partner struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`
