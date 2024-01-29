@@ -277,9 +277,12 @@ class _ItemDetailsState extends State<ItemDetails> {
                         ? const Text('Barcode')
                         : const Text('Change'),
                     onPressed: () {
+                      scanBarcode();
+                      /*
                       setState(() {
                         isListeningForBarcode = !isListeningForBarcode;
                       });
+                      */
                     },
                   )
                 : const SizedBox.shrink(),

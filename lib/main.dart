@@ -135,6 +135,65 @@ class _InventoryManagementState extends State<InventoryManagement> {
     if (!mounted) return;
   }
 
+  Future<DeliveryPartnerDispatchResult?> scanBarcodeDispatch() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+      setState(() {
+        _scanBarcodeResult = barcodeScanRes;
+      });
+
+      print("Result: $_scanBarcodeResult");
+
+      if (_scanBarcodeResult != '-1' && _scanBarcodeResult != null) {
+        // Split the result to extract `phone` and `salesOrderId`
+        final parts = _scanBarcodeResult!.split('-');
+        if (parts.length != 2) {
+          // Handle error: the format does not match expected 'phone-salesOrderId'
+          return null;
+        }
+
+        String phone = parts[0];
+        int salesOrderId;
+        try {
+          salesOrderId = int.parse(parts[1]);
+        } catch (e) {
+          // Handle error: salesOrderId is not a valid integer
+          return null;
+        }
+
+        final response = await http.post(
+          Uri.parse('$baseUrl/delivery-partner-dispatch-order'),
+          headers: <String, String>{
+            'Content-Type': 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, dynamic>{
+            'phone': phone,
+            'sales_order_id': salesOrderId,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final result = json.decode(response.body);
+          return DeliveryPartnerDispatchResult.fromJson(result);
+
+          // Use dispatchResult as needed, for example, show a success dialog
+        } else {
+          // Handle server errors or invalid responses
+        }
+      }
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // Handle exception
+    }
+
+    if (!mounted) return null;
+    return null;
+  }
+
+// Define the DeliveryPartnerDispatchResult class to parse the JSON response
+
   Future<void> scanQR() async {
     String barcodeScanRes;
     try {
@@ -234,7 +293,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
             },
             child: Center(
               child: Container(
-                height: MediaQuery.of(context).size.height * 0.15,
+                height: MediaQuery.of(context).size.height * 0.1,
                 width: MediaQuery.of(context).size.width * 0.85,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15), // Rounded borders
@@ -270,7 +329,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
               );
             },
             child: Container(
-              height: MediaQuery.of(context).size.height * 0.15,
+              height: MediaQuery.of(context).size.height * 0.1,
               width: MediaQuery.of(context).size.width * 0.85,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15), // Rounded borders
@@ -286,7 +345,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
               ),
               child: const Center(
                 child: Text(
-                  'Add+ Item',
+                  'Add+ Item Detail',
                   style: TextStyle(
                       fontSize: 25,
                       color: Colors.black,
@@ -315,7 +374,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
               ),
               child: const Center(
                 child: Text(
-                  'Add+ Inventory',
+                  'Add+ Item Quick',
                   style: TextStyle(
                       fontSize: 25,
                       color: Colors.black,
@@ -365,6 +424,126 @@ class _InventoryManagementState extends State<InventoryManagement> {
               height: MediaQuery.of(context).size.height * 0.2,
               width: MediaQuery.of(context).size.width * 0.85,
               decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25), // Rounded borders
+                color: Colors.deepPurpleAccent,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Pack Order',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () {
+              scanBarcodeDispatch().then((value) {
+                if (value != null) {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Scan Result'),
+                        content: SingleChildScrollView(
+                          child: ListBody(
+                            children: <Widget>[
+                              Text(
+                                  'Delivery Partner Name: ${value.deliveryPartnerName}'),
+                              Text('Order Status: ${value.orderStatus}'),
+                            ],
+                          ),
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('Close'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                }
+              }).catchError((error) {
+                // Handle any errors that occurred during scanBarcodeDispatch execution
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: const Text('Error'),
+                      content: SingleChildScrollView(
+                        child: ListBody(
+                          children: <Widget>[
+                            Text('An error occurred: $error'),
+                          ],
+                        ),
+                      ),
+                      actions: <Widget>[
+                        TextButton(
+                          child: const Text('Close'),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                );
+              });
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.15,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(25), // Rounded borders
+                color: const Color.fromARGB(255, 108, 55, 255),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.25), // Shadow color
+                    spreadRadius: 0,
+                    blurRadius: 20, // Increased shadow blur
+                    offset: const Offset(0, 10), // Increased vertical offset
+                  ),
+                ],
+              ),
+              child: const Center(
+                child: Text(
+                  'Dispatch Order',
+                  style: TextStyle(
+                      fontSize: 25,
+                      color: Colors.white,
+                      fontWeight: FontWeight.normal),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ShelfPage()),
+              );
+            },
+            child: Container(
+              height: MediaQuery.of(context).size.height * 0.1,
+              width: MediaQuery.of(context).size.width * 0.85,
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(15), // Rounded borders
                 color: Colors.white,
                 boxShadow: [
@@ -378,7 +557,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
               ),
               child: const Center(
                 child: Text(
-                  'Pack Order',
+                  'Shelf Management',
                   style: TextStyle(
                       fontSize: 25,
                       color: Colors.black,
@@ -423,42 +602,6 @@ class _InventoryManagementState extends State<InventoryManagement> {
               ),
             ),
           ),
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ShelfPage()),
-              );
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.15,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15), // Rounded borders
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Shelf Management',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal),
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -492,6 +635,26 @@ class ProductCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class DeliveryPartnerDispatchResult {
+  final String deliveryPartnerName;
+  final int salesOrderId;
+  final String orderStatus;
+
+  DeliveryPartnerDispatchResult({
+    required this.deliveryPartnerName,
+    required this.salesOrderId,
+    required this.orderStatus,
+  });
+
+  factory DeliveryPartnerDispatchResult.fromJson(Map<String, dynamic> json) {
+    return DeliveryPartnerDispatchResult(
+      deliveryPartnerName: json['delivery_partner_name'],
+      salesOrderId: json['sales_order_id'],
+      orderStatus: json['order_status'],
     );
   }
 }

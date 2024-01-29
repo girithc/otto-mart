@@ -109,6 +109,40 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
 
   final ItemDetailApiClient apiClient = ItemDetailApiClient();
 
+  Future<void> scanMobileBarcode() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+
+      if (barcodeScanRes != '-1') {
+        scanBarcode(barcodeScanRes);
+      }
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    if (!mounted) return;
+  }
+
+  Future<void> scanMobileBarcodeAssignSpace() async {
+    String barcodeScanRes;
+    try {
+      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
+          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+
+      if (barcodeScanRes != '-1') {
+        scanBarcodeAssignSpace(barcodeScanRes);
+      }
+    } on PlatformException {
+      barcodeScanRes = 'Failed to get platform version';
+      // TODO
+    }
+
+    if (!mounted) return;
+  }
+
   Future<void> scanBarcode(String code) async {
     String barcodeScanRes;
     String? packerId = await _storage.read(key: "packerId");
@@ -120,8 +154,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
               code, packerId!, widget.orderId, "1")
           .then((item) {
         setState(() {
-          widget.prePackedItems = item.itemList; // Storing the response
-          // Calculate the sum of quantities
+          widget.prePackedItems = item.itemList;
           widget.totalQuantity =
               item.itemList.fold(0, (sum, item) => sum + item.quantity);
           widget.allPacked = item.allPacked;
@@ -409,7 +442,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
             ? FloatingActionButton.extended(
                 heroTag: 'packItemButton', // Unique tag for this FAB
 
-                onPressed: () {},
+                onPressed: scanMobileBarcodeAssignSpace,
                 backgroundColor: Colors.deepPurpleAccent,
                 label: const Text(
                   'Complete Packing',
@@ -425,12 +458,12 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                 children: <Widget>[
                   // First FAB
 
-                  const FloatingActionButton.extended(
+                  FloatingActionButton.extended(
                     heroTag: 'scanItemButton', // Unique tag for this FAB
 
-                    onPressed: null, //scanBarcode,
+                    onPressed: scanMobileBarcode,
                     backgroundColor: Colors.deepPurpleAccent,
-                    label: Text(
+                    label: const Text(
                       'Scan Item',
                       style: TextStyle(
                         fontSize: 28,
