@@ -7,11 +7,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
-import 'package:master/store/item-detail/item-detail.dart';
-import 'package:master/main.dart';
-import 'package:master/pack/pack-item.dart';
-import 'package:master/stock/add-stock.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/store/item-detail/item-detail.dart';
+import 'package:packer/main.dart';
+import 'package:packer/pack/pack-item.dart';
+import 'package:packer/stock/add-stock.dart';
+import 'package:packer/utils/constants.dart';
 
 class OrderChecklistPage extends StatefulWidget {
   OrderChecklistPage(

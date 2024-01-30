@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:http/http.dart' as http;
-import 'package:master/quick-add/add-item.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/quick-add/add-item.dart';
+import 'package:packer/utils/constants.dart';
 
 class ListenBarcodePage extends StatefulWidget {
   const ListenBarcodePage({super.key});

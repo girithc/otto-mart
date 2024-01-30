@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
-import 'package:master/pack/checklist.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/pack/checklist.dart';
+import 'package:packer/utils/constants.dart';
 
 class ItemDetailApiClient {
   ItemDetailApiClient();

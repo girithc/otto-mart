@@ -4,8 +4,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:master/main.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/main.dart';
+import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/constants.dart';
 import 'package:pinput/pinput.dart';
 
 class PhonePage extends StatefulWidget {
@@ -118,7 +119,7 @@ class _PhonePageState extends State<PhonePage> {
             tileMode: TileMode.mirror,
           ).createShader(bounds),
           child: const Text(
-            'Otto Mart',
+            'Packer',
             style: TextStyle(
               fontSize: 25,
               fontWeight: FontWeight.bold,
@@ -146,7 +147,7 @@ class _PhonePageState extends State<PhonePage> {
                   height: 10,
                 ),
                 const Text(
-                  "Let's Start Saving!",
+                  "Let's Start Packing!",
                   style: TextStyle(
                     fontSize: 16,
                   ),
@@ -176,8 +177,9 @@ class _PhonePageState extends State<PhonePage> {
                       height: 64,
                       textStyle: GoogleFonts.poppins(
                           fontSize: 20, color: Colors.white),
-                      decoration:
-                          const BoxDecoration(color: Colors.deepPurpleAccent),
+                      decoration: BoxDecoration(
+                          color: Colors.deepPurpleAccent,
+                          borderRadius: BorderRadius.circular(25)),
                     ),
                     focusedPinTheme: PinTheme(
                       width: 36,

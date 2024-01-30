@@ -4,16 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:master/pack/scanner.dart';
-import 'package:master/quick-add/listen-barcode.dart';
-import 'package:master/shelf/shelf.dart';
-import 'package:master/store/item-detail/item-detail.dart';
-import 'package:master/pack/checklist.dart';
-import 'package:master/stock/add-stock.dart';
-import 'package:master/store/stores.dart';
-import 'package:master/utils/constants.dart';
-import 'package:master/utils/login/page/phone.dart';
-import 'package:master/utils/login/provider/loginProvider.dart';
+import 'package:packer/pack/scanner.dart';
+import 'package:packer/quick-add/listen-barcode.dart';
+import 'package:packer/shelf/shelf.dart';
+import 'package:packer/store/item-detail/item-detail.dart';
+import 'package:packer/pack/checklist.dart';
+import 'package:packer/stock/add-stock.dart';
+import 'package:packer/store/stores.dart';
+import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/login/page/phone.dart';
+import 'package:packer/utils/login/provider/loginProvider.dart';
+import 'package:packer/utils/settings/settings.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             // If the user is logged in
             if (snapshot.data == true) {
-              return const MyHomePage(title: 'Home Page');
+              return const MyHomePage(title: 'Hi Packer');
             } else {
               // If the user is not logged in
               return const PhonePage();
@@ -72,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.white,
-          elevation: 4.0,
+          elevation: 1.0,
           shadowColor: Colors.white,
           surfaceTintColor: Colors.white,
           title: Text(
@@ -80,6 +81,14 @@ class _MyHomePageState extends State<MyHomePage> {
             style: const TextStyle(
                 color: Colors.deepPurpleAccent, fontWeight: FontWeight.bold),
           ),
+          leading: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                );
+              },
+              child: const Icon(Icons.person)),
         ),
         body: const InventoryManagement()
         //const Stores(), // This trailing comma makes auto-formatting nicer for build methods.
@@ -280,18 +289,57 @@ class _InventoryManagementState extends State<InventoryManagement> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () => {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const Stores()),
-              )
-            },
-            child: Center(
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Stores()),
+                )
+              },
+              child: Center(
+                child: Container(
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  width: MediaQuery.of(context).size.width * 0.85,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(15), // Rounded borders
+                    color: Colors.white,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.25), // Shadow color
+                        spreadRadius: 0,
+                        blurRadius: 20, // Increased shadow blur
+                        offset:
+                            const Offset(0, 10), // Increased vertical offset
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text(
+                      'Stores',
+                      style: TextStyle(
+                          fontSize: 25,
+                          color: Colors.black,
+                          fontWeight: FontWeight.normal),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ListenBarcodePage()),
+                );
+              },
               child: Container(
                 height: MediaQuery.of(context).size.height * 0.1,
                 width: MediaQuery.of(context).size.width * 0.85,
@@ -309,7 +357,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
                 ),
                 child: const Center(
                   child: Text(
-                    'Stores',
+                    'Add+ Item Detail',
                     style: TextStyle(
                         fontSize: 25,
                         color: Colors.black,
@@ -318,150 +366,140 @@ class _InventoryManagementState extends State<InventoryManagement> {
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => const ListenBarcodePage()),
-              );
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.1,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15), // Rounded borders
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Add+ Item Detail',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: scanBarcode,
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.1,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15), // Rounded borders
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Add+ Item Quick',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              fetchItems().then((value) {
-                if (value) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => OrderChecklistPage(
-                        packedItems: packedItems,
-                        prePackedItems: prePackedItems,
-                        allPacked: allPacked,
-                        orderId: orderId!,
-                        totalQuantity: totalQuantity,
-                      ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: scanBarcode,
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15), // Rounded borders
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.25), // Shadow color
+                      spreadRadius: 0,
+                      blurRadius: 20, // Increased shadow blur
+                      offset: const Offset(0, 10), // Increased vertical offset
                     ),
-                  );
-                } else {
-                  // Show a Snackbar when there is no order to pack
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Center(
-                        child: Text(
-                          'No order to pack',
-                          style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black,
-                              fontWeight: FontWeight.bold),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Add+ Item Quick',
+                    style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.black,
+                        fontWeight: FontWeight.normal),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                fetchItems().then((value) {
+                  if (value) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => OrderChecklistPage(
+                          packedItems: packedItems,
+                          prePackedItems: prePackedItems,
+                          allPacked: allPacked,
+                          orderId: orderId!,
+                          totalQuantity: totalQuantity,
                         ),
                       ),
-                      duration: Duration(seconds: 2),
-                      backgroundColor: Color.fromARGB(255, 255, 188, 188),
+                    );
+                  } else {
+                    // Show a Snackbar when there is no order to pack
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Center(
+                          child: Text(
+                            'No order to pack',
+                            style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        duration: Duration(seconds: 2),
+                        backgroundColor: Color.fromARGB(255, 255, 188, 188),
+                      ),
+                    );
+                  }
+                });
+              },
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.2,
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25), // Rounded borders
+                  color: Colors.deepPurpleAccent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.25), // Shadow color
+                      spreadRadius: 0,
+                      blurRadius: 20, // Increased shadow blur
+                      offset: const Offset(0, 10), // Increased vertical offset
                     ),
-                  );
-                }
-              });
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.2,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25), // Rounded borders
-                color: Colors.deepPurpleAccent,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Pack Order',
+                    style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.white,
+                        fontWeight: FontWeight.normal),
                   ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Pack Order',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              scanBarcodeDispatch().then((value) {
-                if (value != null) {
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                scanBarcodeDispatch().then((value) {
+                  if (value != null) {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Scan Result'),
+                          content: SingleChildScrollView(
+                            child: ListBody(
+                              children: <Widget>[
+                                Text(
+                                    'Delivery Partner Name: ${value.deliveryPartnerName}'),
+                                Text('Order Status: ${value.orderStatus}'),
+                              ],
+                            ),
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              child: const Text('Close'),
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                }).catchError((error) {
+                  // Handle any errors that occurred during scanBarcodeDispatch execution
                   showDialog(
                     context: context,
                     builder: (BuildContext context) {
                       return AlertDialog(
-                        title: const Text('Scan Result'),
+                        title: const Text('Error'),
                         content: SingleChildScrollView(
                           child: ListBody(
                             children: <Widget>[
-                              Text(
-                                  'Delivery Partner Name: ${value.deliveryPartnerName}'),
-                              Text('Order Status: ${value.orderStatus}'),
+                              Text('An error occurred: $error'),
                             ],
                           ),
                         ),
@@ -476,133 +514,108 @@ class _InventoryManagementState extends State<InventoryManagement> {
                       );
                     },
                   );
-                }
-              }).catchError((error) {
-                // Handle any errors that occurred during scanBarcodeDispatch execution
-                showDialog(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text('Error'),
-                      content: SingleChildScrollView(
-                        child: ListBody(
-                          children: <Widget>[
-                            Text('An error occurred: $error'),
-                          ],
-                        ),
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          child: const Text('Close'),
-                          onPressed: () {
-                            Navigator.of(context).pop();
-                          },
-                        ),
-                      ],
-                    );
-                  },
+                });
+              },
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.15,
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(25), // Rounded borders
+                  color: const Color.fromARGB(255, 108, 55, 255),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.25), // Shadow color
+                      spreadRadius: 0,
+                      blurRadius: 20, // Increased shadow blur
+                      offset: const Offset(0, 10), // Increased vertical offset
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Dispatch Order',
+                    style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.white,
+                        fontWeight: FontWeight.normal),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 10,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ShelfPage()),
                 );
-              });
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.15,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25), // Rounded borders
-                color: const Color.fromARGB(255, 108, 55, 255),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
+              },
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15), // Rounded borders
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.25), // Shadow color
+                      spreadRadius: 0,
+                      blurRadius: 20, // Increased shadow blur
+                      offset: const Offset(0, 10), // Increased vertical offset
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Shelf Management',
+                    style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.black,
+                        fontWeight: FontWeight.normal),
                   ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Dispatch Order',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.white,
-                      fontWeight: FontWeight.normal),
                 ),
               ),
             ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ShelfPage()),
-              );
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.1,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15), // Rounded borders
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const Scanner(),
                   ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Shelf Management',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal),
+                );
+              },
+              child: Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                width: MediaQuery.of(context).size.width * 0.85,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(15), // Rounded borders
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.25), // Shadow color
+                      spreadRadius: 0,
+                      blurRadius: 20, // Increased shadow blur
+                      offset: const Offset(0, 10), // Increased vertical offset
+                    ),
+                  ],
+                ),
+                child: const Center(
+                  child: Text(
+                    'Scanner',
+                    style: TextStyle(
+                        fontSize: 25,
+                        color: Colors.black,
+                        fontWeight: FontWeight.normal),
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 10),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const Scanner(),
-                ),
-              );
-            },
-            child: Container(
-              height: MediaQuery.of(context).size.height * 0.1,
-              width: MediaQuery.of(context).size.width * 0.85,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(15), // Rounded borders
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.25), // Shadow color
-                    spreadRadius: 0,
-                    blurRadius: 20, // Increased shadow blur
-                    offset: const Offset(0, 10), // Increased vertical offset
-                  ),
-                ],
-              ),
-              child: const Center(
-                child: Text(
-                  'Scanner',
-                  style: TextStyle(
-                      fontSize: 25,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal),
-                ),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

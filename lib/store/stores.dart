@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:master/store/category/categories.dart';
-import 'package:master/store/store.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/store/category/categories.dart';
+import 'package:packer/store/store.dart';
+import 'package:packer/utils/constants.dart';
 
 class Stores extends StatefulWidget {
   const Stores({super.key});

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:master/add-item/add-items.dart';
-import 'package:master/store/item-detail/item-details.dart';
-import 'package:master/store/item/item.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/add-item/add-items.dart';
+import 'package:packer/store/item-detail/item-details.dart';
+import 'package:packer/store/item/item.dart';
+import 'package:packer/utils/constants.dart';
 
 class Items extends StatefulWidget {
   const Items(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:master/store/category/category.dart';
-import 'package:master/store/item/items.dart';
+import 'package:packer/store/category/category.dart';
+import 'package:packer/store/item/items.dart';
 
 class Categories extends StatefulWidget {
   const Categories({super.key, required this.storeId, required this.storeName});

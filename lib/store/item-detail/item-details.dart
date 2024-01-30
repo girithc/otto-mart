@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:master/store/item-detail/api.dart';
-import 'package:master/store/item-detail/item-detail.dart';
+import 'package:packer/store/item-detail/api.dart';
+import 'package:packer/store/item-detail/item-detail.dart';
 
 class ItemDetails extends StatefulWidget {
   const ItemDetails({required this.itemId, required this.itemName, super.key});

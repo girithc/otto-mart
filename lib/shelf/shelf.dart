@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:master/utils/constants.dart';
+import 'package:packer/utils/constants.dart';
 
 class ShelfPage extends StatefulWidget {
   const ShelfPage({super.key});

@@ -3,10 +3,10 @@ import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:master/main.dart';
-import 'package:master/quick-add/listen-barcode.dart';
-import 'package:master/stock/add-stock.dart';
-import 'package:master/utils/constants.dart';
+import 'package:packer/main.dart';
+import 'package:packer/quick-add/listen-barcode.dart';
+import 'package:packer/stock/add-stock.dart';
+import 'package:packer/utils/constants.dart';
 
 class AddItemScreen extends StatefulWidget {
   ItemAdd item;

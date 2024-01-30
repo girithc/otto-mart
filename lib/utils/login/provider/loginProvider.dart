@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:master/main.dart';
-import 'package:master/utils/constants.dart';
-import 'package:master/utils/login/page/phone.dart';
+import 'package:packer/main.dart';
+import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/login/page/phone.dart';
 
 class LoginProvider with ChangeNotifier {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
