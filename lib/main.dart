@@ -1,9 +1,11 @@
 import 'dart:convert';
 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:packer/firebase_options.dart';
 import 'package:packer/pack/scanner.dart';
 import 'package:packer/quick-add/listen-barcode.dart';
 import 'package:packer/shelf/shelf.dart';
@@ -18,7 +20,13 @@ import 'package:packer/utils/settings/settings.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (Firebase.apps.isEmpty) {
+    // Check if any Firebase apps have been initialized
+    await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform);
+  }
   runApp(
     ChangeNotifierProvider(
       create: (context) => LoginProvider(),

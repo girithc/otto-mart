@@ -102,6 +102,7 @@ class ItemDetailApiClient {
       "sales_order_id": orderId,
       "image": image
     };
+    print('Uploaded Image: $image');
     var response = await http.post(
       url,
       body: jsonEncode(requestData),
