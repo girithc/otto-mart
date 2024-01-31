@@ -1,12 +1,16 @@
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:packer/store/item-detail/item-detail.dart';
 import 'package:packer/main.dart';
 import 'package:packer/pack/pack-item.dart';
@@ -33,10 +37,13 @@ class OrderChecklistPage extends StatefulWidget {
 class _OrderChecklistPageState extends State<OrderChecklistPage> {
   // Sample data for the list
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  File? _image;
+  UploadTask? uploadTask;
 
   List<PackedItem> packedItems = [];
   List<PackerItemDetail?> prePackedItems = [];
   bool allPacked = false;
+  bool pictureTaken = false;
   //PackerItemResponse? packerItemResponse;
 
   int? orderId;
@@ -171,15 +178,36 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     String? storeId = await _storage.read(key: "storeId");
 
     if (code != '-1') {
-      apiClient.orderAssignSpace("A1", packerId!, widget.orderId, "1").then(
-          (allocationInfo) {
-        // Show the allocation details in a dialog
-        _showAllocationDetailsDialog(allocationInfo);
-      }, onError: (error) {
-        // Handle error here if orderAssignSpace fails
-        print("Error: $error");
-        _showErrorDialog("Error: $error"); // Show error dialog
-      });
+      final path =
+          'packer/sales-order/$packerId/${widget.orderId}-${TimeOfDay.now()}';
+
+      final ref = FirebaseStorage.instance.ref().child(path);
+      String urlDownloaded;
+      try {
+        setState(() {
+          uploadTask = ref.putFile(_image!);
+        });
+        final snapshot = await uploadTask!.whenComplete(() => {});
+        urlDownloaded = await snapshot.ref.getDownloadURL();
+        print('Downloaded Link: $urlDownloaded');
+        setState(() {
+          uploadTask = null;
+        });
+
+        apiClient
+            .orderAssignSpace(
+                code, packerId!, widget.orderId, "1", urlDownloaded)
+            .then((allocationInfo) {
+          // Show the allocation details in a dialog
+          _showAllocationDetailsDialog(allocationInfo);
+        }, onError: (error) {
+          // Handle error here if orderAssignSpace fails
+          print("Error: $error");
+          _showErrorDialog("Error: $error"); // Show error dialog
+        });
+      } catch (e) {
+        print('Upload failed: $e');
+      }
     }
   }
 
@@ -193,6 +221,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
           content: SingleChildScrollView(
             child: ListBody(
               children: <Widget>[
+                Image.network(allocationInfo.image),
                 Text('Order ID: ${allocationInfo.salesOrderId}'),
                 Text(
                     'Shelf Name ${allocationInfo.column}${allocationInfo.row}'),
@@ -247,6 +276,36 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     );
   }
 
+  Future<void> _takePicture() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile =
+        await picker.pickImage(source: ImageSource.camera);
+
+    if (pickedFile != null) {
+      File? compressedFile = await _compressFile(File(pickedFile.path));
+      setState(() {
+        _image = compressedFile;
+        pictureTaken = true;
+      });
+    }
+  }
+
+  Future<File?> _compressFile(File file) async {
+    final String targetPath = '${file.path}_compressed.jpg';
+    var result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path, targetPath,
+      quality: 50, // Adjust the quality as needed
+      rotate: 0, // Adjust the rotation as needed
+    );
+
+    File resultImg = File(result!.path);
+
+    print('Original file size: ${file.lengthSync()}');
+    print('Compressed file size: ${resultImg.lengthSync()}');
+
+    return resultImg;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -282,177 +341,240 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         },
         child: widget.packedItems.isEmpty
             ? const Center(child: CircularProgressIndicator())
-            : ListView.builder(
-                itemCount: widget.packedItems.length,
-                itemBuilder: (context, index) {
-                  PackedItem item = widget.packedItems[index];
-                  int? quantityPacked = widget.prePackedItems
-                      .firstWhere(
-                        (result) => result.itemId == item.itemId,
-                        orElse: () => PackerItemDetail(
-                            itemId: 0,
-                            orderId: 0,
-                            packerId: 0,
-                            quantity:
-                                0), // Return null to match the type PackerItemDetail?
-                      )
-                      .quantity;
+            : SingleChildScrollView(
+                child: Column(
+                  children: [
+                    ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: widget.packedItems.length,
+                      itemBuilder: (context, index) {
+                        PackedItem item = widget.packedItems[index];
+                        int? quantityPacked = widget.prePackedItems
+                            .firstWhere(
+                              (result) => result.itemId == item.itemId,
+                              orElse: () => PackerItemDetail(
+                                  itemId: 0,
+                                  orderId: 0,
+                                  packerId: 0,
+                                  quantity:
+                                      0), // Return null to match the type PackerItemDetail?
+                            )
+                            .quantity;
 
-                  print("Quantity Packed $quantityPacked");
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: <Widget>[
-                              // Leading widget
+                        print("Quantity Packed $quantityPacked");
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: <Widget>[
+                                    // Leading widget
 
-                              Column(
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      if (item.imageURLs.isNotEmpty) {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              content: Image.network(
-                                                item.imageURLs.first,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.7, // Use screen width for the image
-                                                height:
-                                                    300, // Adjust height as needed
-                                              ),
-                                              actions: <Widget>[
-                                                Center(
-                                                  child: TextButton(
-                                                    onPressed: () => Navigator
-                                                            .of(context)
-                                                        .pop(), // Close the dialog
-                                                    style: ButtonStyle(
-                                                      backgroundColor:
-                                                          MaterialStateProperty
-                                                              .all<Color>(
-                                                                  Colors.white),
+                                    Column(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            if (item.imageURLs.isNotEmpty) {
+                                              showDialog(
+                                                context: context,
+                                                builder:
+                                                    (BuildContext context) {
+                                                  return AlertDialog(
+                                                    content: Image.network(
+                                                      item.imageURLs.first,
+                                                      width: MediaQuery.of(
+                                                                  context)
+                                                              .size
+                                                              .width *
+                                                          0.7, // Use screen width for the image
+                                                      height:
+                                                          300, // Adjust height as needed
                                                     ),
-                                                    child: const Text(
-                                                      'Cancel',
-                                                      style: TextStyle(
-                                                          color: Colors.black,
-                                                          fontSize:
-                                                              20), // Optional: Change text color if needed
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            );
+                                                    actions: <Widget>[
+                                                      Center(
+                                                        child: TextButton(
+                                                          onPressed: () =>
+                                                              Navigator.of(
+                                                                      context)
+                                                                  .pop(), // Close the dialog
+                                                          style: ButtonStyle(
+                                                            backgroundColor:
+                                                                MaterialStateProperty
+                                                                    .all<Color>(
+                                                                        Colors
+                                                                            .white),
+                                                          ),
+                                                          child: const Text(
+                                                            'Cancel',
+                                                            style: TextStyle(
+                                                                color: Colors
+                                                                    .black,
+                                                                fontSize:
+                                                                    20), // Optional: Change text color if needed
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+                                            }
                                           },
-                                        );
-                                      }
-                                    },
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          '${item.itemQuantity}x',
-                                          style: const TextStyle(fontSize: 25),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${item.itemQuantity}x',
+                                                style: const TextStyle(
+                                                    fontSize: 25),
+                                              ),
+                                              item.imageURLs.isNotEmpty
+                                                  ? Padding(
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                              left: 8.0),
+                                                      child: Image.network(
+                                                        item.imageURLs.first,
+                                                        height: 90,
+                                                        width: 100,
+                                                      ),
+                                                    )
+                                                  : const SizedBox(
+                                                      width: 40, height: 40),
+                                            ],
+                                          ),
                                         ),
-                                        item.imageURLs.isNotEmpty
-                                            ? Padding(
-                                                padding: const EdgeInsets.only(
-                                                    left: 8.0),
-                                                child: Image.network(
-                                                  item.imageURLs.first,
-                                                  height: 90,
-                                                  width: 100,
-                                                ),
-                                              )
-                                            : const SizedBox(
-                                                width: 40, height: 40),
+                                        const SizedBox(
+                                          height: 2.0,
+                                        ),
+                                        const Center(
+                                          child: Text(
+                                            'Aisle 1A',
+                                            style: TextStyle(fontSize: 20),
+                                          ),
+                                        )
                                       ],
                                     ),
-                                  ),
-                                  const SizedBox(
-                                    height: 2.0,
-                                  ),
-                                  const Center(
-                                    child: Text(
-                                      'Aisle 1A',
-                                      style: TextStyle(fontSize: 20),
-                                    ),
-                                  )
-                                ],
-                              ),
-                              // Spacer to push the trailing widget to the end
+                                    // Spacer to push the trailing widget to the end
 
-                              // Title and subtitle
-                              Row(
-                                children: <Widget>[
-                                  SizedBox(
-                                    width: 180,
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Text(
-                                          item.name,
-                                          style: const TextStyle(fontSize: 18),
-                                        ), // Display item name
-                                        Text(
-                                          '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
-                                          style: const TextStyle(fontSize: 18),
-                                        ), // Display brand and quantity
+                                    // Title and subtitle
+                                    Row(
+                                      children: <Widget>[
+                                        SizedBox(
+                                          width: 180,
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Text(
+                                                item.name,
+                                                style: const TextStyle(
+                                                    fontSize: 18),
+                                              ), // Display item name
+                                              Text(
+                                                '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
+                                                style: const TextStyle(
+                                                    fontSize: 18),
+                                              ), // Display brand and quantity
+                                            ],
+                                          ),
+                                        ),
                                       ],
                                     ),
+                                  ],
+                                ),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(
+                                      6.0), // Adjust the radius as needed
+                                  child: SizedBox(
+                                    height: 30,
+                                    child: LinearProgressIndicator(
+                                      value: (quantityPacked ?? 0) /
+                                          item.itemQuantity,
+                                      valueColor:
+                                          const AlwaysStoppedAnimation<Color>(
+                                              Colors.blue),
+                                    ),
                                   ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(
-                                6.0), // Adjust the radius as needed
-                            child: SizedBox(
-                              height: 30,
-                              child: LinearProgressIndicator(
-                                value:
-                                    (quantityPacked ?? 0) / item.itemQuantity,
-                                valueColor: const AlwaysStoppedAnimation<Color>(
-                                    Colors.blue),
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
+                    (widget.allPacked && pictureTaken)
+                        ? Container(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            margin: const EdgeInsets.all(2.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              // This adds the rounded borders
+                              borderRadius: BorderRadius.circular(10.0),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(
+                                      0.5), // Shadow color with some transparency
+                                  spreadRadius:
+                                      2, // Extent of the shadow spread
+                                  blurRadius:
+                                      4, // How blurry the shadow should be
+                                  offset: const Offset(
+                                      0, 3), // Changes position of shadow
+                                ),
+                              ],
+                            ),
+                            child: ClipRRect(
+                              // This is used to clip the image with rounded corners
+                              borderRadius: BorderRadius.circular(
+                                  10.0), // The same radius as the Container's border
+                              child: Image.file(_image!),
+                            ),
+                          )
+                        : Container(),
+                  ],
+                ),
               ),
       ),
       floatingActionButton: Padding(
         padding: const EdgeInsets.all(8.0),
         child: widget.allPacked
-            ? FloatingActionButton.extended(
-                heroTag: 'packItemButton', // Unique tag for this FAB
+            ? (pictureTaken
+                ? FloatingActionButton.extended(
+                    heroTag: 'packItemButton', // Unique tag for this FAB
 
-                onPressed: scanMobileBarcodeAssignSpace,
-                backgroundColor: Colors.deepPurpleAccent,
-                label: const Text(
-                  'Complete Packing',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              )
+                    onPressed: scanMobileBarcodeAssignSpace,
+                    backgroundColor: Colors.deepPurpleAccent,
+                    label: const Text(
+                      'Complete Packing',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  )
+                : FloatingActionButton.extended(
+                    heroTag: 'takepicture', // Unique tag for this FAB
+
+                    onPressed: _takePicture,
+                    backgroundColor: Colors.deepPurpleAccent,
+                    label: const Text(
+                      'Take Picture',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ))
             : Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[

@@ -92,14 +92,15 @@ class ItemDetailApiClient {
     }
   }
 
-  Future<AllocationInfo> orderAssignSpace(
-      String barcode, String packerPhone, int orderId, String storeId) async {
+  Future<AllocationInfo> orderAssignSpace(String barcode, String packerPhone,
+      int orderId, String storeId, String image) async {
     var url = Uri.parse('$baseUrl/packer-space-order');
     final Map<String, dynamic> requestData = {
       "store_id": int.parse(storeId),
       "barcode": barcode,
       "packer_phone": packerPhone,
-      "sales_order_id": orderId
+      "sales_order_id": orderId,
+      "image": image
     };
     var response = await http.post(
       url,
@@ -327,20 +328,21 @@ class AllocationInfo {
   final int row;
   final String column;
   final int shelfId;
+  final String image;
 
-  AllocationInfo({
-    required this.salesOrderId,
-    required this.row,
-    required this.column,
-    required this.shelfId,
-  });
+  AllocationInfo(
+      {required this.salesOrderId,
+      required this.row,
+      required this.column,
+      required this.shelfId,
+      required this.image});
 
   factory AllocationInfo.fromJson(Map<String, dynamic> json) {
     return AllocationInfo(
-      salesOrderId: json['SalesOrderID'],
-      row: json['Row'],
-      column: json['Column'],
-      shelfId: json['ShelfID'],
-    );
+        salesOrderId: json['sales_order_id'],
+        row: json['row'],
+        column: json['column'],
+        shelfId: json['shelf_id'],
+        image: json['image']);
   }
 }

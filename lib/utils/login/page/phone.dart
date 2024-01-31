@@ -235,7 +235,7 @@ class _PhonePageState extends State<PhonePage> {
                             context,
                             MaterialPageRoute(
                                 builder: (context) =>
-                                    const MyHomePage(title: 'Otto Master')),
+                                    const MyHomePage(title: 'Hi Packer')),
                           );
                         } else {
                           // Handle login failure

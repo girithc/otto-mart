@@ -51,6 +51,8 @@ dependencies:
   pinput: ^3.0.1
   flutter_barcode_listener: ^0.1.4
   firebase_core: ^2.24.2
+  flutter_image_compress: ^2.1.0
+  firebase_storage: ^11.6.0
 
 dev_dependencies:
   flutter_test:
