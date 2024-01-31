@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "710742246558",
+    "project_id": "seismic-ground-410711",
+    "storage_bucket": "seismic-ground-410711.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710742246558:android:1301c0c56e8a03ef7ce78f",
+        "android_client_info": {
+          "package_name": "com.example.delivery"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYyFAaJ8LayV6v31aKionhtsw5vLMMu4A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:710742246558:android:4028b74eee7ecbba7ce78f",
+        "android_client_info": {
+          "package_name": "com.example.master"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYyFAaJ8LayV6v31aKionhtsw5vLMMu4A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
