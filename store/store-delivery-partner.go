@@ -76,7 +76,7 @@ func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, err
                so.order_date, so.order_status, so.order_dp_status
         FROM sales_order so
         JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
-        WHERE dp.phone = $1
+        WHERE dp.phone = $1 AND so.order_status != 'completed'
         ORDER BY so.order_date ASC
         LIMIT 1
     `
@@ -94,7 +94,7 @@ func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, err
 				return nil, err
 			}
 			if cartID > 0 {
-				assigned, assignErr := s.AssignDeliveryPartnerToSalesOrder(cartID)
+				assigned, assignErr := s.AssignDeliveryPartnerToSalesOrder(cartID, phone)
 				if assigned && assignErr == nil {
 					// Fetch the newly assigned order
 					query := `
@@ -147,18 +147,23 @@ type OrderAccepted_DP struct {
 }
 
 func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted_DP, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
 	// Get delivery partner ID from phone number
-	dpIDQuery := `SELECT id FROM delivery_partner WHERE phone = $1;`
 	var deliveryPartnerID int
-	err := s.db.QueryRow(dpIDQuery, phone).Scan(&deliveryPartnerID)
+	err = tx.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
 	if err != nil {
 		return nil, err
 	}
 
 	// Verify that the delivery partner assigned is the one making the request
-	checkOrderQuery := `SELECT delivery_partner_id FROM sales_order WHERE id = $1;`
 	var existingDeliveryPartnerID sql.NullInt64 // Using sql.NullInt64 to handle null values
-	err = s.db.QueryRow(checkOrderQuery, order_id).Scan(&existingDeliveryPartnerID)
+	err = tx.QueryRow(`SELECT delivery_partner_id FROM sales_order WHERE id = $1;`, order_id).Scan(&existingDeliveryPartnerID)
 	if err != nil {
 		return nil, err
 	}
@@ -166,25 +171,53 @@ func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (
 		return nil, fmt.Errorf("order is not assigned to this delivery partner")
 	}
 
-	// Proceed with updating the order as the delivery partner matches
-	assignOrderQuery := `
-        UPDATE sales_order
-        SET order_dp_status = 'accepted'
-        WHERE id = $1
-        RETURNING store_id, order_date, order_status, order_dp_status;`
-
+	// Update the sales_order status to 'accepted'
 	var storeID int
 	var orderDate time.Time
 	var orderStatus, orderDPStatus string
-	err = s.db.QueryRow(assignOrderQuery, order_id).Scan(&storeID, &orderDate, &orderStatus, &orderDPStatus)
+	err = tx.QueryRow(`
+    UPDATE sales_order
+    SET order_dp_status = 'accepted'
+    WHERE id = $1 AND (order_dp_status = 'pending' OR delivery_partner_id = $2)
+    RETURNING store_id, order_date, order_status, order_dp_status;`, order_id, deliveryPartnerID).Scan(&storeID, &orderDate, &orderStatus, &orderDPStatus)
 	if err != nil {
 		return nil, err
 	}
 
+	// Check for an existing delivery_order record
+	var existingDeliveryOrderID int
+	err = tx.QueryRow(`SELECT id FROM delivery_order WHERE sales_order_id = $1 AND delivery_partner_id = $2;`, order_id, deliveryPartnerID).Scan(&existingDeliveryOrderID)
+
+	// Update or insert delivery_order record
+	if err == sql.ErrNoRows {
+		// Insert a new delivery_order record with order_accepted_date as current timestamp
+		_, err = tx.Exec(`
+            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_accepted_date)
+            VALUES ($1, $2, CURRENT_TIMESTAMP);`, order_id, deliveryPartnerID)
+		if err != nil {
+			return nil, err
+		}
+	} else if err == nil {
+		// Update the existing record's order_accepted_date
+		_, err = tx.Exec(`
+            UPDATE delivery_order
+            SET order_accepted_date = CURRENT_TIMESTAMP
+            WHERE id = $1;`, existingDeliveryOrderID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return nil, err
+	}
+
 	// Fetch store details
-	storeQuery := `SELECT name, address FROM store WHERE id = $1;`
 	var storeName, storeAddress string
-	err = s.db.QueryRow(storeQuery, storeID).Scan(&storeName, &storeAddress)
+	err = s.db.QueryRow(`SELECT name, address FROM store WHERE id = $1;`, storeID).Scan(&storeName, &storeAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -233,7 +266,7 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
     INNER JOIN shopping_cart sc ON so.cart_id = sc.id
     INNER JOIN address a ON sc.address_id = a.id
     INNER JOIN customer c ON so.customer_id = c.id
-    WHERE so.id = $1 AND so.delivery_partner_id = $2 AND so.order_dp_status = 'accepted';`
+    WHERE so.id = $1 AND so.delivery_partner_id = $2 AND so.order_dp_status = 'accepted' AND so.order_status != 'completed';`
 
 	err = s.db.QueryRow(query, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.Latitude, &info.Longitude, &info.LineOneAddress, &info.LineTwoAddress, &info.StreetAddress, &info.OrderDate, &info.OrderStatus)
 	if err != nil {
@@ -264,7 +297,7 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	}
 	defer tx.Rollback()
 
-	// Verify the sales order's current status is 'packed' and fetch cart_id and packer_id
+	// Verify the sales order's current status is 'packed'
 	var currentStatus string
 	err = tx.QueryRow("SELECT order_status FROM sales_order WHERE id = $1", order_id).Scan(&currentStatus)
 	if err != nil {
@@ -282,9 +315,35 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 		return nil, err
 	}
 
-	// Update the order_status to 'dispatched'
-	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1", order_id)
+	// Update the order_status to 'dispatched' in sales_order
+	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed' ", order_id, deliveryPartnerIDFromDB)
 	if err != nil {
+		return nil, err
+	}
+
+	// Check for an existing delivery_order record
+	var existingDeliveryOrderID int
+	err = tx.QueryRow("SELECT id FROM delivery_order WHERE sales_order_id = $1 AND delivery_partner_id = $2", order_id, deliveryPartnerIDFromDB).Scan(&existingDeliveryOrderID)
+
+	// Update or insert delivery_order record
+	if err == sql.ErrNoRows {
+		// Insert a new delivery_order record with order_picked_date as current timestamp
+		_, err = tx.Exec(`
+            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_picked_date)
+            VALUES ($1, $2, CURRENT_TIMESTAMP);`, order_id, deliveryPartnerIDFromDB)
+		if err != nil {
+			return nil, err
+		}
+	} else if err == nil {
+		// Update the existing record's order_picked_date
+		_, err = tx.Exec(`
+            UPDATE delivery_order
+            SET order_picked_date = CURRENT_TIMESTAMP
+            WHERE id = $1;`, existingDeliveryOrderID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
 		return nil, err
 	}
 
@@ -301,6 +360,69 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	}
 
 	return result, nil
+}
+
+func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order_id int, image string) (*DeliveryCompletionResult, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Verify the delivery partner ID
+	var deliveryPartnerIDFromDB int
+	err = tx.QueryRow("SELECT id FROM delivery_partner WHERE phone = $1", phone).Scan(&deliveryPartnerIDFromDB)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the order_status to 'completed' in sales_order
+	_, err = tx.Exec("UPDATE sales_order SET order_status = 'completed' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed'", order_id, deliveryPartnerIDFromDB)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check for an existing delivery_order record
+	var existingDeliveryOrderID int
+	err = tx.QueryRow("SELECT id FROM delivery_order WHERE sales_order_id = $1 AND delivery_partner_id = $2", order_id, deliveryPartnerIDFromDB).Scan(&existingDeliveryOrderID)
+
+	// Update or insert delivery_order record
+	if err == sql.ErrNoRows {
+		// Insert a new delivery_order record with order_delivered_date and image_url
+		_, err = tx.Exec(`
+            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_delivered_date, image_url)
+            VALUES ($1, $2, CURRENT_TIMESTAMP, $3);`, order_id, deliveryPartnerIDFromDB, image)
+	} else if err == nil {
+		// Update the existing record's order_delivered_date and image_url
+		_, err = tx.Exec(`
+            UPDATE delivery_order 
+            SET order_delivered_date = CURRENT_TIMESTAMP, image_url = $2
+            WHERE id = $1;`, existingDeliveryOrderID, image)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Return the delivery completion result
+	result := &DeliveryCompletionResult{
+		SalesOrderID: order_id,
+		OrderStatus:  "completed",
+		Image:        image,
+	}
+
+	return result, nil
+}
+
+type DeliveryCompletionResult struct {
+	SalesOrderID int    `json:"sales_order_id"`
+	OrderStatus  string `json:"order_status"`
+	Image        string `json:"image"`
 }
 
 type DeliveryPartnerDispatchResult struct {
@@ -465,39 +587,54 @@ func (s *PostgresStore) DeliveryPartnerLogin(phone string) (*DeliveryPartner, er
 	return &partner, nil
 }
 
-func (s *PostgresStore) AssignDeliveryPartnerToSalesOrder(cart_id int) (bool, error) {
+func (s *PostgresStore) AssignDeliveryPartnerToSalesOrder(cart_id int, phone string) (bool, error) {
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
 		return false, fmt.Errorf("failed to start transaction: %s", err)
 	}
+	defer tx.Rollback() // Ensure rollback in case of error
 
-	deliveryPartnerID, err := s.getNextDeliveryPartner(tx)
+	var deliveryPartnerID int
+	var salesOrderID int
+
+	// SQL query to fetch the delivery partner's ID based on the phone number
+	query := `SELECT id FROM delivery_partner WHERE phone = $1`
+	err = tx.QueryRow(query, phone).Scan(&deliveryPartnerID)
 	if err != nil {
-		return true, fmt.Errorf("error fetching next available delivery partner: %s", err)
+		return false, fmt.Errorf("error fetching delivery partner by phone: %s", err)
 	}
 
-	_, err = tx.Exec(`
-		UPDATE sales_order 
-		SET delivery_partner_id = $1 
-		WHERE cart_id = $2
-	`, deliveryPartnerID, cart_id)
+	// Update the delivery_partner_id in sales_order and fetch sales_order_id
+	err = tx.QueryRow(`
+        UPDATE sales_order 
+        SET delivery_partner_id = $1 
+        WHERE cart_id = $2
+        RETURNING id
+    `, deliveryPartnerID, cart_id).Scan(&salesOrderID)
 	if err != nil {
-		return true, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
+		return false, fmt.Errorf("error assigning delivery partner for order of cart %d: %s", cart_id, err)
 	}
 
-	// Update the delivery partner's last_assigned_time or set their availability to false
-	_, err = tx.Exec(`
-		UPDATE delivery_partner 
-		SET last_assigned_time = NOW()
-		WHERE id = $1
-	`, deliveryPartnerID)
-	if err != nil {
-		return true, fmt.Errorf("error updating delivery partner details: %s", err)
+	// Check for an existing delivery_order record
+	var existingDeliveryOrderID int
+	err = tx.QueryRow(`
+        SELECT id FROM delivery_order 
+        WHERE sales_order_id = $1 AND delivery_partner_id = $2
+    `, salesOrderID, deliveryPartnerID).Scan(&existingDeliveryOrderID)
+
+	// Update or insert delivery_order record
+	if err == sql.ErrNoRows {
+		// Insert a new delivery_order record with order_assigned_date as current timestamp
+		_, err = tx.Exec(`
+            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_assigned_date)
+            VALUES ($1, $2, CURRENT_TIMESTAMP);`, salesOrderID, deliveryPartnerID)
+	} else if err != nil {
+		return false, fmt.Errorf("error updating delivery_order record: %s", err)
 	}
 
-	err = tx.Commit()
-	if err != nil {
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
 		return false, fmt.Errorf("error committing transaction: %s", err)
 	}
 

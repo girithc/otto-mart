@@ -724,7 +724,7 @@ type PackedItem struct {
 	ImageURLs      []string `json:"image_urls"` // Using camelCase for consistency
 }
 
-func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone string, salesOrderId int, storeId int) (AllocationInfo, error) {
+func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone string, salesOrderId int, storeId int, image string) (AllocationInfo, error) {
 	var info AllocationInfo
 
 	// Start a transaction
@@ -746,8 +746,8 @@ func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone str
 	}
 
 	// 2. Create a Packer_Shelf record
-	packerShelfQuery := `INSERT INTO Packer_Shelf (sales_order_id, packer_id, shelf_id, active) VALUES ($1, (SELECT id FROM Packer WHERE phone = $2), $3, true)`
-	_, err = tx.Exec(packerShelfQuery, salesOrderId, packerPhone, shelfID)
+	packerShelfQuery := `INSERT INTO Packer_Shelf (sales_order_id, packer_id, shelf_id, image_url, active) VALUES ($1, (SELECT id FROM Packer WHERE phone = $2), $3, $4, true)`
+	_, err = tx.Exec(packerShelfQuery, salesOrderId, packerPhone, shelfID, image)
 	if err != nil {
 		return info, err
 	}
@@ -771,16 +771,18 @@ func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone str
 		Row:          row,
 		Column:       column,
 		ShelfID:      shelfID,
+		Image:        image,
 	}
 
 	return info, nil
 }
 
 type AllocationInfo struct {
-	SalesOrderID int
-	Row          int
-	Column       string
-	ShelfID      int
+	SalesOrderID int    `json:"sales_order_id"`
+	Row          int    `json:"row"`
+	Column       string `json:"column"`
+	ShelfID      int    `json:"shelf_id"`
+	Image        string `json:"image"`
 }
 
 func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool, error) {

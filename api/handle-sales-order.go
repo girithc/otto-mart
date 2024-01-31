@@ -206,13 +206,13 @@ func (s *Server) CancelPackSalesOrder(res http.ResponseWriter, req *http.Request
 
 func (s *Server) PackerAllocateSpace(res http.ResponseWriter, req *http.Request) error {
 	print("Enter PackerAllocateSpace")
-	new_req := new(types.AcceptOrderItem)
+	new_req := new(types.SpaceOrder)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error Decode in PackerPackItem()")
 		return err
 	}
 
-	records, err := s.store.PackerOrderAllocateSpace(new_req.Barcode, new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreId)
+	records, err := s.store.PackerOrderAllocateSpace(new_req.Barcode, new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreId, new_req.Image)
 	if err != nil {
 		return err
 	}

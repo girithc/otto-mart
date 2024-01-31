@@ -11,7 +11,8 @@ func (s *PostgresStore) CreateDeliveryOrderTable(tx *sql.Tx) error {
 		order_picked_date TIMESTAMP DEFAULT NULL,
 		order_delivered_date TIMESTAMP DEFAULT NULL,
 		order_assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		order_accepted_date TIMESTAMP DEFAULT NULL
+		order_accepted_date TIMESTAMP DEFAULT NULL,
+		image_url TEXT DEFAULT ''
 	)`
 
 	_, err := tx.Exec(query)

@@ -11,7 +11,8 @@ func (s *PostgresStore) CreatePackerShelfTable(tx *sql.Tx) error {
         shelf_id INT REFERENCES Shelf(id) ON DELETE CASCADE,
         active BOOLEAN NOT NULL DEFAULT true,
         drop_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        pickup_time TIMESTAMP
+        pickup_time TIMESTAMP,
+        image_url TEXT NOT NULL
     );
 
     CREATE OR REPLACE FUNCTION update_active()
@@ -26,7 +27,7 @@ func (s *PostgresStore) CreatePackerShelfTable(tx *sql.Tx) error {
 
     DROP TRIGGER IF EXISTS trg_update_active ON Packer_Shelf;
 
-    CREATE TRIGGER trg_update_active
+    CREATE OR REPLACE TRIGGER trg_update_active
     BEFORE UPDATE ON Packer_Shelf
     FOR EACH ROW
     EXECUTE FUNCTION update_active();
