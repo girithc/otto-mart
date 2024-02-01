@@ -286,45 +286,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     );
   }
 
-  Widget _buildTitleSection() {
-    return Container(
-      //width: MediaQuery.of(context).size.width,
-      margin: const EdgeInsets.symmetric(horizontal: 5),
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(10),
-          topRight: Radius.circular(10),
-        ),
-      ),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(15), // Rounded corners
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.5),
-                spreadRadius: 2,
-                blurRadius: 4,
-                offset: const Offset(0, 2), // Changes position of shadow
-              ),
-            ],
-            border: Border.all(color: Colors.white, width: 1.0),
-          ),
-          child: const Center(
-            child: Text(
-              "Select Address",
-              style: TextStyle(fontSize: 20),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildSkeletonLoader() {
     return ListView.builder(
       itemCount: 5, // Number of skeleton items

@@ -13,8 +13,6 @@ import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
-import 'package:pronto/payments/verify.dart';
-import 'package:pronto/plan/plan.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/home/api_client_home.dart';
 import 'package:pronto/home/components/network_utility.dart';
@@ -40,19 +38,13 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  final bool _bottomSheetShown = false;
-  static const String routeName = '/myHomePage';
   List<Category> categories = [];
   List<Category> promotions = [];
   List<Address> addresses = [];
   Address? defaultAddress;
 
-  late AnimationController _buttonController;
-  late Animation<Color?> _colorAnim;
-
   bool isLoggedIn = false;
   bool isAddress = false;
-  bool _isMounted = false;
   bool showDialogVisible = false;
   bool isLoadingGetAddress = true;
 
@@ -295,49 +287,114 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>();
+    //var cart = context.watch<CartModel>();
     //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
     int randomNumber = 3 + Random().nextInt(5);
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: const HomeScreenAppBar(),
+      appBar: HomeScreenAppBar(
+        randomNumber: randomNumber,
+      ),
       body: isLoading
           ? const CircularProgressIndicator()
           : RefreshIndicator(
               key: _refreshIndicatorKey,
               onRefresh: _onRefresh,
-              child: CustomScrollView(
-                // <-- Using CustomScrollView
-                slivers: <Widget>[
-                  SliverToBoxAdapter(
-                    child: Consumer<CartModel>(
-                      builder: (context, cart, child) {
-                        return Column(
-                          children: [
-                            // Your other body content
-                            Container(
-                              color: Colors.white,
-                              padding: const EdgeInsets.all(2),
-                              height: 60,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 15, // Flex 3 for the address
-                                    child: GestureDetector(
-                                      onTap: () {
-                                        context.go('/select-address');
-                                      },
+              child: Container(
+                color: Colors.white,
+                child: CustomScrollView(
+                  // <-- Using CustomScrollView
+                  slivers: <Widget>[
+                    SliverToBoxAdapter(
+                      child: Consumer<CartModel>(
+                        builder: (context, cart, child) {
+                          return Column(
+                            children: [
+                              // Your other body content
+                              Container(
+                                color: Colors.white,
+                                padding: const EdgeInsets.all(2),
+                                height: 60,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 15, // Flex 3 for the address
+                                      child: GestureDetector(
+                                        onTap: () {
+                                          context.go('/select-address');
+                                        },
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 6, vertical: 0),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(8.0),
+                                            border: Border.all(
+                                                color: Colors.deepPurpleAccent,
+                                                width: 1),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.grey.shade300,
+                                                spreadRadius: 2,
+                                                blurRadius: 3,
+                                                offset: const Offset(0, 3),
+                                              ),
+                                            ],
+                                          ), // No background color for the first child
+                                          child: Center(
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                const Icon(
+                                                  Icons
+                                                      .location_on, // Location marker icon
+                                                  color:
+                                                      Colors.deepPurpleAccent,
+                                                  size: 20,
+                                                ),
+                                                const SizedBox(
+                                                    width:
+                                                        8), // Provides a gap between the icon and the text
+                                                Expanded(
+                                                  // Makes the text widget flexible
+                                                  child: Text(
+                                                    cart.deliveryAddress
+                                                        .streetAddress,
+                                                    style:
+                                                        GoogleFonts.cantoraOne(
+                                                            fontSize: 18,
+                                                            fontStyle: FontStyle
+                                                                .normal,
+                                                            color:
+                                                                Colors.black),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                    maxLines:
+                                                        1, // Ensures the text does not wrap to more than one line
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 1,
+                                      child: Container(),
+                                    ),
+                                    Expanded(
+                                      flex: 42, // Flex 42 for the main content
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 6, vertical: 0),
+                                        padding: const EdgeInsets.only(
+                                            left: 5.0, top: 10, bottom: 10),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius:
                                               BorderRadius.circular(8.0),
-                                          border: Border.all(
-                                              color: Colors.deepPurpleAccent,
-                                              width: 1),
                                           boxShadow: [
                                             BoxShadow(
                                               color: Colors.grey.shade300,
@@ -346,146 +403,82 @@ class _MyHomePageState extends State<MyHomePage>
                                               offset: const Offset(0, 3),
                                             ),
                                           ],
-                                        ), // No background color for the first child
-                                        child: Center(
-                                          child: Row(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.center,
-                                            children: [
-                                              const Icon(
-                                                Icons
-                                                    .location_on, // Location marker icon
-                                                color: Colors.deepPurpleAccent,
-                                                size: 20,
-                                              ),
-                                              const SizedBox(
-                                                  width:
-                                                      8), // Provides a gap between the icon and the text
-                                              Expanded(
-                                                // Makes the text widget flexible
-                                                child: Text(
-                                                  cart.deliveryAddress
-                                                      .streetAddress,
-                                                  style: GoogleFonts.cantoraOne(
-                                                      fontSize: 18,
-                                                      fontStyle:
-                                                          FontStyle.normal,
-                                                      color: Colors.black),
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                  maxLines:
-                                                      1, // Ensures the text does not wrap to more than one line
-                                                ),
-                                              ),
-                                            ],
-                                          ),
                                         ),
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 1,
-                                    child: Container(),
-                                  ),
-                                  Expanded(
-                                    flex: 42, // Flex 42 for the main content
-                                    child: Container(
-                                      padding: const EdgeInsets.only(
-                                          left: 5.0, top: 6, bottom: 6),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(8.0),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.grey.shade300,
-                                            spreadRadius: 2,
-                                            blurRadius: 3,
-                                            offset: const Offset(0, 3),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment
-                                            .spaceEvenly, // Align content to the start of the Row
-
-                                        children: [
-                                          // Spacing between icon and text
-                                          Expanded(
-                                            // Wrap the text with Expanded to fill the remaining space
-                                            child: Text(
-                                              "Delivery in $randomNumber min",
+                                        child: Row(
+                                          // Align content to the start of the Row
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            // Spacing between icon and text
+                                            Text(
+                                              "Free delivery @ 149",
                                               style: GoogleFonts.cantoraOne(
                                                   fontSize: 24,
-                                                  fontStyle: FontStyle.italic,
-                                                  fontWeight: FontWeight.bold,
+                                                  fontStyle: FontStyle.normal,
+                                                  fontWeight: FontWeight.normal,
                                                   color: Colors.black),
                                               maxLines:
                                                   1, // Ensures the text does not wrap to more than one line
                                               // Add ellipsis when text overflows
                                             ),
-                                          ),
-                                          Image.asset(
-                                            "assets/images/scooter.jpg", // Path to your scooter image
-                                            height:
-                                                50, // Set an appropriate height for the icon
-                                          ),
-                                        ],
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
 
-                            promotions.isNotEmpty
-                                ? Highlights(
-                                    customerId: customerId,
-                                    phone: phone,
-                                    promos: promotions)
-                                : Container(
-                                    height: 40), // Pass retrieved values
-                            Container(
-                              alignment: Alignment
-                                  .centerLeft, // Align text to the left
-                              padding: const EdgeInsets.only(
-                                  left: 16, top: 8.0, bottom: 4.0),
-                              child: const Text(
-                                'Explore By Categories',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black),
+                              promotions.isNotEmpty
+                                  ? Highlights(
+                                      customerId: customerId,
+                                      phone: phone,
+                                      promos: promotions)
+                                  : Container(
+                                      height: 40), // Pass retrieved values
+                              Container(
+                                color: Colors.white,
+                                alignment: Alignment
+                                    .centerLeft, // Align text to the left
+                                padding: const EdgeInsets.only(
+                                    left: 16, top: 8.0, bottom: 4.0),
+                                child: const Text(
+                                  'Explore By Categories',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black),
+                                ),
                               ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 2,
-                        mainAxisSpacing: 4,
-                        childAspectRatio: 0.66,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return _buildCategoryContainer(
-                              context,
-                              categories[index].id,
-                              categories[index].name,
-                              categories[index].image);
+                            ],
+                          );
                         },
-                        childCount: categories.length,
                       ),
                     ),
-                  ),
-                ],
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 4,
+                          crossAxisSpacing: 2,
+                          mainAxisSpacing: 4,
+                          childAspectRatio: 0.66,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (BuildContext context, int index) {
+                            return _buildCategoryContainer(
+                                context,
+                                categories[index].id,
+                                categories[index].name,
+                                categories[index].image);
+                          },
+                          childCount: categories.length,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
       bottomNavigationBar: Container(
@@ -600,18 +593,18 @@ class _MyHomePageState extends State<MyHomePage>
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
                 height: MediaQuery.of(context).size.height * 0.11,
-                padding: const EdgeInsets.all(1.5),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10.0),
                   border: Border.all(color: Colors.white),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.shade400,
+                      color: Colors.grey.shade300,
                       spreadRadius: 0,
                       blurRadius: 1,
                     ),
@@ -849,14 +842,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _isMounted = true;
-  }
-
-  @override
-  void dispose() {
-    _buttonController.dispose();
-    _isMounted = false;
-    super.dispose();
   }
 }
 
@@ -933,10 +918,10 @@ class Highlights extends StatelessWidget {
 }
 
 class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
-  final String? title; // Make the title parameter optional
+  final int randomNumber; // Make the title parameter optional
   //final _MyHomePageState homePageState; // Add this line
 
-  const HomeScreenAppBar({this.title, super.key});
+  const HomeScreenAppBar({required this.randomNumber, super.key});
 
   Future<void> signOutUser(BuildContext context) async {
     // Clear the data in "customerId" key
@@ -992,7 +977,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>();
+    //var cart = context.watch<CartModel>();
     return GestureDetector(
       // GestureDetector captures taps on the screen
       onTap: () {
@@ -1000,6 +985,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
         FocusScope.of(context).unfocus();
       },
       child: AppBar(
+        surfaceTintColor: Colors.white,
         elevation: 0,
         automaticallyImplyLeading:
             false, // This line removes the default back button
@@ -1015,16 +1001,49 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   height: 40.0, // Set height of the container
                   width: 40.0, // Set width of the container
                   decoration: const BoxDecoration(
-                      // Background color of the container
-                      shape: BoxShape.circle,
-                      color: Colors.transparent // Circular shape
-                      ),
+                    // Background color of the container
+                    shape: BoxShape.circle,
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [
+                        Colors.deepPurpleAccent,
+                        Colors.purpleAccent
+                      ], // Gradient colors
+                    ), // Circular shape
+                  ),
                   child: IconButton(
-                      icon: const Icon(Icons.electric_bolt_rounded),
-                      color: Colors.transparent, // Icon color
-                      onPressed: () {}),
+                      icon: const Icon(Icons.person),
+                      color: Colors.white, // Icon color
+                      onPressed: () {
+                        context.push('/setting');
+                      }),
                 ),
-                const Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment
+                      .spaceEvenly, // Align content to the start of the Row
+
+                  children: [
+                    // Spacing between icon and text
+                    Text(
+                      "Delivery in $randomNumber minutes",
+                      style: GoogleFonts.cantoraOne(
+                          fontSize: 24,
+                          fontStyle: FontStyle.normal,
+                          color: Colors.black),
+                      maxLines:
+                          1, // Ensures the text does not wrap to more than one line
+                      // Add ellipsis when text overflows
+                    ),
+
+                    Image.asset(
+                      "assets/images/scooter.jpg", // Path to your scooter image
+                      height: 50, // Set an appropriate height for the icon
+                    ),
+                  ],
+                ),
+
+                /*
                 Container(
                   padding: const EdgeInsets.only(left: 0.0),
                   margin: const EdgeInsets.symmetric(horizontal: 0.0),
@@ -1075,6 +1094,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                         context.push('/setting');
                       }),
                 )
+                */
               ],
             ),
             const SizedBox(
