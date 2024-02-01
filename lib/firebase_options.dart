@@ -45,17 +45,17 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBk9wQmxeSLkjpIOrZqg4Uog43xDMDODrA',
-    appId: '1:710742246558:web:ddb0e70f5fe5f1647ce78f',
+    appId: '1:710742246558:web:88ae9fdf9b223f8a7ce78f',
     messagingSenderId: '710742246558',
     projectId: 'seismic-ground-410711',
     authDomain: 'seismic-ground-410711.firebaseapp.com',
     storageBucket: 'seismic-ground-410711.appspot.com',
-    measurementId: 'G-WQ4KKCME8T',
+    measurementId: 'G-280H75LELP',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCYyFAaJ8LayV6v31aKionhtsw5vLMMu4A',
-    appId: '1:710742246558:android:4028b74eee7ecbba7ce78f',
+    appId: '1:710742246558:android:fed7946ba52595de7ce78f',
     messagingSenderId: '710742246558',
     projectId: 'seismic-ground-410711',
     storageBucket: 'seismic-ground-410711.appspot.com',
@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyADBoJaUlQJ03BkglRinwT9yYnNXDmyWOE',
-    appId: '1:710742246558:ios:2deb48a2712e25f67ce78f',
+    appId: '1:710742246558:ios:305c983c39d2944a7ce78f',
     messagingSenderId: '710742246558',
     projectId: 'seismic-ground-410711',
     storageBucket: 'seismic-ground-410711.appspot.com',
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyADBoJaUlQJ03BkglRinwT9yYnNXDmyWOE',
-    appId: '1:710742246558:ios:7a3963655f076b667ce78f',
+    appId: '1:710742246558:ios:1e58d7bcd1d643107ce78f',
     messagingSenderId: '710742246558',
     projectId: 'seismic-ground-410711',
     storageBucket: 'seismic-ground-410711.appspot.com',

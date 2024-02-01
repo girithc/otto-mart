@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:packer/firebase_options.dart';
 import 'package:packer/pack/scanner.dart';
 import 'package:packer/quick-add/listen-barcode.dart';
 import 'package:packer/shelf/shelf.dart';
@@ -25,7 +24,8 @@ Future<void> main() async {
   if (Firebase.apps.isEmpty) {
     // Check if any Firebase apps have been initialized
     await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform);
+        //options: DefaultFirebaseOptions.currentPlatform
+        );
   }
   runApp(
     ChangeNotifierProvider(
