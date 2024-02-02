@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -27,6 +30,8 @@ import 'login/login_status_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
   const storage = FlutterSecureStorage();
   String? initialCustomerId = await storage.read(key: 'customerId');
 
@@ -116,10 +121,46 @@ class _MyAppState extends State<MyApp> {
 
   @override
   void initState() {
+    init();
     super.initState();
     isLoggedIn = widget.initialCustomerId != null;
     showAddress = true;
     routeObserver = CustomRouteObserver();
+  }
+
+  init() async {
+    String deviceToken = await getDeviceToken();
+    print("###### PRINT DEVICE TOKEN TO USE FOR PUSH NOTIFCIATION ######");
+    print(deviceToken);
+    print("############################################################");
+
+    // listen for user to click on notification
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage remoteMessage) {
+      String? title = remoteMessage.notification!.title;
+      String? description = remoteMessage.notification!.body;
+
+      //im gonna have an alertdialog when clicking from push notification
+      AlertDialog(
+        title: Text(title!),
+        content: Text(description!),
+        actions: <Widget>[
+          TextButton(
+            child: Text("OK"),
+            onPressed: () {
+              // Close the dialog
+              Navigator.of(context).pop();
+            },
+          ),
+          TextButton(
+            child: Text("Cancel"),
+            onPressed: () {
+              // Close the dialog
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    });
   }
 
   @override
@@ -161,6 +202,20 @@ class _MyAppState extends State<MyApp> {
         },
       ),
     );
+  }
+
+  //get device token to use for push notification
+  Future getDeviceToken() async {
+    //request user permission for push notification
+    FirebaseMessaging.instance.requestPermission();
+
+    if (Platform.isIOS) {
+      var iosToken = await FirebaseMessaging.instance.getAPNSToken();
+      print("aps : $iosToken");
+    }
+    FirebaseMessaging firebaseMessage = FirebaseMessaging.instance;
+    String? deviceToken = await firebaseMessage.getToken();
+    return (deviceToken == null) ? "" : deviceToken;
   }
 }
 

@@ -25,7 +25,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        return macos;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for macos - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
@@ -45,12 +48,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBk9wQmxeSLkjpIOrZqg4Uog43xDMDODrA',
-    appId: '1:710742246558:web:ddb0e70f5fe5f1647ce78f',
+    appId: '1:710742246558:web:88ae9fdf9b223f8a7ce78f',
     messagingSenderId: '710742246558',
     projectId: 'seismic-ground-410711',
     authDomain: 'seismic-ground-410711.firebaseapp.com',
     storageBucket: 'seismic-ground-410711.appspot.com',
-    measurementId: 'G-WQ4KKCME8T',
+    measurementId: 'G-280H75LELP',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -68,14 +71,5 @@ class DefaultFirebaseOptions {
     projectId: 'seismic-ground-410711',
     storageBucket: 'seismic-ground-410711.appspot.com',
     iosBundleId: 'com.otto.pronto',
-  );
-
-  static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyADBoJaUlQJ03BkglRinwT9yYnNXDmyWOE',
-    appId: '1:710742246558:ios:eef50ee154e280377ce78f',
-    messagingSenderId: '710742246558',
-    projectId: 'seismic-ground-410711',
-    storageBucket: 'seismic-ground-410711.appspot.com',
-    iosBundleId: 'com.example.pronto.RunnerTests',
   );
 }

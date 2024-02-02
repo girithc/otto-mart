@@ -319,7 +319,7 @@ class _MyHomePageState extends State<MyHomePage>
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      flex: 15, // Flex 3 for the address
+                                      flex: 20, // Flex 3 for the address
                                       child: GestureDetector(
                                         onTap: () {
                                           context.go('/select-address');
@@ -455,26 +455,23 @@ class _MyHomePageState extends State<MyHomePage>
                         },
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      sliver: SliverGrid(
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 4,
-                          crossAxisSpacing: 2,
-                          mainAxisSpacing: 4,
-                          childAspectRatio: 0.66,
-                        ),
-                        delegate: SliverChildBuilderDelegate(
-                          (BuildContext context, int index) {
-                            return _buildCategoryContainer(
-                                context,
-                                categories[index].id,
-                                categories[index].name,
-                                categories[index].image);
-                          },
-                          childCount: categories.length,
-                        ),
+                    SliverGrid(
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 4,
+                        crossAxisSpacing: 2,
+                        mainAxisSpacing: 4,
+                        childAspectRatio: 0.64,
+                      ),
+                      delegate: SliverChildBuilderDelegate(
+                        (BuildContext context, int index) {
+                          return _buildCategoryContainer(
+                              context,
+                              categories[index].id,
+                              categories[index].name,
+                              categories[index].image);
+                        },
+                        childCount: categories.length,
                       ),
                     ),
                   ],
@@ -482,7 +479,11 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.only(bottom: 22, top: 0, left: 15, right: 15),
+        padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).size.height * 0.015,
+            top: 0,
+            left: 15,
+            right: 15),
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white, width: 1),
@@ -588,16 +589,16 @@ class _MyHomePageState extends State<MyHomePage>
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.only(left: 2, right: 2, bottom: 0),
+        padding: const EdgeInsets.only(left: 0, right: 0, bottom: 0),
         color: Colors.white,
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                height: MediaQuery.of(context).size.height * 0.11,
-                padding: const EdgeInsets.all(8),
+                height: MediaQuery.of(context).size.height * 0.10,
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10.0),
@@ -613,19 +614,24 @@ class _MyHomePageState extends State<MyHomePage>
                 child: Image.network(
                   image,
                   fit: BoxFit.cover,
-                  height: MediaQuery.of(context).size.height * 0.12,
                 ),
               ),
               SizedBox(
-                height: MediaQuery.of(context).size.height * 0.04,
-                child: Text(
-                  categoryName,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      height: 1.3,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black), // Adjusting the line spacing here
+                height: MediaQuery.of(context).size.height * 0.01,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.06,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Text(
+                    categoryName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        height: 1.3,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black), // Adjusting the line spacing here
+                  ),
                 ),
               ),
             ],
@@ -1042,59 +1048,6 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                   ],
                 ),
-
-                /*
-                Container(
-                  padding: const EdgeInsets.only(left: 0.0),
-                  margin: const EdgeInsets.symmetric(horizontal: 0.0),
-                  child: TextButton(
-                    onPressed: () {
-                      //homePageState._openBottomSheet();
-                    },
-                    child: ShaderMask(
-                      shaderCallback: (bounds) => const RadialGradient(
-                              center: Alignment.topLeft,
-                              radius: 1.0,
-                              colors: [
-                                Colors.deepPurple,
-                                Colors.deepPurpleAccent
-                              ],
-                              tileMode: TileMode.mirror)
-                          .createShader(bounds),
-                      child: const Text(
-                        'Otto Mart',
-                        style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white),
-                      ),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  height: 40.0, // Set height of the container
-                  width: 40.0, // Set width of the container
-                  decoration: const BoxDecoration(
-                    // Background color of the container
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.black45,
-                        Colors.black87
-                      ], // Gradient colors
-                    ), // Circular shape
-                  ),
-                  child: IconButton(
-                      icon: const Icon(Icons.person),
-                      color: Colors.white, // Icon color
-                      onPressed: () {
-                        context.push('/setting');
-                      }),
-                )
-                */
               ],
             ),
             const SizedBox(

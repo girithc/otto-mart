@@ -302,7 +302,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
             crossAxisCount: 2,
             mainAxisSpacing: 0.0,
             crossAxisSpacing: 0.0,
-            childAspectRatio: 0.618),
+            childAspectRatio: 0.64),
         itemCount: items.length,
         itemBuilder: (context, index) {
           return ListItem2(
@@ -470,14 +470,14 @@ class ListItem2 extends StatelessWidget {
                     left: 3,
                   )
                 : const EdgeInsets.only(top: 3, left: 3.0, right: 3.0),
-            padding: EdgeInsets.only(bottom: 5),
+            padding: const EdgeInsets.only(bottom: 5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.only(
-                      top: 30, bottom: 10, left: 15, right: 15),
-                  height: MediaQuery.of(context).size.height * 0.16,
+                      top: 25, bottom: 10, left: 10, right: 10),
+                  height: MediaQuery.of(context).size.height * 0.15,
                   child: Center(
                     child: Image.network(
                       image,
@@ -500,11 +500,11 @@ class ListItem2 extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: 1),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  margin: const EdgeInsets.only(top: 2.0),
                   alignment: Alignment.centerLeft,
-                  height: MediaQuery.of(context).size.height * 0.05,
+                  height: 37,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(1.0),
@@ -523,12 +523,13 @@ class ListItem2 extends StatelessWidget {
                     ),
                   ),
                 ),
+                SizedBox(height: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
                   margin: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
-                  height: MediaQuery.of(context).size.height * 0.02,
+                  height: 18,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(1.0),
@@ -540,10 +541,10 @@ class ListItem2 extends StatelessWidget {
                         fontSize: 13, fontWeight: FontWeight.w600, height: 1.2),
                   ),
                 ),
-                const Spacer(),
+                SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.only(left: 8.0),
-                  height: MediaQuery.of(context).size.height * 0.05,
+                  height: 40,
                   margin: const EdgeInsets.only(top: 0),
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -553,21 +554,23 @@ class ListItem2 extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Column(children: [
-                        Text(
-                          '$mrpPrice',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            decoration: TextDecoration.lineThrough,
-                            decorationColor: Colors.black54,
-                          ),
-                        ),
-                        Text(
-                          '\u{20B9}$storePrice',
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w600),
-                        ),
-                      ]),
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$mrpPrice',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '\u{20B9}$storePrice',
+                              style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                          ]),
                       itemIndexInCart != -1
                           ? Container(
                               width: 80,
@@ -681,8 +684,8 @@ class ListItem2 extends StatelessWidget {
             ),
           ),
           Positioned(
-            top: 5, // Adjust the position as needed
-            left: 5, // Adjust the position as needed
+            top: 6, // Adjust the position as needed
+            left: 6, // Adjust the position as needed
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
               decoration: BoxDecoration(
