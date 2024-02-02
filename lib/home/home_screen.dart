@@ -1025,28 +1025,22 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                         context.push('/setting');
                       }),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment
-                      .spaceEvenly, // Align content to the start of the Row
-
-                  children: [
-                    // Spacing between icon and text
-                    Text(
-                      "Delivery in $randomNumber minutes",
-                      style: GoogleFonts.cantoraOne(
-                          fontSize: 24,
-                          fontStyle: FontStyle.normal,
-                          color: Colors.black),
-                      maxLines:
-                          1, // Ensures the text does not wrap to more than one line
-                      // Add ellipsis when text overflows
-                    ),
-
-                    Image.asset(
-                      "assets/images/scooter.jpg", // Path to your scooter image
-                      height: 50, // Set an appropriate height for the icon
-                    ),
-                  ],
+                SizedBox(
+                  width: 10,
+                ),
+                Text(
+                  "Delivery in $randomNumber minutes",
+                  style: GoogleFonts.cantoraOne(
+                      fontSize: 24,
+                      fontStyle: FontStyle.normal,
+                      color: Colors.black),
+                  maxLines:
+                      1, // Ensures the text does not wrap to more than one line
+                  // Add ellipsis when text overflows
+                ),
+                Image.asset(
+                  "assets/images/scooter.jpg", // Path to your scooter image
+                  height: 50, // Set an appropriate height for the icon
                 ),
               ],
             ),
