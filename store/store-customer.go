@@ -25,6 +25,7 @@ func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
                 (CHAR_LENGTH(merchant_user_id) <= 36 AND merchant_user_id ~ '^[A-Za-z0-9_-]*$')
             ),
             token UUID NULL,  
+			fcm TEXT NULL,
             role VARCHAR(20) NOT NULL DEFAULT 'Customer' CHECK (role IN ('Customer', 'Manager')), 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );`
@@ -50,6 +51,13 @@ func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
                 WHERE table_name = 'customer' AND column_name = 'role'
             ) THEN
                 ALTER TABLE customer ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'Customer' CHECK (role IN ('Customer', 'Manager'));
+            END IF;
+
+			IF NOT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'customer' AND column_name = 'fcm'
+            ) THEN
+                ALTER TABLE customer ADD COLUMN fcm TEXT UNIQUE NULL;
             END IF;
         END
         $$;`
@@ -140,7 +148,7 @@ func (s *PostgresStore) SendOtpMSG91(phone int) (*types.SendOTPResponse, error) 
 	return &response, nil
 }
 
-func (s *PostgresStore) VerifyOtpMSG91(phone string, otp int) (*types.VerifyOTPResponse, error) {
+func (s *PostgresStore) VerifyOtpMSG91(phone string, otp int, fcm string) (*types.CustomerLogin, error) {
 	// Construct the URL with query parameters
 	url := fmt.Sprintf("https://control.msg91.com/api/v5/otp/verify?mobile=91%s&otp=%d", phone, otp)
 
@@ -172,24 +180,19 @@ func (s *PostgresStore) VerifyOtpMSG91(phone string, otp int) (*types.VerifyOTPR
 	if otpresponse.Type == "success" { // Replace `Success` with the actual field name indicating success in your `VerifyOTPResponse` struct
 		// OTP verified successfully, proceed to fetch customer details
 		var response types.CustomerLogin
-		customerPtr, err := s.GetCustomerByPhone(phone)
+		customerPtr, err := s.GetCustomerByPhone(phone, fcm)
 		if err != nil {
 			return nil, err
 		}
 
-		if customerPtr != nil {
-			response.Customer = *customerPtr // Dereference the pointer
-			response.Message = otpresponse.Message
-			response.Type = otpresponse.Type
-		} else {
-			// handle the case where customer is not found, if necessary
-		}
+		response.Customer = *customerPtr // Dereference the pointer
+		response.Message = otpresponse.Message
+		response.Type = otpresponse.Type
+		return &response, nil
 	} else {
 		// OTP verification failed
 		return nil, fmt.Errorf("OTP verification failed")
 	}
-
-	return nil, nil
 }
 
 func (s *PostgresStore) AuthenticateCustomer(phone string, token uuid.UUID) (bool, error) {
@@ -213,7 +216,7 @@ func (s *PostgresStore) AuthenticateCustomer(phone string, token uuid.UUID) (boo
 }
 
 // Combined Create_Customer and Create_Shopping_Cart
-func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Customer_Login, error) {
+func (s *PostgresStore) Create_Customer(phone string, fcm string) (*types.Customer_Login, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -226,7 +229,7 @@ func (s *PostgresStore) Create_Customer(user *types.Create_Customer) (*types.Cus
 		}
 	}()
 
-	phoneNumberStr := user.Phone
+	phoneNumberStr := phone
 
 	// Create the customer
 	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at, merchant_user_id`
@@ -296,32 +299,82 @@ func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 	return customers, nil
 }
 
-func (s *PostgresStore) GetCustomerByPhone(phone string) (*types.Customer_Login, error) {
+func (s *PostgresStore) GetCustomerByPhone(phone string, fcm string) (*types.Customer_Login, error) {
 	fmt.Println("Started Get_Customer_By_Phone")
-	query := `
-        SELECT *
-        FROM customer
-        WHERE phone = $1
-    `
-	phoneNumberStr := phone
 
-	row := s.db.QueryRow(query, phoneNumberStr)
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // Ensure rollback in case of failure
 
-	fmt.Println("I Query Successful")
+	// Clear FCM for any customer that might have it
+	clearFCMSQL := `UPDATE customer SET fcm = NULL WHERE fcm = $1`
+	if _, err := tx.Exec(clearFCMSQL, fcm); err != nil {
+		return nil, err
+	}
+
+	// Update FCM for the customer with the given phone and fetch necessary fields
+	updateFCMSQL := `
+        UPDATE customer 
+        SET fcm = $1 
+        WHERE phone = $2 
+        RETURNING id, name, phone, address, merchant_user_id, created_at, token`
+	row := tx.QueryRow(updateFCMSQL, fcm, phone)
 
 	var customer types.Customer_Login
 	var merchantUserID sql.NullString
+	var token sql.NullString
 
-	err := row.Scan(
+	err = row.Scan(
 		&customer.ID,
 		&customer.Name,
 		&customer.Phone,
 		&customer.Address,
 		&merchantUserID,
 		&customer.Created_At,
+		&token,
 	)
 
-	fmt.Println("II Row Scan Successful")
+	if err == sql.ErrNoRows {
+		newToken, _ := uuid.NewUUID()                // Generate a new UUID for the token
+		merchantTransactionID := uuid.New().String() // Generate a new UUID for the merchant_user_id
+		insertSQL := `
+            INSERT INTO customer (name, phone, address, merchant_user_id, token, fcm)
+            VALUES ('', $1, '', $2, $3, $4)
+            RETURNING id, name, phone, address, merchant_user_id, created_at, token`
+		row = tx.QueryRow(insertSQL, phone, merchantTransactionID, newToken, fcm)
+
+		// Scan the new customer data
+		err = row.Scan(
+			&customer.ID,
+			&customer.Name,
+			&customer.Phone,
+			&customer.Address,
+			&merchantUserID,
+			&customer.Created_At,
+			&token,
+		)
+		if err != nil {
+			return nil, err
+		}
+		customer.Token = newToken
+	} else if err != nil {
+		return nil, err
+	}
+
+	// Check if token needs to be generated
+	if !token.Valid || token.String == "" {
+		newToken, _ := uuid.NewUUID() // Generate a new UUID for the token
+		updateTokenSQL := `UPDATE customer SET token = $1 WHERE id = $2`
+		if _, err := tx.Exec(updateTokenSQL, newToken, customer.ID); err != nil {
+			return nil, err
+		}
+		customer.Token = newToken // Set the newly generated token in the customer object
+	} else {
+		customer.Token = uuid.MustParse(token.String) // Use the existing token if valid
+	}
 
 	if merchantUserID.Valid {
 		customer.MerchantUserID = merchantUserID.String
@@ -329,22 +382,12 @@ func (s *PostgresStore) GetCustomerByPhone(phone string) (*types.Customer_Login,
 		customer.MerchantUserID = "" // or keep as a default value if needed
 	}
 
-	if err == sql.ErrNoRows {
-		return nil, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	tx, err := s.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
 
+	fmt.Println("Transaction Successful")
 	return &customer, nil
 }
 

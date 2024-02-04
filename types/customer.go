@@ -25,6 +25,7 @@ type CustomerLogin struct {
 type MobileOtp struct {
 	Phone string `json:"phone"`
 	Otp   int    `json:"otp"`
+	FCM   string `json:"fcm"`
 }
 
 // Basic
@@ -49,6 +50,11 @@ type Customer_Login struct {
 
 type Create_Customer struct {
 	Phone string `json:"phone"`
+}
+
+type CustomerFCM struct {
+	Phone string `json:"phone"`
+	FCM   string `json:"fcm"`
 }
 
 type Update_Customer struct {
