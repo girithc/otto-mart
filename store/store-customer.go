@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
@@ -112,16 +113,22 @@ func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
 	return true, nil
 }
 
-func (s *PostgresStore) SendOtpMSG91(phone int) (*types.SendOTPResponse, error) {
+func (s *PostgresStore) SendOtpMSG91(phone string) (*types.SendOTPResponse, error) {
 	// Prepare the URL and headers
-	if phone == 1234567890 {
+	if phone == "1234567890" {
 		// Return a mock response
 		return &types.SendOTPResponse{
 			Type:      "test",
 			RequestId: "test",
 		}, nil
 	}
-	url := "https://control.msg91.com/api/v5/otp?template_id=6562ddc2d6fc0517bc535382&mobile=91" + fmt.Sprintf("%d", phone)
+	phoneInt, err := strconv.Atoi(phone)
+	if err != nil {
+		// Handle error if the phone number is not a valid integer
+		return nil, err
+	}
+
+	url := "https://control.msg91.com/api/v5/otp?template_id=6562ddc2d6fc0517bc535382&mobile=91" + fmt.Sprintf("%d", phoneInt)
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
 		return nil, err

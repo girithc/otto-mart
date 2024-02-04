@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/girithc/pronto-go/types"
@@ -22,13 +21,7 @@ func (s *Server) handleSendOtpMSG91(res http.ResponseWriter, req *http.Request) 
 		return err
 	}
 
-	phoneInt, err := strconv.Atoi(new_req.Phone)
-	if err != nil {
-		// Handle the error if the phone number is not a valid integer
-		return fmt.Errorf("invalid phone number format: %v", err)
-	}
-
-	result, err := s.store.SendOtpMSG91(phoneInt)
+	result, err := s.store.SendOtpMSG91(new_req.Phone)
 	if err != nil {
 		return err
 	}
