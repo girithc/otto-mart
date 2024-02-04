@@ -2,6 +2,8 @@ package types
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type SendOTPResponse struct {
@@ -14,9 +16,15 @@ type VerifyOTPResponse struct {
 	Type    string `json:"type"`
 }
 
+type CustomerLogin struct {
+	Message  string `json:"message"`
+	Type     string `json:"type"`
+	Customer Customer_Login
+}
+
 type MobileOtp struct {
-	Phone int `json:"phone"`
-	Otp   int `json:"otp"`
+	Phone string `json:"phone"`
+	Otp   int    `json:"otp"`
 }
 
 // Basic
@@ -36,6 +44,7 @@ type Customer_Login struct {
 	Address        string    `json:"address"`
 	MerchantUserID string    `json:"merchant_user_id"`
 	Created_At     time.Time `json:"created_at"`
+	Token          uuid.UUID `json:"token"`
 }
 
 type Create_Customer struct {

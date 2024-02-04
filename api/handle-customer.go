@@ -67,10 +67,9 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 	if err != nil {
 		return err
 	}
-
 	// Check if User Exists
 
-	user, err := s.store.Get_Customer_By_Phone(new_user.Phone)
+	user, err := s.store.GetCustomerByPhone(new_user.Phone)
 	if err != nil {
 		print("Get Customer Error")
 		print(err)
@@ -137,7 +136,7 @@ func (s *Server) HandleVerifyCustomerLogin(res http.ResponseWriter, req *http.Re
 	}
 
 	// Check if User Exists
-	user, err := s.store.Get_Customer_By_Phone(new_req.Phone)
+	user, err := s.store.GetCustomerByPhone(new_req.Phone)
 	if err != nil {
 		return err
 	}

@@ -13,22 +13,53 @@ import (
 )
 
 func (s *PostgresStore) CreateCustomerTable(tx *sql.Tx) error {
-	query := `
+	// Updated table creation query with role column
+	createTableQuery := `
         CREATE TABLE IF NOT EXISTS customer(
             id SERIAL PRIMARY KEY,
             name VARCHAR(100) NOT NULL,
-            phone VARCHAR(10) UNIQUE NOT NULL, 
+            phone VARCHAR(10) UNIQUE NOT NULL,
             address TEXT NOT NULL,
             merchant_user_id VARCHAR(36) UNIQUE NULL CHECK (
                 merchant_user_id IS NULL OR 
                 (CHAR_LENGTH(merchant_user_id) <= 36 AND merchant_user_id ~ '^[A-Za-z0-9_-]*$')
             ),
-			
+            token UUID NULL,  
+            role VARCHAR(20) NOT NULL DEFAULT 'Customer' CHECK (role IN ('Customer', 'Manager')), 
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )`
+        );`
 
-	_, err := tx.Exec(query)
-	return err
+	_, err := tx.Exec(createTableQuery)
+	if err != nil {
+		return err // Return error if CREATE TABLE fails
+	}
+
+	// Check if the 'role' column exists and add it if not, along with the 'token' column check
+	checkAndAlterQuery := `
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'customer' AND column_name = 'token'
+            ) THEN
+                ALTER TABLE customer ADD COLUMN token UUID NULL;
+            END IF;
+
+            IF NOT EXISTS (
+                SELECT FROM information_schema.columns 
+                WHERE table_name = 'customer' AND column_name = 'role'
+            ) THEN
+                ALTER TABLE customer ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'Customer' CHECK (role IN ('Customer', 'Manager'));
+            END IF;
+        END
+        $$;`
+
+	_, err = tx.Exec(checkAndAlterQuery)
+	if err != nil {
+		return err // Return error if the check/alter operation fails
+	}
+
+	return nil // Return nil if everything succeeds
 }
 
 func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
@@ -109,9 +140,9 @@ func (s *PostgresStore) SendOtpMSG91(phone int) (*types.SendOTPResponse, error) 
 	return &response, nil
 }
 
-func (s *PostgresStore) VerifyOtpMSG91(phone int, otp int) (*types.VerifyOTPResponse, error) {
+func (s *PostgresStore) VerifyOtpMSG91(phone string, otp int) (*types.VerifyOTPResponse, error) {
 	// Construct the URL with query parameters
-	url := fmt.Sprintf("https://control.msg91.com/api/v5/otp/verify?mobile=91%d&otp=%d", phone, otp)
+	url := fmt.Sprintf("https://control.msg91.com/api/v5/otp/verify?mobile=91%s&otp=%d", phone, otp)
 
 	// Create a new request
 	req, err := http.NewRequest("GET", url, nil)
@@ -132,12 +163,53 @@ func (s *PostgresStore) VerifyOtpMSG91(phone int, otp int) (*types.VerifyOTPResp
 	defer resp.Body.Close()
 
 	// Parse the JSON response
-	var response types.VerifyOTPResponse
-	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+	var otpresponse types.VerifyOTPResponse
+	if err := json.NewDecoder(resp.Body).Decode(&otpresponse); err != nil {
 		return nil, err
 	}
 
-	return &response, nil
+	// Check if OTP verification was successful
+	if otpresponse.Type == "success" { // Replace `Success` with the actual field name indicating success in your `VerifyOTPResponse` struct
+		// OTP verified successfully, proceed to fetch customer details
+		var response types.CustomerLogin
+		customerPtr, err := s.GetCustomerByPhone(phone)
+		if err != nil {
+			return nil, err
+		}
+
+		if customerPtr != nil {
+			response.Customer = *customerPtr // Dereference the pointer
+			response.Message = otpresponse.Message
+			response.Type = otpresponse.Type
+		} else {
+			// handle the case where customer is not found, if necessary
+		}
+	} else {
+		// OTP verification failed
+		return nil, fmt.Errorf("OTP verification failed")
+	}
+
+	return nil, nil
+}
+
+func (s *PostgresStore) AuthenticateCustomer(phone string, token uuid.UUID) (bool, error) {
+	// SQL query to check if there's a customer record matching the phone number and UUID token
+	query := `
+        SELECT EXISTS (
+            SELECT 1 FROM customer
+            WHERE phone = $1 AND token = $2
+        );`
+
+	var isAuthenticated bool
+	// Execute the query, passing in the phone and token as parameters
+	err := s.db.QueryRow(query, phone, token).Scan(&isAuthenticated)
+	if err != nil {
+		// If there's an error executing the query or scanning the result, return false and the error
+		return false, err
+	}
+
+	// Return true if a matching record is found, false otherwise
+	return isAuthenticated, nil
 }
 
 // Combined Create_Customer and Create_Shopping_Cart
@@ -224,7 +296,7 @@ func (s *PostgresStore) Get_All_Customers() ([]*types.Customer, error) {
 	return customers, nil
 }
 
-func (s *PostgresStore) Get_Customer_By_Phone(phone string) (*types.Customer_Login, error) {
+func (s *PostgresStore) GetCustomerByPhone(phone string) (*types.Customer_Login, error) {
 	fmt.Println("Started Get_Customer_By_Phone")
 	query := `
         SELECT *

@@ -26,7 +26,6 @@ func NewServer(listen_address string, store *store.PostgresStore, workerPool *wo
 func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	// http.HandleFunc("/gcloud/sign", gs.handleGoogleSignManager)
 
-	http.HandleFunc("/store/available", makeHTTPHandleFunc(s.handleStoreClient))
 	http.HandleFunc("/store", makeHTTPHandleFunc(s.handleStoreManager))
 
 	http.HandleFunc("/higher-level-category", makeHTTPHandleFunc(s.handleHigherLevelCategory))
@@ -77,7 +76,6 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/brand", makeHTTPHandleFunc(s.handleBrand))
 
 	http.HandleFunc("/store-sales-order", makeHTTPHandleFunc(s.handleStoreSalesOrder))
-	http.HandleFunc("/sales-order-store", makeHTTPHandleFunc(s.handleSalesOrderStore))
 	http.HandleFunc("/sales-order-details", makeHTTPHandleFunc(s.handleSalesOrderDetails))
 	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
 
