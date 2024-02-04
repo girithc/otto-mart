@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/payments/phonepe.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:pronto/cart/cart.dart';
@@ -60,13 +61,18 @@ class _PaymentsPageState extends State<PaymentsPage> {
     };
 
     try {
-      final response = await http.post(
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/checkout-cancel',
+          additionalData: payload);
+
+      /*final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: json.encode(payload),
       );
+      */
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
@@ -87,15 +93,19 @@ class _PaymentsPageState extends State<PaymentsPage> {
   Future<bool> processPayment(int cartId, bool cash) async {
     var headers = {'Content-Type': 'application/json'};
     var url = Uri.parse('$baseUrl/checkout-payment');
-    var body = json.encode({
+    final Map<String, dynamic> body = {
       "cart_id": cartId,
       "cash": cash,
       "sign": widget.sign,
       "merchant_transaction_id": widget.merchantTransactionID
-    });
+    };
 
     try {
-      var response = await http.post(url, headers: headers, body: body);
+      //var response = await http.post(url, headers: headers, body: body);
+
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/checkout-cancel',
+          additionalData: body);
 
       if (response.statusCode == 200) {
         var responseData = json.decode(response.body);

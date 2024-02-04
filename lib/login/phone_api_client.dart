@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class CustomerApiClient {
   CustomerApiClient(this.phone);
@@ -12,6 +13,7 @@ class CustomerApiClient {
       "phone": phone,
     };
 
+    /*
     final http.Response response = await http.post(
       Uri.parse('$baseUrl/login-customer'),
       headers: <String, String>{
@@ -19,6 +21,11 @@ class CustomerApiClient {
       },
       body: jsonEncode(requestData),
     );
+    */
+    final networkService = NetworkService();
+
+    final response = await networkService.postWithAuth('login-customer',
+        additionalData: requestData);
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);

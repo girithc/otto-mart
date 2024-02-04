@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class PaymentVerificationScreen extends StatefulWidget {
   const PaymentVerificationScreen(
@@ -36,7 +37,17 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
       // Retrieve cartId and customerId from secure storage
       String? cartId = await storage.read(key: "cartId");
       String? customerId = await storage.read(key: "customerId");
+      final Map<String, dynamic> body = {
+        "merchant_transaction_id": widget.merchantTransactionId,
+        "cart_id": int.parse(cartId!),
+        "phone": customerId
+      };
 
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/checkout-cancel',
+          additionalData: body);
+
+      /*
       final response = await http.post(
         Uri.parse('$baseUrl/payment-verify'),
         headers: <String, String>{
@@ -48,6 +59,7 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
           "phone": customerId
         }),
       );
+      */
 
       print(response.statusCode);
       print(response.body);

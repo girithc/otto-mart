@@ -11,6 +11,7 @@ import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -129,10 +130,17 @@ class _MyVerifyState extends State<MyVerify> {
         "phone": int.parse(phoneNumber),
         "otp": int.parse(otp)
       };
+
+      /*
       var response = await http.post(
         url,
         body: jsonEncode(requestData),
       );
+      */
+
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/verify-otp',
+          additionalData: requestData);
 
       if (response.statusCode == 200) {
         // Successfully sent OTP, parse the response

@@ -10,6 +10,7 @@ import 'package:pronto/cart/order/place_order_screen.dart';
 import 'package:pronto/payments/verify.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
@@ -121,6 +122,11 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
     };
 
     try {
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/checkout-cancel',
+          additionalData: payload);
+
+      /*
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
@@ -128,6 +134,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
         },
         body: json.encode(payload),
       );
+      */
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
@@ -150,19 +157,25 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
     int cartIdInt = int.parse(cartId!);
     var headers = {'Content-Type': 'application/json'};
     var request = http.Request('POST', Uri.parse('$baseUrl/checkout-payment'));
-    request.body = json.encode({
+    final Map<String, dynamic> body = {
       "cart_id": cartIdInt,
       "cash": false,
       "sign": widget.sign,
       "merchant_transaction_id": widget.merchantTransactionId
-    });
+    };
     request.headers.addAll(headers);
 
     try {
+      /*
       final http.Response response = await http.post(
           Uri.parse('$baseUrl/checkout-payment'),
           body: request.body,
           headers: headers);
+      */
+
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/checkout-payment',
+          additionalData: body);
 
       if (response.statusCode == 200) {
         final responseJson = json.decode(response.body);

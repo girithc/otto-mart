@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class SearchItemApiClient {
   SearchItemApiClient();
@@ -13,15 +14,21 @@ class SearchItemApiClient {
       throw Exception('(SearchItemApiClient) Parameters are not valid');
     }
 
-    var requestBody = jsonEncode({
+    final Map<String, dynamic> body = {
       'name': queryString,
-    });
+    };
 
+    final networkService = NetworkService();
+    final response =
+        await networkService.postWithAuth('/search-item', additionalData: body);
+
+    /*
     var response = await http.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: requestBody,
     );
+    */
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);

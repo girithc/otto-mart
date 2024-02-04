@@ -20,6 +20,7 @@ import 'package:pronto/plan/plan.dart';
 import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:pronto/utils/no_internet.dart';
 import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
@@ -253,6 +254,11 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
       "phone": phone,
     };
 
+    final networkService = NetworkService();
+    final response = await networkService.postWithAuth('/customer',
+        additionalData: requestData);
+
+    /*
     final http.Response response = await http.post(
       Uri.parse('$baseUrl/customer'),
       headers: <String, String>{
@@ -260,6 +266,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
       },
       body: jsonEncode(requestData),
     );
+    */
     print("Reponse for login: ${response.statusCode} ${response.body} ");
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);

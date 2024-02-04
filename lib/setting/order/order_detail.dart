@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final int salesOrderId;
@@ -26,6 +27,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Future<List<dynamic>> fetchOrderDetails() async {
     final customerId = await storage.read(key: 'customerId');
     final url = Uri.parse('$baseUrl/sales-order-details');
+    final Map<String, dynamic> body = {
+      'sales_order_id': widget.salesOrderId,
+      'customer_id': int.parse(customerId!)
+    };
+
+    final networkService = NetworkService();
+    final response = await networkService.postWithAuth('/sales-order-details',
+        additionalData: body);
+
+    /*
     final response = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
@@ -34,6 +45,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
         'customer_id': int.parse(customerId!)
       }),
     );
+    */
 
     if (response.statusCode == 200) {
       return json.decode(response.body);

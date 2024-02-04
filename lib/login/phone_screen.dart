@@ -7,6 +7,7 @@ import 'package:pronto/login/legal/terms.dart';
 import 'package:pronto/login/skip/skip_home.dart';
 import 'package:pronto/login/verify_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 // Main widget for phone number verification
 class MyPhone extends StatefulWidget {
@@ -52,14 +53,21 @@ class _MyPhoneState extends State<MyPhone> {
 
   Future<String?> sendOTP(String phoneNumber) async {
     try {
+      final networkService = NetworkService();
       // Send the HTTP request to send OTP
       var url = Uri.parse('$baseUrl/send-otp');
       final Map<String, dynamic> requestData = {"phone": phoneNumber};
+
+      /*
       var response = await http.post(
         url,
         body: jsonEncode(requestData),
         headers: {"Content-Type": "application/json"},
       );
+      */
+
+      final response = await networkService.postWithAuth('/send-otp',
+          additionalData: requestData);
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         return jsonResponse['type'];

@@ -9,6 +9,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/setting/order/order_detail.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class MyOrdersPage extends StatefulWidget {
   const MyOrdersPage({super.key});
@@ -39,10 +40,13 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
 
     try {
       var headers = {'Content-Type': 'application/json'};
-      var body = json.encode({"customer_id": int.parse(customerId)});
+      final Map<String, dynamic> body = {"customer_id": int.parse(customerId)};
       var url = Uri.parse('$baseUrl/sales-order');
 
-      var response = await http.post(url, headers: headers, body: body);
+      //var response = await http.post(url, headers: headers, body: body);
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/sales-order',
+          additionalData: body);
 
       if (response.statusCode == 200) {
         print("FetchOrder Response: ${response.body}");

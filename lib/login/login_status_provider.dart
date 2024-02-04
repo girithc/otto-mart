@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class LoginStatusProvider with ChangeNotifier {
   bool? isLoggedIn;
@@ -32,6 +33,12 @@ class LoginStatusProvider with ChangeNotifier {
       "phone": phone,
     };
 
+    final networkService = NetworkService();
+
+    final response = await networkService.postWithAuth('/customer',
+        additionalData: requestData);
+
+    /*
     final http.Response response = await http.post(
       Uri.parse('$baseUrl/customer'),
       headers: <String, String>{
@@ -39,6 +46,7 @@ class LoginStatusProvider with ChangeNotifier {
       },
       body: jsonEncode(requestData),
     );
+    */
     print("Reponse for login: ${response.statusCode} ${response.body} ");
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);
