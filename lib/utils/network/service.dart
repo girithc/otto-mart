@@ -1,16 +1,29 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:pronto/utils/constants.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class NetworkService {
   final String _baseUrl = baseUrl; // Base URL for the API
-  final String phone; // User's phone number
-  final String token; // Authentication token
+  String? phone; // User's phone number
+  String? token; // Authentication token
+  final storage = const FlutterSecureStorage();
 
-  NetworkService({required this.phone, required this.token});
+  NetworkService() {
+    _initialize();
+  }
+
+  // Asynchronously fetch phone and token from secure storage
+  Future<void> _initialize() async {
+    phone = await storage.read(key: 'customerId') ?? '';
+    token = await storage.read(key: 'token') ?? '';
+  }
 
   Future<http.Response> postWithAuth(String endpoint,
       {Map<String, dynamic>? additionalData}) async {
+    // Ensure initialization is complete before proceeding
+    await _initialize();
+
     final url = Uri.parse('$_baseUrl$endpoint');
     final headers = {'Content-Type': 'application/json'};
     Map<String, dynamic> body = {

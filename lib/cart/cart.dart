@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 
 class CartItem {
   final String productId;
@@ -97,6 +98,8 @@ class ItemInCart {
 
 class CartModel extends ChangeNotifier {
   final List<CartItem> _items = [];
+  final NetworkService _networkService = NetworkService();
+
   CartDetails? _cartDetails;
   int _deliveryPartnerTip = 0;
   late String customerId;
@@ -178,15 +181,16 @@ class CartModel extends ChangeNotifier {
       _logger.e('Failed to parse customerId: $customerId, error: $e ');
     }
 
-    //print("customer Id $parsedCustomerId");
-
     if (parsedCustomerId == null) return;
 
     final body = <String, dynamic>{
       'customer_id': parsedCustomerId,
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+    //http.post(url, headers: headers, body: jsonEncode(body)).then((response)
+    _networkService
+        .postWithAuth('/cart-item', additionalData: body)
+        .then((response) {
       //_logger.e('Response: $response');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
@@ -238,7 +242,10 @@ class CartModel extends ChangeNotifier {
       "is_default": true,
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+    //http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+    _networkService
+        .postWithAuth('/address', additionalData: body)
+        .then((response) {
       //_logger.e('Response: $response');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
@@ -292,7 +299,7 @@ class CartModel extends ChangeNotifier {
 
     print("Post Delivery $phone");
 
-    final body = <String, dynamic>{
+    final data = <String, dynamic>{
       'customer_id': phone,
       'street_address': flatBuildingName,
       'line_one': lineOne,
@@ -305,8 +312,10 @@ class CartModel extends ChangeNotifier {
     };
 
     try {
+      //final response = await http.post(url, headers: headers, body: jsonEncode(body));
+
       final response =
-          await http.post(url, headers: headers, body: jsonEncode(body));
+          await _networkService.postWithAuth('/address', additionalData: data);
 
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
@@ -355,47 +364,24 @@ class CartModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<Address> postAddress() async {
-    final Map<String, dynamic> requestData = {
-      //"phone": int.parse(phone),
-    };
-
-    final http.Response response = await http.post(
-      Uri.parse('$baseUrl/address'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(requestData),
-    );
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseBody = json.decode(response.body);
-      final Address addr = Address.fromJson(responseBody);
-      return addr;
-    } else {
-      throw Exception('Failed to login Customer');
-    }
-  }
-
   Future<void> addItemToCart(CartItem item) async {
-    //print("Add Item To Cart: $cartId");
-    final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      // Add any other headers you need
-    };
+    // Create an instance of NetworkService
+    final networkService = NetworkService();
 
     String? cartID = await storage.read(key: 'cartId');
 
-    final body = <String, dynamic>{
+    // Define the body for the POST request
+    final Map<String, dynamic> body = {
       'cart_id': int.parse(cartID!),
       'item_id': int.parse(item.productId),
       'quantity': 1,
       // Add any other parameters you need
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
-      //('HTTP POST response body: ${response.body}');
+    // Use NetworkService to make the authenticated POST request
+    networkService
+        .postWithAuth('/cart-item', additionalData: body)
+        .then((response) {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -412,21 +398,22 @@ class CartModel extends ChangeNotifier {
         _items.addAll(items);
         notifyListeners();
       } else {
+        // Log or handle the error
         _logger.e(
             'HTTP POST request failed with status code ${response.statusCode} ${response.body}');
       }
     }).catchError((error) {
+      // Handle any errors
       _logger.e('HTTP POST request error: $error');
     });
   }
 
   Future<void> removeItem({required String itemId}) async {
+    final networkService = NetworkService();
+
     //print("Remove Item From Cart");
-    final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-      // Add any other headers you need
-    };
+    //final url = Uri.parse('$baseUrl/cart-item'); // Replace with your server URL
+    //final headers = <String, String>{ 'Content-Type': 'application/json',};
     String? cartID = await storage.read(key: 'cartId');
 
     final body = <String, dynamic>{
@@ -436,8 +423,10 @@ class CartModel extends ChangeNotifier {
       // Add any other parameters you need
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
-      //print('HTTP POST response body: ${response.body}');
+    //http.post(url, headers: headers, body: jsonEncode(body)).then((response)
+    networkService
+        .postWithAuth('/cart-item', additionalData: body)
+        .then((response) {
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -526,6 +515,7 @@ class AddressModel extends ChangeNotifier {
   final List<Address> addrs = [];
   final String customerId;
   final Logger _logger = Logger();
+  final _networkService = NetworkService();
 
   AddressModel(this.customerId);
 
