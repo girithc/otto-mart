@@ -68,6 +68,9 @@ class _MyPhoneState extends State<MyPhone> {
 
       final response = await networkService.postWithAuth('/send-otp',
           additionalData: requestData);
+
+      print(response.statusCode);
+      print(response.body);
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         return jsonResponse['type'];

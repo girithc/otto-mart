@@ -24,9 +24,12 @@ class NetworkService {
     // Ensure initialization is complete before proceeding
     await _initialize();
 
+    phone = await storage.read(key: 'phone');
+    token = await storage.read(key: 'authToken');
+
     final url = Uri.parse('$_baseUrl$endpoint');
     final headers = {'Content-Type': 'application/json'};
-    Map<String, dynamic> body = {
+    Map<String, dynamic> authBody = {
       'phone_auth': phone,
       'token_auth': token,
     };
@@ -34,16 +37,15 @@ class NetworkService {
     // Add additional data if provided
     if (additionalData != null &&
         endpoint != '/login-customer' &&
-        endpoint != '/customer' &&
         endpoint != '/verify-otp' &&
         endpoint != '/send-otp') {
-      body.addAll(additionalData);
+      additionalData.addAll(authBody);
     }
 
     final response = await http.post(
       url,
       headers: headers,
-      body: json.encode(body),
+      body: json.encode(additionalData),
     );
 
     return response;

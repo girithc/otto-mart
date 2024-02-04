@@ -125,9 +125,11 @@ class _MyVerifyState extends State<MyVerify> {
       String phoneNumber, String otp) async {
     try {
       //var url = Uri.parse('$baseUrl/verify-otp');
+      final fcm = await storage.read(key: 'fcm');
       final Map<String, dynamic> requestData = {
-        "phone": int.parse(phoneNumber),
-        "otp": int.parse(otp)
+        "phone": phoneNumber,
+        "otp": int.parse(otp),
+        "fcm": fcm
       };
 
       final networkService = NetworkService();
@@ -135,9 +137,17 @@ class _MyVerifyState extends State<MyVerify> {
           additionalData: requestData);
 
       if (response.statusCode == 200) {
+        print(response.statusCode);
+        print(response.body);
         // Successfully verified OTP, parse the response
         Map<String, dynamic> jsonResponse = json.decode(response.body);
-        return CustomerLoginResponse.fromJson(jsonResponse);
+        final customerLoginResponse =
+            CustomerLoginResponse.fromJson(jsonResponse);
+        await storage.write(
+            key: 'authToken', value: customerLoginResponse.customer?.token);
+        await storage.write(
+            key: 'customerId', value: customerLoginResponse.customer?.phone);
+        return customerLoginResponse;
       } else {
         // Handle HTTP request error by creating a response with the error message
         return CustomerLoginResponse(
@@ -226,24 +236,13 @@ class _MyVerifyState extends State<MyVerify> {
                       isPinCorrect
                           ? verifyOTP(widget.number, otp).then((value) {
                               if (value!.type == 'success') {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                  content: Text('OTP verified'),
-                                  backgroundColor: Colors.green,
-                                ));
-                                loginCustomer().then((isSuccess) {
-                                  if (isSuccess) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AddressSelectionWidget(),
-                                      ),
-                                    );
-                                  } else {
-                                    // Show an error message to the user or handle the failure appropriately.
-                                  }
-                                });
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(),
+                                  ),
+                                );
                               } else {
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(const SnackBar(
@@ -307,25 +306,14 @@ class _MyVerifyState extends State<MyVerify> {
                     String otp = pinController.text;
                     isPinCorrect
                         ? verifyOTP(widget.number, otp).then((value) {
-                            if (value == 'success') {
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(const SnackBar(
-                                content: Text('OTP verified'),
-                                backgroundColor: Colors.green,
-                              ));
-                              loginCustomer().then((isSuccess) {
-                                if (isSuccess) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AddressSelectionWidget(),
-                                    ),
-                                  );
-                                } else {
-                                  // Show an error message to the user or handle the failure appropriately.
-                                }
-                              });
+                            if (value!.type == 'success') {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AddressSelectionWidget(),
+                                ),
+                              );
                             } else {
                               ScaffoldMessenger.of(context)
                                   .showSnackBar(const SnackBar(
@@ -401,25 +389,14 @@ class _MyVerifyState extends State<MyVerify> {
                       String otp = pinController.text;
                       isPinCorrect
                           ? verifyOTP(widget.number, otp).then((value) {
-                              if (value == 'success') {
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(const SnackBar(
-                                  content: Text('OTP verified'),
-                                  backgroundColor: Colors.green,
-                                ));
-                                loginCustomer().then((isSuccess) {
-                                  if (isSuccess) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AddressSelectionWidget(),
-                                      ),
-                                    );
-                                  } else {
-                                    // Show an error message to the user or handle the failure appropriately.
-                                  }
-                                });
+                              if (value!.type == 'success') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(),
+                                  ),
+                                );
                               } else {
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(const SnackBar(
@@ -498,7 +475,7 @@ class CustomerLoginResponse {
     return CustomerLoginResponse(
       message: json['message'],
       type: json['type'],
-      customer: CustomerLogin.fromJson(json['customer']),
+      customer: CustomerLogin.fromJson(json['Customer']),
     );
   }
 }

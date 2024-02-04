@@ -119,6 +119,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool? isLoggedIn;
   late CustomRouteObserver routeObserver;
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -135,6 +136,7 @@ class _MyAppState extends State<MyApp> {
     print(deviceToken);
     print("############################################################");
 
+    await storage.write(key: 'fcm', value: deviceToken);
     // listen for user to click on notification
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage remoteMessage) {
       String? title = remoteMessage.notification!.title;
