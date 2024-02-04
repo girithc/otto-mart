@@ -121,39 +121,31 @@ class _MyVerifyState extends State<MyVerify> {
     }
   }
 
-  Future<String?> verifyOTP(String phoneNumber, String otp) async {
+  Future<CustomerLoginResponse?> verifyOTP(
+      String phoneNumber, String otp) async {
     try {
-      // Define
-      // Send the HTTP request to send OTP
-      var url = Uri.parse('$baseUrl/verify-otp');
+      //var url = Uri.parse('$baseUrl/verify-otp');
       final Map<String, dynamic> requestData = {
         "phone": int.parse(phoneNumber),
         "otp": int.parse(otp)
       };
-
-      /*
-      var response = await http.post(
-        url,
-        body: jsonEncode(requestData),
-      );
-      */
 
       final networkService = NetworkService();
       final response = await networkService.postWithAuth('/verify-otp',
           additionalData: requestData);
 
       if (response.statusCode == 200) {
-        // Successfully sent OTP, parse the response
+        // Successfully verified OTP, parse the response
         Map<String, dynamic> jsonResponse = json.decode(response.body);
-
-        // Check the 'type' field in the response
-        return jsonResponse['type'];
+        return CustomerLoginResponse.fromJson(jsonResponse);
       } else {
-        // Handle HTTP request error
-        return response.reasonPhrase;
+        // Handle HTTP request error by creating a response with the error message
+        return CustomerLoginResponse(
+          message: response.reasonPhrase ?? "Unknown error",
+          type: "error",
+        );
       }
     } catch (error) {
-      // Handle other errors
       print('Error(Verify OTP): $error');
     }
     return null;
@@ -233,7 +225,7 @@ class _MyVerifyState extends State<MyVerify> {
                       String otp = pinController.text;
                       isPinCorrect
                           ? verifyOTP(widget.number, otp).then((value) {
-                              if (value == 'success') {
+                              if (value!.type == 'success') {
                                 ScaffoldMessenger.of(context)
                                     .showSnackBar(const SnackBar(
                                   content: Text('OTP verified'),
@@ -487,6 +479,59 @@ class _MyVerifyState extends State<MyVerify> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class CustomerLoginResponse {
+  final String message;
+  final String type;
+  CustomerLogin? customer;
+
+  CustomerLoginResponse({
+    required this.message,
+    required this.type,
+    this.customer,
+  });
+
+  factory CustomerLoginResponse.fromJson(Map<String, dynamic> json) {
+    return CustomerLoginResponse(
+      message: json['message'],
+      type: json['type'],
+      customer: CustomerLogin.fromJson(json['customer']),
+    );
+  }
+}
+
+class CustomerLogin {
+  final int id;
+  final String name;
+  final String phone;
+  final String address;
+  final String merchantUserID;
+  final DateTime createdAt;
+  final String
+      token; // Adjusted for Dart, as it doesn't have a built-in UUID type
+
+  CustomerLogin({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.address,
+    required this.merchantUserID,
+    required this.createdAt,
+    required this.token,
+  });
+
+  factory CustomerLogin.fromJson(Map<String, dynamic> json) {
+    return CustomerLogin(
+      id: json['id'],
+      name: json['name'],
+      phone: json['phone'],
+      address: json['address'],
+      merchantUserID: json['merchant_user_id'],
+      createdAt: DateTime.parse(json['created_at']),
+      token: json['token'],
     );
   }
 }

@@ -32,7 +32,11 @@ class NetworkService {
     };
 
     // Add additional data if provided
-    if (additionalData != null) {
+    if (additionalData != null &&
+        endpoint != '/login-customer' &&
+        endpoint != '/customer' &&
+        endpoint != '/verify-otp' &&
+        endpoint != '/send-otp') {
       body.addAll(additionalData);
     }
 
