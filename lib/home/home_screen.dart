@@ -21,6 +21,7 @@ import 'package:pronto/home/models/prediction_auto_complete.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/search/search_screen.dart';
 import 'package:pronto/utils/globals.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:pronto/item/category_items/category_items_screen.dart';
 
@@ -147,89 +148,6 @@ class _MyHomePageState extends State<MyHomePage>
     }
   }
 
-  Future<void> getAllAddresses() async {
-    final Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    };
-
-    final Map<String, dynamic> body = {
-      "customer_id":
-          int.parse(customerId) // Replace with the actual customer_id value
-    };
-
-    // Send the HTTP POST request
-    final http.Response response = await http.post(
-      Uri.parse("$baseUrl/address"),
-      headers: headers,
-      body: jsonEncode(body), // Convert the Map to a JSON string
-    );
-
-    // Check the response
-    if (response.statusCode == 200) {
-      if (response.body.isNotEmpty && response.contentLength! > 3) {
-        //print("address Response Not Empty ${response.contentLength}");
-        final List<dynamic> jsonData = json.decode(response.body);
-        final List<Address> items =
-            jsonData.map((item) => Address.fromJson(item)).toList();
-        setState(() {
-          print("Success $addresses");
-          addresses = items;
-          isLoadingGetAddress = false;
-        });
-      } else {
-        setState(() {
-          // print("Empty Response");
-          isLoadingGetAddress = false;
-        });
-        print("Error: ${response.reasonPhrase}");
-      }
-    }
-  }
-
-  Future<Address?> setDefaultAddress(int addressId) async {
-    final Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    };
-
-    final Map<String, dynamic> body = {
-      "customer_id": int.parse(customerId),
-      "address_id": addressId,
-      "is_default": true
-    };
-
-    try {
-      final http.Response response = await http.post(
-        Uri.parse("$baseUrl/address"),
-        headers: headers,
-        body: jsonEncode(body),
-      );
-
-      if (response.statusCode == 200) {
-        if (response.body.isNotEmpty) {
-          final decodedResponse = json.decode(response.body);
-          if (decodedResponse is Map) {
-            // Explicitly cast the response to Map<String, dynamic>
-            return Address.fromJson(Map<String, dynamic>.from(decodedResponse));
-          } else if (decodedResponse is List) {
-            // Handle the case where the response is a List
-            final List<Address> items = (decodedResponse)
-                .map(
-                    (item) => Address.fromJson(Map<String, dynamic>.from(item)))
-                .toList();
-            return items.isNotEmpty ? items[0] : null;
-          }
-        }
-      } else {
-        print("Error: ${response.reasonPhrase}");
-      }
-    } catch (e) {
-      print("Exception occurred: $e");
-    }
-    return null;
-  }
-
   Future<String?> getOrderStatus() async {
     return await storage.read(key: 'orderStatus');
   }
@@ -240,6 +158,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> _checkAddressAndLoginStatus() async {
+    final network = NetworkService();
     // Your HTTP request logic here
     var headers = {
       'Content-Type': 'application/json',
@@ -255,17 +174,15 @@ class _MyHomePageState extends State<MyHomePage>
     request.headers.addAll(headers);
 
     // Send the HTTP POST request
-    final http.Response response = await http.post(
-      Uri.parse("$baseUrl/address"),
-      headers: headers,
-      body: jsonEncode(body), // Convert the Map to a JSON string
-    );
+    //final http.Response response = await http.post(Uri.parse("$baseUrl/address"),headers: headers,body: jsonEncode(body),);
+
+    final response =
+        await network.postWithAuth('/address', additionalData: body);
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
       final List<Address> items =
           jsonData.map((item) => Address.fromJson(item)).toList();
-      //print("Address: $jsonData");
       setState(() {
         isLoading = false;
         print("Address Fetched ${items[0]}");
@@ -282,8 +199,6 @@ class _MyHomePageState extends State<MyHomePage>
 
     // Update the state to indicate loading is complete
   }
-
-  Future<void> getDefaultAddress() async {}
 
   @override
   Widget build(BuildContext context) {
@@ -639,210 +554,6 @@ class _MyHomePageState extends State<MyHomePage>
         ),
       ),
     );
-  }
-
-  Future<void> _showBottomSheet(BuildContext context, CartModel cart) async {
-    //var cart = context.watch<CartModel>(); // or context.watch<CartModel>();
-
-    getAllAddresses().then((_) {
-      showModalBottomSheet(
-        context: context,
-        isDismissible: false, // Prevent dismissing by tapping outside
-        enableDrag: false,
-        builder: (BuildContext context) {
-          return StatefulBuilder(
-            builder: (BuildContext context, StateSetter modalSetState) {
-              return Container(
-                padding: const EdgeInsets.all(10),
-                height: MediaQuery.of(context).size.height * 0.5,
-                width: MediaQuery.of(context).size.width * 0.90,
-                decoration: const BoxDecoration(
-                  // other decoration properties like color, border, etc.
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(10), // Adjust the radius as needed
-                    topRight:
-                        Radius.circular(10), // Adjust the radius as needed
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: MediaQuery.of(context).size.width * 0.80,
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 12, horizontal: 30),
-                      decoration: BoxDecoration(
-                        color: Colors.white, // Grey background
-                        borderRadius:
-                            BorderRadius.circular(10), // Rounded corners
-                        border: Border.all(
-                          color: Colors.deepPurpleAccent, // Border color
-                          width: 1.0, // Border width
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.black.withOpacity(0.2), // Shadow color
-                            spreadRadius: 1,
-                            blurRadius: 5,
-                            offset: const Offset(
-                                0, 3), // Changes position of shadow
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          "Select Address",
-                          style: TextStyle(fontSize: 20),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    Expanded(
-                      child: isLoadingGetAddress
-                          ? ListView.builder(
-                              itemCount:
-                                  5, // Display 5 skeleton items for example
-                              itemBuilder: (BuildContext context, int index) {
-                                return Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 10.0, horizontal: 15.0),
-                                  child: Container(
-                                    height: 20.0, // Height of the skeleton item
-                                    width: double.infinity,
-                                    color: Colors.grey[
-                                        300], // Light grey color for the skeleton
-                                  ),
-                                );
-                              },
-                            )
-                          : ListView.builder(
-                              itemCount: addresses.length +
-                                  2, // Two more than the addresses for the 'add' option and the current address
-                              itemBuilder: (BuildContext context, int index) {
-                                if (index == 0) {
-                                  return ListTile(
-                                    // <-- You missed the return here
-                                    leading:
-                                        const Icon(Icons.add), // An add icon
-                                    title: const Text("Add New Address"),
-                                    onTap: () {
-                                      Navigator.of(context)
-                                          .pushReplacement(MaterialPageRoute(
-                                        builder: (context) =>
-                                            const AddressScreen(),
-                                      ));
-                                    },
-                                  );
-                                } else if (index == 1) {
-                                  // Display the current address
-                                  return ListTile(
-                                    leading: const Text("Current"),
-                                    title: Text(
-                                      cart.deliveryAddress.streetAddress,
-                                      style:
-                                          const TextStyle(color: Colors.black),
-                                    ),
-                                  );
-                                } else {
-                                  return RadioListTile<int>(
-                                    value: index - 2,
-                                    groupValue: selectedAddressIndex,
-                                    onChanged: (int? value) {
-                                      modalSetState(() {
-                                        selectedAddressIndex = value;
-                                      });
-                                    },
-                                    title: Text(
-                                        addresses[index - 2].streetAddress),
-                                  );
-                                }
-                              },
-                            ),
-                    ),
-                    ElevatedButton(
-                      onPressed: () async {
-                        try {
-                          String snackBarMessage;
-                          if (selectedAddressIndex != null &&
-                              selectedAddressIndex! < addresses.length) {
-                            showAddress = false;
-                            setDefaultAddress(
-                                    addresses[selectedAddressIndex!].id)
-                                .then((address) {
-                              if (address != null) {
-                                cart.deliveryAddress = address;
-                              }
-                            });
-                            snackBarMessage =
-                                'Delivery address set to: ${addresses[selectedAddressIndex!].streetAddress}';
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(snackBarMessage),
-                                backgroundColor: Colors.green,
-                              ),
-                            );
-                          } else {
-                            snackBarMessage = 'No Address Selected';
-                            if (!mounted) {
-                              return; // Check if the widget is still mounted
-                            }
-                            showDialog(
-                                context: context,
-                                builder: (context) {
-                                  Future.delayed(const Duration(seconds: 1),
-                                      () {
-                                    Navigator.of(context).pop(true);
-                                  });
-                                  return const AlertDialog(
-                                    title: Text('No Address Selected'),
-                                  );
-                                });
-                          }
-
-                          // Close the bottom sheet
-                        } catch (error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to set default address'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        backgroundColor:
-                            Colors.deepPurpleAccent, // Button color
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                              8), // Smaller rounded corners for a squarish look
-                        ),
-                        elevation: 5, // Floating effect
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 35, // Slightly more horizontal padding
-                          vertical: 18, // Slightly more vertical padding
-                        ),
-                      ),
-                      child: const Text(
-                        "Deliver To Address",
-                        style: TextStyle(fontSize: 28),
-                      ),
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    )
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      );
-    });
   }
 
   @override

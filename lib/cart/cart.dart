@@ -538,8 +538,11 @@ class AddressModel extends ChangeNotifier {
       'customer_id': parsedCustomerId,
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
-      //_logger.e('Response: $response');
+    //http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+    //_logger.e('Response: $response');
+    _networkService
+        .postWithAuth('/address', additionalData: body)
+        .then((response) {
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final List<dynamic> jsonData = json.decode(response.body);
@@ -582,8 +585,11 @@ class AddressModel extends ChangeNotifier {
       'customer_id': parsedCustomerId,
     };
 
-    http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
-      //_logger.e('Response: $response');
+    //http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
+    //_logger.e('Response: $response');
+    _networkService
+        .postWithAuth('/address', additionalData: body)
+        .then((response) {
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final List<dynamic> jsonData = json.decode(response.body);

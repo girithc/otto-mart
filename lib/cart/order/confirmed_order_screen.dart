@@ -7,6 +7,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'dart:convert';
 
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 
 class OrderConfirmed extends StatefulWidget {
@@ -75,6 +76,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     // Retrieve customerId and cartId from secure storage
     String? customerId = await _storage.read(key: 'customerId');
     String? cartId;
+    final _networkService = NetworkService();
     if (widget.newOrder) {
       cartId = await _storage.read(key: 'cartId');
       print("Cart ID: $cartId");
@@ -88,6 +90,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       throw Exception('Customer ID or Cart ID is missing');
     }
 
+    /*
     final response = await http.post(
       Uri.parse('$baseUrl/sales-order'),
       headers: {'Content-Type': 'application/json'},
@@ -97,6 +100,18 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
         // Add other necessary fields if any
       }),
     );
+    */
+
+    // Prepare the body for the POST request
+    final body = {
+      'customer_id': int.parse(customerId),
+      'cart_id': int.parse(cartId),
+      // Add other necessary fields if any
+    };
+
+    // Use the NetworkService to make the authenticated POST request
+    final response = await _networkService.postWithAuth('/sales-order',
+        additionalData: body);
 
     print("CustomerId: $customerId, CartId: $cartId");
 

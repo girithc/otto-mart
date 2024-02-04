@@ -11,6 +11,7 @@ import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
 import 'package:pronto/utils/constants.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 
@@ -25,9 +26,12 @@ class MyCart extends StatefulWidget {
 class _MyCartState extends State<MyCart> {
   Future<LockStockResponse> checkoutLockItems(int cartId) async {
     const String apiUrl = '$baseUrl/checkout-lock-items';
-    final Map<String, dynamic> payload = {'cart_id': cartId};
-    print("Check-out-lock-items");
+    final Map<String, dynamic> body = {'cart_id': cartId};
+    final networkService = NetworkService();
+
+    //print("Check-out-lock-items");
     try {
+      /*
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {
@@ -35,6 +39,10 @@ class _MyCartState extends State<MyCart> {
         },
         body: json.encode(payload),
       );
+      */
+
+      final response =
+          await networkService.postWithAuth(apiUrl, additionalData: body);
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
