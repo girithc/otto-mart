@@ -391,6 +391,47 @@ func (s *PostgresStore) GetCustomerByPhone(phone string, fcm string) (*types.Cus
 	return &customer, nil
 }
 
+func (s *PostgresStore) UpdateFcm(phone string, fcm string) (bool, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, err
+	}
+
+	// Set the FCM token to null for any customer with the same FCM token
+	clearFcmSQL := `UPDATE customer SET fcm = NULL WHERE fcm = $1`
+	if _, err := tx.Exec(clearFcmSQL, fcm); err != nil {
+		tx.Rollback() // Roll back the transaction in case of error
+		return false, err
+	}
+
+	// Update the FCM token for the customer with the specified phone number
+	updateFcmSQL := `UPDATE customer SET fcm = $1 WHERE phone = $2`
+	result, err := tx.Exec(updateFcmSQL, fcm, phone)
+	if err != nil {
+		tx.Rollback() // Roll back the transaction in case of error
+		return false, err
+	}
+
+	// Check if any row was updated
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		tx.Rollback() // Roll back the transaction in case of error
+		return false, err
+	}
+	if rowsAffected == 0 {
+		tx.Rollback() // Roll back the transaction if no rows were updated
+		return false, fmt.Errorf("no customer found with the provided phone number")
+	}
+
+	// Commit the transaction if all operations are successful
+	if err := tx.Commit(); err != nil {
+		return false, err
+	}
+
+	return true, nil // Return true and nil error on success
+}
+
 func scan_Into_Customer(rows *sql.Rows) (*types.Customer, error) {
 	customer := new(types.Customer)
 	var merchantUserID sql.NullString // Use sql.NullString to handle NULL values

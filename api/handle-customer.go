@@ -122,7 +122,7 @@ func (s *Server) HandleCustomerLogin(res http.ResponseWriter, req *http.Request)
 func (s *Server) HandleVerifyCustomerLogin(res http.ResponseWriter, req *http.Request) error {
 	// Preprocessing
 
-	new_req := new(types.Create_Customer)
+	new_req := new(types.CustomerFCM)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in HandleVerifyCustomerLogin()")
@@ -130,16 +130,16 @@ func (s *Server) HandleVerifyCustomerLogin(res http.ResponseWriter, req *http.Re
 	}
 
 	// Check if User Exists
-	user, err := s.store.GetCustomerByPhone(new_req.Phone, "")
+	verified, err := s.store.UpdateFcm(new_req.Phone, new_req.FCM)
 	if err != nil {
 		return err
 	}
 
 	// User Does Not Exist
-	if user == nil {
-		return WriteJSON(res, http.StatusNotFound, "")
+	if !verified {
+		return WriteJSON(res, http.StatusNotFound, verified)
 	} else { // User Exists
-		return WriteJSON(res, http.StatusOK, user)
+		return WriteJSON(res, http.StatusOK, verified)
 	}
 }
 
