@@ -132,12 +132,9 @@ class _MyAppState extends State<MyApp> {
 
   init() async {
     String deviceToken = await getDeviceToken();
-    print("###### PRINT DEVICE TOKEN TO USE FOR PUSH NOTIFCIATION ######");
-    print(deviceToken);
-    print("############################################################");
 
     await storage.write(key: 'fcm', value: deviceToken);
-    // listen for user to click on notification
+
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage remoteMessage) {
       String? title = remoteMessage.notification!.title;
       String? description = remoteMessage.notification!.body;
@@ -148,14 +145,14 @@ class _MyAppState extends State<MyApp> {
         content: Text(description!),
         actions: <Widget>[
           TextButton(
-            child: Text("OK"),
+            child: const Text("OK"),
             onPressed: () {
               // Close the dialog
               Navigator.of(context).pop();
             },
           ),
           TextButton(
-            child: Text("Cancel"),
+            child: const Text("Cancel"),
             onPressed: () {
               // Close the dialog
               Navigator.of(context).pop();
@@ -260,21 +257,16 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
     final response = await networkService.postWithAuth('/customer',
         additionalData: requestData);
 
-    /*
-    final http.Response response = await http.post(
-      Uri.parse('$baseUrl/customer'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(requestData),
-    );
-    */
     print("Reponse for login: ${response.statusCode} ${response.body} ");
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);
-      final Customer customer = Customer.fromJson(responseBody);
+      final CustomerAutoLogin customer =
+          CustomerAutoLogin.fromJson(responseBody);
+
       await storage.write(key: 'customerId', value: customer.id.toString());
-      await storage.write(key: 'phone', value: customer.phone.toString());
+      await storage.write(key: 'phone', value: customer.phone);
+      await storage.write(key: 'name', value: customer.name);
+      await storage.write(key: 'authToken', value: customer.token);
       isLoggedIn = true;
       return true;
     } else {
@@ -286,8 +278,6 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
 
   @override
   Widget build(BuildContext context) {
-    // Use a default value if null
-    print("IsLoggedIn:$isLoggedIn");
     return Scaffold(
       backgroundColor: Colors.white,
       body: Center(
@@ -312,15 +302,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
               onEnd: () {
                 checkLoginStatus().then((loggedIn) => {
                       if (loggedIn)
-                        {
-                          context.go('/select-address-login')
-                          /*
-                          Navigator.of(context).pushReplacement(
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      const MyHomePage(title: 'Pronto')))
-                           */
-                        }
+                        {context.go('/select-address-login')}
                       else
                         {context.go('/phone')}
                     });

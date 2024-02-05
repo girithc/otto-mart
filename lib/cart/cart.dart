@@ -221,28 +221,13 @@ class CartModel extends ChangeNotifier {
   }
 
   Future<void> _fetchDefaultAddress() async {
-    final url = Uri.parse('$baseUrl/address');
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-
-    //print("customer Id $customerId");
-
-    int? parsedCustomerId;
-    try {
-      parsedCustomerId = int.parse(customerId);
-    } catch (e) {
-      _logger.e('Failed to parse customerId: $customerId, error: $e ');
-    }
-
-    //print("customer Id $parsedCustomerId");
+    final customerId = await storage.read(key: 'customerId');
 
     final body = <String, dynamic>{
-      'customer_id': parsedCustomerId,
+      'customer_id': int.parse(customerId!),
       "is_default": true,
     };
 
-    //http.post(url, headers: headers, body: jsonEncode(body)).then((response) {
     _networkService
         .postWithAuth('/address', additionalData: body)
         .then((response) {

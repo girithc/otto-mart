@@ -9,26 +9,16 @@ class NetworkService {
   String? token; // Authentication token
   final storage = const FlutterSecureStorage();
 
-  NetworkService() {
-    _initialize();
-  }
-
-  // Asynchronously fetch phone and token from secure storage
-  Future<void> _initialize() async {
-    phone = await storage.read(key: 'customerId') ?? '';
-    token = await storage.read(key: 'token') ?? '';
-  }
-
   Future<http.Response> postWithAuth(String endpoint,
       {Map<String, dynamic>? additionalData}) async {
     // Ensure initialization is complete before proceeding
-    await _initialize();
 
     phone = await storage.read(key: 'phone');
     token = await storage.read(key: 'authToken');
 
     final url = Uri.parse('$_baseUrl$endpoint');
     final headers = {'Content-Type': 'application/json'};
+
     Map<String, dynamic> authBody = {
       'phone_auth': phone,
       'token_auth': token,
@@ -41,6 +31,10 @@ class NetworkService {
         endpoint != '/send-otp') {
       additionalData.addAll(authBody);
     }
+
+    print("URL: $url");
+    print("Headers: $headers");
+    print("Body: $additionalData");
 
     final response = await http.post(
       url,

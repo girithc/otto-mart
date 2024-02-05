@@ -12,16 +12,6 @@ class CustomerApiClient {
     final Map<String, dynamic> requestData = {
       "phone": phone,
     };
-
-    /*
-    final http.Response response = await http.post(
-      Uri.parse('$baseUrl/login-customer'),
-      headers: <String, String>{
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-      body: jsonEncode(requestData),
-    );
-    */
     final networkService = NetworkService();
 
     final response = await networkService.postWithAuth('login-customer',

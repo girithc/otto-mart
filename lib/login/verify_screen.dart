@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -30,6 +32,7 @@ class _MyVerifyState extends State<MyVerify> {
 
   final Logger _logger = Logger();
   final storage = const FlutterSecureStorage();
+  String? fcmToken;
   final pinController = TextEditingController();
   final focusNode = FocusNode();
   final formKey = GlobalKey<FormState>();
@@ -44,8 +47,32 @@ class _MyVerifyState extends State<MyVerify> {
   void initState() {
     super.initState();
     apiClient = CustomerApiClient(widget.number);
-    checkLoginStatus();
+    _retrieveFCMToken();
     startTimer();
+  }
+
+  Future<void> _retrieveFCMToken() async {
+    String deviceToken = await getDeviceToken();
+    await storage.write(key: 'fcm', value: deviceToken);
+
+    try {
+      fcmToken = await storage.read(key: 'fcm');
+    } catch (e) {
+      print('Error retrieving FCM token: $e');
+    }
+  }
+
+  Future getDeviceToken() async {
+    //request user permission for push notification
+    FirebaseMessaging.instance.requestPermission();
+
+    if (Platform.isIOS) {
+      var iosToken = await FirebaseMessaging.instance.getAPNSToken();
+      print("aps : $iosToken");
+    }
+    FirebaseMessaging firebaseMessage = FirebaseMessaging.instance;
+    String? deviceToken = await firebaseMessage.getToken();
+    return (deviceToken == null) ? "" : deviceToken;
   }
 
   @override
@@ -124,12 +151,11 @@ class _MyVerifyState extends State<MyVerify> {
   Future<CustomerLoginResponse?> verifyOTP(
       String phoneNumber, String otp) async {
     try {
-      //var url = Uri.parse('$baseUrl/verify-otp');
-      final fcm = await storage.read(key: 'fcm');
+      //final fcm = await storage.read(key: 'fcm');
       final Map<String, dynamic> requestData = {
         "phone": phoneNumber,
         "otp": int.parse(otp),
-        "fcm": fcm
+        "fcm": fcmToken ?? ""
       };
 
       final networkService = NetworkService();
@@ -146,7 +172,11 @@ class _MyVerifyState extends State<MyVerify> {
         await storage.write(
             key: 'authToken', value: customerLoginResponse.customer?.token);
         await storage.write(
-            key: 'customerId', value: customerLoginResponse.customer?.phone);
+            key: 'customerId',
+            value: customerLoginResponse.customer?.id.toString());
+        await storage.write(
+            key: 'phone', value: customerLoginResponse.customer?.phone);
+
         return customerLoginResponse;
       } else {
         // Handle HTTP request error by creating a response with the error message
@@ -188,6 +218,7 @@ class _MyVerifyState extends State<MyVerify> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              //Text(fcmToken ?? 'FCM Token not found'),
               Image.asset(
                 'assets/icon/icon.jpeg',
                 height: 250,

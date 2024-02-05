@@ -9,6 +9,7 @@ import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
+import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 // Import other necessary packages
 
@@ -25,7 +26,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   bool isLoadingGetAddress = true;
   int? selectedAddressIndex;
   Address? defaultAddress; // Your default address object
-  String customerId = "0";
+  String? customerId;
   String phone = "0";
 
   final storage = const FlutterSecureStorage();
@@ -44,7 +45,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   }
 
   Future<void> retrieveCustomerInfo() async {
-    print("Enter retreive");
     String? storedCustomerId = await storage.read(key: 'customerId');
     String? storedPhone = await storage.read(key: 'phone');
 
@@ -61,24 +61,30 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   }
 
   Future<void> getAllAddresses() async {
-    await retrieveCustomerInfo();
+    //await retrieveCustomerInfo();
     final Map<String, String> headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
     };
-    print("Customer $customerId");
+
+    customerId = await storage.read(key: 'customerId');
 
     final Map<String, dynamic> body = {
       "customer_id":
-          int.parse(customerId) // Replace with the actual customer_id value
+          int.parse(customerId!) // Replace with the actual customer_id value
     };
 
-    // Send the HTTP POST request
+    final networkService = NetworkService();
+    final response =
+        await networkService.postWithAuth('/address', additionalData: body);
+
+    /*
     final http.Response response = await http.post(
       Uri.parse("$baseUrl/address"),
       headers: headers,
       body: jsonEncode(body), // Convert the Map to a JSON string
     );
+    */
 
     // Check the response
     if (response.statusCode == 200) {
@@ -109,8 +115,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       "Accept": "application/json",
     };
 
+    customerId = await storage.read(key: 'customerId');
+
     final Map<String, dynamic> body = {
-      "customer_id": int.parse(customerId),
+      "customer_id": int.parse(customerId!),
       "address_id": addressId,
       "is_default": true
     };
@@ -157,8 +165,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       "Accept": "application/json",
     };
 
+    customerId = await storage.read(key: 'customerId');
+
     final Map<String, dynamic> body = {
-      "customer_id": int.parse(customerId),
+      "customer_id": int.parse(customerId!),
       "address_id": addressId,
     };
 
