@@ -398,18 +398,20 @@ func (s *PostgresStore) GetCustomerByPhone(phone string, fcm string) (*types.Cus
 	return &customer, nil
 }
 
-func (s *PostgresStore) UpdateFcm(phone string, fcm string) (bool, error) {
+func (s *PostgresStore) UpdateFcm(phone string, fcm string) (types.AutoLogin, error) {
+	var autoLogin types.AutoLogin // Declare an instance of AutoLogin to store the fetched details
+
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
-		return false, err
+		return types.AutoLogin{}, err // Return an empty AutoLogin and the error
 	}
 
 	// Set the FCM token to null for any customer with the same FCM token
 	clearFcmSQL := `UPDATE customer SET fcm = NULL WHERE fcm = $1`
 	if _, err := tx.Exec(clearFcmSQL, fcm); err != nil {
 		tx.Rollback() // Roll back the transaction in case of error
-		return false, err
+		return types.AutoLogin{}, err
 	}
 
 	// Update the FCM token for the customer with the specified phone number
@@ -417,26 +419,34 @@ func (s *PostgresStore) UpdateFcm(phone string, fcm string) (bool, error) {
 	result, err := tx.Exec(updateFcmSQL, fcm, phone)
 	if err != nil {
 		tx.Rollback() // Roll back the transaction in case of error
-		return false, err
+		return types.AutoLogin{}, err
 	}
 
 	// Check if any row was updated
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		tx.Rollback() // Roll back the transaction in case of error
-		return false, err
+		return types.AutoLogin{}, err
 	}
 	if rowsAffected == 0 {
 		tx.Rollback() // Roll back the transaction if no rows were updated
-		return false, fmt.Errorf("no customer found with the provided phone number")
+		return types.AutoLogin{}, fmt.Errorf("no customer found with the provided phone number")
+	}
+
+	// Fetch the updated customer details to populate the AutoLogin struct
+	fetchCustomerSQL := `SELECT name, phone, address, id, token FROM customer WHERE phone = $1`
+	err = tx.QueryRow(fetchCustomerSQL, phone).Scan(&autoLogin.Name, &autoLogin.Phone, &autoLogin.Address, &autoLogin.Id, &autoLogin.Token)
+	if err != nil {
+		tx.Rollback() // Roll back the transaction in case of error
+		return types.AutoLogin{}, err
 	}
 
 	// Commit the transaction if all operations are successful
 	if err := tx.Commit(); err != nil {
-		return false, err
+		return types.AutoLogin{}, err
 	}
 
-	return true, nil // Return true and nil error on success
+	return autoLogin, nil // Return the populated AutoLogin and nil error on success
 }
 
 func scan_Into_Customer(rows *sql.Rows) (*types.Customer, error) {

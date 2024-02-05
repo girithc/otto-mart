@@ -122,18 +122,12 @@ func (s *Server) HandleVerifyCustomerLogin(res http.ResponseWriter, req *http.Re
 		return err
 	}
 
-	// Check if User Exists
 	verified, err := s.store.UpdateFcm(new_req.Phone, new_req.FCM)
 	if err != nil {
 		return err
 	}
 
-	// User Does Not Exist
-	if !verified {
-		return WriteJSON(res, http.StatusNotFound, verified)
-	} else { // User Exists
-		return WriteJSON(res, http.StatusOK, verified)
-	}
+	return WriteJSON(res, http.StatusOK, verified)
 }
 
 func (s *Server) HandleGetCustomers(res http.ResponseWriter, req *http.Request) error {

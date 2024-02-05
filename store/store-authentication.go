@@ -8,7 +8,7 @@ func (s *PostgresStore) AuthenticateRequest(phone, token string) (bool, string, 
 	var dbToken sql.NullString
 	var role string
 
-	err := s.db.QueryRow(query, phone).Scan(&dbToken)
+	err := s.db.QueryRow(query, phone).Scan(&dbToken, &role)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return false, "", nil

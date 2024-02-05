@@ -83,3 +83,11 @@ func New_Update_Customer(id int, name string, phone int, address string) (*Updat
 		Address: address,
 	}, nil
 }
+
+type AutoLogin struct {
+	Name    string    `json:"name"`
+	Phone   string    `json:"phone"`
+	Address string    `json:"address"`
+	Id      int       `json:"id"`
+	Token   uuid.UUID `json:"token"`
+}
