@@ -104,7 +104,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
       //var response = await http.post(url, headers: headers, body: body);
 
       final networkService = NetworkService();
-      final response = await networkService.postWithAuth('/checkout-cancel',
+      final response = await networkService.postWithAuth('/checkout-payment',
           additionalData: body);
 
       if (response.statusCode == 200) {
@@ -127,22 +127,24 @@ class _PaymentsPageState extends State<PaymentsPage> {
     var headers = {'Content-Type': 'application/json'};
     var request =
         http.Request('POST', Uri.parse('$baseUrl/phonepe-payment-init'));
-    request.body = json.encode({
+    final Map<String, dynamic> body = {
       "cart_id": cartId,
       "sign": widget.sign,
       "merchantTransactionId": widget.merchantTransactionID
-    });
+    };
     request.headers.addAll(headers);
 
     try {
-      http.StreamedResponse response = await request.send();
+      final networkService = NetworkService();
+      final response = await networkService
+          .postWithAuth('/phonepe-payment-init', additionalData: body);
+      //http.StreamedResponse response = await request.send();
 
       if (response.statusCode == 200) {
-        var responseBody = await response.stream.bytesToString();
-        var decodedResponse = json.decode(responseBody);
+        //var responseBody = await response.stream.bytesToString();
+        var decodedResponse = json.decode(response.body);
 
-        // Assuming the URL is correctly found in the response
-        print(responseBody);
+        print(decodedResponse);
         String url = decodedResponse['data']['instrumentResponse']
             ['redirectInfo']['url'];
         String message = decodedResponse['message'];
@@ -164,8 +166,11 @@ class _PaymentsPageState extends State<PaymentsPage> {
               merchantTransactionId: '');
         }
       } else {
-        var errorResponse = await response.stream.bytesToString();
-        print('Error response: $errorResponse');
+        //var errorResponse = await response.stream.bytesToString();
+        print(
+            'Request failed with status: ${response.statusCode}. ${response.body}');
+        //throw Exception('Failed to cancel checkout items');
+        //print('Error response: $errorResponse');
         return PaymentResult(
             url: 'Payment Error',
             isSuccess: false,

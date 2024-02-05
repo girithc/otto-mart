@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:pinput/pinput.dart';
@@ -456,6 +457,7 @@ class SearchItemListState extends State<SearchItemList> {
           height: MediaQuery.of(context).size.height * 0.08,
           width: MediaQuery.of(context).size.width * 0.95,
           alignment: Alignment.centerLeft,
+          color: Colors.white,
           //decoration: BoxDecoration(border: Border.all(color: Colors.black)),
           child: Chip(
             label: searchData.notFound
@@ -496,11 +498,7 @@ class SearchItemListState extends State<SearchItemList> {
           child: Container(
             padding: EdgeInsets.zero,
             decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.center,
-                colors: [Colors.white, Color.fromARGB(255, 248, 219, 253)],
-              ),
+              color: Colors.white,
             ), //const Color.fromARGB(255, 212, 187, 255),
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -560,6 +558,7 @@ class ListItem extends StatelessWidget {
       required this.unitOfQuantity,
       required this.brand});
 
+  /*
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>(); // Access the CartModel instance
@@ -800,6 +799,285 @@ class ListItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+  */
+  @override
+  Widget build(BuildContext context) {
+    var cart = context.watch<CartModel>(); // Access the CartModel instance
+    var itemIndexInCart =
+        cart.items.indexWhere((item) => item.productId == id.toString());
+    return GestureDetector(
+      onTap: () async {
+        const storage = FlutterSecureStorage();
+
+        // Read the cartId from storage
+        String? cartId = await storage.read(key: 'cartId');
+
+        // Check if cartId is null
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Product(
+              brand: brand,
+              productName: name,
+              productId: id,
+              mrpPrice: mrpPrice,
+              storePrice: storePrice,
+              discount: discount,
+              stockQuantity: stockQuantity,
+              image: image,
+              quantity: quantity,
+              unitOfQuantity: unitOfQuantity,
+            ),
+          ),
+        );
+      },
+      child: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: Colors.white, width: 1.0),
+              borderRadius: BorderRadius.circular(8.0),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.shade400
+                      .withOpacity(0.2), // Shadow color with some opacity
+                  spreadRadius: 1, // Extent of the shadow
+                  blurRadius: 1, // Blur effect
+                  offset: const Offset(0, 1), // Changes position of shadow
+                ),
+              ],
+            ),
+            margin: index == 0
+                ? const EdgeInsets.only(
+                    top: 5,
+                    left: 5,
+                  )
+                : const EdgeInsets.only(top: 5, left: 5.0, right: 5.0),
+            padding: const EdgeInsets.only(bottom: 2),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(
+                      top: 25, bottom: 10, left: 10, right: 10),
+                  height: MediaQuery.of(context).size.height * 0.15,
+                  child: Center(
+                    child: Image.network(
+                      image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (BuildContext context, Object exception,
+                          StackTrace? stackTrace) {
+                        return Container(
+                          height: 120,
+                          color: Colors.grey[200],
+                          alignment: Alignment.center,
+                          child: const Center(
+                            child: Text(
+                              'no image',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  alignment: Alignment.centerLeft,
+                  height: 37,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(1.0),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Text(
+                    name,
+                    maxLines: 2,
+                    style: GoogleFonts.hind(
+                      textStyle: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        height: 1.25,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
+                  margin: EdgeInsets.zero,
+                  alignment: Alignment.centerLeft,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(1.0),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Text(
+                    '$quantity $unitOfQuantity',
+                    style: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600, height: 1.2),
+                  ),
+                ),
+                //const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.only(left: 8.0),
+                  height: 40,
+                  margin: const EdgeInsets.only(top: 0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(1.0),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$mrpPrice',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: Colors.black54,
+                              ),
+                            ),
+                            Text(
+                              '\u{20B9}$storePrice',
+                              style: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600),
+                            ),
+                          ]),
+                      itemIndexInCart != -1
+                          ? Container(
+                              width: 80,
+                              height: 35,
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 2, vertical: 2),
+                              decoration: BoxDecoration(
+                                  color: Colors.pinkAccent, // Add border
+                                  borderRadius: BorderRadius.circular(10.0)),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  InkWell(
+                                    onTap: () {
+                                      context
+                                          .read<CartModel>()
+                                          .removeItem(itemId: id.toString());
+                                    },
+                                    child: const Icon(
+                                      Icons.horizontal_rule,
+                                      size: 22,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Text(
+                                    cart.items[itemIndexInCart].quantity
+                                        .toString(),
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 18),
+                                  ),
+                                  InkWell(
+                                    onTap: () {
+                                      cart.addItemToCart(CartItem(
+                                          productId: id.toString(),
+                                          productName: name,
+                                          price: mrpPrice,
+                                          soldPrice: storePrice,
+                                          quantity: 1,
+                                          stockQuantity: stockQuantity,
+                                          image: image));
+                                    },
+                                    child: const Icon(
+                                      Icons.add,
+                                      size: 26,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : Container(
+                              width: 55,
+                              padding: EdgeInsets.zero,
+                              margin: const EdgeInsets.only(
+                                  right: 2, top: 2, bottom: 4),
+                              child: ElevatedButton(
+                                onPressed: () async {
+                                  // Create an instance of FlutterSecureStorage
+                                  const storage = FlutterSecureStorage();
+
+                                  // Read the cartId from storage
+                                  String? cartId =
+                                      await storage.read(key: 'cartId');
+
+                                  // Check if cartId is null
+                                  // If cartId is not null, proceed with adding item to cart
+                                  final cartItem = CartItem(
+                                    productId: id.toString(),
+                                    productName: name,
+                                    price: mrpPrice,
+                                    soldPrice: storePrice,
+                                    quantity: 1,
+                                    stockQuantity: stockQuantity,
+                                    image: image,
+                                  );
+                                  cart.addItemToCart(cartItem);
+                                },
+                                style: ElevatedButton.styleFrom(
+                                    surfaceTintColor: Colors.white,
+                                    backgroundColor: Colors.white,
+                                    padding: const EdgeInsets.all(2),
+                                    side: const BorderSide(
+                                      width: 1.0,
+                                      color: Colors.pinkAccent,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    )),
+                                child: const Text(
+                                  'Add',
+                                  style: TextStyle(
+                                      color: Colors.pinkAccent, fontSize: 13),
+                                ),
+                              ),
+                            )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            top: 6, // Adjust the position as needed
+            left: 6, // Adjust the position as needed
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+              decoration: BoxDecoration(
+                color: Colors.deepPurpleAccent,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '\u{20B9}$discount OFF',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

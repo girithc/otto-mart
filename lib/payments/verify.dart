@@ -36,15 +36,15 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
 
       // Retrieve cartId and customerId from secure storage
       String? cartId = await storage.read(key: "cartId");
-      String? customerId = await storage.read(key: "customerId");
+      String? phone = await storage.read(key: "phone");
       final Map<String, dynamic> body = {
         "merchant_transaction_id": widget.merchantTransactionId,
         "cart_id": int.parse(cartId!),
-        "phone": customerId
+        "phone": phone
       };
 
       final networkService = NetworkService();
-      final response = await networkService.postWithAuth('/checkout-cancel',
+      final response = await networkService.postWithAuth('/payment-verify',
           additionalData: body);
 
       /*

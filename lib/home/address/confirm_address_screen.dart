@@ -78,19 +78,22 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
         centerTitle: true,
       ),
       body: _buildBody(),
-      bottomNavigationBar: BottomAppBar(
+      bottomNavigationBar: Container(
         color: Colors.white,
-        surfaceTintColor: Colors.white,
-        height: 150,
+        height: 170,
+        margin: const EdgeInsets.only(bottom: 10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
             ListTile(
-              contentPadding: const EdgeInsets.all(0),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               minVerticalPadding: 0,
               title: Text(
                 _draggedAddress_one + _draggedAddress_two,
-                style: const TextStyle(height: 1.2),
+                style: const TextStyle(
+                  height: 1.3,
+                ),
               ),
               leading: GestureDetector(
                 onTap: () {
@@ -128,8 +131,8 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6200EE),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 65, vertical: 15),
+                padding: const EdgeInsets.only(
+                    left: 65, right: 65, top: 15, bottom: 15),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

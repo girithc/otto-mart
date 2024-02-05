@@ -41,8 +41,8 @@ class _MyCartState extends State<MyCart> {
       );
       */
 
-      final response =
-          await networkService.postWithAuth(apiUrl, additionalData: body);
+      final response = await networkService.postWithAuth('/checkout-lock-items',
+          additionalData: body);
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object

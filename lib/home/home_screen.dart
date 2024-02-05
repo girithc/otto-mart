@@ -230,18 +230,18 @@ class _MyHomePageState extends State<MyHomePage>
                               Container(
                                 color: Colors.white,
                                 padding: const EdgeInsets.all(2),
-                                height: 60,
+                                height: 65,
                                 child: Row(
                                   children: [
                                     Expanded(
-                                      flex: 20, // Flex 3 for the address
+                                      flex: 22, // Flex 3 for the address
                                       child: GestureDetector(
                                         onTap: () {
                                           context.go('/select-address');
                                         },
                                         child: Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 6, vertical: 0),
+                                              horizontal: 5, vertical: 0),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
                                             borderRadius:
@@ -288,7 +288,7 @@ class _MyHomePageState extends State<MyHomePage>
                                                     overflow:
                                                         TextOverflow.ellipsis,
                                                     maxLines:
-                                                        1, // Ensures the text does not wrap to more than one line
+                                                        2, // Ensures the text does not wrap to more than one line
                                                   ),
                                                 ),
                                               ],
@@ -305,7 +305,7 @@ class _MyHomePageState extends State<MyHomePage>
                                       flex: 42, // Flex 42 for the main content
                                       child: Container(
                                         padding: const EdgeInsets.only(
-                                            left: 5.0, top: 10, bottom: 10),
+                                            left: 5.0, top: 12, bottom: 12),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                           borderRadius:
@@ -736,7 +736,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                         context.push('/setting');
                       }),
                 ),
-                SizedBox(
+                const SizedBox(
                   width: 10,
                 ),
                 Text(

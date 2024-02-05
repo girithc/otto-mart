@@ -78,18 +78,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     final response =
         await networkService.postWithAuth('/address', additionalData: body);
 
-    /*
-    final http.Response response = await http.post(
-      Uri.parse("$baseUrl/address"),
-      headers: headers,
-      body: jsonEncode(body), // Convert the Map to a JSON string
-    );
-    */
-
-    // Check the response
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
-        //print("address Response Not Empty ${response.contentLength}");
         final List<dynamic> jsonData = json.decode(response.body);
         final List<Address> items =
             jsonData.map((item) => Address.fromJson(item)).toList();
@@ -100,7 +90,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         });
       } else {
         setState(() {
-          // print("Empty Response");
           isLoadingGetAddress = false;
         });
         print("Error in getAllAddress(): ${response.reasonPhrase}");
@@ -115,7 +104,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       "Accept": "application/json",
     };
 
-    customerId = await storage.read(key: 'customerId');
+    final customerId = await storage.read(key: 'customerId');
 
     final Map<String, dynamic> body = {
       "customer_id": int.parse(customerId!),
@@ -124,11 +113,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     };
 
     try {
-      final http.Response response = await http.post(
-        Uri.parse("$baseUrl/address"),
-        headers: headers,
-        body: jsonEncode(body),
-      );
+      final networkService = NetworkService();
+      final response =
+          await networkService.postWithAuth('/address', additionalData: body);
 
       if (response.statusCode == 200) {
         print(">>>>>>>>>>>>>>");
@@ -175,22 +162,16 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     print("AddressID: $addressId");
 
     try {
-      final http.Response response = await http.post(
-        Uri.parse("$baseUrl/deliver-to"),
-        headers: headers,
-        body: jsonEncode(body),
-      );
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth('/deliver-to',
+          additionalData: body);
 
       if (response.statusCode == 200) {
-        print(">>>>>>>>>>>>>>");
-        print(response.body.toString());
-        print(">>>>>>>>>>>>>>");
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           return DeliverableResponse.fromJson(decodedResponse);
         }
       } else {
-        print("Delivered To Error");
         print("Error: ${response.reasonPhrase}");
         print("Error: ${response.body}");
       }

@@ -209,7 +209,7 @@ class _ListOfItemsState extends State<ListOfItems> {
               child: Container(
                 //surfaceTintColor: Colors.white,
                 //shadowColor: Colors.grey,
-                margin: EdgeInsets.symmetric(vertical: 5),
+                margin: const EdgeInsets.symmetric(vertical: 5),
                 padding: EdgeInsets.zero,
                 color: Colors.white,
                 child: ListView.builder(
@@ -296,13 +296,13 @@ class _ItemCatalogState extends State<ItemCatalog> {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
-      padding: EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 4),
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             mainAxisSpacing: 0.0,
             crossAxisSpacing: 0.0,
-            childAspectRatio: 0.64),
+            childAspectRatio: 0.635),
         itemCount: items.length,
         itemBuilder: (context, index) {
           return ListItem2(
@@ -500,7 +500,7 @@ class ListItem2 extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 1),
+                const SizedBox(height: 1),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   alignment: Alignment.centerLeft,
@@ -523,7 +523,7 @@ class ListItem2 extends StatelessWidget {
                     ),
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
@@ -541,7 +541,7 @@ class ListItem2 extends StatelessWidget {
                         fontSize: 13, fontWeight: FontWeight.w600, height: 1.2),
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.only(left: 8.0),
                   height: 40,
