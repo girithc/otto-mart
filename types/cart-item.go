@@ -60,8 +60,9 @@ type Get_Cart_Items_Item_List struct {
 	Items  bool `json:"items"`
 }
 
-type Cart_Item_Customer_Id struct {
+type CustomerAndCartId struct {
 	Customer_Id int `json:"customer_id"`
+	Cart_Id     int `json:"cart_id"`
 }
 
 type Cart_Item_Quantity struct {

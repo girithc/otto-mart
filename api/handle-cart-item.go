@@ -98,13 +98,14 @@ func (s *Server) Handle_Get_Item_List_From_Cart_Item(res http.ResponseWriter, re
 }
 
 func (s *Server) Handle_Get_Item_List_From_Cart_Item_By_Customer_Id(res http.ResponseWriter, req *http.Request, requestBodyReader *bytes.Reader) error {
-	new_req := new(types.Cart_Item_Customer_Id)
+	fmt.Println(" Entered Get Cart Items For Customer")
+	new_req := new(types.CustomerAndCartId)
 	if err := json.NewDecoder(requestBodyReader).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in Handle_Get_Item_List_From_Cart_Item_By_Customer_Id()", err)
 		return err
 	}
 
-	cart_items, err := s.store.Get_Items_List_From_Active_Cart_By_Customer_Id(new_req.Customer_Id)
+	cart_items, err := s.store.GetItemsListFromCartByCustomerId(new_req.Customer_Id, new_req.Cart_Id)
 	if err != nil {
 		return err
 	}

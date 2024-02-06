@@ -143,6 +143,11 @@ func (s *Server) handleCartItem(res http.ResponseWriter, req *http.Request) erro
 					return s.Handle_Get_All_Cart_Items(res, req, requestBodyReader)
 				}
 
+			} else {
+				// Create a new reader from the decoded data
+				requestBodyBytes, _ := json.Marshal(requestBody)
+				requestBodyReader := bytes.NewReader(requestBodyBytes)
+				return s.Handle_Get_Item_List_From_Cart_Item_By_Customer_Id(res, req, requestBodyReader)
 			}
 		} else if _, customerOk := requestBody["customer_id"].(float64); customerOk {
 
