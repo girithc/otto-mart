@@ -30,12 +30,19 @@ func (s *Server) Handle_Get_Address_By_Customer_Id(res http.ResponseWriter, req 
 		return err
 	}
 
+	addr, err := s.store.Get_Addresses_By_Customer_Id(new_req.Customer_Id, true)
+	if err != nil {
+		return err
+	}
+
 	addrs, err := s.store.Get_Addresses_By_Customer_Id(new_req.Customer_Id, false)
 	if err != nil {
 		return err
 	}
 
-	return WriteJSON(res, http.StatusOK, addrs)
+	addr_list := append(addr, addrs...)
+
+	return WriteJSON(res, http.StatusOK, addr_list)
 }
 
 func (s *Server) handleGetDefaultAddress(res http.ResponseWriter, req *http.Request) error {

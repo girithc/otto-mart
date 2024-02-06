@@ -254,3 +254,47 @@ func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 
 	return cart, err
 }
+
+type ValidShoppingCart struct {
+	Valid  bool
+	CartId int
+}
+
+func (s *PostgresStore) ValidShoppingCart(cartID int, customerID int) (ValidShoppingCart, error) {
+	var count int
+	val := ValidShoppingCart{false, 0}
+	// Check if the provided cartID is valid and belongs to the customerID
+	err := s.db.QueryRow("SELECT COUNT(*) FROM shopping_cart WHERE id = $1 AND customer_id = $2 AND active = true", cartID, customerID).Scan(&count)
+	if err != nil {
+		return val, err
+	}
+
+	// If the cartID is valid and belongs to the customer, return the cartID
+	if count > 0 {
+		val.CartId = cartID
+		val.Valid = true
+		return val, nil
+	}
+
+	// If the provided cartID is not valid, check for any existing active cart for the customer
+	var existingCartID int
+	err = s.db.QueryRow("SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true LIMIT 1", customerID).Scan(&existingCartID)
+	if err == nil {
+		// An active cart exists, return its ID
+		val.CartId = existingCartID
+		val.Valid = true
+		return val, nil
+	}
+
+	// No active cart exists for the customer, create a new one
+	var newCartID int
+	err = s.db.QueryRow(`INSERT INTO shopping_cart (customer_id, active) VALUES ($1, true) RETURNING id`, customerID).Scan(&newCartID)
+	if err != nil {
+		return val, err
+	}
+
+	// Return the new cart ID
+	val.CartId = newCartID
+	val.Valid = true
+	return val, nil
+}

@@ -29,9 +29,10 @@ type CartItemResponse struct {
 }
 
 type Create_Cart_Item struct {
-	CartId   int `json:"cart_id"`
-	ItemId   int `json:"item_id"`
-	Quantity int `json:"quantity"`
+	CartId     int `json:"cart_id"`
+	ItemId     int `json:"item_id"`
+	Quantity   int `json:"quantity"`
+	CustomerId int `json:"customer_id"`
 }
 
 type Remove_Cart_Item struct {

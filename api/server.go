@@ -29,9 +29,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/store", makeHTTPHandleFunc(s.handleStoreManager))
 
 	http.HandleFunc("/higher-level-category", makeHTTPHandleFunc(s.handleHigherLevelCategory))
-
 	http.HandleFunc("/category-higher-level-mapping", makeHTTPHandleFunc(s.handleCategoryHigherLevelMapping))
-
 	http.HandleFunc("/category", makeHTTPHandleFunc(s.handleCategory))
 
 	http.HandleFunc("/get-category", makeHTTPHandleFunc(s.handleGetCategory))

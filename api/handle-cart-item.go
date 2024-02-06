@@ -17,18 +17,25 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 		return err
 	}
 
-	println("CartId: ", new_req.CartId)
-	println("ItemId: ", new_req.ItemId)
-	println("Quantity: ", new_req.Quantity)
-	cart, err := s.store.Add_Cart_Item(new_req.CartId, new_req.ItemId, new_req.Quantity)
+	print("new_req", new_req)
+	validCart, err := s.store.ValidShoppingCart(new_req.CartId, new_req.CustomerId)
 	if err != nil {
 		return err
 	}
 
-	cartItemList, err := s.store.Get_Items_List_From_Cart_Items_By_Cart_Id(new_req.CartId)
+	fmt.Println("validCart ", validCart)
+
+	cart, err := s.store.Add_Cart_Item(validCart.CartId, new_req.ItemId, new_req.Quantity)
 	if err != nil {
 		return err
 	}
+	fmt.Println("cart", cart)
+
+	cartItemList, err := s.store.Get_Items_List_From_Cart_Items_By_Cart_Id(validCart.CartId)
+	if err != nil {
+		return err
+	}
+	fmt.Println("cartItemList", cartItemList)
 
 	cartResponse := types.CartItemResponse{
 		CartDetails:   cart,

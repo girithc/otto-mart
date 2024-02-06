@@ -83,7 +83,7 @@ var authRequirements = map[string]Permission{
 	BrandUpdate:                           {Role: "Customer", AuthRequired: true},
 	BrandDelete:                           {Role: "Customer", AuthRequired: true},
 	PhonePeCheckStatus:                    {Role: "Customer", AuthRequired: true},
-	PhonePeCallback:                       {Role: "Customer", AuthRequired: true},
+	PhonePeCallback:                       {Role: "Customer", AuthRequired: false},
 	PhonePePaymentInit:                    {Role: "Customer", AuthRequired: true},
 	PhonePePaymentVerify:                  {Role: "Customer", AuthRequired: true},
 	OtpSend:                               {Role: "Customer", AuthRequired: false},
