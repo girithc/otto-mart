@@ -85,9 +85,9 @@ class _MyCartState extends State<MyCart> {
                 ),
               );
             },
-            child: const Text(
-              'Otto Cart',
-              style: TextStyle(
+            child: Text(
+              'Otto Cart ${cart.cartId}',
+              style: const TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
                   color: Colors.white),
@@ -424,6 +424,7 @@ class _CartList extends StatelessWidget {
                                           onTap: () {
                                             final item2 = item;
                                             item2.quantity = -1;
+                                            print(item);
                                             cart.addItemToCart(item2);
                                           },
                                           child: const Icon(

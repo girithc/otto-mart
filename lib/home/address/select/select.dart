@@ -38,6 +38,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     super.initState();
 
     getAllAddresses();
+
     // Initialize your data here
   }
 
@@ -50,7 +51,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     String? storedCustomerId = await storage.read(key: 'customerId');
     String? storedPhone = await storage.read(key: 'phone');
 
-    CartModel cartModel = CartModel();
+    //CartModel cartModel = CartModel();
     //Address? deliveryAddress = cartModel.deliveryAddress;
 
     setState(() {
@@ -128,14 +129,21 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
             // Parse and return AddressResponse
-            return AddressResponse.fromJson(
+            final resp = AddressResponse.fromJson(
                 Map<String, dynamic>.from(decodedResponse));
+            print("Setting cartId to ${resp.cartId}");
+            CartModel cartModel = CartModel();
+            Address? deliveryAddress = cartModel.deliveryAddress;
+            await storage.write(key: 'cartId', value: resp.cartId.toString());
+            await storage.write(key: 'storeId', value: resp.storeId.toString());
+            return resp;
           } else if (decodedResponse is List) {
             // Handle the case where the response is a List
             final List<AddressResponse> items = (decodedResponse)
                 .map((item) =>
                     AddressResponse.fromJson(Map<String, dynamic>.from(item)))
                 .toList();
+
             return items.isNotEmpty ? items[0] : null;
           }
         }
@@ -171,7 +179,13 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
-          return DeliverableResponse.fromJson(decodedResponse);
+          final resp = DeliverableResponse.fromJson(decodedResponse);
+          print("Setting cartId to ${resp.cartId}");
+          CartModel cartModel = CartModel();
+          Address? deliveryAddress = cartModel.deliveryAddress;
+          await storage.write(key: 'cartId', value: resp.cartId.toString());
+          await storage.write(key: 'storeId', value: resp.storeId.toString());
+          return resp;
         }
       } else {
         print("Error: ${response.reasonPhrase}");
@@ -387,7 +401,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       child: ElevatedButton(
         onPressed: () async {
           try {
-            String snackBarMessage;
             bool deliverable = true;
             print("Button Press: SelectedAddressindex $selectedAddressIndex");
             if (selectedAddressIndex != null) {
@@ -407,9 +420,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                     }
 
                     if (deliverable) {
-                      snackBarMessage =
-                          'Delivery address set to: ${addresses[selectedAddressIndex! - 1].streetAddress}';
-
                       print('Go To Home');
                       await storage
                           .write(
@@ -422,9 +432,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                                     .then((value) => {context.push('/home')})
                               });
                     } else {
-                      snackBarMessage =
-                          'Not deliverable to: ${addresses[selectedAddressIndex! - 1].streetAddress}';
-
                       await storage.delete(key: 'storeId');
                       print('Coming Soon');
                       context.push('/coming-soon');
@@ -464,13 +471,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   ),
                 );
               }
-            } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
-              print("2nd Branch");
-              context.push('/home');
             } else {
-              print("3rd Branch");
-
-              snackBarMessage = 'No Address Selected';
+              print("2rd Branch");
               if (!mounted) {
                 return; // Check if the widget is still mounted
               }

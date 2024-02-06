@@ -162,35 +162,26 @@ class CartModel extends ChangeNotifier {
       // Handle it according to your requirements.
       // Maybe set a default value, or log an error.
       _logger.e('cartId is not found in the storage');
+    } else {
+      print("Fetched Cart Id $cartId");
     }
   }
 
   Future<void> _fetchCartItems() async {
-    final url = Uri.parse('$baseUrl/cart-item');
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-
+    print("Fetch Cart Items");
     final customerId = await storage.read(key: 'customerId');
-
-    int? parsedCustomerId;
-    try {
-      parsedCustomerId = int.parse(customerId!);
-    } catch (e) {
-      _logger.e('Failed to parse customerId: $customerId, error: $e ');
-    }
-
-    if (parsedCustomerId == null) return;
+    final cartId = await storage.read(key: 'cartId');
 
     final body = <String, dynamic>{
-      'customer_id': parsedCustomerId,
+      'customer_id': int.parse(customerId!),
+      'cart_id': int.parse(cartId!),
     };
 
     //http.post(url, headers: headers, body: jsonEncode(body)).then((response)
     _networkService
         .postWithAuth('/cart-item', additionalData: body)
         .then((response) {
-      //_logger.e('Response: $response');
+      //_logger.e('Response Fetch Cart Items: ${response.body}');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final Map<String, dynamic> jsonData = json.decode(response.body);
@@ -208,7 +199,8 @@ class CartModel extends ChangeNotifier {
           _items.addAll(items);
           notifyListeners();
         } else {
-          _logger.e('Empty response received from server');
+          print("Response: $response");
+          print("Empty Response");
         }
       } else {
         _logger.e(
@@ -355,7 +347,7 @@ class CartModel extends ChangeNotifier {
     String? cartID = await storage.read(key: 'cartId');
     String? customerId = await storage.read(key: 'customerId');
 
-    print("Add Item To Cart");
+    print("Before Add Item To Cart");
     print("Cart Id $cartID");
     print("Customer Id $customerId");
 
@@ -377,6 +369,8 @@ class CartModel extends ChangeNotifier {
     networkService
         .postWithAuth('/cart-item', additionalData: body)
         .then((response) {
+      print("Response Status Code ${response.statusCode}");
+      print("Response Body ${response.body}");
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -403,13 +397,19 @@ class CartModel extends ChangeNotifier {
         }
       } else {
         // Log or handle the error
-        _logger.e(
-            'HTTP POST request failed with status code ${response.statusCode} ${response.body}');
+        print("Error: ${response.statusCode} ${response.body}");
       }
     }).catchError((error) {
       // Handle any errors
       _logger.e('HTTP POST request error: $error');
     });
+
+    cartID = await storage.read(key: 'cartId');
+    customerId = await storage.read(key: 'customerId');
+
+    print("After Add Item To Cart");
+    print("Cart Id $cartID");
+    print("Customer Id $customerId");
   }
 
   Future<void> removeItem({required String itemId}) async {

@@ -78,8 +78,6 @@ class _MyHomePageState extends State<MyHomePage>
     String? storedCartId =
         await storage.read(key: 'cartId'); // Get cartId from secure storage
 
-    CartModel cartModel = CartModel();
-
     setState(() {
       customerId = storedCustomerId!;
       phone = storedPhone ?? "0";
