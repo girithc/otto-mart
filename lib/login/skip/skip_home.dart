@@ -86,7 +86,6 @@ class _SkipHomePageState extends State<SkipHomePage>
       final fetchedPromotions = await apiClient.fetchPromotions();
       setState(() {
         promotions = fetchedPromotions;
-        //print("Promotions: ${promotions[0].image}");
       });
     } catch (err) {
       _logger.e('(home)fetchPromotions error $err');
@@ -335,6 +334,20 @@ class _SkipHomePageState extends State<SkipHomePage>
                 image,
                 fit: BoxFit.cover,
                 height: 69.0,
+                errorBuilder: (BuildContext context, Object exception,
+                    StackTrace? stackTrace) {
+                  return Container(
+                    height: 120,
+                    color: Colors.grey[200],
+                    alignment: Alignment.center,
+                    child: const Center(
+                      child: Text(
+                        'no image',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  );
+                },
               ),
               Text(
                 categoryName,

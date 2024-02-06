@@ -63,7 +63,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    print("Show Address: $showAddress");
+    //print("Show Address: $showAddress");
 
     fetchCategories();
     fetchPromotions();
@@ -78,11 +78,10 @@ class _MyHomePageState extends State<MyHomePage>
     String? storedCartId =
         await storage.read(key: 'cartId'); // Get cartId from secure storage
 
-    CartModel cartModel = CartModel(storedCustomerId!);
-    Address? deliveryAddress = cartModel.deliveryAddress;
+    CartModel cartModel = CartModel();
 
     setState(() {
-      customerId = storedCustomerId;
+      customerId = storedCustomerId!;
       phone = storedPhone ?? "0";
       cartId = storedCartId ?? "0"; // Set the cartId
       //addressId = deliveryAddress.id;
@@ -159,7 +158,6 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> _checkAddressAndLoginStatus() async {
     final network = NetworkService();
-    // Your HTTP request logic here
     var headers = {
       'Content-Type': 'application/json',
       'Cookie': 'token=your_token'
@@ -169,13 +167,9 @@ class _MyHomePageState extends State<MyHomePage>
 
     final Map<String, dynamic> body = {
       "customer_id": int.parse(storedCustomerId!),
-      "is_default": true // Replace with the actual customer_id value
+      "is_default": true
     };
     request.headers.addAll(headers);
-
-    // Send the HTTP POST request
-    //final http.Response response = await http.post(Uri.parse("$baseUrl/address"),headers: headers,body: jsonEncode(body),);
-
     final response =
         await network.postWithAuth('/address', additionalData: body);
 
@@ -185,7 +179,7 @@ class _MyHomePageState extends State<MyHomePage>
           jsonData.map((item) => Address.fromJson(item)).toList();
       setState(() {
         isLoading = false;
-        print("Address Fetched ${items[0]}");
+        //print("Address Fetched ${items[0]}");
         showDialogVisible = false;
         defaultAddress = items[0];
       });
@@ -196,8 +190,6 @@ class _MyHomePageState extends State<MyHomePage>
       });
       print(response.reasonPhrase);
     }
-
-    // Update the state to indicate loading is complete
   }
 
   @override
@@ -529,6 +521,20 @@ class _MyHomePageState extends State<MyHomePage>
                 child: Image.network(
                   image,
                   fit: BoxFit.cover,
+                  errorBuilder: (BuildContext context, Object exception,
+                      StackTrace? stackTrace) {
+                    return Container(
+                      height: 120,
+                      color: Colors.grey[200],
+                      alignment: Alignment.center,
+                      child: const Center(
+                        child: Text(
+                          'no image',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
               SizedBox(

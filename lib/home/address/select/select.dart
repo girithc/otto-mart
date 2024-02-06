@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -11,6 +12,7 @@ import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
+import 'package:upgrader/upgrader.dart';
 // Import other necessary packages
 
 class AddressSelectionWidget extends StatefulWidget {
@@ -48,8 +50,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     String? storedCustomerId = await storage.read(key: 'customerId');
     String? storedPhone = await storage.read(key: 'phone');
 
-    CartModel cartModel = CartModel(storedCustomerId!);
-    Address? deliveryAddress = cartModel.deliveryAddress;
+    CartModel cartModel = CartModel();
+    //Address? deliveryAddress = cartModel.deliveryAddress;
 
     setState(() {
       customerId = storedCustomerId;
@@ -197,66 +199,73 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         centerTitle: true,
         leading: Container(),
       ),
-      body: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(10),
-            topRight: Radius.circular(10),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black,
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: Offset(0, 3),
+      body: UpgradeAlert(
+        dialogStyle: Platform.isIOS
+            ? UpgradeDialogStyle.cupertino
+            : UpgradeDialogStyle.material,
+        canDismissDialog: false,
+        showIgnore: false,
+        showLater: false,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(10),
+              topRight: Radius.circular(10),
             ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Title
-            _buildAdvertisement(),
-            /*
-            _buildTitleSection(),
-            */
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(
-                    bottom: 10, top: 5, left: 5, right: 5),
-                padding: const EdgeInsets.symmetric(vertical: 10.0),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(15), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2), // Changes position of shadow
-                    ),
-                  ],
-                  border: Border.all(color: Colors.white, width: 1.0),
-                ),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: isLoadingGetAddress
-                          ? _buildSkeletonLoader()
-                          : _buildAddressList(),
-                    ),
-                  ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black,
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Title
+              _buildAdvertisement(),
+
+              Expanded(
+                child: Container(
+                  margin: const EdgeInsets.only(
+                      bottom: 10, top: 5, left: 5, right: 5),
+                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15), // Rounded corners
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.5),
+                        spreadRadius: 2,
+                        blurRadius: 4,
+                        offset:
+                            const Offset(0, 2), // Changes position of shadow
+                      ),
+                    ],
+                    border: Border.all(color: Colors.white, width: 1.0),
+                  ),
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: isLoadingGetAddress
+                            ? _buildSkeletonLoader()
+                            : _buildAddressList(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(
-              height: 5,
-            ),
-            _buildActionButton(),
-          ],
+              const SizedBox(
+                height: 5,
+              ),
+              _buildActionButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -306,7 +315,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter modalSetState) {
         return ListView.builder(
-          itemCount: addresses.length + 2,
+          itemCount: addresses.length + 1,
           itemBuilder: (BuildContext context, int index) {
             bool isSelected = index == selectedAddressIndex;
 
@@ -350,8 +359,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                         : null, // Icon for current address
                     title: Text(
                       index == 1
-                          ? "${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}, ${cart.deliveryAddress.lineTwo}"
-                          : "${addresses[index - 2].streetAddress}, ${addresses[index - 2].lineOne}, ${addresses[index - 2].lineTwo}",
+                          ? "${addresses[index - 1].streetAddress}, ${addresses[index - 1].lineOne}, ${addresses[index - 1].lineTwo}"
+                          //"${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}, ${cart.deliveryAddress.lineTwo}"
+                          : "${addresses[index - 1].streetAddress}, ${addresses[index - 1].lineOne}, ${addresses[index - 1].lineTwo}",
                       style: const TextStyle(fontSize: 16, color: Colors.black),
                     ),
                   ),
@@ -381,10 +391,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             bool deliverable = true;
             print("Button Press: SelectedAddressindex $selectedAddressIndex");
             if (selectedAddressIndex != null) {
-              if (selectedAddressIndex! > 1) {
+              if (selectedAddressIndex! >= 1) {
                 print("1a Branch");
                 showAddress = false;
-                setDefaultAddress(addresses[selectedAddressIndex! - 2].id).then(
+                setDefaultAddress(addresses[selectedAddressIndex! - 1].id).then(
                   (address) async {
                     if (!mounted) return;
 
@@ -398,7 +408,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
                     if (deliverable) {
                       snackBarMessage =
-                          'Delivery address set to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
+                          'Delivery address set to: ${addresses[selectedAddressIndex! - 1].streetAddress}';
 
                       print('Go To Home');
                       await storage
@@ -413,7 +423,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                               });
                     } else {
                       snackBarMessage =
-                          'Not deliverable to: ${addresses[selectedAddressIndex! - 2].streetAddress}';
+                          'Not deliverable to: ${addresses[selectedAddressIndex! - 1].streetAddress}';
 
                       await storage.delete(key: 'storeId');
                       print('Coming Soon');

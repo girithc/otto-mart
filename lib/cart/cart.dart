@@ -102,7 +102,6 @@ class CartModel extends ChangeNotifier {
 
   CartDetails? _cartDetails;
   int _deliveryPartnerTip = 0;
-  late String customerId;
 
   // Initialize storage
   final storage = const FlutterSecureStorage();
@@ -124,7 +123,7 @@ class CartModel extends ChangeNotifier {
       longitude: 0.00,
       latitude: 0.0);
 
-  CartModel(this.customerId) {
+  CartModel() {
     _cartDetails = CartDetails(
       cartItemId: 0,
       cartId: 0,
@@ -166,17 +165,17 @@ class CartModel extends ChangeNotifier {
     }
   }
 
-  void _fetchCartItems() {
+  Future<void> _fetchCartItems() async {
     final url = Uri.parse('$baseUrl/cart-item');
     final headers = <String, String>{
       'Content-Type': 'application/json',
     };
 
-    //print("customer Id $customerId");
+    final customerId = await storage.read(key: 'customerId');
 
     int? parsedCustomerId;
     try {
-      parsedCustomerId = int.parse(customerId);
+      parsedCustomerId = int.parse(customerId!);
     } catch (e) {
       _logger.e('Failed to parse customerId: $customerId, error: $e ');
     }
@@ -354,12 +353,23 @@ class CartModel extends ChangeNotifier {
     final networkService = NetworkService();
 
     String? cartID = await storage.read(key: 'cartId');
+    String? customerId = await storage.read(key: 'customerId');
+
+    print("Add Item To Cart");
+    print("Cart Id $cartID");
+    print("Customer Id $customerId");
 
     // Define the body for the POST request
+    if (item.quantity > 0) {
+      item.quantity = 1;
+    } else {
+      item.quantity = -1;
+    }
     final Map<String, dynamic> body = {
       'cart_id': int.parse(cartID!),
       'item_id': int.parse(item.productId),
-      'quantity': 1,
+      'quantity': item.quantity,
+      'customer_id': int.parse(customerId!)
       // Add any other parameters you need
     };
 
@@ -374,14 +384,23 @@ class CartModel extends ChangeNotifier {
             jsonData['cart_details'] as Map<String, dynamic>;
         _cartDetails = CartDetails.fromJson(cartDetailsData);
 
-        // Extracting 'cart_items_list' from the response
-        final List<dynamic> cartItemsList = jsonData['cart_items_list'];
-        final List<CartItem> items =
-            cartItemsList.map((item) => CartItem.fromJson(item)).toList();
+        if (_cartDetails?.cartId.toString() != cartID) {
+          print("\n");
+          print("Old Cart Id $cartID");
+          print("New Cart Id ${_cartDetails?.cartId}");
+          print("\n");
+          storage.write(key: 'cartId', value: _cartDetails?.cartId.toString());
+          _items.clear();
+          clearCart();
+        } else {
+          final List<dynamic> cartItemsList = jsonData['cart_items_list'];
+          final List<CartItem> items =
+              cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
-        _items.clear();
-        _items.addAll(items);
-        notifyListeners();
+          _items.clear();
+          _items.addAll(items);
+          notifyListeners();
+        }
       } else {
         // Log or handle the error
         _logger.e(

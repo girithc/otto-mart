@@ -76,7 +76,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     // Retrieve customerId and cartId from secure storage
     String? customerId = await _storage.read(key: 'customerId');
     String? cartId;
-    final _networkService = NetworkService();
+    final networkService = NetworkService();
     if (widget.newOrder) {
       cartId = await _storage.read(key: 'cartId');
       print("Cart ID: $cartId");
@@ -90,28 +90,16 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       throw Exception('Customer ID or Cart ID is missing');
     }
 
-    /*
-    final response = await http.post(
-      Uri.parse('$baseUrl/sales-order'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'customer_id': int.parse(customerId),
-        'cart_id': int.parse(cartId),
-        // Add other necessary fields if any
-      }),
-    );
-    */
-
     // Prepare the body for the POST request
-    final body = {
+    final Map<String, dynamic> body = {
       'customer_id': int.parse(customerId),
       'cart_id': int.parse(cartId),
       // Add other necessary fields if any
     };
 
     // Use the NetworkService to make the authenticated POST request
-    final response = await _networkService.postWithAuth('/sales-order',
-        additionalData: body);
+    final response =
+        await networkService.postWithAuth('/sales-order', additionalData: body);
 
     print("CustomerId: $customerId, CartId: $cartId");
 
@@ -343,7 +331,6 @@ class _ItemListState extends State<ItemList> {
         children: [
           for (var item in cart.items)
             Container(
-              //padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
               margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
               child: Row(
                 children: [
@@ -402,14 +389,7 @@ class _ItemListState extends State<ItemList> {
                       child: Center(
                         child: Text(
                             "\u{20B9}${item.soldPrice * item.quantity}", // Replace with your price calculation
-                            style: itemNameStyle
-                            /*
-                                        const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                        */
-                            ),
+                            style: itemNameStyle),
                       ),
                     ),
                   ),

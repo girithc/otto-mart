@@ -422,10 +422,9 @@ class _CartList extends StatelessWidget {
                                         const Spacer(),
                                         InkWell(
                                           onTap: () {
-                                            context
-                                                .read<CartModel>()
-                                                .removeItem(
-                                                    itemId: item.productId);
+                                            final item2 = item;
+                                            item2.quantity = -1;
+                                            cart.addItemToCart(item2);
                                           },
                                           child: const Icon(
                                             Icons.horizontal_rule,

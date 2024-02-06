@@ -32,9 +32,11 @@ class NetworkService {
       additionalData.addAll(authBody);
     }
 
+    print("\n");
     print("URL: $url");
     print("Headers: $headers");
     print("Body: $additionalData");
+    print("\n");
 
     final response = await http.post(
       url,

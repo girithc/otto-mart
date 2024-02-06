@@ -24,6 +24,7 @@ import 'package:pronto/utils/network/service.dart';
 import 'package:pronto/utils/no_internet.dart';
 import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
+import 'package:upgrader/upgrader.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
 
@@ -35,6 +36,9 @@ void main() async {
 
   const storage = FlutterSecureStorage();
   String? initialCustomerId = await storage.read(key: 'customerId');
+
+  // Only call clearSavedSettings() during testing to reset internal values.
+  await Upgrader.clearSavedSettings(); // REMOVE this for release builds
 
   runApp(MyApp(
     initialCustomerId: initialCustomerId,
@@ -173,9 +177,8 @@ class _MyAppState extends State<MyApp> {
         ChangeNotifierProvider(
             create: (context) => AddressModel(widget.initialCustomerId!)),
         ChangeNotifierProxyProvider<LoginStatusProvider, CartModel>(
-          create: (context) => CartModel(widget.initialCustomerId ?? ""),
-          update: (context, loginProvider, cartModel) =>
-              CartModel(loginProvider.customerId ?? ""),
+          create: (context) => CartModel(),
+          update: (context, loginProvider, cartModel) => CartModel(),
         ),
       ],
       child: Consumer<ConnectivityProvider>(

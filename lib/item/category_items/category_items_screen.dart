@@ -144,7 +144,7 @@ class CategoryItemsBody extends StatefulWidget {
 }
 
 class _CategoryItemsBodyState extends State<CategoryItemsBody> {
-  final ItemApiClient apiClient = ItemApiClient('https://localhost:3000');
+  final ItemApiClient apiClient = ItemApiClient();
   List<Item> items = [];
   final Logger _logger = Logger();
 

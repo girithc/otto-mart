@@ -1,8 +1,6 @@
 // Copyright 2019 The Flutter team. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
-import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -257,7 +255,7 @@ class ItemCatalog extends StatefulWidget {
 }
 
 class _ItemCatalogState extends State<ItemCatalog> {
-  final ItemApiClient apiClient = ItemApiClient('https://localhost:3000');
+  final ItemApiClient apiClient = ItemApiClient();
   List<Item> items = [];
   final Logger _logger = Logger();
 
@@ -586,9 +584,14 @@ class ListItem2 extends StatelessWidget {
                                 children: [
                                   InkWell(
                                     onTap: () {
-                                      context
-                                          .read<CartModel>()
-                                          .removeItem(itemId: id.toString());
+                                      cart.addItemToCart(CartItem(
+                                          productId: id.toString(),
+                                          productName: name,
+                                          price: mrpPrice,
+                                          soldPrice: storePrice,
+                                          quantity: -1,
+                                          stockQuantity: stockQuantity,
+                                          image: image));
                                     },
                                     child: const Icon(
                                       Icons.horizontal_rule,
