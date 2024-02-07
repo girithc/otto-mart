@@ -5,6 +5,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
@@ -13,7 +14,6 @@ import 'package:pronto/payments/payments_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 
 class MyCart extends StatefulWidget {
   const MyCart({super.key});
@@ -24,23 +24,27 @@ class MyCart extends StatefulWidget {
 }
 
 class _MyCartState extends State<MyCart> {
+  String? cartId;
+  final storage = const FlutterSecureStorage();
+
+  @override
+  void initState() {
+    fetchCartId();
+    super.initState();
+  }
+
+  Future<void> fetchCartId() async {
+    //await Future.delayed(const Duration(seconds: 3)); // Introduce a 3-second delay
+
+    cartId = await storage.read(key: 'cartId');
+  }
+
   Future<LockStockResponse> checkoutLockItems(int cartId) async {
     const String apiUrl = '$baseUrl/checkout-lock-items';
     final Map<String, dynamic> body = {'cart_id': cartId};
     final networkService = NetworkService();
 
-    //print("Check-out-lock-items");
     try {
-      /*
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: json.encode(payload),
-      );
-      */
-
       final response = await networkService.postWithAuth('/checkout-lock-items',
           additionalData: body);
 
@@ -65,239 +69,265 @@ class _MyCartState extends State<MyCart> {
     var cart = context.watch<CartModel>();
     bool hasDeliveryAddress = !cart.deliveryAddress.isEmpty();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: ShaderMask(
-          shaderCallback: (bounds) => const RadialGradient(
-                  center: Alignment.topLeft,
-                  radius: 1.0,
-                  colors: [Colors.deepPurple, Colors.deepPurpleAccent],
-                  tileMode: TileMode.mirror)
-              .createShader(bounds),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MyHomePage(
-                    title: 'Otto Mart',
-                  ),
-                ),
-              );
-            },
-            child: Text(
-              'Otto Cart ${cart.cartId}',
-              style: const TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white),
-            ),
-          ),
-        ),
-        elevation: 4.0,
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.deepPurple,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        centerTitle: true,
-      ),
-      body: Container(
-        color: Colors.white,
-        child: Column(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(0),
-                child: _CartList(),
-              ),
-            ),
-            //const Divider(height: 4, color: Colors.black),
-          ],
-        ),
-      ),
-      bottomNavigationBar: !hasDeliveryAddress
-          ? Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.grey,
-                    blurRadius: 10,
-                    offset: Offset(0, 5), // Specify the shadow's offset
-                  ),
-                ],
-              ),
-              padding: EdgeInsets.zero,
-              margin: EdgeInsets.zero,
-              height: MediaQuery.of(context).size.height * 0.15,
-              child: Column(
-                  // Align children at the start
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.only(
-                          left: 12, right: 12, bottom: 20, top: 0),
-                      height:
-                          MediaQuery.of(context).size.height * (0.18 - 0.065),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SavedAddressScreen(),
-                            ),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pinkAccent,
-                          foregroundColor: Colors.white,
-                          textStyle:
-                              Theme.of(context).textTheme.titleLarge!.copyWith(
-                                    fontWeight:
-                                        FontWeight.bold, // Making the font bold
-                                  ),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(
-                                20.0), // Slightly more rounded
-                          ),
-                          elevation: 5, // Adding some shadow for depth
-                          side: BorderSide(
-                              color: Colors.pink[200]!,
-                              width: 2), // Border for a more defined look
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.electric_bike_outlined),
-                            SizedBox(width: 10),
-                            Text('Enter Delivery Address'),
-                          ],
+    return FutureBuilder(
+      future: fetchCartId(),
+      builder: (BuildContext context, AsyncSnapshot<void> snapshot) {
+        // Check if the future is complete
+        if (snapshot.connectionState == ConnectionState.done) {
+          // Future is complete, you can use the fetched cartId here
+          return Scaffold(
+            appBar: AppBar(
+              title: ShaderMask(
+                shaderCallback: (bounds) => const RadialGradient(
+                        center: Alignment.topLeft,
+                        radius: 1.0,
+                        colors: [Colors.deepPurple, Colors.deepPurpleAccent],
+                        tileMode: TileMode.mirror)
+                    .createShader(bounds),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyHomePage(
+                          title: 'Otto Mart',
                         ),
                       ),
-                    ),
-                  ]))
-          : Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.grey,
-                    blurRadius: 10,
-                    offset: Offset(0, 5), // Specify the shadow's offset
+                    );
+                  },
+                  child: Text(
+                    'Otto Cart $cartId',
+                    style: const TextStyle(
+                        fontSize: 25,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white),
                   ),
+                ),
+              ),
+              elevation: 4.0,
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.deepPurple,
+              shadowColor: Colors.white,
+              surfaceTintColor: Colors.white,
+              centerTitle: true,
+            ),
+            body: Container(
+              color: Colors.white,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(0),
+                      child: _CartList(),
+                    ),
+                  ),
+                  //const Divider(height: 4, color: Colors.black),
                 ],
               ),
-              padding: EdgeInsets.zero,
-              margin: EdgeInsets.zero,
-              height: MediaQuery.of(context).size.height * 0.15,
-              child: Column(
-                // Align children at the start
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.only(
-                        left: 12, right: 12, bottom: 20, top: 0),
-                    height: MediaQuery.of(context).size.height * (0.18 - 0.065),
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Make sure to get the actual cart ID from your cart variable or state
-                        if (cart.isEmpty()) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const MyHomePage(
-                                title: 'Otto Mart',
-                              ),
-                            ),
-                          );
-                        } else {
-                          String? cartId = cart.cartId;
-                          if (cartId != null) {
-                            int cartIdInt = int.parse(cartId);
-                            checkoutLockItems(cartIdInt).then((success) {
-                              if (success.lock) {
-                                // If the checkout lock is successful, navigate to the PaymentsPage
-                                Navigator.pushReplacement(
+            ),
+            bottomNavigationBar: !hasDeliveryAddress
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          blurRadius: 10,
+                          offset: Offset(0, 5), // Specify the shadow's offset
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.zero,
+                    margin: EdgeInsets.zero,
+                    height: MediaQuery.of(context).size.height * 0.15,
+                    child: Column(
+                        // Align children at the start
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.only(
+                                left: 12, right: 12, bottom: 20, top: 0),
+                            height: MediaQuery.of(context).size.height *
+                                (0.18 - 0.065),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => PaymentsPage(
-                                      sign: success.sign,
-                                      merchantTransactionID:
-                                          success.merchantTransactionID,
+                                    builder: (context) =>
+                                        const SavedAddressScreen(),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.pinkAccent,
+                                foregroundColor: Colors.white,
+                                textStyle: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge!
+                                    .copyWith(
+                                      fontWeight: FontWeight
+                                          .bold, // Making the font bold
+                                    ),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 10),
+
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(
+                                      20.0), // Slightly more rounded
+                                ),
+                                elevation: 5, // Adding some shadow for depth
+                                side: BorderSide(
+                                    color: Colors.pink[200]!,
+                                    width: 2), // Border for a more defined look
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.electric_bike_outlined),
+                                  SizedBox(width: 10),
+                                  Text('Enter Delivery Address'),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ]))
+                : Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.grey,
+                          blurRadius: 10,
+                          offset: Offset(0, 5), // Specify the shadow's offset
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.zero,
+                    margin: EdgeInsets.zero,
+                    height: MediaQuery.of(context).size.height * 0.15,
+                    child: Column(
+                      // Align children at the start
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.only(
+                              left: 12, right: 12, bottom: 20, top: 0),
+                          height: MediaQuery.of(context).size.height *
+                              (0.18 - 0.065),
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              // Make sure to get the actual cart ID from your cart variable or state
+                              if (cart.isEmpty()) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MyHomePage(
+                                      title: 'Otto Mart',
                                     ),
                                   ),
                                 );
                               } else {
-                                // If the checkout lock is unsuccessful, you might want to show an error message
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                        'Failed to lock items for checkout.'),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
+                                String? cartId =
+                                    await storage.read(key: 'cartId');
+                                if (cartId != null) {
+                                  int cartIdInt = int.parse(cartId);
+                                  print("CartID INT: $cartIdInt");
+                                  checkoutLockItems(cartIdInt).then((success) {
+                                    if (success.lock) {
+                                      // If the checkout lock is successful, navigate to the PaymentsPage
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PaymentsPage(
+                                            sign: success.sign,
+                                            merchantTransactionID:
+                                                success.merchantTransactionID,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      // If the checkout lock is unsuccessful, you might want to show an error message
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Failed to lock items for checkout.'),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                    }
+                                  }).catchError((error) {
+                                    // Handle any errors here
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Error: $error'),
+                                        backgroundColor: Colors.redAccent,
+                                      ),
+                                    );
+                                  });
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Error: Cart Id Not Found'),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                  );
+                                }
                               }
-                            }).catchError((error) {
-                              // Handle any errors here
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Error: $error'),
-                                  backgroundColor: Colors.redAccent,
-                                ),
-                              );
-                            });
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Error: Cart Id Not Found'),
-                                backgroundColor: Colors.redAccent,
-                              ),
-                            );
-                          }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pinkAccent,
-                        foregroundColor: Colors.white,
-                        textStyle:
-                            Theme.of(context).textTheme.titleLarge!.copyWith(
-                                  fontWeight:
-                                      FontWeight.bold, // Making the font bold
-                                ),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 10),
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.pinkAccent,
+                              foregroundColor: Colors.white,
+                              textStyle: Theme.of(context)
+                                  .textTheme
+                                  .titleLarge!
+                                  .copyWith(
+                                    fontWeight:
+                                        FontWeight.bold, // Making the font bold
+                                  ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 10),
 
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                              20.0), // Slightly more rounded
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(
+                                    20.0), // Slightly more rounded
+                              ),
+                              elevation: 5, // Adding some shadow for depth
+                              side: BorderSide(
+                                  color: Colors.pink[200]!,
+                                  width: 2), // Border for a more defined look
+                            ),
+                            child: Center(
+                              child: Text(
+                                cart.isEmpty()
+                                    ? 'Add Items'
+                                    : 'Complete Payment',
+                                style: const TextStyle(
+                                    fontSize: 24), // Consistent text size
+                              ),
+                            ),
+                          ),
                         ),
-                        elevation: 5, // Adding some shadow for depth
-                        side: BorderSide(
-                            color: Colors.pink[200]!,
-                            width: 2), // Border for a more defined look
-                      ),
-                      child: Center(
-                        child: Text(
-                          cart.isEmpty() ? 'Add Items' : 'Complete Payment',
-                          style: const TextStyle(
-                              fontSize: 24), // Consistent text size
-                        ),
-                      ),
+
+                        // ... other children of the Column ...
+                      ],
                     ),
                   ),
-
-                  // ... other children of the Column ...
-                ],
-              ),
-            ),
-      // Return an empty SizedBox when no delivery address
+            // Return an empty SizedBox when no delivery address
+          );
+        } else {
+          // Future is still loading, show a loading indicator or some placeholder
+          return const Scaffold(
+              body: Center(
+            child: LinearProgressIndicator(),
+          ));
+        }
+      },
     );
   }
 }

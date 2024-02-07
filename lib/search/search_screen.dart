@@ -33,22 +33,31 @@ class _SearchTopLevelState extends State<SearchTopLevel> {
   }
 }
 
-class SearchPage extends StatelessWidget {
+class SearchPage extends StatefulWidget {
   final FocusNode searchFocusNode;
 
   const SearchPage({required this.searchFocusNode, Key? key}) : super(key: key);
 
   @override
+  State<SearchPage> createState() => _SearchPageState();
+}
+
+class _SearchPageState extends State<SearchPage> {
+  @override
+  void initState() {
+    super.initState();
+    widget.searchFocusNode.requestFocus();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Focus the text field when the page is loaded
-    searchFocusNode.requestFocus();
     final searchData = context.watch<SearchData>();
     final searchQuery = searchData.searchQuery;
     var cart = context.watch<CartModel>();
 
     return Scaffold(
       appBar: CustomAppBar(
-          categoryName: 'Pronto', searchFocusNode: searchFocusNode),
+          categoryName: 'Pronto', searchFocusNode: widget.searchFocusNode),
       body: searchQuery.length > 2
           ? const SearchItemList()
           : const TypingAnimation(),
@@ -558,251 +567,6 @@ class ListItem extends StatelessWidget {
       required this.unitOfQuantity,
       required this.brand});
 
-  /*
-  @override
-  Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>(); // Access the CartModel instance
-    var itemIndexInCart =
-        cart.items.indexWhere((item) => item.productId == id.toString());
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Product(
-              productName: name,
-              productId: id,
-              mrpPrice: mrpPrice,
-              storePrice: storePrice,
-              discount: discount,
-              stockQuantity: stockQuantity,
-              brand: brand,
-              image: image,
-              quantity: quantity,
-              unitOfQuantity: unitOfQuantity,
-            ),
-          ),
-        );
-      },
-      child: Material(
-        elevation: 4.0,
-        shadowColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: borderColor, width: 1.0),
-                borderRadius: BorderRadius.circular(3.0),
-              ),
-              margin: index == 0
-                  ? const EdgeInsets.only(top: 4.0, left: 4.0, right: 2.0)
-                  : const EdgeInsets.only(top: 4.0, left: 2.0, right: 4.0),
-              padding: EdgeInsets.zero,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4.0, bottom: 2.0),
-                    child: Center(
-                      child: Image.network(
-                        image,
-                        height: MediaQuery.of(context).size.height * 0.15,
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 2.0),
-                      alignment: Alignment.centerLeft,
-                      height: MediaQuery.of(context).size.height * 0.04,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Text(
-                        name,
-                        maxLines: 2,
-                        style: GoogleFonts.hind(
-                          textStyle: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              height: 1.1,
-                              overflow: TextOverflow.ellipsis),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Container(
-                      margin: EdgeInsets.zero,
-                      alignment: Alignment.centerLeft,
-                      height: 17,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Text(
-                        '$quantity$unitOfQuantity',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            height: 1.2),
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 8.0),
-                    child: Container(
-                      height: 37,
-                      margin: const EdgeInsets.only(top: 0),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(1.0),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            '\u{20B9}$storePrice',
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          Text(
-                            '$mrpPrice',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              decoration: TextDecoration.lineThrough,
-                              decorationColor: Colors.black54,
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 2,
-                          ),
-                          itemIndexInCart != -1
-                              ? Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 2, vertical: 2),
-                                  margin: const EdgeInsets.only(right: 2),
-                                  decoration: BoxDecoration(
-                                      color: const Color.fromARGB(
-                                          255, 140, 98, 255), // Add border
-                                      borderRadius: BorderRadius.circular(3.0)),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          context.read<CartModel>().removeItem(
-                                              itemId: id.toString());
-                                        },
-                                        child: const Icon(
-                                          Icons.horizontal_rule,
-                                          size: 21,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                      Text(
-                                        cart.items[itemIndexInCart].quantity
-                                            .toString(),
-                                        style: const TextStyle(
-                                            color: Colors.white, fontSize: 16),
-                                      ),
-                                      InkWell(
-                                        onTap: () {
-                                          cart.addItemToCart(CartItem(
-                                              productId: id.toString(),
-                                              productName: name,
-                                              price: mrpPrice,
-                                              soldPrice: storePrice,
-                                              quantity: 1,
-                                              stockQuantity: stockQuantity,
-                                              image: image));
-                                        },
-                                        child: const Icon(
-                                          Icons.add,
-                                          size: 24,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                              : Container(
-                                  padding: EdgeInsets.zero,
-                                  margin: const EdgeInsets.only(
-                                      right: 2, top: 2, bottom: 4),
-                                  child: ElevatedButton(
-                                      onPressed: () {
-                                        final cartItem = CartItem(
-                                            productId: id.toString(),
-                                            productName: name,
-                                            price: mrpPrice,
-                                            soldPrice: storePrice,
-                                            quantity: 1,
-                                            stockQuantity: stockQuantity,
-                                            image: image);
-                                        cart.addItemToCart(cartItem);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                          surfaceTintColor: Colors.white,
-                                          backgroundColor: Colors.white,
-                                          padding: const EdgeInsets.all(2),
-                                          side: const BorderSide(
-                                            width: 1.0,
-                                            color: Colors.pink,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(10.0),
-                                          )),
-                                      child: const Text(
-                                        'Add+',
-                                        style: TextStyle(
-                                            color: Colors.pink, fontSize: 13.5),
-                                      )),
-                                )
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 10, // Adjust the position as needed
-              left: 10, // Adjust the position as needed
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurpleAccent,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Text(
-                  '\u{20B9}$discount OFF',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  */
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>(); // Access the CartModel instance
@@ -971,9 +735,14 @@ class ListItem extends StatelessWidget {
                                 children: [
                                   InkWell(
                                     onTap: () {
-                                      context
-                                          .read<CartModel>()
-                                          .removeItem(itemId: id.toString());
+                                      cart.addItemToCart(CartItem(
+                                          productId: id.toString(),
+                                          productName: name,
+                                          price: mrpPrice,
+                                          soldPrice: storePrice,
+                                          quantity: -1,
+                                          stockQuantity: stockQuantity,
+                                          image: image));
                                     },
                                     child: const Icon(
                                       Icons.horizontal_rule,

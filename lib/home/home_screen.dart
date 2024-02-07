@@ -385,8 +385,8 @@ class _MyHomePageState extends State<MyHomePage>
             ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height * 0.015,
-            top: 0,
+            bottom: MediaQuery.of(context).size.height * 0.025,
+            top: 5,
             left: 15,
             right: 15),
         margin: const EdgeInsets.only(bottom: 0),
@@ -433,6 +433,41 @@ class _MyHomePageState extends State<MyHomePage>
                       size: 15, color: Colors.black87), // Icon for Home
                   SizedBox(width: 4),
                   Text('Home',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87)),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // Navigate to Cart
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const SearchTopLevel()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white, // Background color
+                surfaceTintColor: Colors.white,
+                elevation: 0.0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8), // Squarish shape
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.travel_explore_outlined,
+                    size: 15,
+                    color: Colors.black87,
+                  ), // Icon for Cart
+                  SizedBox(width: 4),
+                  Text('Explore',
                       style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,

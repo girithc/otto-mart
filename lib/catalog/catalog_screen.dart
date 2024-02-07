@@ -87,6 +87,7 @@ class _CatalogPageState extends State<CatalogPage> {
       body: ListOfItems(categories: categories),
       bottomNavigationBar: Material(
         elevation: 4.0,
+        color: Colors.white,
         child: Container(
           margin: EdgeInsets.zero,
           padding:
@@ -465,9 +466,9 @@ class ListItem2 extends StatelessWidget {
             margin: index == 0
                 ? const EdgeInsets.only(
                     top: 3,
-                    left: 3,
+                    left: 0,
                   )
-                : const EdgeInsets.only(top: 3, left: 3.0, right: 3.0),
+                : const EdgeInsets.only(top: 3, left: 0.0, right: 0.0),
             padding: const EdgeInsets.only(bottom: 5),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

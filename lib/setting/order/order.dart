@@ -39,9 +39,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     }
 
     try {
-      var headers = {'Content-Type': 'application/json'};
       final Map<String, dynamic> body = {"customer_id": int.parse(customerId)};
-      var url = Uri.parse('$baseUrl/sales-order');
 
       //var response = await http.post(url, headers: headers, body: body);
       final networkService = NetworkService();
@@ -117,9 +115,10 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => OrderDetailPage(
-                                salesOrderId: orders[index].id!,
-                              )),
+                        builder: (context) => OrderDetailPage(
+                          salesOrderId: orders[index].id!,
+                        ),
+                      ),
                     );
                   },
                   child: Container(
@@ -150,13 +149,17 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                           Text(
                             "Address ${orders[index].address!}",
                             style: GoogleFonts.robotoMono(fontSize: 14),
-                            maxLines: 2,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             textAlign:
                                 TextAlign.center, // Center-aligns the text
                           ),
                           Text(
                             " Order Date ${orders[index].date!}",
+                            style: GoogleFonts.robotoMono(fontSize: 14),
+                          ),
+                          Text(
+                            " Order Id ${orders[index].id!}",
                             style: GoogleFonts.robotoMono(fontSize: 14),
                           ),
                           const Row(

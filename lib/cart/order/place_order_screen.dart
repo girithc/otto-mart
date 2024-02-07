@@ -102,17 +102,3 @@ class _TextCyclerState extends State<TextCycler> {
     );
   }
 }
-
-class AnotherPage extends StatelessWidget {
-  const AnotherPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Another Page')),
-      body: const Center(
-        child: Text('This is another page'),
-      ),
-    );
-  }
-}

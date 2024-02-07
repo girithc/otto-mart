@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/payments/phonepe.dart';
@@ -24,6 +25,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
   late final WebViewController controller;
   var loadingPercentage = 0;
   final String _selectedPayment = 'PhonePe';
+  final storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -65,15 +67,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
       final response = await networkService.postWithAuth('/checkout-cancel',
           additionalData: payload);
 
-      /*final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: json.encode(payload),
-      );
-      */
-
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
         final jsonResponse = json.decode(response.body);
@@ -91,8 +84,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
   }
 
   Future<bool> processPayment(int cartId, bool cash) async {
-    var headers = {'Content-Type': 'application/json'};
-    var url = Uri.parse('$baseUrl/checkout-payment');
     final Map<String, dynamic> body = {
       "cart_id": cartId,
       "cash": cash,
@@ -101,12 +92,10 @@ class _PaymentsPageState extends State<PaymentsPage> {
     };
 
     try {
-      //var response = await http.post(url, headers: headers, body: body);
-
       final networkService = NetworkService();
       final response = await networkService.postWithAuth('/checkout-payment',
           additionalData: body);
-
+      print("COD Response: ${response.body}");
       if (response.statusCode == 200) {
         var responseData = json.decode(response.body);
         print(response.body);
@@ -195,53 +184,44 @@ class _PaymentsPageState extends State<PaymentsPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
+          onPressed: () async {
             // Call your function here
-            String? cartId = cart.cartId;
-            if (cartId != null) {
-              int cartIdInt = int.parse(cartId);
-              print('CartID: $cartIdInt');
-              checkoutCancelItems(cartIdInt, widget.sign).then((success) {
-                if (success) {
-                  // If the checkout lock is successful, navigate to the PaymentsPage
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyCart(),
-                    ),
-                  );
-                } else {
-                  // If the checkout lock is unsuccessful, you might want to show an error message
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Failed to cancel checkout.'),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyCart(),
-                    ),
-                  );
-                }
-              }).catchError((error) {
-                // Handle any errors here
+            String? cartId = await storage.read(key: 'cartId');
+            int cartIdInt = int.parse(cartId!);
+            print('CartID: $cartIdInt');
+            checkoutCancelItems(cartIdInt, widget.sign).then((success) {
+              if (success) {
+                // If the checkout lock is successful, navigate to the PaymentsPage
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyCart(),
+                  ),
+                );
+              } else {
+                // If the checkout lock is unsuccessful, you might want to show an error message
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Error: $error'),
+                  const SnackBar(
+                    content: Text('Failed to cancel checkout.'),
                     backgroundColor: Colors.redAccent,
                   ),
                 );
-              });
-            } else {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyCart(),
+                  ),
+                );
+              }
+            }).catchError((error) {
+              // Handle any errors here
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Error: Cart Id Not Found'),
+                SnackBar(
+                  content: Text('Error: $error'),
                   backgroundColor: Colors.redAccent,
                 ),
               );
-            }
+            });
             // Then navigate back
           },
         ),
@@ -271,8 +251,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
             height: 50,
           ),
           InkWell(
-            onTap: () {
-              String? cartId = cart.cartId;
+            onTap: () async {
+              String? cartId = await storage.read(key: 'cartId');
               int cartIdInt = int.parse(cartId!);
               initiatePhonePePayment(cartIdInt).then((response) {
                 if (response.isSuccess) {
@@ -372,15 +352,16 @@ class _PaymentsPageState extends State<PaymentsPage> {
             ),
           ),
           InkWell(
-            onTap: () {
-              String? cartId = cart.cartId;
+            onTap: () async {
+              String? cartId = await storage.read(key: 'cartId');
               int cartIdInt = int.parse(cartId!);
               processPayment(cartIdInt, true).then((isPaid) {
                 if (isPaid) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => OrderConfirmed(newOrder: true),
+                      builder: (context) =>
+                          const OrderConfirmed(newOrder: true),
                     ),
                   );
                 } else {

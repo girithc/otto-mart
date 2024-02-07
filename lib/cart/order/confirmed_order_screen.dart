@@ -1,29 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:lottie/lottie.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'dart:convert';
 
-import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 
 class OrderConfirmed extends StatefulWidget {
-  OrderConfirmed({super.key, required this.newOrder});
+  const OrderConfirmed({super.key, required this.newOrder});
 
-  bool newOrder;
+  final bool newOrder;
 
   @override
   _OrderConfirmedState createState() => _OrderConfirmedState();
 }
 
 class _OrderConfirmedState extends State<OrderConfirmed> {
-  late String _orderDetails;
+  String? _orderDetails;
   bool _isLoading = true;
   bool _isError = false;
-  late String _errorMsg;
+  String? _errorMsg;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   String orderStatus = 'Preparing Order';
@@ -85,52 +83,38 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       print("PlacedCart ID: $cartId");
     }
 
-    // Ensure both values are not null
     if (cartId == null || customerId == null) {
       throw Exception('Customer ID or Cart ID is missing');
     }
 
-    // Prepare the body for the POST request
     final Map<String, dynamic> body = {
       'customer_id': int.parse(customerId),
       'cart_id': int.parse(cartId),
-      // Add other necessary fields if any
     };
 
-    // Use the NetworkService to make the authenticated POST request
     final response =
         await networkService.postWithAuth('/sales-order', additionalData: body);
 
-    print("CustomerId: $customerId, CartId: $cartId");
+    print("Confirmed Order Response: ${response.body}");
 
     if (response.statusCode == 200) {
-      // Decode the JSON response
       Map<String, dynamic> responseData = json.decode(response.body);
-
-      // Extract and print the 'payment_type' field
       String paymentType = responseData['payment_type'];
-      print("Payment Type: $paymentType");
 
       if (responseData.isNotEmpty) {
-        // Extracting the 'paid' field from the first object in the list
-        String? newCartId = await _storage.read(key: 'cartId');
-        print("placeCartID: $newCartId");
         if (widget.newOrder) {
-          await _storage.write(key: 'placedCartId', value: newCartId);
+          String? oldCartId = await _storage.read(key: 'cartId');
+          await _storage.write(key: 'placedCartId', value: oldCartId);
 
-          newCartId = responseData["new_cart_id"].toString();
+          final String newCartId = responseData["new_cart_id"].toString();
           await _storage.write(key: 'cartId', value: newCartId);
         }
 
-        await _storage.write(key: 'orderStatus', value: "Preparing Order");
+        //await _storage.write(key: 'orderStatus', value: "Preparing Order");
 
         setState(() {
           _isLoading = false;
           _orderDetails = paymentType;
-          if (widget.newOrder) {
-            print("Old Cart ID: $cartId");
-            print("New Cart ID: $newCartId");
-          }
 
           //_deliveryPartnerName = responseData['delivery_partner']['name'];
           _numberOfItems =
@@ -158,7 +142,9 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-
+    if (widget.newOrder) {
+      cart.clearCart();
+    }
     return Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.deepPurpleAccent,
@@ -173,9 +159,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
             ),
             onPressed: () {
               // Navigate to the HomeScreen, replacing the current route
-              if (widget.newOrder) {
-                cart.clearCart();
-              }
 
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
@@ -194,7 +177,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                     Center(child: CircularProgressIndicator()),
                   ])
             : _isError
-                ? Center(child: Text(_errorMsg))
+                ? Center(child: Text(_errorMsg!))
                 : SingleChildScrollView(
                     // Enables scrolling
                     child: Center(
