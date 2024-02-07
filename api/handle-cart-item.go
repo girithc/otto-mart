@@ -21,6 +21,8 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 	validCart, err := s.store.ValidShoppingCart(new_req.CartId, new_req.CustomerId)
 	if err != nil {
 		return err
+	} else if !(validCart.Valid) {
+		return fmt.Errorf("cart is invalid %v", validCart.CartId)
 	}
 
 	fmt.Println("validCart ", validCart)

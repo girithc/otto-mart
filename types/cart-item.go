@@ -6,8 +6,7 @@ type Cart_Item struct {
 	ItemId   int `json:"item_id"`
 	Quantity int `json:"quantity"`
 }
-type Cart_Item_Cart struct {
-	CartItemID           int `json:"cart_item_id"`
+type CartDetails struct {
 	CartId               int `json:"cart_id"`
 	ItemId               int `json:"item_id"`
 	Quantity             int `json:"quantity"`
@@ -24,7 +23,7 @@ type Cart_Item_Cart struct {
 }
 
 type CartItemResponse struct {
-	CartDetails   *Cart_Item_Cart        `json:"cart_details"`
+	CartDetails   *CartDetails           `json:"cart_details"`
 	CartItemsList []*Cart_Item_Item_List `json:"cart_items_list"`
 }
 

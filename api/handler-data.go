@@ -90,7 +90,7 @@ var authRequirements = map[string]Permission{
 	OtpVerify:                             {Role: "Customer", AuthRequired: false},
 	ShelfCreate:                           {Role: "Customer", AuthRequired: true},
 	ShelfGetAll:                           {Role: "Customer", AuthRequired: true},
-	LockStockCloudTask:                    {Role: "Customer", AuthRequired: true},
+	LockStockCloudTask:                    {Role: "Customer", AuthRequired: false},
 }
 
 const (

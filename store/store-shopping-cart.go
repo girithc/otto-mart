@@ -92,6 +92,7 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 }
 
 func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
+	print("Calculating cart total for cart_id: ", cart_id)
 	var itemCost, discounts, numberOfItems, deliveryFee, smallOrderFee, platformFee, packagingFee int
 
 	// Calculate total item cost and discounts from cart_item and item_store
@@ -262,7 +263,7 @@ type ValidShoppingCart struct {
 
 func (s *PostgresStore) ValidShoppingCart(cartID int, customerID int) (ValidShoppingCart, error) {
 	var count int
-	val := ValidShoppingCart{false, 0}
+	val := ValidShoppingCart{false, cartID}
 	// Check if the provided cartID is valid and belongs to the customerID
 	err := s.db.QueryRow("SELECT COUNT(*) FROM shopping_cart WHERE id = $1 AND customer_id = $2 AND active = true", cartID, customerID).Scan(&count)
 	if err != nil {
@@ -284,17 +285,20 @@ func (s *PostgresStore) ValidShoppingCart(cartID int, customerID int) (ValidShop
 		val.CartId = existingCartID
 		val.Valid = true
 		return val, nil
-	}
+	} else if err == sql.ErrNoRows {
+		// No active cart exists for the customer
+		// No active cart exists for the customer, create a new one
+		var newCartID int
+		err = s.db.QueryRow(`INSERT INTO shopping_cart (customer_id, active) VALUES ($1, true) RETURNING id`, customerID).Scan(&newCartID)
+		if err != nil {
+			return val, err
+		}
 
-	// No active cart exists for the customer, create a new one
-	var newCartID int
-	err = s.db.QueryRow(`INSERT INTO shopping_cart (customer_id, active) VALUES ($1, true) RETURNING id`, customerID).Scan(&newCartID)
-	if err != nil {
+		// Return the new cart ID
+		val.CartId = newCartID
+		val.Valid = true
+		return val, nil
+	} else {
 		return val, err
 	}
-
-	// Return the new cart ID
-	val.CartId = newCartID
-	val.Valid = true
-	return val, nil
 }
