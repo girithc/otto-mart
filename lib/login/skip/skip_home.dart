@@ -213,26 +213,23 @@ class _SkipHomePageState extends State<SkipHomePage>
                       },
                     ),
                   ),
-                  SliverPadding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    sliver: SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 5,
-                        mainAxisSpacing: 5,
-                        childAspectRatio: 0.7,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return _buildCategoryContainer(
-                              context,
-                              categories[index].id,
-                              categories[index].name,
-                              categories[index].image);
-                        },
-                        childCount: categories.length,
-                      ),
+                  SliverGrid(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 4,
+                      crossAxisSpacing: 2,
+                      mainAxisSpacing: 4,
+                      childAspectRatio: 0.64,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int index) {
+                        return _buildCategoryContainer(
+                            context,
+                            categories[index].id,
+                            categories[index].name,
+                            categories[index].image);
+                      },
+                      childCount: categories.length,
                     ),
                   ),
                 ],
@@ -269,7 +266,9 @@ class _SkipHomePageState extends State<SkipHomePage>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white70, // Background color
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+                // Background color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Squarish shape
                 ),
@@ -285,7 +284,8 @@ class _SkipHomePageState extends State<SkipHomePage>
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white70, // Different background color
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white, // Different background color
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8), // Squarish shape
                 ),
@@ -311,49 +311,65 @@ class _SkipHomePageState extends State<SkipHomePage>
         )
       },
       child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(8.0),
-          border: Border.all(color: Colors.white),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.pinkAccent.shade100,
-              spreadRadius: 1,
-              blurRadius: 3,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
-        padding: const EdgeInsets.only(left: 2, right: 2, bottom: 1),
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        padding: const EdgeInsets.only(left: 0, right: 0, bottom: 0),
+        color: Colors.white,
         child: Center(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.network(
-                image,
-                fit: BoxFit.cover,
-                height: 69.0,
-                errorBuilder: (BuildContext context, Object exception,
-                    StackTrace? stackTrace) {
-                  return Container(
-                    height: 120,
-                    color: Colors.grey[200],
-                    alignment: Alignment.center,
-                    child: const Center(
-                      child: Text(
-                        'no image',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.10,
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.white),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      spreadRadius: 0,
+                      blurRadius: 1,
                     ),
-                  );
-                },
+                  ],
+                ),
+                child: Image.network(
+                  image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (BuildContext context, Object exception,
+                      StackTrace? stackTrace) {
+                    return Container(
+                      height: 120,
+                      color: Colors.grey[200],
+                      alignment: Alignment.center,
+                      child: const Center(
+                        child: Text(
+                          'no image',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ),
-              Text(
-                categoryName,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    height: 1.1), // Adjusting the line spacing here
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.01,
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.06,
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: Text(
+                    categoryName,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        height: 1.3,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black), // Adjusting the line spacing here
+                  ),
+                ),
               ),
             ],
           ),

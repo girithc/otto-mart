@@ -401,22 +401,6 @@ class _MyVerifyState extends State<MyVerify> {
                       ),
                     ),
                     onPressed: () {
-                      widget.isTester
-                          ? loginCustomer().then((isSuccess) {
-                              if (isSuccess) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const AddressSelectionWidget(),
-                                  ),
-                                );
-                              } else {
-                                // Show an error message to the user or handle the failure appropriately.
-                              }
-                            })
-                          : null;
-
                       String otp = pinController.text;
                       isPinCorrect
                           ? verifyOTP(widget.number, otp).then((value) {
