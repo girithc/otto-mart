@@ -53,6 +53,10 @@ dependencies:
   firebase_core: ^2.24.2
   flutter_image_compress: ^2.1.0
   firebase_storage: ^11.6.0
+  webview_flutter: ^4.5.0
+  upgrader: ^9.0.0
+  logger: ^2.0.2+1
+  firebase_messaging: ^14.7.15
 
 dev_dependencies:
   flutter_test:

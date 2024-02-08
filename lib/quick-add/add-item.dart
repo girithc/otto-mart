@@ -306,7 +306,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                                     Navigator.of(context).pushReplacement(
                                       MaterialPageRoute(
                                           builder: (context) =>
-                                              const MyHomePage(title: '')),
+                                              const MyHomePage()),
                                     ); // Navigate to MyHomePage
                                   },
                                 ),

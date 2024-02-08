@@ -3,9 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:packer/main.dart';
 import 'package:packer/utils/constants.dart';
-import 'package:packer/utils/login/page/phone.dart';
+import 'package:packer/utils/network/service.dart';
 
 class LoginProvider with ChangeNotifier {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -28,13 +27,11 @@ class LoginProvider with ChangeNotifier {
 
   Future<String> checkPackerExists(String phoneNumber) async {
     try {
-      var url = Uri.parse('$baseUrl/login-packer');
       final Map<String, dynamic> requestData = {"phone": phoneNumber};
-      var response = await http.post(
-        url,
-        body: jsonEncode(requestData),
-        headers: {"Content-Type": "application/json"},
-      );
+
+      final networkService = NetworkService();
+      var response = await networkService.postWithAuth('/login-packer',
+          additionalData: requestData);
       // Send the POST request
 
       if (response.statusCode == 200) {
@@ -53,5 +50,31 @@ class LoginProvider with ChangeNotifier {
       print('Error occurred: $e');
       return 'error';
     }
+  }
+}
+
+class Packer {
+  final int id;
+  final String name;
+  final String phone;
+  final String address;
+  final String createdAt;
+
+  Packer({
+    required this.id,
+    required this.name,
+    required this.phone,
+    required this.address,
+    required this.createdAt,
+  });
+
+  factory Packer.fromJson(Map<String, dynamic> json) {
+    return Packer(
+      id: json['id'],
+      name: json['name'],
+      phone: json['phone'],
+      address: json['address'],
+      createdAt: json['created_at'],
+    );
   }
 }

@@ -1,24 +1,25 @@
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
-import 'package:packer/main.dart';
-import 'package:packer/utils/constants.dart';
-import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/login/legal/privacy.dart';
+import 'package:packer/utils/login/legal/terms.dart';
+import 'package:packer/utils/login/page/verify.dart';
+import 'package:packer/utils/network/service.dart';
 import 'package:pinput/pinput.dart';
+import 'package:upgrader/upgrader.dart';
 
-class PhonePage extends StatefulWidget {
-  const PhonePage({super.key});
+class MyPhone extends StatefulWidget {
+  const MyPhone({super.key});
 
   @override
-  _PhonePageState createState() => _PhonePageState();
+  _MyPhoneState createState() => _MyPhoneState();
 }
 
-class _PhonePageState extends State<PhonePage> {
+class _MyPhoneState extends State<MyPhone> {
   TextEditingController phoneNumberController = TextEditingController();
   TextEditingController countryController = TextEditingController();
+  bool isTesterVersion = false; // To track the state of the checkbox
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
@@ -49,42 +50,17 @@ class _PhonePageState extends State<PhonePage> {
     );
   }
 
-  Future<String?> loginPacker(String phoneNumber) async {
-    try {
-      // Send the HTTP request to send OTP
-      var url = Uri.parse('$baseUrl/login-packer');
-      final Map<String, dynamic> requestData = {"phone": phoneNumber};
-      var response = await http.post(
-        url,
-        body: jsonEncode(requestData),
-        headers: {"Content-Type": "application/json"},
-      );
-      if (response.statusCode == 200) {
-        Map<String, dynamic> jsonResponse = json.decode(response.body);
-        return jsonResponse['phone'];
-      } else {
-        // Handle HTTP request error
-        print(response.body);
-        return 'error';
-      }
-    } catch (error) {
-      print('Error(Send OTP): $error');
-      return 'error';
-    }
-  }
-
   Future<String?> sendOTP(String phoneNumber) async {
     try {
+      final networkService = NetworkService();
       // Send the HTTP request to send OTP
-      var url = Uri.parse('$baseUrl/send-otp');
-      final Map<String, dynamic> requestData = {
-        "phone": int.parse(phoneNumber)
-      };
-      var response = await http.post(
-        url,
-        body: jsonEncode(requestData),
-        headers: {"Content-Type": "application/json"},
-      );
+      final Map<String, dynamic> requestData = {"phone": phoneNumber};
+
+      final response = await networkService.postWithAuth('/send-otp-packer',
+          additionalData: requestData);
+
+      print(response.statusCode);
+      print(response.body);
       if (response.statusCode == 200) {
         Map<String, dynamic> jsonResponse = json.decode(response.body);
         return jsonResponse['type'];
@@ -108,155 +84,221 @@ class _PhonePageState extends State<PhonePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.deepPurpleAccent,
-        title: ShaderMask(
-          shaderCallback: (bounds) => const RadialGradient(
-            center: Alignment.topLeft,
-            radius: 1.0,
-            colors: [Colors.white, Colors.white70],
-            tileMode: TileMode.mirror,
-          ).createShader(bounds),
-          child: const Text(
-            'Packer',
-            style: TextStyle(
-              fontSize: 25,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
+      body: UpgradeAlert(
+        dialogStyle: Platform.isIOS
+            ? UpgradeDialogStyle.cupertino
+            : UpgradeDialogStyle.material,
+        canDismissDialog: false,
+        showIgnore: false,
+        showLater: false,
+        child: Form(
+          key: formKey,
+          child: Container(
+            color: Colors.white,
+            margin: const EdgeInsets.symmetric(horizontal: 15),
+            alignment: Alignment.center,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset(
+                    'assets/icon/icon.jpeg',
+                    height: 250,
+                  ),
+                  const SizedBox(
+                    height: 25,
+                  ),
+                  const Text(
+                    "Phone Verification",
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(
+                    height: 10,
+                  ),
+                  const Text(
+                    "Let's Start Saving!",
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(
+                    height: 30,
+                  ),
+                  SizedBox(
+                    height: 80, // Increased height for a larger input area
+                    child: Pinput(
+                      separatorBuilder: (index) => Container(
+                        height: 80,
+                        width: 2,
+                        color:
+                            Colors.transparent, // Use a transparent separator
+                      ),
+                      length: 10, // Set the length of the input
+                      controller: phoneNumberController,
+                      pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
+                      onSubmitted: (pin) {
+                        // Handle submission logic here
+                      },
+                      defaultPinTheme: PinTheme(
+                        width: 70, // Increased width for larger input boxes
+                        height:
+                            60, // Add some spacing around each input box for the floating effect
+                        padding: EdgeInsets.zero,
+                        decoration: BoxDecoration(
+                          color: Colors
+                              .deepPurpleAccent, // Uniform color for each input box
+                          border: Border.all(
+                            color: Colors.deepPurpleAccent, // Border color
+                            width: 1, // Border width
+                          ),
+                          borderRadius:
+                              BorderRadius.circular(25), // More rounded borders
+                          boxShadow: [
+                            // Shadow for the floating effect
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              spreadRadius: 1,
+                              blurRadius: 5,
+                              offset: const Offset(
+                                  0, 3), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize:
+                              26, // Larger font size for better visibility
+                          color: Colors.white, // Text color
+                        ),
+                      ),
+                      focusedPinTheme: PinTheme(
+                        width:
+                            70, // Keep the width consistent with defaultPinTheme
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Colors
+                              .white, // Color of the input box when focused
+                          border: Border.all(
+                            color:
+                                Colors.greenAccent, // Border color when focused
+                            width: 2,
+                          ),
+                          borderRadius: BorderRadius.circular(
+                              10), // Consistent border radius with defaultPinTheme
+                          boxShadow: [
+                            // Enhanced shadow for the floating effect when focused
+                            BoxShadow(
+                              color: Colors.greenAccent.withOpacity(0.5),
+                              spreadRadius: 2,
+                              blurRadius: 8,
+                              offset: const Offset(
+                                  0, 4), // changes position of shadow
+                            ),
+                          ],
+                        ),
+                        textStyle: const TextStyle(
+                          fontSize: 28,
+                          color: Colors.black, // Text color when focused
+                        ),
+                      ),
+                      // Add more customization to Pinput as needed
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 40,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 15),
+                    width: double.infinity,
+                    height: 55,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurpleAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      onPressed: () {
+                        String phoneNumber = phoneNumberController.text;
+                        if (phoneNumber.length == 10) {
+                          sendOTP(phoneNumber).then((value) {
+                            if (value == "success") {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MyVerify(
+                                    number: phoneNumber,
+                                    isTester: false,
+                                  ),
+                                ),
+                              );
+                            } else if (value == "test") {
+                              print("TEST");
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MyVerify(
+                                    number: '1234567890',
+                                    isTester: true,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              _showDialog(value ?? 'Failed to send OTP');
+                            }
+                          });
+                        } else {
+                          _showDialog("Phone number must be 10 digits");
+                        }
+                      },
+                      child: const Text(
+                        "Send OTP code",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        elevation: 4.0,
-        surfaceTintColor: Colors.white,
       ),
-      body: Form(
-        key: formKey,
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 15),
-          alignment: Alignment.center,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text(
-                  "Phone Verification",
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      bottomNavigationBar: BottomAppBar(
+        color: Colors.white,
+        surfaceTintColor: Colors.white,
+        elevation: 0.0,
+        child: SizedBox(
+          height: 40,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: <Widget>[
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Terms()),
+                    );
+                  },
+                  child: const Text('Terms'),
                 ),
-                const SizedBox(
-                  height: 10,
+              ),
+              Expanded(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const Privacy()),
+                    );
+                  },
+                  child: const Text('Privacy'),
                 ),
-                const Text(
-                  "Let's Start Packing!",
-                  style: TextStyle(
-                    fontSize: 16,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(
-                  height: 50,
-                ),
-                SizedBox(
-                  height: 80, // Increased height for larger input boxes
-                  child: Pinput(
-                    separatorBuilder: (index) => Container(
-                      height: 64,
-                      width: 1,
-                      color: Colors.white,
-                    ),
-                    androidSmsAutofillMethod:
-                        AndroidSmsAutofillMethod.smsRetrieverApi,
-                    length: 10, // Set the length of the input
-                    controller: phoneNumberController,
-                    pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-                    onSubmitted: (pin) {
-                      // Handle submission logic here
-                    },
-                    defaultPinTheme: PinTheme(
-                      width: 60,
-                      height: 64,
-                      textStyle: GoogleFonts.poppins(
-                          fontSize: 20, color: Colors.white),
-                      decoration: BoxDecoration(
-                          color: Colors.deepPurpleAccent,
-                          borderRadius: BorderRadius.circular(25)),
-                    ),
-                    focusedPinTheme: PinTheme(
-                      width: 36,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color:
-                            Colors.white, // Color of the input box when focused
-                        border: Border.all(
-                          color: Colors
-                              .deepPurpleAccent, // Border color when focused
-                          width: 2,
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      textStyle: const TextStyle(
-                        fontSize: 28,
-                        color: Colors.black, // Text color when focused
-                      ),
-                    ),
-                    // Add more customization to Pinput as needed
-                  ),
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                const SizedBox(
-                  height: 10,
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 15),
-                  width: double.infinity,
-                  height: 55,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onPressed: () async {
-                      String phoneNumber = phoneNumberController.text;
-                      if (phoneNumber.length == 10) {
-                        // Call loginPacker function
-                        String? response = await loginPacker(phoneNumber);
-                        if (response != 'error') {
-                          print("Reponse : $response");
-                          const storage = FlutterSecureStorage();
-                          await storage.write(
-                              key: "packerId", value: phoneNumber);
-                          await storage.write(key: "storeId", value: '1');
-                          // Success - Navigate to MyHomePage
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const MyHomePage(title: 'Hi Packer')),
-                          );
-                        } else {
-                          // Handle login failure
-                          _showDialog("Login failed. Please try again.");
-                        }
-                      } else {
-                        _showDialog("Phone number must be 10 digits");
-                      }
-                    },
-                    child: const Text(
-                      "Login",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

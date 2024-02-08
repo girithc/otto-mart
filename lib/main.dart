@@ -51,10 +51,10 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             // If the user is logged in
             if (snapshot.data == true) {
-              return const MyHomePage(title: 'Hi Packer');
+              return const MyHomePage();
             } else {
               // If the user is not logged in
-              return const PhonePage();
+              return const MyPhone();
             }
           } else {
             // Show loading indicator while waiting for login check
@@ -68,8 +68,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-  final String title;
+  const MyHomePage({super.key});
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -84,9 +83,9 @@ class _MyHomePageState extends State<MyHomePage> {
           elevation: 1.0,
           shadowColor: Colors.white,
           surfaceTintColor: Colors.white,
-          title: Text(
-            widget.title,
-            style: const TextStyle(
+          title: const Text(
+            'Hi Packer',
+            style: TextStyle(
                 color: Colors.deepPurpleAccent, fontWeight: FontWeight.bold),
           ),
           leading: InkWell(

@@ -236,10 +236,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                 Navigator.of(context).pop(); // Close the dialog
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) => const MyHomePage(
-                            title: 'Otto Store',
-                          )),
+                  MaterialPageRoute(builder: (context) => const MyHomePage()),
                 ); // Navigate to MyHomePage
               },
             ),

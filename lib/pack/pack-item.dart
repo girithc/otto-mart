@@ -159,10 +159,8 @@ class _PackItemState extends State<PackItem> {
             // Check if the request was successful
             if (response.statusCode == 200) {
               // If successful, navigate to MyHomePage with a success SnackBar
-              Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => const MyHomePage(
-                        title: 'Otto Master',
-                      )));
+              Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const MyHomePage()));
 
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Stock added successfully'),
