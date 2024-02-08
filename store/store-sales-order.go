@@ -785,12 +785,10 @@ type AllocationInfo struct {
 	Image        string `json:"image"`
 }
 
-func (s *PostgresStore) CancelPackOrder(storeId, phoneNumber, orderId int) (bool, error) {
-	// Step 1: Retrieve the actual packerId using the phone number
-	str := fmt.Sprintf("%d", phoneNumber)
+func (s *PostgresStore) CancelPackOrder(storeId int, phoneNumber string, orderId int) (bool, error) {
 	var packerId int
 	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
-	err := s.db.QueryRow(packerIdQuery, str).Scan(&packerId)
+	err := s.db.QueryRow(packerIdQuery, phoneNumber).Scan(&packerId)
 	if err != nil {
 		return false, fmt.Errorf("error finding packer ID: %w", err)
 	}

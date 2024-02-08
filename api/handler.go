@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 )
 
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
@@ -54,19 +55,61 @@ func (s *Server) goRoutineWrapper(handlerID string, handler HandlerFunc, res htt
 			if err := json.Unmarshal(bodyBytes, &requestBody); err != nil {
 				resultChan <- fmt.Errorf("error unmarshalling request body: %v", err)
 			}
-			authenticated, role, err := s.store.AuthenticateRequest(requestBody.PhoneAuth, requestBody.TokenAuth)
-			if err != nil {
-				resultChan <- err
-			}
-			if authenticated {
-				if role == permission.Role || role == "Manager" {
-					handlerErr := handler(res, req)
-					resultChan <- handlerErr
+
+			// Check if handlerID starts with "packer"
+			if strings.HasPrefix(handlerID, "packer") {
+				// Call AuthenticateRequestPacker for handlers starting with "packer"
+				authenticated, role, err := s.store.AuthenticateRequestPacker(requestBody.PhoneAuth, requestBody.TokenAuth)
+				if err != nil {
+					resultChan <- err
+					return
+				}
+
+				if authenticated {
+					if role == permission.Role || role == "Manager" {
+						handlerErr := handler(res, req)
+						resultChan <- handlerErr
+					} else {
+						resultChan <- fmt.Errorf("unauthorized. permission denied for role")
+					}
 				} else {
-					resultChan <- fmt.Errorf("unauthorized. permission denied for role")
+					resultChan <- fmt.Errorf("unauthorized access")
+				}
+				// Add logic here based on the `authenticated` and `role`
+			} else if strings.HasPrefix(handlerID, "delivery-partner") {
+				authenticated, role, err := s.store.AuthenticateRequestDeliveryPartner(requestBody.PhoneAuth, requestBody.TokenAuth)
+				if err != nil {
+					resultChan <- err
+					return
+				}
+
+				if authenticated {
+					if role == permission.Role || role == "Manager" {
+						handlerErr := handler(res, req)
+						resultChan <- handlerErr
+					} else {
+						resultChan <- fmt.Errorf("unauthorized. permission denied for role")
+					}
+				} else {
+					resultChan <- fmt.Errorf("unauthorized access")
 				}
 			} else {
-				resultChan <- fmt.Errorf("unauthorized access")
+
+				authenticated, role, err := s.store.AuthenticateRequest(requestBody.PhoneAuth, requestBody.TokenAuth)
+				if err != nil {
+					resultChan <- err
+				}
+
+				if authenticated {
+					if role == permission.Role || role == "Manager" {
+						handlerErr := handler(res, req)
+						resultChan <- handlerErr
+					} else {
+						resultChan <- fmt.Errorf("unauthorized. permission denied for role")
+					}
+				} else {
+					resultChan <- fmt.Errorf("unauthorized access")
+				}
 			}
 		}()
 		return <-resultChan

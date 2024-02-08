@@ -148,7 +148,7 @@ type CompletePackOrder struct {
 }
 
 type CancelRecentOrder struct {
-	StoreID  int `json:"store_id"`
-	PackerID int `json:"packer_id"`
-	OrderID  int `json:"order_id"`
+	StoreID     int    `json:"store_id"`
+	PackerPhone string `json:"packer_phone"`
+	OrderID     int    `json:"order_id"`
 }

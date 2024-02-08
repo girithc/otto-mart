@@ -41,19 +41,19 @@ func (s *Server) handleVerifyOtpPackerMSG91(res http.ResponseWriter, req *http.R
 func (s *Server) HandlePackerLogin(res http.ResponseWriter, req *http.Request) error {
 	// Preprocessing
 
-	new_req := new(types.Create_Customer)
+	new_req := new(types.PackerFCM)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in HandlePackerLogin()")
 		return err
 	}
 
-	new_user, err := s.store.CreatePacker(new_req.Phone)
+	packer, err := s.store.GetPackerByPhone(new_req.Phone, new_req.FCM)
 	if err != nil {
 		return err
 	}
 
 	// Check if User Exists
 
-	return WriteJSON(res, http.StatusOK, new_user)
+	return WriteJSON(res, http.StatusOK, packer)
 }

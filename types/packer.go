@@ -20,3 +20,8 @@ type PackerData struct {
 	Created_At time.Time `json:"created_at"`
 	Token      uuid.UUID `json:"token"`
 }
+
+type PackerFCM struct {
+	Phone string `json:"phone"`
+	FCM   string `json:"fcm"`
+}

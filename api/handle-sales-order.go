@@ -194,9 +194,7 @@ func (s *Server) CancelPackSalesOrder(res http.ResponseWriter, req *http.Request
 		return err
 	}
 
-	print("Packer-ID: ", new_req.PackerID)
-
-	records, err := s.store.CancelPackOrder(new_req.StoreID, new_req.PackerID, new_req.OrderID)
+	records, err := s.store.CancelPackOrder(new_req.StoreID, new_req.PackerPhone, new_req.OrderID)
 	if err != nil {
 		return err
 	}

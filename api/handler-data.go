@@ -98,11 +98,10 @@ var authRequirements = map[string]Permission{
 }
 
 const (
-	CustomerLoginVerify                   = "customer-login-verify"
-	CustomerGetAll                        = "customer-get-all"
-	CustomerLoginAuto                     = "customer-login-auto"
-	PackerLogin                           = "packer-login"
-	PackerGetAll                          = "packer-get-all"
+	CustomerLoginVerify = "customer-login-verify"
+	CustomerGetAll      = "customer-get-all"
+	CustomerLoginAuto   = "customer-login-auto"
+
 	ShoppingCartGetAllActive              = "shopping-cart-get-all-active"
 	ShoppingCartGetByCustomer             = "shopping-cart-get-by-customer"
 	CartItemDelete                        = "cart-item-delete"
@@ -136,6 +135,8 @@ const (
 	ItemAddStockAll                       = "item-add-stock-all"
 	SearchItems                           = "search-items"
 	ItemAddQuick                          = "item-add-quick"
+	PackerLogin                           = "packer-login"
+	PackerGetAll                          = "packer-get-all"
 	PackerPackOrder                       = "packer-pack-order"
 	PackerFetchItem                       = "packer-fetch-item"
 	PackerGetPackedItems                  = "packer-get-packed-items"
