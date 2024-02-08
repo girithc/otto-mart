@@ -211,8 +211,9 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6200EE),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 65, vertical: 15),
+                padding: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.height * 0.03,
+                    vertical: MediaQuery.of(context).size.height * 0.02),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

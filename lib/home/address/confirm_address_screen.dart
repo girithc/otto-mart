@@ -80,7 +80,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       body: _buildBody(),
       bottomNavigationBar: Container(
         color: Colors.white,
-        height: 170,
+        height: MediaQuery.of(context).size.height * 0.2,
         margin: const EdgeInsets.only(bottom: 10),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -131,8 +131,11 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF6200EE),
-                padding: const EdgeInsets.only(
-                    left: 65, right: 65, top: 15, bottom: 15),
+                padding: EdgeInsets.only(
+                    left: MediaQuery.of(context).size.height * 0.05,
+                    right: MediaQuery.of(context).size.height * 0.05,
+                    top: MediaQuery.of(context).size.height * 0.02,
+                    bottom: MediaQuery.of(context).size.height * 0.02),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

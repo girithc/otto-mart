@@ -24,7 +24,7 @@ class _AddressScreenState extends State<AddressScreen> {
   List<PredictionAutoComplete> placePredictions = [];
   //final Logger _logger = Logger();
 
-  final _debouncer = Debouncer(milliseconds: 500); // Adjust the delay as needed
+  final _debouncer = Debouncer(milliseconds: 100); // Adjust the delay as needed
 
   void placeAutocomplete(String query) async {
     Uri uri =
@@ -35,7 +35,7 @@ class _AddressScreenState extends State<AddressScreen> {
 
     //print('Api Key: $modApikey');
 
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 1000));
 
     String? response = await NetworkUtility.fetchUrl(uri);
 

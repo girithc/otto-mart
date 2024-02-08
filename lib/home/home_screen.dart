@@ -775,9 +775,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                         context.push('/setting');
                       }),
                 ),
-                const SizedBox(
-                  width: 10,
-                ),
+                const Spacer(),
                 Text(
                   "Delivery in $randomNumber minutes",
                   style: GoogleFonts.cantoraOne(
