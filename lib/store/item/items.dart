@@ -51,6 +51,7 @@ class _ItemsState extends State<Items> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Items'),
+        centerTitle: true,
       ),
       body: Container(
         color: const Color.fromARGB(255, 249, 214, 255),
@@ -150,6 +151,21 @@ class ListItem2 extends StatelessWidget {
                         image,
                         height: 120,
                         fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context, Object exception,
+                            StackTrace? stackTrace) {
+                          return Container(
+                            height: 120,
+                            color: Colors.grey[200],
+                            alignment: Alignment.center,
+                            child: const Center(
+                              child: Text(
+                                'no image',
+                                style:
+                                    TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

@@ -7,17 +7,11 @@ import 'package:packer/utils/constants.dart';
 import 'package:packer/utils/network/service.dart';
 
 class LoginProvider with ChangeNotifier {
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final FlutterSecureStorage storage = const FlutterSecureStorage();
 
   Future<bool> checkLogin() async {
-    String? packerId = await _storage.read(key: "packerId");
-    String? storeId = await _storage.read(key: "storeId");
-    // Call your API endpoint to check if packer exists
-    if (packerId == null) {
-      return false;
-    }
-    String exists =
-        await checkPackerExists(packerId); // Implement this function
+    String? phone = await storage.read(key: "phone");
+    String exists = await checkPackerExists(phone!); // Implement this function
     if (exists.length == 10) {
       return true;
     }
@@ -37,7 +31,12 @@ class LoginProvider with ChangeNotifier {
       if (response.statusCode == 200) {
         var data = json.decode(response.body);
         // Assuming the API returns a JSON object with a field that indicates if the packer exists
-        print("Login Successful ${data['phone']}");
+        final Packer packer = Packer.fromJson(data);
+        print("Packer: ${packer.id} ${packer.phone}");
+        await storage.write(key: 'packerId', value: packer.id.toString());
+        await storage.write(key: 'phone', value: packer.phone);
+        await storage.write(key: 'name', value: packer.name);
+        await storage.write(key: 'authToken', value: packer.token);
 
         return data['phone']; // Replace 'exists' with the actual field name
       } else {
@@ -59,6 +58,7 @@ class Packer {
   final String phone;
   final String address;
   final String createdAt;
+  final String token;
 
   Packer({
     required this.id,
@@ -66,6 +66,7 @@ class Packer {
     required this.phone,
     required this.address,
     required this.createdAt,
+    required this.token,
   });
 
   factory Packer.fromJson(Map<String, dynamic> json) {
@@ -75,6 +76,7 @@ class Packer {
       phone: json['phone'],
       address: json['address'],
       createdAt: json['created_at'],
+      token: json['token'],
     );
   }
 }

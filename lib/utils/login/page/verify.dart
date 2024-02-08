@@ -77,15 +77,6 @@ class _MyVerifyState extends State<MyVerify> {
     super.dispose();
   }
 
-  Future<void> checkLoginStatus() async {
-    const storage = FlutterSecureStorage();
-    final customerId = await storage.read(key: 'customerId');
-
-    setState(() {
-      isLoggedIn = customerId != null;
-    });
-  }
-
   void startTimer() {
     const oneSec = Duration(seconds: 1);
     _timer = Timer.periodic(
@@ -141,8 +132,7 @@ class _MyVerifyState extends State<MyVerify> {
         await storage.write(
             key: 'authToken', value: packerLoginResponse.packer?.token);
         await storage.write(
-            key: 'customerId',
-            value: packerLoginResponse.packer?.id.toString());
+            key: 'packerId', value: packerLoginResponse.packer?.id.toString());
         await storage.write(
             key: 'phone', value: packerLoginResponse.packer?.phone);
 

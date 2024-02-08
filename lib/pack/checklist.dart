@@ -16,6 +16,7 @@ import 'package:packer/main.dart';
 import 'package:packer/pack/pack-item.dart';
 import 'package:packer/stock/add-stock.dart';
 import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/network/service.dart';
 
 class OrderChecklistPage extends StatefulWidget {
   OrderChecklistPage(
@@ -90,19 +91,20 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   }
 
   Future<bool> cancelPackOrder() async {
-    String? packerId = await _storage.read(key: "packerId");
+    String? packerPhone = await _storage.read(key: "phone");
     String? storeId = await _storage.read(key: "storeId");
 
-    var url = Uri.parse('$baseUrl/packer-cancel-order');
-    var response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "packer_id": int.parse(packerId!),
-        "store_id": int.parse(storeId!),
-        "order_id": widget.packedItems[0].orderId,
-      }),
-    );
+    //var url = Uri.parse('$baseUrl/packer-cancel-order');
+    Map<String, dynamic> data = {
+      "packer_phone": packerPhone,
+      "store_id": 1,
+      "order_id": widget.packedItems[0].orderId,
+    };
+
+    final networkService = NetworkService();
+
+    final response = await networkService.postWithAuth('/packer-cancel-order',
+        additionalData: data);
 
     if (response.statusCode == 200) {
       print('response: ${response.body}');
@@ -439,6 +441,31 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                                         item.imageURLs.first,
                                                         height: 90,
                                                         width: 100,
+                                                        errorBuilder:
+                                                            (BuildContext
+                                                                    context,
+                                                                Object
+                                                                    exception,
+                                                                StackTrace?
+                                                                    stackTrace) {
+                                                          return Container(
+                                                            height: 120,
+                                                            color: Colors
+                                                                .grey[200],
+                                                            alignment: Alignment
+                                                                .center,
+                                                            child: const Center(
+                                                              child: Text(
+                                                                'no image',
+                                                                style: TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    color: Colors
+                                                                        .grey),
+                                                              ),
+                                                            ),
+                                                          );
+                                                        },
                                                       ),
                                                     )
                                                   : const SizedBox(

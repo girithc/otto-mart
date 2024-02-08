@@ -16,6 +16,7 @@ import 'package:packer/store/stores.dart';
 import 'package:packer/utils/constants.dart';
 import 'package:packer/utils/login/page/phone.dart';
 import 'package:packer/utils/login/provider/loginProvider.dart';
+import 'package:packer/utils/network/service.dart';
 import 'package:packer/utils/settings/settings.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
@@ -88,6 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
             style: TextStyle(
                 color: Colors.deepPurpleAccent, fontWeight: FontWeight.bold),
           ),
+          centerTitle: true,
           leading: InkWell(
               onTap: () {
                 Navigator.push(
@@ -256,15 +258,14 @@ class _InventoryManagementState extends State<InventoryManagement> {
   }
 
   Future<bool> fetchItems() async {
-    String? packerId = await _storage.read(key: "packerId");
+    String? phone = await _storage.read(key: "phone");
     String? storeId = await _storage.read(key: "storeId");
-    var url = Uri.parse('$baseUrl/packer-pack-order');
-    var response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(
-          {"store_id": int.parse(storeId!), "packer_phone": packerId}),
-    );
+
+    Map<String, dynamic> data = {"store_id": 1, "packer_phone": phone};
+
+    final networkService = NetworkService();
+    var response = await networkService.postWithAuth('/packer-pack-order',
+        additionalData: data);
 
     if (response.statusCode == 200) {
       print('response: ${response.body}');
