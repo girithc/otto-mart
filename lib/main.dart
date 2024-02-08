@@ -8,17 +8,14 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/home/address/select/select.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/home/tab/tab.dart';
-import 'package:pronto/login/phone_api_client.dart';
 import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/login/verify_screen.dart';
 import 'package:pronto/plan/plan.dart';
 import 'package:pronto/setting/setting_screen.dart';
-import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:pronto/utils/no_internet.dart';
@@ -28,17 +25,12 @@ import 'package:upgrader/upgrader.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
 
-// Define a global key for your navigator
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
   const storage = FlutterSecureStorage();
   String? initialCustomerId = await storage.read(key: 'customerId');
-
-  // Only call clearSavedSettings() during testing to reset internal values.
-  await Upgrader.clearSavedSettings(); // REMOVE this for release builds
 
   runApp(MyApp(
     initialCustomerId: initialCustomerId,
