@@ -434,18 +434,3 @@ func scan_Into_Cart_Item(rows *sql.Rows) (*types.Cart_Item, error) {
 
 	return cart_item, err
 }
-
-func scan_Into_Cart_Item_Item_List(rows *sql.Rows) (*types.Cart_Item_Item_List, error) {
-	cart_item_item_list := new(types.Cart_Item_Item_List)
-	err := rows.Scan(
-		&cart_item_item_list.Id,
-		&cart_item_item_list.Name,
-		&cart_item_item_list.Price,
-		&cart_item_item_list.Image,
-		&cart_item_item_list.Stock_Quantity,
-		&cart_item_item_list.Quantity,
-		&cart_item_item_list.SoldPrice,
-	)
-
-	return cart_item_item_list, err
-}

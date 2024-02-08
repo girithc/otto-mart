@@ -803,6 +803,38 @@ func (s *Server) handleVerifyOtp(res http.ResponseWriter, req *http.Request) err
 	return nil
 }
 
+func (s *Server) handleSendOtpPacker(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "send-otp-packer")
+		return s.goRoutineWrapper(OtpSendPacker, s.handleSendOtpPackerMSG91, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleVerifyOtpPacker(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "verify-otp-packer")
+		return s.goRoutineWrapper(OtpVerifyPacker, s.handleVerifyOtpPackerMSG91, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleSendOtpDeliveryPartner(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "send-otp-delivery-partner")
+		return s.goRoutineWrapper(OtpSendDeliveryPartner, s.handleSendOtpDeliveryPartnerMSG91, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleVerifyOtpDeliveryPartner(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "verify-otp-delivery-partner")
+		return s.goRoutineWrapper(OtpVerifyDeliveryPartner, s.handleVerifyOtpDeliveryPartnerMSG91, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleShelfCRUD(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "create-shelf")

@@ -8,6 +8,36 @@ import (
 	"github.com/girithc/pronto-go/types"
 )
 
+func (s *Server) handleSendOtpDeliveryPartnerMSG91(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.Create_Customer)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleSendOtpMSG91")
+		return err
+	}
+
+	result, err := s.store.SendOtpDeliveryPartnerMSG91(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
+func (s *Server) handleVerifyOtpDeliveryPartnerMSG91(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.MobileOtp)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleVerifyOtpMSG91")
+		return err
+	}
+
+	result, err := s.store.VerifyOtpDeliveryPartnerMSG91(new_req.Phone, new_req.Otp, new_req.FCM)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
 func (s *Server) Handle_Delivery_Partner_FCM_Token(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.FCM_Token_Delivery_Partner)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

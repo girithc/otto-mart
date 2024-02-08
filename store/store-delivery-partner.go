@@ -2,11 +2,15 @@ package store
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/girithc/pronto-go/types"
+	"github.com/google/uuid"
 
 	_ "github.com/lib/pq"
 )
@@ -16,18 +20,55 @@ func (s *PostgresStore) CreateDeliveryPartnerTable(tx *sql.Tx) error {
 	create table if not exists delivery_partner(
 		id SERIAL PRIMARY KEY,
 		name VARCHAR(100) NOT NULL,
-		fcm_token TEXT NOT NULL,  
+		fcm TEXT NULL,  
+		role VARCHAR(20) NOT NULL DEFAULT 'Customer' CHECK (role IN ('Customer', 'Manager')), 
 		store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
 		phone VARCHAR(10) NOT NULL, 
 		address TEXT NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		available BOOLEAN DEFAULT true,
 		current_location TEXT, 
 		active_deliveries INT DEFAULT 0,
-		last_assigned_time TIMESTAMP DEFAULT NULL
+		last_assigned_time TIMESTAMP DEFAULT NULL,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	)`
 
 	_, err := tx.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	// Check if the 'role' column exists and add it if not, along with the 'token' column check
+	checkAndAlterQuery := `
+	DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT FROM information_schema.columns 
+			WHERE table_name = 'delivery_partner' AND column_name = 'token'
+		) THEN
+			ALTER TABLE delivery_partner ADD COLUMN token UUID NULL;
+		END IF;
+
+		IF NOT EXISTS (
+			SELECT FROM information_schema.columns 
+			WHERE table_name = 'delivery_partner' AND column_name = 'role'
+		) THEN
+			ALTER TABLE delivery_partner ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'Customer' CHECK (role IN ('Customer', 'Manager'));
+		END IF;
+
+		IF NOT EXISTS (
+			SELECT FROM information_schema.columns 
+			WHERE table_name = 'delivery_partner' AND column_name = 'fcm'
+		) THEN
+			ALTER TABLE delivery_partner ADD COLUMN fcm TEXT UNIQUE NULL;
+		END IF;
+	END
+	$$;`
+
+	_, err = tx.Exec(checkAndAlterQuery)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -538,22 +579,6 @@ func (s *PostgresStore) Get_Delivery_Partner_By_Phone(phone string) (*types.Deli
 	return partners[0], nil
 }
 
-// updated
-func (s *PostgresStore) getNextDeliveryPartner(tx *sql.Tx) (int, error) {
-	var deliveryPartnerID int
-	err := tx.QueryRow(`
-		SELECT id 
-		FROM delivery_partner 
-		WHERE available = true 
-		ORDER BY last_assigned_time ASC, active_deliveries ASC 
-		LIMIT 1
-	`).Scan(&deliveryPartnerID)
-	if err != nil {
-		return 0, err
-	}
-	return deliveryPartnerID, nil
-}
-
 // Assuming you have a scan_Into_Delivery_Partner function to scan row data into the Delivery_Partner type.
 func scan_Into_Delivery_Partner(rows *sql.Rows) (*types.Delivery_Partner, error) {
 	partner := &types.Delivery_Partner{}
@@ -629,6 +654,11 @@ func (s *PostgresStore) AssignDeliveryPartnerToSalesOrder(cart_id int, phone str
 		_, err = tx.Exec(`
             INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_assigned_date)
             VALUES ($1, $2, CURRENT_TIMESTAMP);`, salesOrderID, deliveryPartnerID)
+
+		if err != nil {
+			return false, fmt.Errorf("error inserting delivery_order record: %s", err)
+		}
+
 	} else if err != nil {
 		return false, fmt.Errorf("error updating delivery_order record: %s", err)
 	}
@@ -661,4 +691,192 @@ func (s *PostgresStore) GetOldestUnassignedOrder() (int, error) {
 	}
 
 	return cartID, nil
+}
+
+func (s *PostgresStore) SendOtpDeliveryPartnerMSG91(phone string) (*types.SendOTPResponse, error) {
+	// Prepare the URL and headers
+	if phone == "1234567890" {
+		// Return a mock response
+		return &types.SendOTPResponse{
+			Type:      "test",
+			RequestId: "test",
+		}, nil
+	}
+	phoneInt, err := strconv.Atoi(phone)
+	if err != nil {
+		// Handle error if the phone number is not a valid integer
+		return nil, err
+	}
+
+	url := "https://control.msg91.com/api/v5/otp?template_id=6562ddc2d6fc0517bc535382&mobile=91" + fmt.Sprintf("%d", phoneInt)
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("authkey", "405982AVwwWkcR036562d3eaP1")
+	req.Header.Set("content-type", "application/json")
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Decode the response
+	var response types.SendOTPResponse
+	if err := json.NewDecoder(resp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
+func (s *PostgresStore) VerifyOtpDeliveryPartnerMSG91(phone string, otp int, fcm string) (*types.DeliveryPartnerLogin, error) {
+	// Construct the URL with query parameters
+
+	if phone == "1234567890" {
+		var response types.DeliveryPartnerLogin
+		var otpresponse types.VerifyOTPResponse
+		otpresponse.Type = "success"
+		otpresponse.Message = "test user - OTP verified successfully"
+		deliveryPartnerPtr, err := s.GetDeliveryPartnerByPhone(phone, fcm)
+		if err != nil {
+			return nil, err
+		}
+
+		response.DeliveryPartner = *deliveryPartnerPtr // Dereference the pointer
+		response.Message = otpresponse.Message
+		response.Type = otpresponse.Type
+		return &response, nil
+	}
+
+	url := fmt.Sprintf("https://control.msg91.com/api/v5/otp/verify?mobile=91%s&otp=%d", phone, otp)
+
+	// Create a new request
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set headers
+	req.Header.Set("accept", "application/json")
+	req.Header.Set("authkey", "405982AVwwWkcR036562d3eaP1")
+
+	// Initialize HTTP client and send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Parse the JSON response
+	var otpresponse types.VerifyOTPResponse
+	if err := json.NewDecoder(resp.Body).Decode(&otpresponse); err != nil {
+		return nil, err
+	}
+
+	// Check if OTP verification was successful
+	if otpresponse.Type == "success" { // Replace `Success` with the actual field name indicating success in your `VerifyOTPResponse` struct
+		// OTP verified successfully, proceed to fetch customer details
+		var response types.DeliveryPartnerLogin
+		deliveryPartnerPtr, err := s.GetDeliveryPartnerByPhone(phone, fcm)
+		if err != nil {
+			return nil, err
+		}
+
+		response.DeliveryPartner = *deliveryPartnerPtr // Dereference the pointer
+		response.Message = otpresponse.Message
+		response.Type = otpresponse.Type
+		return &response, nil
+	} else {
+		// OTP verification failed
+		return nil, fmt.Errorf("OTP verification failed")
+	}
+}
+
+func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*types.DeliveryPartnerData, error) {
+	fmt.Println("Started GetDeliveryPartnerByPhone")
+
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // Ensure rollback in case of failure
+
+	// Clear FCM for any customer that might have it
+	clearFCMSQL := `UPDATE delivery_partner SET fcm = NULL WHERE fcm = $1`
+	if _, err := tx.Exec(clearFCMSQL, fcm); err != nil {
+		return nil, err
+	}
+
+	// Update FCM for the customer with the given phone and fetch necessary fields
+	updateFCMSQL := `
+        UPDATE delivery_partner 
+        SET fcm = $1 
+        WHERE phone = $2 
+        RETURNING id, name, phone, address,  created_at, token`
+	row := tx.QueryRow(updateFCMSQL, fcm, phone)
+
+	var deliveryPartner types.DeliveryPartnerData
+	var token sql.NullString
+
+	err = row.Scan(
+		&deliveryPartner.ID,
+		&deliveryPartner.Name,
+		&deliveryPartner.Phone,
+		&deliveryPartner.Address,
+		&deliveryPartner.Created_At,
+		&token,
+	)
+
+	if err == sql.ErrNoRows {
+		newToken, _ := uuid.NewUUID() // Generate a new UUID for the token
+		insertSQL := `
+            INSERT INTO delivery_partner (name, phone, address, token, fcm)
+            VALUES ('', $1, '', $2, $3)
+            RETURNING id, name, phone, address, created_at, token`
+		row = tx.QueryRow(insertSQL, phone, newToken, fcm)
+
+		// Scan the new customer data
+		err = row.Scan(
+			&deliveryPartner.ID,
+			&deliveryPartner.Name,
+			&deliveryPartner.Phone,
+			&deliveryPartner.Address,
+			&deliveryPartner.Created_At,
+			&token,
+		)
+		if err != nil {
+			return nil, err
+		}
+		deliveryPartner.Token = newToken
+	} else if err != nil {
+		return nil, err
+	}
+
+	// Check if token needs to be generated
+	if !token.Valid || token.String == "" {
+		newToken, _ := uuid.NewUUID() // Generate a new UUID for the token
+		updateTokenSQL := `UPDATE delivery_partner SET token = $1 WHERE id = $2`
+		if _, err := tx.Exec(updateTokenSQL, newToken, deliveryPartner.ID); err != nil {
+			return nil, err
+		}
+		deliveryPartner.Token = newToken // Set the newly generated token in the customer object
+	} else {
+		deliveryPartner.Token = uuid.MustParse(token.String) // Use the existing token if valid
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	fmt.Println("Transaction Successful")
+	return &deliveryPartner, nil
 }

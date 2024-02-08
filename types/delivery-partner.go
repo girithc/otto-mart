@@ -2,6 +2,8 @@ package types
 
 import (
 	"time"
+
+	"github.com/google/uuid"
 )
 
 // Basic
@@ -75,4 +77,19 @@ func New_Update_Delivery_Partner(id int, name string, storeID int, phone int, ad
 		Phone:    phone,
 		Address:  address,
 	}, nil
+}
+
+type DeliveryPartnerLogin struct {
+	Message         string `json:"message"`
+	Type            string `json:"type"`
+	DeliveryPartner DeliveryPartnerData
+}
+
+type DeliveryPartnerData struct {
+	ID         int       `json:"id"`
+	Name       string    `json:"name"`
+	Phone      string    `json:"phone"`
+	Address    string    `json:"address"`
+	Created_At time.Time `json:"created_at"`
+	Token      uuid.UUID `json:"token"`
 }

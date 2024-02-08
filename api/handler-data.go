@@ -88,6 +88,10 @@ var authRequirements = map[string]Permission{
 	PhonePePaymentVerify:                  {Role: "Customer", AuthRequired: true},
 	OtpSend:                               {Role: "Customer", AuthRequired: false},
 	OtpVerify:                             {Role: "Customer", AuthRequired: false},
+	OtpSendPacker:                         {Role: "Customer", AuthRequired: false},
+	OtpVerifyPacker:                       {Role: "Customer", AuthRequired: false},
+	OtpSendDeliveryPartner:                {Role: "Customer", AuthRequired: false},
+	OtpVerifyDeliveryPartner:              {Role: "Customer", AuthRequired: false},
 	ShelfCreate:                           {Role: "Customer", AuthRequired: true},
 	ShelfGetAll:                           {Role: "Customer", AuthRequired: true},
 	LockStockCloudTask:                    {Role: "Customer", AuthRequired: false},
@@ -174,6 +178,10 @@ const (
 	PhonePePaymentVerify                  = "phonepe-payment-verify"
 	OtpSend                               = "send-otp"
 	OtpVerify                             = "verify-otp"
+	OtpSendPacker                         = "send-otp-packer"
+	OtpVerifyPacker                       = "verify-otp-packer"
+	OtpSendDeliveryPartner                = "send-otp-delivery-partner"
+	OtpVerifyDeliveryPartner              = "verify-otp-delivery-partner"
 	ShelfCreate                           = "shelf-create"
 	ShelfGetAll                           = "shelf-get-all"
 	LockStockCloudTask                    = "lock-stock-cloud-task"
