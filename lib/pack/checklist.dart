@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:packer/store/item-detail/item-detail.dart';
 import 'package:packer/main.dart';
-import 'package:packer/utils/constants.dart';
 import 'package:packer/utils/network/service.dart';
 
 // ignore: must_be_immutable
@@ -54,37 +53,6 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   void initState() {
     super.initState();
     //fetchItems();
-  }
-
-  Future<void> fetchItems() async {
-    String? phone = await _storage.read(key: "phone");
-    //String? storeId = await _storage.read(key: "storeId");
-    Map<String, dynamic> data = {"store_id": 1, "packer_phone": phone};
-
-    final networkService = NetworkService();
-    final response = await networkService.postWithAuth('/packer-pack-order',
-        additionalData: data);
-
-    if (response.statusCode == 200) {
-      print('response: ${response.body}');
-      final jsonResponse = json.decode(response.body);
-      if (jsonResponse.isNotEmpty) {
-        final combinedResponse = CombinedOrderResponse.fromJson(jsonResponse);
-
-        setState(() {
-          packedItems = combinedResponse.packedItems;
-          prePackedItems = combinedResponse.packedDetails;
-          allPacked = combinedResponse.allPacked;
-          orderId = packedItems.isNotEmpty ? packedItems[0].orderId : null;
-
-          // Calculate the sum of quantities
-          totalQuantity = combinedResponse.packedDetails
-              .fold(0, (int sum, item) => sum + (item.quantity ?? 0));
-        });
-      }
-    } else {
-      print("Error ${response.body}");
-    }
   }
 
   Future<bool> cancelPackOrder() async {
@@ -207,87 +175,6 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
-  //delivery partner submit order
-  /*
-  Future<void> submitOrder(BuildContext context) async {
-    print('Submit Order');
-    final partnerPhone = await _storage.read(key: 'partnerId');
-
-    if (_image == null) {
-      print('No image selected');
-      return;
-    }
-
-    final path =
-        'delivery-partner/sales-order/${widget.customerPhone}/${widget.orderDate}';
-    final ref = FirebaseStorage.instance.ref().child(path);
-
-    try {
-      setState(() {
-        uploadTask = ref.putFile(_image!);
-      });
-      final snapshot = await uploadTask!.whenComplete(() => {});
-      final urlDownloaded = await snapshot.ref.getDownloadURL();
-      print('Downloaded Link: $urlDownloaded');
-      setState(() {
-        uploadTask = null;
-      });
-
-      // Constructing the request body
-      final body = json.encode({
-        'phone': partnerPhone,
-        'sales_order_id': widget.orderId,
-        'image': urlDownloaded,
-      });
-
-      // Sending the HTTP POST request
-      final response = await http.post(
-        Uri.parse('$baseUrl/delivery-partner-complete-order'),
-        headers: {'Content-Type': 'application/json'},
-        body: body,
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = json.decode(response.body);
-        //final result = DeliveryCompletionResult.fromJson(responseData);
-
-        // Showing the dialog
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Order Completed'),
-              content: Column(
-                children: [
-                  Image.network(result.image),
-                  Text(
-                      'Order ID: ${result.salesOrderID}\nStatus: ${result.orderStatus}'),
-                ],
-              ),
-              actions: <Widget>[
-                TextButton(
-                  child: const Text('Next'),
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                    Navigator.of(context).pushReplacement(MaterialPageRoute(
-                        builder: (context) =>
-                            const HomePage())); // Navigate back to homepage
-                  },
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        print(
-            'Failed to complete the order: ${response.statusCode} ${response.body}');
-      }
-    } catch (e) {
-      print('Upload failed or request failed: $e');
-    }
-  }
-  */
-
   void _showAllocationDetailsDialog(AllocationInfo allocationInfo) {
     showDialog(
       context: context,
@@ -391,6 +278,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
             style: TextStyle(color: Colors.white),
           ),
         ),
+        centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -409,8 +297,6 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
       ),
       body: BarcodeKeyboardListener(
         onBarcodeScanned: (String code) {
-          print("Barcode: $code");
-
           if (widget.allPacked) {
             scanBarcodeAssignSpace(code);
           } else {
@@ -438,176 +324,309 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                       0), // Return null to match the type PackerItemDetail?
                             )
                             .quantity;
-
-                        print("Quantity Packed $quantityPacked");
-                        return Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceAround,
-                                  children: <Widget>[
-                                    // Leading widget
-
-                                    Column(
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () {
-                                            if (item.imageURLs.isNotEmpty) {
-                                              showDialog(
-                                                context: context,
-                                                builder:
-                                                    (BuildContext context) {
-                                                  return AlertDialog(
-                                                    content: Image.network(
-                                                      item.imageURLs.first,
-                                                      width: MediaQuery.of(
-                                                                  context)
-                                                              .size
-                                                              .width *
-                                                          0.7, // Use screen width for the image
-                                                      height:
-                                                          300, // Adjust height as needed
-                                                    ),
-                                                    actions: <Widget>[
-                                                      Center(
-                                                        child: TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.of(
+                        return Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            children: [
+                              Row(
+                                children: <Widget>[
+                                  Column(
+                                    children: [
+                                      item.imageURLs.isNotEmpty
+                                          ? GestureDetector(
+                                              onTap: () {
+                                                if (item.imageURLs.isNotEmpty) {
+                                                  showDialog(
+                                                    context: context,
+                                                    builder:
+                                                        (BuildContext context) {
+                                                      return AlertDialog(
+                                                        content: Image.network(
+                                                          item.imageURLs.first,
+                                                          width: MediaQuery.of(
                                                                       context)
-                                                                  .pop(), // Close the dialog
-                                                          style: ButtonStyle(
-                                                            backgroundColor:
-                                                                MaterialStateProperty
-                                                                    .all<Color>(
+                                                                  .size
+                                                                  .width *
+                                                              0.7, // Use screen width for the image
+                                                          height: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .height *
+                                                              0.6,
+                                                          errorBuilder:
+                                                              (BuildContext
+                                                                      context,
+                                                                  Object
+                                                                      exception,
+                                                                  StackTrace?
+                                                                      stackTrace) {
+                                                            return Container(
+                                                              height: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .height *
+                                                                  0.4,
+                                                              width: MediaQuery.of(
+                                                                          context)
+                                                                      .size
+                                                                      .width *
+                                                                  0.3,
+                                                              color: Colors
+                                                                  .grey[200],
+                                                              alignment:
+                                                                  Alignment
+                                                                      .center,
+                                                              child:
+                                                                  const Center(
+                                                                child: Text(
+                                                                  'no image',
+                                                                  style: TextStyle(
+                                                                      fontSize:
+                                                                          12,
+                                                                      color: Colors
+                                                                          .grey),
+                                                                ),
+                                                              ),
+                                                            );
+                                                          }, // Adjust height as needed
+                                                        ),
+                                                        actions: <Widget>[
+                                                          Center(
+                                                            child: TextButton(
+                                                              onPressed: () =>
+                                                                  Navigator.of(
+                                                                          context)
+                                                                      .pop(), // Close the dialog
+                                                              style:
+                                                                  ButtonStyle(
+                                                                backgroundColor:
+                                                                    MaterialStateProperty.all<
+                                                                            Color>(
                                                                         Colors
                                                                             .white),
-                                                          ),
-                                                          child: const Text(
-                                                            'Cancel',
-                                                            style: TextStyle(
-                                                                color: Colors
-                                                                    .black,
-                                                                fontSize:
-                                                                    20), // Optional: Change text color if needed
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-                                            }
-                                          },
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${item.itemQuantity}x',
-                                                style: const TextStyle(
-                                                    fontSize: 25),
-                                              ),
-                                              item.imageURLs.isNotEmpty
-                                                  ? Padding(
-                                                      padding:
-                                                          const EdgeInsets.only(
-                                                              left: 8.0),
-                                                      child: Image.network(
-                                                        item.imageURLs.first,
-                                                        height: 90,
-                                                        width: 100,
-                                                        errorBuilder:
-                                                            (BuildContext
-                                                                    context,
-                                                                Object
-                                                                    exception,
-                                                                StackTrace?
-                                                                    stackTrace) {
-                                                          return Container(
-                                                            height: 120,
-                                                            color: Colors
-                                                                .grey[200],
-                                                            alignment: Alignment
-                                                                .center,
-                                                            child: const Center(
-                                                              child: Text(
-                                                                'no image',
+                                                              ),
+                                                              child: const Text(
+                                                                'Cancel',
                                                                 style: TextStyle(
-                                                                    fontSize:
-                                                                        12,
                                                                     color: Colors
-                                                                        .grey),
+                                                                        .black,
+                                                                    fontSize:
+                                                                        20), // Optional: Change text color if needed
                                                               ),
                                                             ),
-                                                          );
-                                                        },
-                                                      ),
-                                                    )
-                                                  : const SizedBox(
-                                                      width: 40, height: 40),
-                                            ],
-                                          ),
-                                        ),
-                                        const SizedBox(
-                                          height: 2.0,
-                                        ),
-                                        const Center(
-                                          child: Text(
-                                            'Aisle 1A',
-                                            style: TextStyle(fontSize: 20),
-                                          ),
-                                        )
-                                      ],
-                                    ),
-                                    // Spacer to push the trailing widget to the end
+                                                          ),
+                                                        ],
+                                                      );
+                                                    },
+                                                  );
+                                                }
+                                              },
+                                              child: Image.network(
+                                                item.imageURLs.first,
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.2,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.35, // Increased width
 
-                                    // Title and subtitle
-                                    Row(
-                                      children: <Widget>[
-                                        SizedBox(
-                                          width: 180,
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Text(
-                                                item.name,
-                                                style: const TextStyle(
-                                                    fontSize: 18),
-                                              ), // Display item name
-                                              Text(
-                                                '${item.brand}\nQuantity: ${item.quantity} ${item.unitOfQuantity}',
-                                                style: const TextStyle(
-                                                    fontSize: 18),
-                                              ), // Display brand and quantity
-                                            ],
-                                          ),
+                                                errorBuilder: (BuildContext
+                                                        context,
+                                                    Object exception,
+                                                    StackTrace? stackTrace) {
+                                                  return Container(
+                                                    height:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .height *
+                                                            0.2,
+                                                    width: MediaQuery.of(
+                                                                context)
+                                                            .size
+                                                            .width *
+                                                        0.35, // Increased width
+
+                                                    color: Colors.grey[200],
+                                                    alignment: Alignment.center,
+                                                    child: const Center(
+                                                      child: Text(
+                                                        'no image',
+                                                        style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            )
+                                          : const SizedBox(
+                                              width: 40, height: 40),
+                                      const SizedBox(
+                                        height: 2.0,
+                                      ),
+                                    ],
+                                  ),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment
+                                        .start, // Align children to the top
+                                    children: [
+                                      Container(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.60,
+                                        padding:
+                                            const EdgeInsets.only(left: 10),
+                                        child: Text(
+                                          item.name,
+                                          style: const TextStyle(fontSize: 18),
                                         ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(
-                                      6.0), // Adjust the radius as needed
-                                  child: SizedBox(
-                                    height: 30,
-                                    child: LinearProgressIndicator(
-                                      value: (quantityPacked ?? 0) /
-                                          item.itemQuantity,
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                              Colors.blue),
-                                    ),
+                                      ),
+                                      Container(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.60,
+                                        padding:
+                                            const EdgeInsets.only(left: 10),
+                                        child: Text(
+                                          "${item.brand}",
+                                          style: TextStyle(
+                                              color: Colors.deepPurple,
+                                              fontSize: 18),
+                                        ),
+                                      ), // Display item name
+                                      Container(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.60,
+                                        padding:
+                                            const EdgeInsets.only(left: 10),
+                                        child: Text(
+                                          'size: ${item.quantity} ${item.unitOfQuantity}',
+                                          style: const TextStyle(fontSize: 18),
+                                        ),
+                                      ),
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          SizedBox(width: 4),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10),
+                                            decoration: const BoxDecoration(
+                                                color: Colors.amberAccent,
+                                                borderRadius: BorderRadius.all(
+                                                  Radius.circular(
+                                                      10.0), // Set the rounded corner radius
+                                                )),
+                                            child: Text(
+                                              'quantity: ${item.itemQuantity}',
+                                              style:
+                                                  const TextStyle(fontSize: 20),
+                                            ),
+                                          ),
+                                          SizedBox(width: 4),
+                                          Container(
+                                            padding: EdgeInsets.symmetric(
+                                                horizontal: 10, vertical: 2),
+                                            decoration: BoxDecoration(
+                                                color: Colors.tealAccent,
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(10))),
+                                            child: Text(
+                                              'Aisle 1A',
+                                              style: TextStyle(fontSize: 20),
+                                            ),
+                                          )
+                                        ],
+                                      ),
+                                      GestureDetector(
+                                        onTap: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: (BuildContext context) {
+                                              return AlertDialog(
+                                                title: Text("Help"),
+                                                content: Text(
+                                                    "This is the help dialog content."),
+                                                actions: <Widget>[
+                                                  ElevatedButton(
+                                                    style: ElevatedButton
+                                                        .styleFrom(
+                                                      primary: Colors
+                                                          .white, // Background color
+                                                      onPrimary: Colors
+                                                          .black, // Text color
+                                                      shape:
+                                                          RoundedRectangleBorder(
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                                20.0), // Roundish borders
+                                                      ),
+                                                      elevation:
+                                                          5, // The elevation of the button
+                                                    ),
+                                                    child: Text('Close'),
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pop(); // Close the dialog
+                                                    },
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+                                        },
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment
+                                              .end, // Align this row's child to the end, effectively aligning it to the right
+                                          children: [
+                                            Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.50,
+                                              padding: const EdgeInsets.only(
+                                                  top: 10, bottom: 10),
+                                              child: Text(
+                                                'help',
+                                                textAlign: TextAlign
+                                                    .right, // Align the text to the right within the container
+                                                style: const TextStyle(
+                                                    fontSize: 18),
+                                              ),
+                                            ),
+                                            Icon(
+                                              Icons
+                                                  .help_outline, // The help center icon
+                                              color: Colors
+                                                  .black, // Specify the color of the icon if needed
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(
+                                    6.0), // Adjust the radius as needed
+                                child: SizedBox(
+                                  height: 30,
+                                  child: LinearProgressIndicator(
+                                    value: (quantityPacked ?? 0) /
+                                        item.itemQuantity,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                            Colors.blue),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         );
                       },
@@ -646,82 +665,107 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                 ),
               ),
       ),
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: widget.allPacked
-            ? (pictureTaken
-                ? FloatingActionButton.extended(
-                    heroTag: 'packItemButton', // Unique tag for this FAB
+      bottomNavigationBar: Material(
+        elevation: 4.0,
+        child: Container(
+          padding: EdgeInsets.only(bottom: 10, top: 5, left: 5, right: 5),
+          child: widget.allPacked
+              ? (pictureTaken
+                  ? ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pinkAccent, // Background color
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 12), // Makes the button longer and taller
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(20), // Roundish borders
+                        ),
+                      ),
+                      onPressed: scanMobileBarcodeAssignSpace,
+                      child: const Text(
+                        'Complete Packing',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        primary: Colors.pinkAccent, // Background color
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 12), // Makes the button longer and taller
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(20), // Roundish borders
+                        ),
+                      ),
+                      onPressed: _takePicture,
+                      child: const Text(
+                        'Take Picture',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ))
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    // First FAB
 
-                    onPressed: scanMobileBarcodeAssignSpace,
-                    backgroundColor: Colors.deepPurpleAccent,
-                    label: const Text(
-                      'Complete Packing',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.pinkAccent, // Background color
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 40,
+                            vertical: 10), // Makes the button longer and taller
+                        shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(10), // Roundish borders
+                        ),
+                      ),
+                      onPressed: scanMobileBarcode,
+                      child: const Text(
+                        'Scan Item',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  )
-                : FloatingActionButton.extended(
-                    heroTag: 'takepicture', // Unique tag for this FAB
 
-                    onPressed: _takePicture,
-                    backgroundColor: Colors.deepPurpleAccent,
-                    label: const Text(
-                      'Take Picture',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                    /*
+                    const SizedBox(
+                      width: 4.0,
+                    ),
+                    // Second FAB
+                    FloatingActionButton(
+                      heroTag: 'counterButton', // Unique tag for this FAB
+        
+                      onPressed: () {
+                        // Define the action for this button
+                      },
+                      backgroundColor: Colors.deepPurpleAccent,
+                      child: Text(
+                        "${widget.totalQuantity}",
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ))
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  // First FAB
-
-                  FloatingActionButton.extended(
-                    heroTag: 'scanItemButton', // Unique tag for this FAB
-
-                    onPressed: scanMobileBarcode,
-                    backgroundColor: Colors.deepPurpleAccent,
-                    label: const Text(
-                      'Scan Item',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(
-                    width: 4.0,
-                  ),
-                  // Second FAB
-                  FloatingActionButton(
-                    heroTag: 'counterButton', // Unique tag for this FAB
-
-                    onPressed: () {
-                      // Define the action for this button
-                    },
-                    backgroundColor: Colors.deepPurpleAccent,
-                    child: Text(
-                      "${widget.totalQuantity}",
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                    */
+                  ],
+                ),
+        ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
