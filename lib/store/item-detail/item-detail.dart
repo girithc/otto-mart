@@ -1,8 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:packer/pack/checklist.dart';
 import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/network/service.dart';
 
 class ItemDetailApiClient {
   ItemDetailApiClient();
@@ -49,11 +51,9 @@ class ItemDetailApiClient {
       'barcode': barcode,
     };
 
-    http.Response response = await http.post(
-      url,
-      headers: headers,
-      body: json.encode(body),
-    );
+    final networkService = NetworkService();
+    final response =
+        await networkService.postWithAuth('/item-update', additionalData: body);
 
     if (response.statusCode == 200) {
       final dynamic jsonData = json.decode(response.body);
@@ -103,11 +103,10 @@ class ItemDetailApiClient {
       "image": image
     };
     print('Uploaded Image: $image');
-    var response = await http.post(
-      url,
-      body: jsonEncode(requestData),
-      headers: {"Content-Type": "application/json"},
-    );
+
+    final networkService = NetworkService();
+    final response = await networkService.postWithAuth('/packer-space-order',
+        additionalData: requestData);
 
     if (response.statusCode == 200) {
       print("Packer Item $response");
@@ -119,19 +118,20 @@ class ItemDetailApiClient {
   }
 
   Future<PackerItemResponse> fetchItemFromBarcodeInSalesOrder(
-      String barcode, String packerPhone, int orderId, String storeId) async {
-    var url = Uri.parse('$baseUrl/packer-pack-item');
+      String barcode, int orderId, String storeId) async {
+    const storage = FlutterSecureStorage();
+    final phone = await storage.read(key: 'phone');
+
     final Map<String, dynamic> requestData = {
       "store_id": int.parse(storeId),
       "barcode": barcode,
-      "packer_phone": packerPhone,
+      "packer_phone": phone,
       "sales_order_id": orderId
     };
-    var response = await http.post(
-      url,
-      body: jsonEncode(requestData),
-      headers: {"Content-Type": "application/json"},
-    );
+
+    final networkService = NetworkService();
+    final response = await networkService.postWithAuth('/packer-pack-item',
+        additionalData: requestData);
 
     if (response.statusCode == 200) {
       print("Packer Item ${response.body}");

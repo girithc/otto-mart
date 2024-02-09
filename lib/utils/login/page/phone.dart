@@ -104,6 +104,20 @@ class _MyPhoneState extends State<MyPhone> {
                   Image.asset(
                     'assets/icon/icon.jpeg',
                     height: 250,
+                    errorBuilder: (BuildContext context, Object exception,
+                        StackTrace? stackTrace) {
+                      return Container(
+                        height: 250,
+                        color: Colors.grey[200],
+                        alignment: Alignment.center,
+                        child: const Center(
+                          child: Text(
+                            'no image',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(
                     height: 25,

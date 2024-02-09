@@ -7,17 +7,15 @@ import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:packer/store/item-detail/item-detail.dart';
 import 'package:packer/main.dart';
-import 'package:packer/pack/pack-item.dart';
-import 'package:packer/stock/add-stock.dart';
 import 'package:packer/utils/constants.dart';
 import 'package:packer/utils/network/service.dart';
 
+// ignore: must_be_immutable
 class OrderChecklistPage extends StatefulWidget {
   OrderChecklistPage(
       {super.key,
@@ -26,11 +24,13 @@ class OrderChecklistPage extends StatefulWidget {
       required this.allPacked,
       required this.orderId,
       required this.totalQuantity});
+
   List<PackedItem> packedItems;
   List<PackerItemDetail> prePackedItems;
   bool allPacked;
   int orderId;
   int totalQuantity;
+
   @override
   State<OrderChecklistPage> createState() => _OrderChecklistPageState();
 }
@@ -57,22 +57,19 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   }
 
   Future<void> fetchItems() async {
-    String? packerId = await _storage.read(key: "packerId");
-    String? storeId = await _storage.read(key: "storeId");
-    var url = Uri.parse('$baseUrl/packer-pack-order');
-    var response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(
-          {"store_id": int.parse(storeId!), "packer_phone": packerId}),
-    );
+    String? phone = await _storage.read(key: "phone");
+    //String? storeId = await _storage.read(key: "storeId");
+    Map<String, dynamic> data = {"store_id": 1, "packer_phone": phone};
+
+    final networkService = NetworkService();
+    final response = await networkService.postWithAuth('/packer-pack-order',
+        additionalData: data);
 
     if (response.statusCode == 200) {
       print('response: ${response.body}');
       final jsonResponse = json.decode(response.body);
       if (jsonResponse.isNotEmpty) {
         final combinedResponse = CombinedOrderResponse.fromJson(jsonResponse);
-        // Calculate the sum of quantities
 
         setState(() {
           packedItems = combinedResponse.packedItems;
@@ -153,14 +150,11 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   }
 
   Future<void> scanBarcode(String code) async {
-    String barcodeScanRes;
-    String? packerId = await _storage.read(key: "packerId");
-    String? storeId = await _storage.read(key: "storeId");
+    print("Scanned barcode: $code ");
 
     if (code != '-1') {
       apiClient
-          .fetchItemFromBarcodeInSalesOrder(
-              code, packerId!, widget.orderId, "1")
+          .fetchItemFromBarcodeInSalesOrder(code, widget.orderId, "1")
           .then((item) {
         setState(() {
           widget.prePackedItems = item.itemList;
@@ -212,6 +206,87 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
       }
     }
   }
+
+  //delivery partner submit order
+  /*
+  Future<void> submitOrder(BuildContext context) async {
+    print('Submit Order');
+    final partnerPhone = await _storage.read(key: 'partnerId');
+
+    if (_image == null) {
+      print('No image selected');
+      return;
+    }
+
+    final path =
+        'delivery-partner/sales-order/${widget.customerPhone}/${widget.orderDate}';
+    final ref = FirebaseStorage.instance.ref().child(path);
+
+    try {
+      setState(() {
+        uploadTask = ref.putFile(_image!);
+      });
+      final snapshot = await uploadTask!.whenComplete(() => {});
+      final urlDownloaded = await snapshot.ref.getDownloadURL();
+      print('Downloaded Link: $urlDownloaded');
+      setState(() {
+        uploadTask = null;
+      });
+
+      // Constructing the request body
+      final body = json.encode({
+        'phone': partnerPhone,
+        'sales_order_id': widget.orderId,
+        'image': urlDownloaded,
+      });
+
+      // Sending the HTTP POST request
+      final response = await http.post(
+        Uri.parse('$baseUrl/delivery-partner-complete-order'),
+        headers: {'Content-Type': 'application/json'},
+        body: body,
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = json.decode(response.body);
+        //final result = DeliveryCompletionResult.fromJson(responseData);
+
+        // Showing the dialog
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Order Completed'),
+              content: Column(
+                children: [
+                  Image.network(result.image),
+                  Text(
+                      'Order ID: ${result.salesOrderID}\nStatus: ${result.orderStatus}'),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Next'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                    Navigator.of(context).pushReplacement(MaterialPageRoute(
+                        builder: (context) =>
+                            const HomePage())); // Navigate back to homepage
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        print(
+            'Failed to complete the order: ${response.statusCode} ${response.body}');
+      }
+    } catch (e) {
+      print('Upload failed or request failed: $e');
+    }
+  }
+  */
 
   void _showAllocationDetailsDialog(AllocationInfo allocationInfo) {
     showDialog(
@@ -333,10 +408,14 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         backgroundColor: Colors.deepPurpleAccent,
       ),
       body: BarcodeKeyboardListener(
-        onBarcodeScanned: (code) async {
-          widget.allPacked
-              ? await scanBarcodeAssignSpace(code)
-              : await scanBarcode(code);
+        onBarcodeScanned: (String code) {
+          print("Barcode: $code");
+
+          if (widget.allPacked) {
+            scanBarcodeAssignSpace(code);
+          } else {
+            scanBarcode(code);
+          }
         },
         child: widget.packedItems.isEmpty
             ? const Center(child: CircularProgressIndicator())
