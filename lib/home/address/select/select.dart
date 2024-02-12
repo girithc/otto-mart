@@ -392,9 +392,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     var cart = context.watch<CartModel>();
     return Container(
       width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.only(
-        bottom: 20,
-      ),
+      padding: const EdgeInsets.only(bottom: 20, left: 5, right: 5),
       decoration: const BoxDecoration(
         color: Colors.white,
       ),
@@ -506,9 +504,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             borderRadius: BorderRadius.circular(20),
           ),
           elevation: 5,
-          padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 15),
+          padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.04,
+              vertical: MediaQuery.of(context).size.width * 0.04),
         ),
-        child: const Text("Deliver To Address", style: TextStyle(fontSize: 20)),
+        child: const Text("Deliver To Address", style: TextStyle(fontSize: 22)),
       ),
     );
   }
