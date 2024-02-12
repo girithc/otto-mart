@@ -39,6 +39,8 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   File? _image;
   UploadTask? uploadTask;
+  bool _isLoading = false;
+  bool _isAssigningSpace = false;
 
   List<PackedItem> packedItems = [];
   List<PackerItemDetail?> prePackedItems = [];
@@ -121,6 +123,10 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     print("Scanned barcode: $code ");
 
     if (code != '-1') {
+      setState(() {
+        _isLoading = true; // Start loading
+      });
+
       apiClient
           .fetchItemFromBarcodeInSalesOrder(code, widget.orderId, "1")
           .then((item) {
@@ -129,10 +135,14 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
           widget.totalQuantity =
               item.itemList.fold(0, (sum, item) => sum + item.quantity);
           widget.allPacked = item.allPacked;
+          _isLoading = false; // Stop loading after data is fetched
         });
       }, onError: (error) {
-        // Handle error here if fetchItemFromBarcode fails
-        print("Error fetching item: $error");
+        setState(() {
+          _isLoading = false; // Stop loading on error
+          print("Error fetching item: $error");
+          // Optionally show an error message or handle the error differently
+        });
       });
     }
   }
@@ -142,6 +152,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     String? storeId = await _storage.read(key: "storeId");
 
     if (code != '-1') {
+      setState(() {
+        _isAssigningSpace = true; // Start loading
+      });
       final path =
           'packer/sales-order/$packerId/${widget.orderId}-${TimeOfDay.now()}';
 
@@ -164,13 +177,21 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
             .then((allocationInfo) {
           // Show the allocation details in a dialog
           _showAllocationDetailsDialog(allocationInfo);
+          setState(() {
+            _isAssigningSpace = false;
+          });
         }, onError: (error) {
-          // Handle error here if orderAssignSpace fails
-          print("Error: $error");
           _showErrorDialog("Error: $error"); // Show error dialog
+
+          setState(() {
+            _isAssigningSpace = false;
+          });
         });
       } catch (e) {
-        print('Upload failed: $e');
+        setState(() {
+          _isAssigningSpace = false;
+        });
+        _showErrorDialog("Error: $e");
       }
     }
   }
@@ -306,375 +327,411 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         child: widget.packedItems.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: widget.packedItems.length,
-                      itemBuilder: (context, index) {
-                        PackedItem item = widget.packedItems[index];
-                        int? quantityPacked = widget.prePackedItems
-                            .firstWhere(
-                              (result) => result.itemId == item.itemId,
-                              orElse: () => PackerItemDetail(
-                                  itemId: 0,
-                                  orderId: 0,
-                                  packerId: 0,
-                                  quantity:
-                                      0), // Return null to match the type PackerItemDetail?
-                            )
-                            .quantity;
-                        return Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: <Widget>[
-                                  Column(
-                                    children: [
-                                      item.imageURLs.isNotEmpty
-                                          ? GestureDetector(
-                                              onTap: () {
-                                                if (item.imageURLs.isNotEmpty) {
-                                                  showDialog(
-                                                    context: context,
-                                                    builder:
-                                                        (BuildContext context) {
-                                                      return AlertDialog(
-                                                        content: Image.network(
-                                                          item.imageURLs.first,
-                                                          width: MediaQuery.of(
-                                                                      context)
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : Column(
+                        children: [
+                          ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: widget.packedItems.length,
+                            itemBuilder: (context, index) {
+                              PackedItem item = widget.packedItems[index];
+                              int? quantityPacked = widget.prePackedItems
+                                  .firstWhere(
+                                    (result) => result.itemId == item.itemId,
+                                    orElse: () => PackerItemDetail(
+                                        itemId: 0,
+                                        orderId: 0,
+                                        packerId: 0,
+                                        quantity:
+                                            0), // Return null to match the type PackerItemDetail?
+                                  )
+                                  .quantity;
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  children: [
+                                    Row(
+                                      children: <Widget>[
+                                        Column(
+                                          children: [
+                                            item.imageURLs.isNotEmpty
+                                                ? GestureDetector(
+                                                    onTap: () {
+                                                      if (item.imageURLs
+                                                          .isNotEmpty) {
+                                                        showDialog(
+                                                          context: context,
+                                                          builder: (BuildContext
+                                                              context) {
+                                                            return AlertDialog(
+                                                              content:
+                                                                  Image.network(
+                                                                item.imageURLs
+                                                                    .first,
+                                                                width: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .width *
+                                                                    0.7, // Use screen width for the image
+                                                                height: MediaQuery.of(
+                                                                            context)
+                                                                        .size
+                                                                        .height *
+                                                                    0.6,
+                                                                errorBuilder: (BuildContext
+                                                                        context,
+                                                                    Object
+                                                                        exception,
+                                                                    StackTrace?
+                                                                        stackTrace) {
+                                                                  return Container(
+                                                                    height: MediaQuery.of(context)
+                                                                            .size
+                                                                            .height *
+                                                                        0.4,
+                                                                    width: MediaQuery.of(context)
+                                                                            .size
+                                                                            .width *
+                                                                        0.3,
+                                                                    color: Colors
+                                                                            .grey[
+                                                                        200],
+                                                                    alignment:
+                                                                        Alignment
+                                                                            .center,
+                                                                    child:
+                                                                        const Center(
+                                                                      child:
+                                                                          Text(
+                                                                        'no image',
+                                                                        style: TextStyle(
+                                                                            fontSize:
+                                                                                12,
+                                                                            color:
+                                                                                Colors.grey),
+                                                                      ),
+                                                                    ),
+                                                                  );
+                                                                }, // Adjust height as needed
+                                                              ),
+                                                              actions: <Widget>[
+                                                                Center(
+                                                                  child:
+                                                                      TextButton(
+                                                                    onPressed: () =>
+                                                                        Navigator.of(context)
+                                                                            .pop(), // Close the dialog
+                                                                    style:
+                                                                        ButtonStyle(
+                                                                      backgroundColor: MaterialStateProperty.all<
+                                                                              Color>(
+                                                                          Colors
+                                                                              .white),
+                                                                    ),
+                                                                    child:
+                                                                        const Text(
+                                                                      'Cancel',
+                                                                      style: TextStyle(
+                                                                          color: Colors
+                                                                              .black,
+                                                                          fontSize:
+                                                                              20), // Optional: Change text color if needed
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            );
+                                                          },
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Image.network(
+                                                      item.imageURLs.first,
+                                                      height:
+                                                          MediaQuery.of(context)
                                                                   .size
-                                                                  .width *
-                                                              0.7, // Use screen width for the image
+                                                                  .height *
+                                                              0.2,
+                                                      width: MediaQuery.of(
+                                                                  context)
+                                                              .size
+                                                              .width *
+                                                          0.35, // Increased width
+
+                                                      errorBuilder:
+                                                          (BuildContext context,
+                                                              Object exception,
+                                                              StackTrace?
+                                                                  stackTrace) {
+                                                        return Container(
                                                           height: MediaQuery.of(
                                                                       context)
                                                                   .size
                                                                   .height *
-                                                              0.6,
-                                                          errorBuilder:
-                                                              (BuildContext
-                                                                      context,
-                                                                  Object
-                                                                      exception,
-                                                                  StackTrace?
-                                                                      stackTrace) {
-                                                            return Container(
-                                                              height: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .height *
-                                                                  0.4,
-                                                              width: MediaQuery.of(
-                                                                          context)
-                                                                      .size
-                                                                      .width *
-                                                                  0.3,
-                                                              color: Colors
-                                                                  .grey[200],
-                                                              alignment:
-                                                                  Alignment
-                                                                      .center,
-                                                              child:
-                                                                  const Center(
-                                                                child: Text(
-                                                                  'no image',
-                                                                  style: TextStyle(
-                                                                      fontSize:
-                                                                          12,
-                                                                      color: Colors
-                                                                          .grey),
-                                                                ),
-                                                              ),
-                                                            );
-                                                          }, // Adjust height as needed
-                                                        ),
-                                                        actions: <Widget>[
-                                                          Center(
-                                                            child: TextButton(
-                                                              onPressed: () =>
-                                                                  Navigator.of(
-                                                                          context)
-                                                                      .pop(), // Close the dialog
-                                                              style:
-                                                                  ButtonStyle(
-                                                                backgroundColor:
-                                                                    MaterialStateProperty.all<
-                                                                            Color>(
-                                                                        Colors
-                                                                            .white),
-                                                              ),
-                                                              child: const Text(
-                                                                'Cancel',
-                                                                style: TextStyle(
-                                                                    color: Colors
-                                                                        .black,
-                                                                    fontSize:
-                                                                        20), // Optional: Change text color if needed
-                                                              ),
+                                                              0.2,
+                                                          width: MediaQuery.of(
+                                                                      context)
+                                                                  .size
+                                                                  .width *
+                                                              0.35, // Increased width
+
+                                                          color:
+                                                              Colors.grey[200],
+                                                          alignment:
+                                                              Alignment.center,
+                                                          child: const Center(
+                                                            child: Text(
+                                                              'no image',
+                                                              style: TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors
+                                                                      .grey),
                                                             ),
                                                           ),
-                                                        ],
-                                                      );
-                                                    },
-                                                  );
-                                                }
-                                              },
-                                              child: Image.network(
-                                                item.imageURLs.first,
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height *
-                                                    0.2,
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width *
-                                                    0.35, // Increased width
-
-                                                errorBuilder: (BuildContext
-                                                        context,
-                                                    Object exception,
-                                                    StackTrace? stackTrace) {
-                                                  return Container(
-                                                    height:
-                                                        MediaQuery.of(context)
-                                                                .size
-                                                                .height *
-                                                            0.2,
-                                                    width: MediaQuery.of(
-                                                                context)
-                                                            .size
-                                                            .width *
-                                                        0.35, // Increased width
-
-                                                    color: Colors.grey[200],
-                                                    alignment: Alignment.center,
-                                                    child: const Center(
-                                                      child: Text(
-                                                        'no image',
-                                                        style: TextStyle(
-                                                            fontSize: 12,
-                                                            color: Colors.grey),
-                                                      ),
+                                                        );
+                                                      },
                                                     ),
-                                                  );
-                                                },
-                                              ),
-                                            )
-                                          : const SizedBox(
-                                              width: 40, height: 40),
-                                      const SizedBox(
-                                        height: 2.0,
-                                      ),
-                                    ],
-                                  ),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment
-                                        .start, // Align children to the top
-                                    children: [
-                                      Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.60,
-                                        padding:
-                                            const EdgeInsets.only(left: 10),
-                                        child: Text(
-                                          item.name,
-                                          style: const TextStyle(fontSize: 18),
-                                        ),
-                                      ),
-                                      Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.60,
-                                        padding:
-                                            const EdgeInsets.only(left: 10),
-                                        child: Text(
-                                          "${item.brand}",
-                                          style: TextStyle(
-                                              color: Colors.deepPurple,
-                                              fontSize: 18),
-                                        ),
-                                      ), // Display item name
-                                      Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.60,
-                                        padding:
-                                            const EdgeInsets.only(left: 10),
-                                        child: Text(
-                                          'size: ${item.quantity} ${item.unitOfQuantity}',
-                                          style: const TextStyle(fontSize: 18),
-                                        ),
-                                      ),
-                                      Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: [
-                                          SizedBox(width: 4),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10),
-                                            decoration: const BoxDecoration(
-                                                color: Colors.amberAccent,
-                                                borderRadius: BorderRadius.all(
-                                                  Radius.circular(
-                                                      10.0), // Set the rounded corner radius
-                                                )),
-                                            child: Text(
-                                              'quantity: ${item.itemQuantity}',
-                                              style:
-                                                  const TextStyle(fontSize: 20),
+                                                  )
+                                                : const SizedBox(
+                                                    width: 40, height: 40),
+                                            const SizedBox(
+                                              height: 2.0,
                                             ),
-                                          ),
-                                          SizedBox(width: 4),
-                                          Container(
-                                            padding: EdgeInsets.symmetric(
-                                                horizontal: 10, vertical: 2),
-                                            decoration: BoxDecoration(
-                                                color: Colors.tealAccent,
-                                                borderRadius: BorderRadius.all(
-                                                    Radius.circular(10))),
-                                            child: Text(
-                                              'Aisle 1A',
-                                              style: TextStyle(fontSize: 20),
-                                            ),
-                                          )
-                                        ],
-                                      ),
-                                      GestureDetector(
-                                        onTap: () {
-                                          showDialog(
-                                            context: context,
-                                            builder: (BuildContext context) {
-                                              return AlertDialog(
-                                                title: Text("Help"),
-                                                content: Text(
-                                                    "This is the help dialog content."),
-                                                actions: <Widget>[
-                                                  ElevatedButton(
-                                                    style: ElevatedButton
-                                                        .styleFrom(
-                                                      primary: Colors
-                                                          .white, // Background color
-                                                      onPrimary: Colors
-                                                          .black, // Text color
-                                                      shape:
-                                                          RoundedRectangleBorder(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                                20.0), // Roundish borders
-                                                      ),
-                                                      elevation:
-                                                          5, // The elevation of the button
-                                                    ),
-                                                    child: Text('Close'),
-                                                    onPressed: () {
-                                                      Navigator.of(context)
-                                                          .pop(); // Close the dialog
-                                                    },
-                                                  ),
-                                                ],
-                                              );
-                                            },
-                                          );
-                                        },
-                                        child: Row(
-                                          mainAxisAlignment: MainAxisAlignment
-                                              .end, // Align this row's child to the end, effectively aligning it to the right
+                                          ],
+                                        ),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment
+                                              .start, // Align children to the top
                                           children: [
                                             Container(
                                               width: MediaQuery.of(context)
                                                       .size
                                                       .width *
-                                                  0.50,
+                                                  0.60,
                                               padding: const EdgeInsets.only(
-                                                  top: 10, bottom: 10),
+                                                  left: 10),
                                               child: Text(
-                                                'help',
-                                                textAlign: TextAlign
-                                                    .right, // Align the text to the right within the container
+                                                item.name,
                                                 style: const TextStyle(
                                                     fontSize: 18),
                                               ),
                                             ),
-                                            Icon(
-                                              Icons
-                                                  .help_outline, // The help center icon
-                                              color: Colors
-                                                  .black, // Specify the color of the icon if needed
+                                            Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.60,
+                                              padding: const EdgeInsets.only(
+                                                  left: 10),
+                                              child: Text(
+                                                item.brand,
+                                                style: const TextStyle(
+                                                    color: Colors.deepPurple,
+                                                    fontSize: 18),
+                                              ),
+                                            ), // Display item name
+                                            Container(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.60,
+                                              padding: const EdgeInsets.only(
+                                                  left: 10),
+                                              child: Text(
+                                                'size: ${item.quantity} ${item.unitOfQuantity}',
+                                                style: const TextStyle(
+                                                    fontSize: 18),
+                                              ),
+                                            ),
+                                            Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                const SizedBox(width: 4),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 10),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                          color: Colors
+                                                              .amberAccent,
+                                                          borderRadius:
+                                                              BorderRadius.all(
+                                                            Radius.circular(
+                                                                10.0), // Set the rounded corner radius
+                                                          )),
+                                                  child: Text(
+                                                    'amount: ${item.itemQuantity}',
+                                                    style: const TextStyle(
+                                                        fontSize: 20),
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 2),
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                          color:
+                                                              Colors.tealAccent,
+                                                          borderRadius:
+                                                              BorderRadius.all(
+                                                                  Radius
+                                                                      .circular(
+                                                                          10))),
+                                                  child: const Text(
+                                                    'Aisle 1A',
+                                                    style:
+                                                        TextStyle(fontSize: 20),
+                                                  ),
+                                                )
+                                              ],
+                                            ),
+                                            GestureDetector(
+                                              onTap: () {
+                                                showDialog(
+                                                  context: context,
+                                                  builder:
+                                                      (BuildContext context) {
+                                                    return AlertDialog(
+                                                      title: const Text("Help"),
+                                                      content: const Text(
+                                                          "This is the help dialog content."),
+                                                      actions: <Widget>[
+                                                        ElevatedButton(
+                                                          style: ElevatedButton
+                                                              .styleFrom(
+                                                            foregroundColor:
+                                                                Colors.black,
+                                                            backgroundColor: Colors
+                                                                .white, // Text color
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          20.0), // Roundish borders
+                                                            ),
+                                                            elevation:
+                                                                5, // The elevation of the button
+                                                          ),
+                                                          child: const Text(
+                                                              'Close'),
+                                                          onPressed: () {
+                                                            Navigator.of(
+                                                                    context)
+                                                                .pop(); // Close the dialog
+                                                          },
+                                                        ),
+                                                      ],
+                                                    );
+                                                  },
+                                                );
+                                              },
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment
+                                                    .end, // Align this row's child to the end, effectively aligning it to the right
+                                                children: [
+                                                  Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.50,
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                            top: 10,
+                                                            bottom: 10),
+                                                    child: const Text(
+                                                      'help',
+                                                      textAlign: TextAlign
+                                                          .right, // Align the text to the right within the container
+                                                      style: TextStyle(
+                                                          fontSize: 18),
+                                                    ),
+                                                  ),
+                                                  const Icon(
+                                                    Icons
+                                                        .help_outline, // The help center icon
+                                                    color: Colors
+                                                        .black, // Specify the color of the icon if needed
+                                                  ),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
+                                      ],
+                                    ),
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(
+                                          6.0), // Adjust the radius as needed
+                                      child: SizedBox(
+                                        height: 30,
+                                        child: LinearProgressIndicator(
+                                          value: (quantityPacked ?? 0) /
+                                              item.itemQuantity,
+                                          valueColor:
+                                              const AlwaysStoppedAnimation<
+                                                  Color>(Colors.blue),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                          (widget.allPacked && pictureTaken)
+                              ? Container(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.4,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2),
+                                  margin: const EdgeInsets.all(2.0),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    // This adds the rounded borders
+                                    borderRadius: BorderRadius.circular(10.0),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(
+                                            0.5), // Shadow color with some transparency
+                                        spreadRadius:
+                                            2, // Extent of the shadow spread
+                                        blurRadius:
+                                            4, // How blurry the shadow should be
+                                        offset: const Offset(
+                                            0, 3), // Changes position of shadow
                                       ),
                                     ],
                                   ),
-                                ],
-                              ),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                    6.0), // Adjust the radius as needed
-                                child: SizedBox(
-                                  height: 30,
-                                  child: LinearProgressIndicator(
-                                    value: (quantityPacked ?? 0) /
-                                        item.itemQuantity,
-                                    valueColor:
-                                        const AlwaysStoppedAnimation<Color>(
-                                            Colors.blue),
+                                  child: ClipRRect(
+                                    // This is used to clip the image with rounded corners
+                                    borderRadius: BorderRadius.circular(
+                                        10.0), // The same radius as the Container's border
+                                    child: Image.file(_image!),
                                   ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                    (widget.allPacked && pictureTaken)
-                        ? Container(
-                            height: MediaQuery.of(context).size.height * 0.4,
-                            padding: const EdgeInsets.symmetric(vertical: 2),
-                            margin: const EdgeInsets.all(2.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              // This adds the rounded borders
-                              borderRadius: BorderRadius.circular(10.0),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(
-                                      0.5), // Shadow color with some transparency
-                                  spreadRadius:
-                                      2, // Extent of the shadow spread
-                                  blurRadius:
-                                      4, // How blurry the shadow should be
-                                  offset: const Offset(
-                                      0, 3), // Changes position of shadow
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              // This is used to clip the image with rounded corners
-                              borderRadius: BorderRadius.circular(
-                                  10.0), // The same radius as the Container's border
-                              child: Image.file(_image!),
-                            ),
-                          )
-                        : Container(),
-                  ],
-                ),
+                                )
+                              : Container(),
+                        ],
+                      ),
               ),
       ),
       bottomNavigationBar: Material(
         elevation: 4.0,
         child: Container(
-          padding: EdgeInsets.only(bottom: 10, top: 5, left: 5, right: 5),
+          padding: const EdgeInsets.only(bottom: 10, top: 5, left: 5, right: 5),
           child: widget.allPacked
               ? (pictureTaken
                   ? ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pinkAccent, // Background color
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 32,
                             vertical: 12), // Makes the button longer and taller
                         shape: RoundedRectangleBorder(
@@ -683,19 +740,21 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                         ),
                       ),
                       onPressed: scanMobileBarcodeAssignSpace,
-                      child: const Text(
-                        'Complete Packing',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: _isAssigningSpace
+                          ? const CircularProgressIndicator()
+                          : const Text(
+                              'Complete Packing',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     )
                   : ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        primary: Colors.pinkAccent, // Background color
-                        padding: EdgeInsets.symmetric(
+                        backgroundColor: Colors.pinkAccent, // Background color
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 32,
                             vertical: 12), // Makes the button longer and taller
                         shape: RoundedRectangleBorder(
@@ -721,7 +780,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pinkAccent, // Background color
-                        padding: EdgeInsets.symmetric(
+                        padding: const EdgeInsets.symmetric(
                             horizontal: 40,
                             vertical: 10), // Makes the button longer and taller
                         shape: RoundedRectangleBorder(

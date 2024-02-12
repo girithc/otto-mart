@@ -13,13 +13,11 @@ import 'package:packer/store/item-detail/item-detail.dart';
 import 'package:packer/pack/checklist.dart';
 import 'package:packer/stock/add-stock.dart';
 import 'package:packer/store/stores.dart';
-import 'package:packer/utils/constants.dart';
 import 'package:packer/utils/login/page/phone.dart';
 import 'package:packer/utils/login/provider/loginProvider.dart';
 import 'package:packer/utils/network/service.dart';
 import 'package:packer/utils/settings/settings.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -181,16 +179,15 @@ class _InventoryManagementState extends State<InventoryManagement> {
           return null;
         }
 
-        final response = await http.post(
-          Uri.parse('$baseUrl/delivery-partner-dispatch-order'),
-          headers: <String, String>{
-            'Content-Type': 'application/json; charset=UTF-8',
-          },
-          body: jsonEncode(<String, dynamic>{
-            'phone': phone,
-            'sales_order_id': salesOrderId,
-          }),
-        );
+        Map<String, dynamic> body = {
+          'phone': phone,
+          'sales_order_id': salesOrderId,
+        };
+
+        final networkService = NetworkService();
+        final response = await networkService.postWithAuth(
+            'delivery-partner-dispatch-order',
+            additionalData: body);
 
         if (response.statusCode == 200) {
           final result = json.decode(response.body);
