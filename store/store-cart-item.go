@@ -147,6 +147,9 @@ func (s *PostgresStore) Update_Cart_Item_Quantity(cart_id int, item_id int, quan
 
 func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*types.CartDetails, error) {
 	// Begin a new transaction
+
+	var outOfStock bool = false
+	var finalQuantity int = 0
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -183,10 +186,9 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 				tx.Rollback()
 				return nil, err
 			}
+			finalQuantity = quantity
 		}
-	}
-
-	if err == nil {
+	} else if err == nil {
 
 		newTotalQuantity := cartItemQuantity + quantity
 		if newTotalQuantity < 0 {
@@ -194,8 +196,17 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 			return nil, fmt.Errorf("resulting quantity cannot be negative")
 		} else if newTotalQuantity == 0 {
 			_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
+		} else if newTotalQuantity > stockQuantity {
+			outOfStock = true
+			if stockQuantity <= 0 {
+				_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
+			} else {
+				_, err = tx.Exec("UPDATE cart_item SET quantity=$1 WHERE cart_id=$2 AND item_id=$3", stockQuantity, cartId, itemId)
+				finalQuantity = stockQuantity
+			}
 		} else {
 			_, err = tx.Exec("UPDATE cart_item SET quantity=$1 WHERE cart_id=$2 AND item_id=$3", newTotalQuantity, cartId, itemId)
+			finalQuantity = newTotalQuantity
 		}
 		if err != nil {
 			tx.Rollback()
@@ -235,6 +246,8 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 
 	cartItem.CartId = cartId
 	cartItem.ItemId = itemId
+	cartItem.Quantity = finalQuantity
+	cartItem.OutOfStock = outOfStock
 
 	// Return the cart item details
 	return cartItem, nil
@@ -262,15 +275,16 @@ func (s *PostgresStore) Get_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_It
 func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_Item_Item_List, error) {
 	rows, err := s.db.Query(`
         SELECT 
-            i.id, 
+            ci.item_id,  -- Changed from i.id to ci.item_id for clarity
             i.name, 
             istore.mrp_price::numeric::float8, 
-            ii.image_url,  -- Assumes that we are getting image from item_image table
+            ii.image_url, 
             istore.stock_quantity, 
             ci.quantity, 
-			ci.sold_price
+            ci.sold_price,
+            (istore.stock_quantity >= ci.quantity) AS in_stock 
         FROM cart_item ci
-		JOIN item_store istore ON ci.item_id = istore.item_id
+        JOIN item_store istore ON ci.item_id = istore.item_id
         JOIN item i ON istore.item_id = i.id
         LEFT JOIN item_image ii ON i.id = ii.item_id
         WHERE ci.cart_id = $1;
@@ -283,9 +297,29 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
 	cart_items := []*types.Cart_Item_Item_List{}
 	for rows.Next() {
 		cart_item := &types.Cart_Item_Item_List{}
-		if err := rows.Scan(&cart_item.Id, &cart_item.Name, &cart_item.Price, &cart_item.Image, &cart_item.Stock_Quantity, &cart_item.Quantity, &cart_item.SoldPrice); err != nil {
+		if err := rows.Scan(&cart_item.Id, &cart_item.Name, &cart_item.Price, &cart_item.Image, &cart_item.Stock_Quantity, &cart_item.Quantity, &cart_item.SoldPrice, &cart_item.InStock); err != nil {
 			return nil, err
 		}
+
+		// Process each cart item based on its stock status
+		if !cart_item.InStock {
+			if cart_item.Stock_Quantity > 0 {
+				// Update cart_item quantity to stock_quantity
+				_, err := s.db.Exec(`UPDATE cart_item SET quantity = $1 WHERE item_id = $2 AND cart_id = $3`, cart_item.Stock_Quantity, cart_item.Id, cart_id)
+				if err != nil {
+					return nil, err // Consider handling this more gracefully in a real application
+				}
+				cart_item.Quantity = cart_item.Stock_Quantity
+			} else {
+				// Delete cart_item record if stock_quantity is 0
+				_, err := s.db.Exec(`DELETE FROM cart_item WHERE item_id = $1 AND cart_id = $2`, cart_item.Id, cart_id)
+				if err != nil {
+					return nil, err // Consider handling this more gracefully in a real application
+				}
+				cart_item.Quantity = 0
+			}
+		}
+
 		cart_items = append(cart_items, cart_item)
 	}
 
@@ -404,6 +438,8 @@ func (s *PostgresStore) fetchCartDetails(tx *sql.Tx, cartId int) (*types.CartDet
 	if err != nil {
 		return nil, fmt.Errorf("error querying cart details: %w", err)
 	}
+
+	cartItem.OutOfStock = false
 
 	return cartItem, nil
 }
