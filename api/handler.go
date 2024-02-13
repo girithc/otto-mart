@@ -634,6 +634,14 @@ func (s *Server) handleDeliveryPartnerDispatchOrder(res http.ResponseWriter, req
 	return nil
 }
 
+func (s *Server) handleDeliveryPartnerArrive(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "delivery_partner_arrive")
+		return s.goRoutineWrapper(DeliveryPartnerArrive, s.DeliveryPartnerArrive, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleDeliveryPartnerCompleteOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_complete_order")

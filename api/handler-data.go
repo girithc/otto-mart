@@ -62,6 +62,7 @@ var authRequirements = map[string]Permission{
 	DeliveryPartnerAcceptOrder:            {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerPickupOrder:            {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerDispatchOrder:          {Role: "Customer", AuthRequired: true},
+	DeliveryPartnerArrive:                 {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerCompleteOrder:          {Role: "Customer", AuthRequired: true},
 	SalesOrderGetAll:                      {Role: "Customer", AuthRequired: true},
 	SalesOrderGetByDeliveryPartner:        {Role: "Customer", AuthRequired: true},
@@ -153,6 +154,7 @@ const (
 	DeliveryPartnerAcceptOrder            = "delivery-partner-accept-order"
 	DeliveryPartnerPickupOrder            = "delivery-partner-pickup-order"
 	DeliveryPartnerDispatchOrder          = "packer-dispatch-order"
+	DeliveryPartnerArrive                 = "delivery-partner-arrive"
 	DeliveryPartnerCompleteOrder          = "delivery-partner-complete-order"
 	SalesOrderGetAll                      = "sales-order-get-all"
 	SalesOrderGetByDeliveryPartner        = "sales-order-get-by-delivery-partner"

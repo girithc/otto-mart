@@ -185,6 +185,7 @@ type OrderAccepted_DP struct {
 	OrderDate             time.Time `json:"order_date"`
 	OrderStatus           string    `json:"order_status"`
 	DeliveryPartnerStatus string    `json:"order_dp_status"`
+	CustomerPhone         string    `json:"customer_phone"`
 }
 
 func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted_DP, error) {
@@ -263,19 +264,53 @@ func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (
 		return nil, err
 	}
 
-	// Create and return the accepted order details
-	acceptedOrder := &OrderAccepted_DP{
-		ID:                    order_id,
-		DeliveryPartnerID:     deliveryPartnerID,
-		StoreID:               storeID,
-		StoreName:             storeName,
-		StoreAddress:          storeAddress,
-		OrderDate:             orderDate,
-		OrderStatus:           orderStatus,
-		DeliveryPartnerStatus: orderDPStatus,
-	}
+	if orderStatus == "arrived" {
+		var customerPhone string
 
-	return acceptedOrder, nil
+		// Get customer_id from sales_order table
+		var customerID int
+		err = s.db.QueryRow(`SELECT customer_id FROM sales_order WHERE id = $1;`, order_id).Scan(&customerID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get phone from customer table using customer_id
+		err = s.db.QueryRow(`SELECT phone FROM customer WHERE id = $1;`, customerID).Scan(&customerPhone)
+		if err != nil {
+			return nil, err
+		}
+
+		// Create and return the accepted order details
+		acceptedOrder := &OrderAccepted_DP{
+			ID:                    order_id,
+			DeliveryPartnerID:     deliveryPartnerID,
+			StoreID:               storeID,
+			StoreName:             storeName,
+			StoreAddress:          storeAddress,
+			OrderDate:             orderDate,
+			OrderStatus:           orderStatus,
+			DeliveryPartnerStatus: orderDPStatus,
+			CustomerPhone:         customerPhone,
+		}
+
+		return acceptedOrder, nil
+
+	} else {
+		// Create and return the accepted order details
+		acceptedOrder := &OrderAccepted_DP{
+			ID:                    order_id,
+			DeliveryPartnerID:     deliveryPartnerID,
+			StoreID:               storeID,
+			StoreName:             storeName,
+			StoreAddress:          storeAddress,
+			OrderDate:             orderDate,
+			OrderStatus:           orderStatus,
+			DeliveryPartnerStatus: orderDPStatus,
+			CustomerPhone:         "",
+		}
+		return acceptedOrder, nil
+
+	}
 }
 
 type PickupOrderInfo struct {
@@ -411,6 +446,61 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	return result, nil
 }
 
+func (s *PostgresStore) DeliveryPartnerArrive(phone string, order_id int, status string) (*DeliveryPartnerArriveResult, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Verify the sales order's current status is 'dispatched'
+	var currentStatus string
+	err = tx.QueryRow("SELECT order_status FROM sales_order WHERE id = $1", order_id).Scan(&currentStatus)
+	if err != nil {
+		return nil, err
+	}
+	if currentStatus != "dispatched" {
+		return nil, errors.New("order is not in dispatched status")
+	}
+
+	// Verify the delivery partner ID and retrieve delivery partner name
+	var deliveryPartnerName string
+	var deliveryPartnerIDFromDB int
+	err = tx.QueryRow("SELECT id, name FROM delivery_partner WHERE phone = $1", phone).Scan(&deliveryPartnerIDFromDB, &deliveryPartnerName)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the order_status to 'arrived' in sales_order
+	_, err = tx.Exec("UPDATE sales_order SET order_status = $1 WHERE id = $2 AND delivery_partner_id = $3", status, order_id, deliveryPartnerIDFromDB)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the delivery_order record with order_arrive_date as current timestamp
+	_, err = tx.Exec(`
+        UPDATE delivery_order
+        SET order_arrive_date = CURRENT_TIMESTAMP
+        WHERE sales_order_id = $1 AND delivery_partner_id = $2;`, order_id, deliveryPartnerIDFromDB)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Prepare and return the arrival result
+	result := &DeliveryPartnerArriveResult{
+		SalesOrderID: order_id,
+		OrderStatus:  status,
+	}
+
+	return result, nil
+}
+
 func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order_id int, image string) (*DeliveryCompletionResult, error) {
 	// Start a transaction
 	tx, err := s.db.Begin()
@@ -478,6 +568,11 @@ type DeliveryPartnerDispatchResult struct {
 	DeliveryPartnerName string `json:"delivery_partner_name"`
 	SalesOrderID        int    `json:"sales_order_id"`
 	OrderStatus         string `json:"order_status"`
+}
+
+type DeliveryPartnerArriveResult struct {
+	SalesOrderID int    `json:"sales_order_id"`
+	OrderStatus  string `json:"order_status"`
 }
 
 type OrderStatusError struct {
