@@ -186,8 +186,10 @@ class _InventoryManagementState extends State<InventoryManagement> {
 
         final networkService = NetworkService();
         final response = await networkService.postWithAuth(
-            'delivery-partner-dispatch-order',
+            '/delivery-partner-dispatch-order',
             additionalData: body);
+
+        print("response: ${response.body}");
 
         if (response.statusCode == 200) {
           final result = json.decode(response.body);
