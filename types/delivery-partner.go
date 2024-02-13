@@ -32,6 +32,12 @@ type FCM_Token_Delivery_Partner struct {
 type DeliveryPartnerPhone struct {
 	Phone string `json:"phone"`
 }
+
+type DeliveryPhoneFCM struct {
+	Phone string `json:"phone"`
+	FCM   string `json:"fcm"`
+}
+
 type DeliveryPartnerAcceptOrder struct {
 	Phone        string `json:"phone"`
 	SalesOrderId int    `json:"sales_order_id"`

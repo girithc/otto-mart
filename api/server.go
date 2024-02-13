@@ -89,6 +89,9 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/send-otp-packer", makeHTTPHandleFunc(s.handleSendOtpPacker))
 	http.HandleFunc("/verify-otp-packer", makeHTTPHandleFunc(s.handleVerifyOtpPacker))
 
+	http.HandleFunc("/send-otp-delivery-partner", makeHTTPHandleFunc(s.handleSendOtpDeliveryPartner))
+	http.HandleFunc("/verify-otp-delivery-partner", makeHTTPHandleFunc(s.handleVerifyOtpDeliveryPartner))
+
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))
 	// Planner

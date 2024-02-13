@@ -838,10 +838,10 @@ func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*ty
 	if err == sql.ErrNoRows {
 		newToken, _ := uuid.NewUUID() // Generate a new UUID for the token
 		insertSQL := `
-            INSERT INTO delivery_partner (name, phone, address, token, fcm)
-            VALUES ('', $1, '', $2, $3)
+            INSERT INTO delivery_partner (name, phone, address, token, fcm, store_id)
+            VALUES ('', $1, '', $2, $3, $4)
             RETURNING id, name, phone, address, created_at, token`
-		row = tx.QueryRow(insertSQL, phone, newToken, fcm)
+		row = tx.QueryRow(insertSQL, phone, newToken, fcm, 1)
 
 		// Scan the new customer data
 		err = row.Scan(

@@ -162,14 +162,14 @@ func (e *OrderStatusError) Error() string {
 }
 
 func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.DeliveryPartnerPhone)
+	new_req := new(types.DeliveryPhoneFCM)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in handleCheckAssignedOrder()")
 		return err
 	}
 
 	// Check if Delivery Partner Exists
-	user, err := s.store.Get_Delivery_Partner_By_Phone(new_req.Phone)
+	user, err := s.store.GetDeliveryPartnerByPhone(new_req.Phone, new_req.FCM)
 	if err != nil {
 		return err
 	}
@@ -178,9 +178,5 @@ func (s *Server) HandlePostDeliveryPartnerLogin(res http.ResponseWriter, req *ht
 		return WriteJSON(res, http.StatusOK, user)
 	}
 
-	new_user, err := s.store.DeliveryPartnerLogin(new_req.Phone)
-	if err != nil {
-		return err
-	}
-	return WriteJSON(res, http.StatusOK, new_user)
+	return WriteJSON(res, http.StatusOK, nil)
 }
