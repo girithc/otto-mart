@@ -293,7 +293,6 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 		return nil, err
 	}
 
-	// Initialize variables to find the nearest store
 	var nearestStoreID int
 	minHDistance := math.MaxFloat64
 

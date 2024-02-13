@@ -152,7 +152,7 @@ const (
 	DeliveryPartnerCheckAssignedOrder     = "delivery-partner-check-assigned-order"
 	DeliveryPartnerAcceptOrder            = "delivery-partner-accept-order"
 	DeliveryPartnerPickupOrder            = "delivery-partner-pickup-order"
-	DeliveryPartnerDispatchOrder          = "delivery-partner-dispatch-order"
+	DeliveryPartnerDispatchOrder          = "packer-dispatch-order"
 	DeliveryPartnerCompleteOrder          = "delivery-partner-complete-order"
 	SalesOrderGetAll                      = "sales-order-get-all"
 	SalesOrderGetByDeliveryPartner        = "sales-order-get-by-delivery-partner"

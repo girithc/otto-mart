@@ -300,16 +300,24 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
 		return nil, err
 	}
 
-	// Updated query to include latitude, longitude, line one and line two address
-	query := `
-    SELECT c.name, c.phone, a.latitude, a.longitude, a.line_one_address, a.line_two_address, a.street_address, so.order_date, so.order_status
+	// Query to get order, customer information, and address_id from shopping_cart or sales_order
+	orderQuery := `
+    SELECT c.name, c.phone, so.order_date, so.order_status,
+           COALESCE(sc.address_id, so.address_id) AS address_id
     FROM sales_order so
-    INNER JOIN shopping_cart sc ON so.cart_id = sc.id
-    INNER JOIN address a ON sc.address_id = a.id
+    LEFT JOIN shopping_cart sc ON so.cart_id = sc.id
     INNER JOIN customer c ON so.customer_id = c.id
     WHERE so.id = $1 AND so.delivery_partner_id = $2 AND so.order_dp_status = 'accepted' AND so.order_status != 'completed';`
 
-	err = s.db.QueryRow(query, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.Latitude, &info.Longitude, &info.LineOneAddress, &info.LineTwoAddress, &info.StreetAddress, &info.OrderDate, &info.OrderStatus)
+	var addressID int
+	err = s.db.QueryRow(orderQuery, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.OrderDate, &info.OrderStatus, &addressID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Query to get address information using the obtained addressID
+	addressQuery := `SELECT latitude, longitude, line_one_address, line_two_address, street_address FROM address WHERE id = $1;`
+	err = s.db.QueryRow(addressQuery, addressID).Scan(&info.Latitude, &info.Longitude, &info.LineOneAddress, &info.LineTwoAddress, &info.StreetAddress)
 	if err != nil {
 		return nil, err
 	}
@@ -318,7 +326,7 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
 	switch info.OrderStatus {
 	case "dispatched":
 		// Return the information for dispatched orders
-		println("Order Not Dispatched")
+		println("Order Dispatched")
 		return &info, nil
 	case "packed":
 		// Return nil for packed orders as they are not yet ready for pickup
@@ -351,7 +359,7 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	// Verify the delivery partner ID and retrieve delivery partner name
 	var deliveryPartnerName string
 	var deliveryPartnerIDFromDB int
-	err = tx.QueryRow("SELECT id, name FROM Delivery_Partner WHERE phone = $1", phone).Scan(&deliveryPartnerIDFromDB, &deliveryPartnerName)
+	err = tx.QueryRow("SELECT id, name FROM delivery_partner WHERE phone = $1", phone).Scan(&deliveryPartnerIDFromDB, &deliveryPartnerName)
 	if err != nil {
 		return nil, err
 	}
