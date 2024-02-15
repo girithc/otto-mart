@@ -790,8 +790,6 @@ class ListItem extends StatelessWidget {
                                   String? cartId =
                                       await storage.read(key: 'cartId');
 
-                                  // Check if cartId is null
-                                  // If cartId is not null, proceed with adding item to cart
                                   final cartItem = CartItem(
                                     productId: id.toString(),
                                     productName: name,

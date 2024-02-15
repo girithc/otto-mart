@@ -50,39 +50,40 @@ class CartDetails {
   final int peakTimeSurcharge;
   final int subtotal;
   final int discounts;
+  final bool outOfStock;
 
-  CartDetails({
-    required this.cartId,
-    required this.itemId,
-    required this.quantity,
-    required this.itemCost,
-    required this.deliveryFee,
-    required this.platformFee,
-    required this.smallOrderFee,
-    required this.rainFee,
-    required this.highTrafficSurcharge,
-    required this.packagingFee,
-    required this.peakTimeSurcharge,
-    required this.subtotal,
-    required this.discounts,
-  });
+  CartDetails(
+      {required this.cartId,
+      required this.itemId,
+      required this.quantity,
+      required this.itemCost,
+      required this.deliveryFee,
+      required this.platformFee,
+      required this.smallOrderFee,
+      required this.rainFee,
+      required this.highTrafficSurcharge,
+      required this.packagingFee,
+      required this.peakTimeSurcharge,
+      required this.subtotal,
+      required this.discounts,
+      required this.outOfStock});
 
   factory CartDetails.fromJson(Map<String, dynamic> json) {
     return CartDetails(
-      cartId: json['cart_id'],
-      itemId: json['item_id'],
-      quantity: json['quantity'],
-      itemCost: json['item_cost'],
-      deliveryFee: json['delivery_fee'],
-      platformFee: json['platform_fee'],
-      smallOrderFee: json['small_order_fee'],
-      rainFee: json['rain_fee'],
-      highTrafficSurcharge: json['high_traffic_surcharge'],
-      packagingFee: json['packaging_fee'],
-      peakTimeSurcharge: json['peak_time_surcharge'],
-      subtotal: json['subtotal'],
-      discounts: json['discounts'],
-    );
+        cartId: json['cart_id'],
+        itemId: json['item_id'],
+        quantity: json['quantity'],
+        itemCost: json['item_cost'],
+        deliveryFee: json['delivery_fee'],
+        platformFee: json['platform_fee'],
+        smallOrderFee: json['small_order_fee'],
+        rainFee: json['rain_fee'],
+        highTrafficSurcharge: json['high_traffic_surcharge'],
+        packagingFee: json['packaging_fee'],
+        peakTimeSurcharge: json['peak_time_surcharge'],
+        subtotal: json['subtotal'],
+        discounts: json['discounts'],
+        outOfStock: json['out_of_stock']);
   }
 }
 
@@ -122,20 +123,20 @@ class CartModel extends ChangeNotifier {
 
   CartModel() {
     _cartDetails = CartDetails(
-      cartId: 0,
-      itemId: 0,
-      quantity: 0,
-      itemCost: 0,
-      deliveryFee: 0,
-      platformFee: 0,
-      smallOrderFee: 0,
-      rainFee: 0,
-      highTrafficSurcharge: 0,
-      packagingFee: 0,
-      peakTimeSurcharge: 0,
-      subtotal: 0,
-      discounts: 0,
-    );
+        cartId: 0,
+        itemId: 0,
+        quantity: 0,
+        itemCost: 0,
+        deliveryFee: 0,
+        platformFee: 0,
+        smallOrderFee: 0,
+        rainFee: 0,
+        highTrafficSurcharge: 0,
+        packagingFee: 0,
+        peakTimeSurcharge: 0,
+        subtotal: 0,
+        discounts: 0,
+        outOfStock: false);
 
     _fetchDefaultAddress();
     _fetchCartId().then((_) {
@@ -337,7 +338,7 @@ class CartModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> addItemToCart(CartItem item) async {
+  Future<OutOfStock?> addItemToCart(CartItem item) async {
     // Create an instance of NetworkService
     final networkService = NetworkService();
 
@@ -375,6 +376,11 @@ class CartModel extends ChangeNotifier {
             jsonData['cart_details'] as Map<String, dynamic>;
         _cartDetails = CartDetails.fromJson(cartDetailsData);
 
+        final OutOfStock outOfStock = OutOfStock(
+            productId: _cartDetails!.itemId,
+            stockQuantity: _cartDetails!.quantity,
+            outOfStock: _cartDetails!.outOfStock);
+
         if (_cartDetails?.cartId.toString() != cartID) {
           print("\n");
           print("Old Cart Id $cartID");
@@ -389,6 +395,8 @@ class CartModel extends ChangeNotifier {
         _items.clear();
         _items.addAll(items);
         notifyListeners();
+
+        return outOfStock;
       } else {
         // Log or handle the error
         print("Error: ${response.statusCode} ${response.body}");
@@ -404,6 +412,7 @@ class CartModel extends ChangeNotifier {
     print("After Add Item To Cart");
     print("Cart Id $cartID");
     print("Customer Id $customerId");
+    return null;
   }
 
   bool isEmpty() {
@@ -565,4 +574,15 @@ class AddressModel extends ChangeNotifier {
       _logger.e('(cart model) HTTP POST request error: $error');
     });
   }
+}
+
+class OutOfStock {
+  final int productId;
+  final int stockQuantity;
+  final bool outOfStock;
+
+  OutOfStock(
+      {required this.outOfStock,
+      required this.productId,
+      required this.stockQuantity});
 }
