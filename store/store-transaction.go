@@ -29,7 +29,8 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
             status VARCHAR(20) DEFAULT 'pending',
             response_code VARCHAR(20) DEFAULT '',
             payment_gateway_name VARCHAR(50) DEFAULT '',
-            payment_details JSONB
+            payment_details JSONB,
+			payment_link VARCHAR(255) DEFAULT ''
         )`
 
 	_, err := tx.Exec(query)
@@ -54,6 +55,24 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
 	_, err = tx.Exec(alterQuery)
 	if err != nil {
 		return fmt.Errorf("error altering transaction table to add transaction_id: %w", err)
+	}
+
+	alterQueryPaymentLink := `
+	DO $$
+	BEGIN
+		IF NOT EXISTS (
+			SELECT FROM information_schema.columns 
+			WHERE table_name = 'transaction' AND column_name = 'payment_link'
+		) THEN
+			ALTER TABLE transaction
+			ADD COLUMN payment_link VARCHAR(255) DEFAULT '';
+		END IF;
+	END
+	$$;`
+
+	_, err = tx.Exec(alterQueryPaymentLink)
+	if err != nil {
+		return fmt.Errorf("error altering transaction table to add payment_link: %w", err)
 	}
 
 	return nil
