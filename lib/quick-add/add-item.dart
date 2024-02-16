@@ -352,11 +352,101 @@ class _AddItemScreenState extends State<AddItemScreen> {
                 const SizedBox(height: 40),
                 ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const ListenBarcodePage()),
-                    );
+                    addStock().then((value) {
+                      if (value != null) {
+                        showDialog(
+                          context: context,
+                          barrierDismissible:
+                              false, // Makes the dialog undismissible
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              backgroundColor: Colors.deepPurpleAccent,
+                              title: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.check_circle, color: Colors.white),
+                                  SizedBox(
+                                      width:
+                                          10), // Spacing between icon and text
+                                  Text(
+                                    "Success",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              content: SingleChildScrollView(
+                                child: ListBody(
+                                  children: <Widget>[
+                                    Text(
+                                      "Name: ${value.itemName}",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    Text(
+                                      "Brand: ${widget.item.brand}",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    Text(
+                                      "Added Stock: ${value.addedStock}",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                    Text(
+                                      "Stock Quantity: ${value.stockQuantity}",
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.black,
+                                    backgroundColor:
+                                        Colors.white, // Button text color
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 25,
+                                        vertical: 15), // Button padding
+                                  ),
+                                  child: const Text(
+                                    'Next',
+                                    style: TextStyle(
+                                        fontSize:
+                                            16), // Bigger text size for the button
+                                  ),
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(); // Close the dialog
+                                    Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ListenBarcodePage()),
+                                    ); // Navigate to MyHomePage
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      } else {
+                        // Handle the case when value is null (e.g., show an error message)
+                      }
+                    }).catchError((error) {
+                      // Handle any errors here
+                    });
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF6200EE),

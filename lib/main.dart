@@ -270,83 +270,133 @@ class _InventoryManagementState extends State<InventoryManagement> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.white,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Container(
-            margin:
-                EdgeInsets.only(top: MediaQuery.of(context).size.height * 0.05),
-            height: MediaQuery.of(context).size.height * 0.2,
-            color: Colors.white,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset('assets/icon/icon.jpeg'),
-              ],
+    return SingleChildScrollView(
+      child: Container(
+        color: Colors.white,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () => {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsPage()),
+                )
+              },
+              child: Container(
+                margin: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.height * 0.05),
+                height: MediaQuery.of(context).size.height * 0.2,
+                color: Colors.white,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image.asset('assets/icon/icon.jpeg'),
+                  ],
+                ),
+              ),
             ),
-          ),
-          Container(
-              height: MediaQuery.of(context).size.height * 0.05,
-              color: Colors.white),
-          Container(
-            color: Colors.white,
-            child: Column(
-              children: [
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SettingsPage()),
-                    );
-                  },
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.10,
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(25), // Rounded borders
-                      color: Colors.white,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.25), // Shadow color
-                          spreadRadius: 0,
-                          blurRadius: 20, // Increased shadow blur
-                          offset:
-                              const Offset(0, 10), // Increased vertical offset
+            Container(
+                height: MediaQuery.of(context).size.height * 0.05,
+                color: Colors.white),
+            Container(
+              color: Colors.white,
+              child: Column(
+                children: [
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const ListenBarcodePage()),
+                      );
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.1,
+                      width: MediaQuery.of(context).size.width * 0.85,
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(15), // Rounded borders
+                        color: const Color.fromARGB(255, 108, 55, 255),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
+                            spreadRadius: 0,
+                            blurRadius: 20, // Increased shadow blur
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Load',
+                              style: TextStyle(
+                                  fontSize: 36,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                                width:
+                                    MediaQuery.of(context).size.width * 0.04),
+                            const Icon(
+                              Icons.storage_outlined,
+                              size: 40,
+                              color: Colors.white,
+                            )
+                          ],
                         ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: Text(
-                        'Settings',
-                        style: TextStyle(
-                            fontSize: 25,
-                            color: Colors.black,
-                            fontWeight: FontWeight.normal),
                       ),
                     ),
                   ),
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                GestureDetector(
-                  onTap: () {
-                    scanBarcodeDispatch().then((value) {
-                      if (value != null) {
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                  GestureDetector(
+                    onTap: () {
+                      scanBarcodeDispatch().then((value) {
+                        if (value != null) {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Scan Result'),
+                                content: SingleChildScrollView(
+                                  child: ListBody(
+                                    children: <Widget>[
+                                      Text(
+                                          'Delivery Partner Name: ${value.deliveryPartnerName}'),
+                                      Text(
+                                          'Order Status: ${value.orderStatus}'),
+                                    ],
+                                  ),
+                                ),
+                                actions: <Widget>[
+                                  TextButton(
+                                    child: const Text('Close'),
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                      }).catchError((error) {
+                        // Handle any errors that occurred during scanBarcodeDispatch execution
                         showDialog(
                           context: context,
                           builder: (BuildContext context) {
                             return AlertDialog(
-                              title: const Text('Scan Result'),
+                              title: const Text('Error'),
                               content: SingleChildScrollView(
                                 child: ListBody(
                                   children: <Widget>[
-                                    Text(
-                                        'Delivery Partner Name: ${value.deliveryPartnerName}'),
-                                    Text('Order Status: ${value.orderStatus}'),
+                                    Text('An error occurred: $error'),
                                   ],
                                 ),
                               ),
@@ -361,153 +411,131 @@ class _InventoryManagementState extends State<InventoryManagement> {
                             );
                           },
                         );
-                      }
-                    }).catchError((error) {
-                      // Handle any errors that occurred during scanBarcodeDispatch execution
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Error'),
-                            content: SingleChildScrollView(
-                              child: ListBody(
-                                children: <Widget>[
-                                  Text('An error occurred: $error'),
-                                ],
-                              ),
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                child: const Text('Close'),
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    });
-                  },
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.15,
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(25), // Rounded borders
-                      color: const Color.fromARGB(255, 108, 55, 255),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.25), // Shadow color
-                          spreadRadius: 0,
-                          blurRadius: 20, // Increased shadow blur
-                          offset:
-                              const Offset(0, 10), // Increased vertical offset
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Delivery',
-                            style: TextStyle(
-                                fontSize: 36,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold),
+                      });
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.15,
+                      width: MediaQuery.of(context).size.width * 0.85,
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(25), // Rounded borders
+                        color: const Color.fromARGB(255, 108, 55, 255),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
+                            spreadRadius: 0,
+                            blurRadius: 20, // Increased shadow blur
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
                           ),
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.04),
-                          const Icon(
-                            Icons.electric_bike_outlined,
-                            size: 40,
-                            color: Colors.white,
-                          )
                         ],
                       ),
-                    ),
-                  ),
-                ),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                GestureDetector(
-                  onTap: () {
-                    fetchItems().then((value) {
-                      if (value) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => OrderChecklistPage(
-                              packedItems: packedItems,
-                              prePackedItems: prePackedItems,
-                              allPacked: allPacked,
-                              orderId: orderId!,
-                              totalQuantity: totalQuantity,
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Delivery',
+                              style: TextStyle(
+                                  fontSize: 36,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
                             ),
-                          ),
-                        );
-                      } else {
-                        // Show a Snackbar when there is no order to pack
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Center(
-                              child: Text(
-                                'No order to pack',
-                                style: TextStyle(
-                                    fontSize: 18,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            duration: Duration(seconds: 2),
-                            backgroundColor: Color.fromARGB(255, 255, 188, 188),
-                          ),
-                        );
-                      }
-                    });
-                  },
-                  child: Container(
-                    height: MediaQuery.of(context).size.height * 0.2,
-                    width: MediaQuery.of(context).size.width * 0.85,
-                    decoration: BoxDecoration(
-                      borderRadius:
-                          BorderRadius.circular(25), // Rounded borders
-                      color: const Color.fromARGB(255, 108, 55, 255),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.25), // Shadow color
-                          spreadRadius: 0,
-                          blurRadius: 20, // Increased shadow blur
-                          offset:
-                              const Offset(0, 10), // Increased vertical offset
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            'Pack',
-                            style: TextStyle(
-                              fontSize: 38,
-                              fontWeight: FontWeight.bold,
+                            SizedBox(
+                                width:
+                                    MediaQuery.of(context).size.width * 0.04),
+                            const Icon(
+                              Icons.electric_bike_outlined,
+                              size: 40,
                               color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(
-                              width: MediaQuery.of(context).size.width * 0.04),
-                          const Icon(
-                            Icons.shopping_cart_outlined,
-                            size: 40,
-                            color: Colors.white,
-                          )
-                        ],
+                            )
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                /*
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                  GestureDetector(
+                    onTap: () {
+                      fetchItems().then((value) {
+                        if (value) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OrderChecklistPage(
+                                packedItems: packedItems,
+                                prePackedItems: prePackedItems,
+                                allPacked: allPacked,
+                                orderId: orderId!,
+                                totalQuantity: totalQuantity,
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Show a Snackbar when there is no order to pack
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Center(
+                                child: Text(
+                                  'No order to pack',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              duration: Duration(seconds: 2),
+                              backgroundColor:
+                                  Color.fromARGB(255, 255, 188, 188),
+                            ),
+                          );
+                        }
+                      });
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * 0.2,
+                      width: MediaQuery.of(context).size.width * 0.85,
+                      decoration: BoxDecoration(
+                        borderRadius:
+                            BorderRadius.circular(25), // Rounded borders
+                        color: const Color.fromARGB(255, 108, 55, 255),
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
+                            spreadRadius: 0,
+                            blurRadius: 20, // Increased shadow blur
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Pack',
+                              style: TextStyle(
+                                fontSize: 38,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(
+                                width:
+                                    MediaQuery.of(context).size.width * 0.04),
+                            const Icon(
+                              Icons.shopping_cart_outlined,
+                              size: 40,
+                              color: Colors.white,
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 10),
                   GestureDetector(
                     onTap: () => {
@@ -565,11 +593,12 @@ class _InventoryManagementState extends State<InventoryManagement> {
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.25), // Shadow color
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
                             spreadRadius: 0,
                             blurRadius: 20, // Increased shadow blur
-                            offset:
-                                const Offset(0, 10), // Increased vertical offset
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
                           ),
                         ],
                       ),
@@ -596,11 +625,12 @@ class _InventoryManagementState extends State<InventoryManagement> {
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.25), // Shadow color
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
                             spreadRadius: 0,
                             blurRadius: 20, // Increased shadow blur
-                            offset:
-                                const Offset(0, 10), // Increased vertical offset
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
                           ),
                         ],
                       ),
@@ -635,11 +665,12 @@ class _InventoryManagementState extends State<InventoryManagement> {
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.25), // Shadow color
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
                             spreadRadius: 0,
                             blurRadius: 20, // Increased shadow blur
-                            offset:
-                                const Offset(0, 10), // Increased vertical offset
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
                           ),
                         ],
                       ),
@@ -673,11 +704,12 @@ class _InventoryManagementState extends State<InventoryManagement> {
                         color: Colors.white,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.25), // Shadow color
+                            color:
+                                Colors.grey.withOpacity(0.25), // Shadow color
                             spreadRadius: 0,
                             blurRadius: 20, // Increased shadow blur
-                            offset:
-                                const Offset(0, 10), // Increased vertical offset
+                            offset: const Offset(
+                                0, 10), // Increased vertical offset
                           ),
                         ],
                       ),
@@ -692,11 +724,11 @@ class _InventoryManagementState extends State<InventoryManagement> {
                       ),
                     ),
                   ),
-                  */
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
