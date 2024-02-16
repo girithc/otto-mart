@@ -106,10 +106,31 @@ class _AddItemScreenState extends State<AddItemScreen> {
         key: _formKey,
         child: SingleChildScrollView(
           child: Container(
-            margin: const EdgeInsets.all(20),
+            margin: const EdgeInsets.only(left: 20, right: 20, top: 5),
             padding: const EdgeInsets.all(5),
             child: Column(
               children: <Widget>[
+                Image.network(
+                  widget.item.imageURLs[0],
+                  fit: BoxFit.cover,
+                  errorBuilder: (BuildContext context, Object exception,
+                      StackTrace? stackTrace) {
+                    return Container(
+                      height: 120,
+                      color: Colors.grey[200],
+                      alignment: Alignment.center,
+                      child: const Center(
+                        child: Text(
+                          'no image',
+                          style: TextStyle(fontSize: 12, color: Colors.grey),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(
+                  height: 10,
+                ),
                 TextFormField(
                   style: inputTextStyle,
                   decoration:
@@ -118,20 +139,24 @@ class _AddItemScreenState extends State<AddItemScreen> {
                   validator: (value) =>
                       value!.isEmpty ? 'Please enter name' : null,
                   initialValue: widget.item.name,
-                ),
-                const SizedBox(height: 10),
-                TextFormField(
-                  style: inputTextStyle,
-                  decoration: getDecoration(
-                      'Brand Name', 'Enter Brand Name', fieldTextStyle),
-                  onSaved: (value) => newItem?.brand = value!,
-                  validator: (value) =>
-                      value!.isEmpty ? 'Please enter brand name' : null,
-                  initialValue: widget.item.brand,
+                  readOnly: true,
                 ),
                 const SizedBox(height: 10),
                 Row(
                   children: <Widget>[
+                    Expanded(
+                      child: TextFormField(
+                        style: inputTextStyle,
+                        decoration: getDecoration(
+                            'Brand Name', 'Enter Brand Name', fieldTextStyle),
+                        onSaved: (value) => newItem?.brand = value!,
+                        validator: (value) =>
+                            value!.isEmpty ? 'Please enter brand name' : null,
+                        initialValue: widget.item.brand,
+                        readOnly: true,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: TextFormField(
                         style: inputTextStyle,
@@ -141,19 +166,9 @@ class _AddItemScreenState extends State<AddItemScreen> {
                             newItem?.quantity = int.tryParse(value!) ?? 0,
                         validator: (value) =>
                             value!.isEmpty ? 'Please enter quantity' : null,
-                        initialValue: widget.item.quantity.toString(),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextFormField(
-                        style: inputTextStyle,
-                        decoration: getDecoration('Unit Of Quantity',
-                            'Enter Unit Of Quantity', fieldTextStyle),
-                        onSaved: (value) => newItem?.unit = value!,
-                        validator: (value) =>
-                            value!.isEmpty ? 'Please enter unit' : null,
-                        initialValue: widget.item.unit,
+                        initialValue:
+                            "${widget.item.quantity} ${widget.item.unit}",
+                        readOnly: true,
                       ),
                     ),
                   ],
@@ -222,7 +237,7 @@ class _AddItemScreenState extends State<AddItemScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 80),
+                const SizedBox(height: 40),
                 ElevatedButton(
                   onPressed: () {
                     addStock().then((value) {

@@ -121,50 +121,97 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
         ),
       ),
       bottomNavigationBar: BottomAppBar(
-        height: MediaQuery.of(context).size.height * 0.15,
+        height: MediaQuery.of(context).size.height * 0.22,
         color: Colors.white,
         surfaceTintColor: Colors.white,
-        child: Center(
-          child: ElevatedButton(
-            onPressed: () {
-              scanBarcode().then(
-                (value) => {
-                  if (value != null)
-                    {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => AddItemScreen(item: value)),
-                      ),
-                    }
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  scanBarcode().then(
+                    (value) => {
+                      if (value != null)
+                        {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    AddItemScreen(item: value)),
+                          ),
+                        }
+                    },
+                  );
                 },
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color.fromARGB(255, 108, 55, 255),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 108, 55, 255),
 
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 20), // Increase padding inside the button
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Phone Scan',
-                  style: TextStyle(fontSize: 24, color: Colors.white),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 20), // Increase padding inside the button
                 ),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.01,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Phone Scan',
+                      style: TextStyle(fontSize: 24, color: Colors.white),
+                    ),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.01,
+                    ),
+                    const Icon(
+                      Icons.phone_android_outlined,
+                      color: Colors.white,
+                      size: 35,
+                    )
+                  ],
                 ),
-                const Icon(
-                  Icons.phone_android_outlined,
-                  color: Colors.white,
-                  size: 35,
-                )
-              ],
+              ),
             ),
-          ),
+            /*
+            SizedBox(
+              width: MediaQuery.of(context).size.height * 0.01,
+            ),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  scanBarcode().then(
+                    (value) => {
+                      if (value != null)
+                        {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    AddItemScreen(item: value)),
+                          ),
+                        }
+                    },
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color.fromARGB(255, 108, 55, 255),
+
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 20), // Increase padding inside the button
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.search_outlined,
+                      color: Colors.white,
+                      size: 35,
+                    )
+                  ],
+                ),
+              ),
+            ),
+            */
+          ],
         ),
       ),
     );

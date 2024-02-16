@@ -536,6 +536,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
                       ),
                     ),
                   ),
+                  /*
                   const SizedBox(height: 10),
                   GestureDetector(
                     onTap: () => {
@@ -724,6 +725,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
                       ),
                     ),
                   ),
+                  */
                 ],
               ),
             ),
