@@ -80,3 +80,4 @@ flutter:
   uses-material-design: true
   assets:
     - assets/scooter.avif
+    - assets/icon/icon.jpeg
