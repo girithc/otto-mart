@@ -96,6 +96,7 @@ var authRequirements = map[string]Permission{
 	ShelfCreate:                           {Role: "Customer", AuthRequired: true},
 	ShelfGetAll:                           {Role: "Customer", AuthRequired: true},
 	LockStockCloudTask:                    {Role: "Customer", AuthRequired: false},
+	VendorGetAll:                          {Role: "Customer", AuthRequired: false},
 }
 
 const (
@@ -188,4 +189,5 @@ const (
 	ShelfCreate                           = "shelf-create"
 	ShelfGetAll                           = "shelf-get-all"
 	LockStockCloudTask                    = "lock-stock-cloud-task"
+	VendorGetAll                          = "vendor-get-all"
 )

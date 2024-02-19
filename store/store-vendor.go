@@ -10,11 +10,11 @@ func (s *PostgresStore) CreateVendorTable(tx *sql.Tx) error {
     CREATE TABLE IF NOT EXISTS vendor (
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
-        brand_id INTEGER REFERENCES brand(id), -- Assuming there's a 'brand' table with an 'id' column
+        brand_id INTEGER REFERENCES brand(id), 
         phone VARCHAR(10) NOT NULL,
         email VARCHAR(100) NOT NULL,
         delivery_frequency VARCHAR(50) CHECK (delivery_frequency IN ('once', 'twice', 'thrice', 'All days')),
-        delivery_day VARCHAR(255), -- Storing CSV format for multiple days selection
+        delivery_day VARCHAR(255), 
         mode_of_communication VARCHAR(50) CHECK (mode_of_communication IN ('whatsapp', 'email')),
         notes TEXT
     );`

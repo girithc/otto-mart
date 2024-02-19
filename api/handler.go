@@ -795,6 +795,14 @@ func (s *Server) handleDeliverTo(res http.ResponseWriter, req *http.Request) err
 	return nil
 }
 
+func (s *Server) handleVendorList(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("GET", "vendor-list")
+		return s.goRoutineWrapper(VendorGetAll, s.handleGetVendorList, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "brand")

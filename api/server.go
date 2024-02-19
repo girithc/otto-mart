@@ -95,8 +95,8 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))
-	// Planner
-	// http.HandleFunc("/plan-add-item", makeHTTPHandleFunc(s.handleAddItemList))
+
+	http.HandleFunc("/vendor-list", makeHTTPHandleFunc(s.handleVendorList))
 
 	fmt.Println("Listening PORT", s.listen_address)
 
