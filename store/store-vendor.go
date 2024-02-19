@@ -7,13 +7,17 @@ import (
 
 func (s *PostgresStore) CreateVendorTable(tx *sql.Tx) error {
 	createVendorTableQuery := `
-	CREATE TABLE IF NOT EXISTS vendor (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) NOT NULL,
-		address VARCHAR(100) NOT NULL,
-		phone VARCHAR(10) NOT NULL,
-		email VARCHAR(100) NOT NULL
-	);`
+    CREATE TABLE IF NOT EXISTS vendor (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        brand_id INTEGER REFERENCES brand(id), -- Assuming there's a 'brand' table with an 'id' column
+        phone VARCHAR(10) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        delivery_frequency VARCHAR(50) CHECK (delivery_frequency IN ('once', 'twice', 'thrice', 'All days')),
+        delivery_day VARCHAR(255), -- Storing CSV format for multiple days selection
+        mode_of_communication VARCHAR(50) CHECK (mode_of_communication IN ('whatsapp', 'email')),
+        notes TEXT
+    );`
 
 	_, err := tx.Exec(createVendorTableQuery)
 	if err != nil {
@@ -50,4 +54,37 @@ func (s *PostgresStore) CreateItemVendorTable(tx *sql.Tx) error {
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) GetVendorList() ([]Vendor, error) {
+	var vendors []Vendor
+	query := "SELECT * FROM vendor"
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error getting vendor list: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var vendor Vendor
+		err := rows.Scan(&vendor.ID, &vendor.Name, &vendor.BrandID, &vendor.Phone, &vendor.Email, &vendor.DeliveryFrequency, &vendor.DeliveryDay, &vendor.ModeOfCommunication, &vendor.Notes)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning vendor list: %w", err)
+		}
+		vendors = append(vendors, vendor)
+	}
+
+	return vendors, nil
+}
+
+type Vendor struct {
+	ID                  int    `json:"id"`
+	Name                string `json:"name"`
+	BrandID             int    `json:"brand_id"`
+	Phone               string `json:"phone"`
+	Email               string `json:"email"`
+	DeliveryFrequency   string `json:"delivery_frequency"`
+	DeliveryDay         string `json:"delivery_day"`
+	ModeOfCommunication string `json:"mode_of_communication"`
+	Notes               string `json:"notes"`
 }
