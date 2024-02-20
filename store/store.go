@@ -218,6 +218,11 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Vendor Order Table")
 
+	if err := s.CreateVendorBrandTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Vendor Brand Table")
+
 	constraintQuery := `
     DO $$
     BEGIN

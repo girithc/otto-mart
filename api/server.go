@@ -97,6 +97,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))
 
 	http.HandleFunc("/vendor-list", makeHTTPHandleFunc(s.handleVendorList))
+	http.Handle("/vendor-add", makeHTTPHandleFunc(s.handleAddVendor))
 
 	fmt.Println("Listening PORT", s.listen_address)
 

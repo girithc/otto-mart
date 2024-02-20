@@ -108,7 +108,7 @@ func (s *PostgresStore) GetBrands() ([]*types.Brand, error) {
 func (s *PostgresStore) GetBrandsList() ([]Brand, error) {
 	var brands []Brand
 
-	query := `SELECT id, name FROM brand`
+	query := `SELECT id, name FROM brand ORDER BY name ASC` // Updated query
 	rows, err := s.db.Query(query)
 	if err != nil {
 		return nil, fmt.Errorf("error querying brands: %w", err)

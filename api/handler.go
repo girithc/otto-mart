@@ -803,6 +803,14 @@ func (s *Server) handleVendorList(res http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
+func (s *Server) handleAddVendor(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "vendor")
+		return s.goRoutineWrapper(VendorAdd, s.handleCreateVendor, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "brand")
