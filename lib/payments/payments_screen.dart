@@ -14,9 +14,13 @@ import 'package:provider/provider.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage(
-      {super.key, required this.sign, required this.merchantTransactionID});
+      {super.key,
+      required this.sign,
+      required this.merchantTransactionID,
+      required this.amount});
   final String sign;
   final String merchantTransactionID;
+  final int amount;
   @override
   State<PaymentsPage> createState() => _PaymentsPageState();
 }
@@ -232,10 +236,27 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   colors: [Colors.deepPurple, Colors.deepPurpleAccent],
                   tileMode: TileMode.mirror)
               .createShader(bounds),
-          child: const Text(
-            'Otto Pay',
-            style: TextStyle(
-                fontSize: 25, fontWeight: FontWeight.bold, color: Colors.white),
+          child: RichText(
+            text: TextSpan(
+              text: 'Pay  ',
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.normal,
+                color:
+                    Colors.white, // This color is not visible due to ShaderMask
+              ),
+              children: <TextSpan>[
+                TextSpan(
+                  text: '\u{20B9}${widget.amount}',
+                  style: const TextStyle(
+                    fontSize: 19, // Make this size smaller than the 'Pay' title
+                    fontWeight:
+                        FontWeight.normal, // Optional: adjust the weight
+                    // color: Colors.white, // No need to set color here; it inherits from parent
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         elevation: 4.0,

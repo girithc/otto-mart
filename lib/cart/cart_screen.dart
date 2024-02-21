@@ -95,16 +95,29 @@ class _MyCartState extends State<MyCart> {
                       ),
                     );
                   },
-                  child: Text(
-                    'Otto Cart $cartId',
-                    style: const TextStyle(
+                  child: const Text(
+                    'Otto Cart',
+                    style: TextStyle(
                         fontSize: 25,
                         fontWeight: FontWeight.bold,
                         color: Colors.white),
                   ),
                 ),
               ),
-              elevation: 4.0,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new),
+                onPressed: () {
+                  // Navigate to the homepage
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyHomePage(
+                        title: 'Otto Mart',
+                      ),
+                    ),
+                  );
+                },
+              ),
               backgroundColor: Colors.white,
               foregroundColor: Colors.deepPurple,
               shadowColor: Colors.white,
@@ -112,7 +125,7 @@ class _MyCartState extends State<MyCart> {
               centerTitle: true,
             ),
             body: Container(
-              color: Colors.white,
+              color: const Color.fromARGB(255, 253, 248, 255),
               child: Column(
                 children: [
                   Expanded(
@@ -128,18 +141,12 @@ class _MyCartState extends State<MyCart> {
             bottomNavigationBar: !hasDeliveryAddress
                 ? Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: const Color.fromARGB(255, 253, 248, 255),
                       borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(0, 5), // Specify the shadow's offset
-                        ),
-                      ],
+                      boxShadow: const [], // Add border
                     ),
                     padding: EdgeInsets.zero,
-                    margin: EdgeInsets.zero,
+                    margin: const EdgeInsets.only(top: 20),
                     height: MediaQuery.of(context).size.height * 0.15,
                     child: Column(
                         // Align children at the start
@@ -196,128 +203,173 @@ class _MyCartState extends State<MyCart> {
                         ]))
                 : Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Colors.grey,
-                          blurRadius: 10,
-                          offset: Offset(0, 5), // Specify the shadow's offset
-                        ),
-                      ],
+                      color: const Color.fromARGB(255, 253, 248, 255),
+                      borderRadius: BorderRadius.circular(0),
+                      boxShadow: const [], // Add border
                     ),
                     padding: EdgeInsets.zero,
                     margin: EdgeInsets.zero,
                     height: MediaQuery.of(context).size.height * 0.15,
-                    child: Column(
-                      // Align children at the start
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.only(
-                              left: 12, right: 12, bottom: 20, top: 0),
-                          height: MediaQuery.of(context).size.height *
-                              (0.18 - 0.065),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              // Make sure to get the actual cart ID from your cart variable or state
-                              if (cart.isEmpty()) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MyHomePage(
-                                      title: 'Otto Mart',
-                                    ),
-                                  ),
-                                );
-                              } else {
-                                String? cartId =
-                                    await storage.read(key: 'cartId');
-                                if (cartId != null) {
-                                  int cartIdInt = int.parse(cartId);
-                                  print("CartID INT: $cartIdInt");
-                                  checkoutLockItems(cartIdInt).then((success) {
-                                    if (success.lock) {
-                                      // If the checkout lock is successful, navigate to the PaymentsPage
-                                      Navigator.pushReplacement(
+                    child: !(cart.isEmpty())
+                        ? Column(
+                            // Align children at the start
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.only(
+                                    left: 12, right: 12, bottom: 10, top: 0),
+                                height: MediaQuery.of(context).size.height *
+                                    (0.18 - 0.065),
+                                child: ElevatedButton(
+                                  onPressed: () async {
+                                    // Make sure to get the actual cart ID from your cart variable or state
+                                    if (cart.isEmpty()) {
+                                      Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => PaymentsPage(
-                                            sign: success.sign,
-                                            merchantTransactionID:
-                                                success.merchantTransactionID,
+                                          builder: (context) =>
+                                              const MyHomePage(
+                                            title: 'Otto Mart',
                                           ),
                                         ),
                                       );
                                     } else {
-                                      // If the checkout lock is unsuccessful, you might want to show an error message
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Failed to lock items for checkout.'),
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                      );
+                                      String? cartId =
+                                          await storage.read(key: 'cartId');
+                                      if (cartId != null) {
+                                        int cartIdInt = int.parse(cartId);
+                                        print("CartID INT: $cartIdInt");
+                                        checkoutLockItems(cartIdInt)
+                                            .then((success) {
+                                          if (success.lock) {
+                                            // If the checkout lock is successful, navigate to the PaymentsPage
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PaymentsPage(
+                                                  sign: success.sign,
+                                                  merchantTransactionID: success
+                                                      .merchantTransactionID,
+                                                  amount: cart.totalPrice,
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            // If the checkout lock is unsuccessful, you might want to show an error message
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                    'Failed to lock items for checkout.'),
+                                                backgroundColor:
+                                                    Colors.redAccent,
+                                              ),
+                                            );
+                                          }
+                                        }).catchError((error) {
+                                          // Handle any errors here
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text('Error: $error'),
+                                              backgroundColor: Colors.redAccent,
+                                            ),
+                                          );
+                                        });
+                                      } else {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'Error: Cart Id Not Found'),
+                                            backgroundColor: Colors.redAccent,
+                                          ),
+                                        );
+                                      }
                                     }
-                                  }).catchError((error) {
-                                    // Handle any errors here
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Error: $error'),
-                                        backgroundColor: Colors.redAccent,
-                                      ),
-                                    );
-                                  });
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Error: Cart Id Not Found'),
-                                      backgroundColor: Colors.redAccent,
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    surfaceTintColor: Colors.white,
+                                    foregroundColor: Colors.black,
+                                    shadowColor: Colors.white.withOpacity(0.8),
+
+                                    textStyle: Theme.of(context)
+                                        .textTheme
+                                        .titleLarge!
+                                        .copyWith(
+                                          fontWeight: FontWeight
+                                              .bold, // Making the font bold
+                                        ),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 2),
+
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          20.0), // Slightly more rounded
                                     ),
-                                  );
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.pinkAccent,
-                              foregroundColor: Colors.white,
-                              textStyle: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge!
-                                  .copyWith(
-                                    fontWeight:
-                                        FontWeight.bold, // Making the font bold
+                                    elevation:
+                                        5, // Adding some shadow for depth
+                                    side: const BorderSide(
+                                        color: Colors.white,
+                                        width:
+                                            1), // Border for a more defined look
                                   ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 10),
-
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    20.0), // Slightly more rounded
+                                  child: Center(
+                                      child: !(cart.isEmpty())
+                                          ? Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.center,
+                                              children: [
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 20,
+                                                      vertical: 20),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.pinkAccent,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            20),
+                                                    boxShadow: const [],
+                                                    border: Border.all(
+                                                        color:
+                                                            Colors.transparent,
+                                                        width: 1.0),
+                                                  ),
+                                                  child: const Text(
+                                                    'Complete Payment',
+                                                    style: TextStyle(
+                                                        fontSize: 24,
+                                                        color: Colors
+                                                            .white), // Consistent text size
+                                                  ),
+                                                ),
+                                                const SizedBox(
+                                                  width: 10,
+                                                ),
+                                                Center(
+                                                  child: Text(
+                                                    '\u{20B9}${cart.totalPrice}',
+                                                    style: const TextStyle(
+                                                        fontSize: 18,
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        color: Colors.black),
+                                                  ),
+                                                )
+                                              ],
+                                            )
+                                          : Container(
+                                              color: Colors.white,
+                                            )),
+                                ),
                               ),
-                              elevation: 5, // Adding some shadow for depth
-                              side: BorderSide(
-                                  color: Colors.pink[200]!,
-                                  width: 2), // Border for a more defined look
-                            ),
-                            child: Center(
-                              child: Text(
-                                cart.isEmpty()
-                                    ? 'Add Items'
-                                    : 'Complete Payment',
-                                style: const TextStyle(
-                                    fontSize: 24), // Consistent text size
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // ... other children of the Column ...
-                      ],
-                    ),
-                  ),
+                            ],
+                          )
+                        : Container()),
             // Return an empty SizedBox when no delivery address
           );
         } else {
@@ -339,10 +391,32 @@ class _CartList extends StatelessWidget {
     var itemNameStyle = Theme.of(context).textTheme.titleMedium;
 
     if (cart.isEmpty()) {
-      return const Center(
-        child: Text(
-          'Your Cart is Empty',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18.0),
+      return Center(
+        child: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MyHomePage(
+                title: 'Otto Mart',
+              ),
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            decoration: BoxDecoration(
+              color: Colors.pinkAccent,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: const [],
+              border: Border.all(color: Colors.transparent, width: 1.0),
+            ),
+            child: const Text(
+              'Add Items',
+              style: TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold), // Consistent text size
+            ),
+          ),
         ),
       );
     } else {
@@ -351,22 +425,14 @@ class _CartList extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
         padding: EdgeInsets.zero,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.transparent,
           borderRadius: BorderRadius.circular(4), // Rounded corners
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2,
-              blurRadius: 4,
-              offset: const Offset(0, 2), // Changes position of shadow
-            ),
-          ],
-          border: Border.all(color: Colors.white, width: 1.0),
+          boxShadow: const [],
         ),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 5),
+              const SizedBox(height: 10),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 10.0),
                 decoration: BoxDecoration(
@@ -374,13 +440,13 @@ class _CartList extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15), // Rounded corners
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.5),
-                      spreadRadius: 2,
-                      blurRadius: 4,
-                      offset: const Offset(0, 2), // Changes position of shadow
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1), // Changes position of shadow
                     ),
                   ],
-                  border: Border.all(color: Colors.white, width: 1.0),
+                  border: Border.all(color: Colors.white, width: 2.0),
                 ),
                 child: Column(
                   children: [
@@ -540,13 +606,13 @@ class _TaxAndDelivery extends StatelessWidget {
         borderRadius: BorderRadius.circular(15), // Rounded corners
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 4,
-            offset: const Offset(0, 2), // Changes position of shadow
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: const Offset(0, 1), // Changes position of shadow
           ),
         ],
-        border: Border.all(color: Colors.white, width: 1.0),
+        border: Border.all(color: Colors.white, width: 2.0),
       ),
       child: Padding(
         padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
@@ -621,16 +687,16 @@ class TotalAmountSaved extends StatelessWidget {
           stops: [0.3, 0.5],
           colors: [Colors.white, Colors.deepPurpleAccent],
         ),
-        borderRadius: BorderRadius.circular(15), // Rounded corners
+        borderRadius: BorderRadius.circular(10), // Rounded corners
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.5),
-            spreadRadius: 2,
-            blurRadius: 4,
-            offset: const Offset(0, 2), // Changes position of shadow
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 1,
+            blurRadius: 1,
+            offset: const Offset(0, 1), // Changes position of shadow
           ),
         ],
-        border: Border.all(color: Colors.white, width: 1.0),
+        border: Border.all(color: Colors.white, width: 2.0),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
       margin: const EdgeInsets.symmetric(horizontal: 10),

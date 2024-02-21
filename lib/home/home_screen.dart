@@ -192,8 +192,6 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    //var cart = context.watch<CartModel>();
-    //print("DeliveryAddress.ID ${cart.deliveryAddress.id}");
     int randomNumber = 3 + Random().nextInt(5);
 
     return Scaffold(
@@ -543,13 +541,7 @@ class _MyHomePageState extends State<MyHomePage>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10.0),
                   border: Border.all(color: Colors.white),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.shade300,
-                      spreadRadius: 0,
-                      blurRadius: 1,
-                    ),
-                  ],
+                  boxShadow: const [],
                 ),
                 child: Image.network(
                   image,

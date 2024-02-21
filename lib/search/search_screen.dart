@@ -58,7 +58,7 @@ class _SearchPageState extends State<SearchPage> {
     return Scaffold(
       appBar: CustomAppBar(
           categoryName: 'Pronto', searchFocusNode: widget.searchFocusNode),
-      body: searchQuery.length > 2
+      body: searchQuery.isNotEmpty
           ? const SearchItemList()
           : const TypingAnimation(),
       //: const SearchTemplate(),

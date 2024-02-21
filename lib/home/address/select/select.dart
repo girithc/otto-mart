@@ -208,7 +208,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         backgroundColor: Colors.deepPurpleAccent,
         title: const Text(
           'Select Address',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         leading: Container(),
@@ -275,9 +275,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                 ),
               ),
               const SizedBox(
-                height: 5,
+                height: 10,
               ),
-              _buildActionButton(),
+              //_buildActionButton(),
             ],
           ),
         ),
@@ -335,18 +335,46 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
             if (index == 0) {
               // "Add New Address" tile
-              return ListTile(
-                minVerticalPadding: 12,
-                leading: const Icon(Icons.add, size: 20),
-                title: const Text("Add New Address",
-                    style: TextStyle(fontSize: 16)),
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => const AddressScreen()),
-                  );
-                },
-              );
+              return GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                          builder: (context) => const AddressScreen()),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    margin:
+                        const EdgeInsets.only(bottom: 10, left: 10, right: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(5), // Add rounded corners
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurpleAccent.withOpacity(
+                              0.5), // Shadow color with some transparency
+                          spreadRadius: 1, // Spread radius
+                          blurRadius: 2, // Blur radius
+                          offset:
+                              const Offset(0, 1), // Changes position of shadow
+                        ),
+                      ],
+                      border: Border.all(
+                          color: Colors.deepPurpleAccent,
+                          width: 1), // Optional: add a subtle border
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.add, size: 25),
+                        SizedBox(width: 5),
+                        Text(" New Address",
+                            style:
+                                TextStyle(fontSize: 20, color: Colors.black)),
+                      ],
+                    ),
+                  ));
             } else {
               // Address tiles
               return InkWell(
@@ -354,6 +382,73 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   modalSetState(() {
                     selectedAddressIndex = index;
                   });
+                  bool deliverable = true;
+
+                  if (selectedAddressIndex! >= 1) {
+                    print("1a Branch");
+                    showAddress = false;
+                    setDefaultAddress(addresses[selectedAddressIndex! - 1].id)
+                        .then(
+                      (address) async {
+                        if (!mounted) return;
+
+                        if (address?.address != null) {
+                          cart.deliveryAddress = address!.address;
+                        }
+                        if (!address!.deliverable) {
+                          print('Not Deliverable');
+                          deliverable = false;
+                        }
+
+                        if (deliverable) {
+                          print('Go To Home');
+                          await storage
+                              .write(
+                                  key: 'storeId',
+                                  value: address.storeId.toString())
+                              .then((value) => {
+                                    storage
+                                        .write(
+                                            key: 'cartId',
+                                            value: address.cartId.toString())
+                                        .then(
+                                            (value) => {context.push('/home')})
+                                  });
+                        } else {
+                          await storage.delete(key: 'storeId');
+                          print('Coming Soon');
+                          context.push('/coming-soon');
+                        }
+                      },
+                    );
+                  } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
+                    print("1b Branch");
+
+                    deliverToAddress(cart.deliveryAddress.id).then(
+                      (resp) async => {
+                        if (resp!.deliverable)
+                          {
+                            await storage
+                                .write(
+                                    key: 'storeId',
+                                    value: resp.storeId.toString())
+                                .then((value) => {
+                                      storage
+                                          .write(
+                                              key: 'cartId',
+                                              value: resp.cartId.toString())
+                                          .then((value) =>
+                                              {context.push('/home')})
+                                    })
+                          }
+                        else
+                          {
+                            await storage.delete(key: 'storeId'),
+                            context.push('/coming-soon')
+                          }
+                      },
+                    );
+                  }
                 },
                 child: Container(
                   decoration: BoxDecoration(
@@ -388,6 +483,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     );
   }
 
+/*
   Widget _buildActionButton() {
     var cart = context.watch<CartModel>();
     return Container(
@@ -470,7 +566,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                 );
               }
             } else {
-              print("2rd Branch");
+              print("2nd Branch");
               if (!mounted) {
                 return; // Check if the widget is still mounted
               }
@@ -512,6 +608,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       ),
     );
   }
+*/
 }
 
 // Define other necessary classes/models like Address, etc.
