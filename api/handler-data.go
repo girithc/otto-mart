@@ -98,6 +98,7 @@ var authRequirements = map[string]Permission{
 	LockStockCloudTask:                    {Role: "Customer", AuthRequired: false},
 	VendorGetAll:                          {Role: "Customer", AuthRequired: false},
 	VendorAdd:                             {Role: "Customer", AuthRequired: false},
+	VendorEdit:                            {Role: "Customer", AuthRequired: false},
 }
 
 const (
@@ -192,4 +193,5 @@ const (
 	LockStockCloudTask                    = "lock-stock-cloud-task"
 	VendorGetAll                          = "vendor-get-all"
 	VendorAdd                             = "vendor-add"
+	VendorEdit                            = "vendor-edit"
 )

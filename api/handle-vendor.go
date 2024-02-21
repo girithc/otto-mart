@@ -28,3 +28,17 @@ func (s *Server) handleCreateVendor(res http.ResponseWriter, req *http.Request) 
 
 	return WriteJSON(res, http.StatusOK, vendor)
 }
+
+func (s *Server) handleEditVendorDetails(res http.ResponseWriter, req *http.Request) error {
+	editReq := new(types.Vendor)
+	if err := json.NewDecoder(req.Body).Decode(editReq); err != nil {
+		return err
+	}
+
+	vendor, err := s.store.EditVendor(*editReq) // Pass the dereferenced value of editReq
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, vendor)
+}

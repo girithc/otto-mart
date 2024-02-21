@@ -95,10 +95,10 @@ func (s *PostgresStore) CreateItemVendorTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) GetVendorList() ([]Vendor, error) {
-	var vendors []Vendor
+func (s *PostgresStore) GetVendorList() ([]types.Vendor, error) {
+	var vendors []types.Vendor
 	query := `
-    SELECT v.id, v.name, v.phone, v.email, v.delivery_frequency, v.delivery_day, v.mode_of_communication, v.notes, array_agg(b.name) as brands
+    SELECT v.id, v.name, v.phone, v.email, v.delivery_frequency, v.delivery_day, v.mode_of_communication, v.notes, COALESCE(array_agg(b.name) FILTER (WHERE b.name IS NOT NULL), '{}') as brands
     FROM vendor v
     LEFT JOIN vendor_brand vb ON v.id = vb.vendor_id
     LEFT JOIN brand b ON vb.brand_id = b.id
@@ -111,7 +111,7 @@ func (s *PostgresStore) GetVendorList() ([]Vendor, error) {
 	defer rows.Close()
 
 	for rows.Next() {
-		var vendor Vendor
+		var vendor types.Vendor
 		// Scan the brand names into the Brands field of the Vendor struct
 		err := rows.Scan(&vendor.ID, &vendor.Name, &vendor.Phone, &vendor.Email, &vendor.DeliveryFrequency, pq.Array(&vendor.DeliveryDay), pq.Array(&vendor.ModeOfCommunication), &vendor.Notes, pq.Array(&vendor.Brands))
 		if err != nil {
@@ -128,25 +128,34 @@ func (s *PostgresStore) GetVendorList() ([]Vendor, error) {
 	return vendors, nil
 }
 
-func (s *PostgresStore) AddVendor(vendor *types.AddVendor) (*Vendor, error) {
+func (s *PostgresStore) AddVendor(vendor *types.AddVendor) (*types.Vendor, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("error starting transaction: %w", err)
+	}
+
 	// Check for duplicate vendor
 	var existingVendorID int
 	checkVendorQuery := `SELECT id FROM vendor WHERE LOWER(name) = LOWER($1) AND phone = $2`
-	err := s.db.QueryRow(checkVendorQuery, vendor.Name, vendor.Phone).Scan(&existingVendorID)
+	err = tx.QueryRow(checkVendorQuery, vendor.Name, vendor.Phone).Scan(&existingVendorID)
 	if err == nil {
+		tx.Rollback() // Rollback the transaction as the vendor already exists
 		return nil, fmt.Errorf("duplicate vendor exists with name: %s and phone: %s", vendor.Name, vendor.Phone)
 	} else if err != sql.ErrNoRows {
+		tx.Rollback() // Rollback the transaction due to an error
 		return nil, fmt.Errorf("error checking for existing vendor: %w", err)
 	}
 
 	// Insert new vendor since no duplicate was found
-	vendorInsertQuery := `
-    INSERT INTO vendor (name, phone, email, delivery_frequency, delivery_day, mode_of_communication, notes)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING id;`
 	var newVendorID int
-	err = s.db.QueryRow(vendorInsertQuery, vendor.Name, vendor.Phone, vendor.Email, vendor.DeliveryFrequency, pq.Array(vendor.DeliveryDay), pq.Array(vendor.ModeOfCommunication), vendor.Notes).Scan(&newVendorID)
+	vendorInsertQuery := `
+        INSERT INTO vendor (name, phone, email, delivery_frequency, delivery_day, mode_of_communication, notes)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id;`
+	err = tx.QueryRow(vendorInsertQuery, vendor.Name, vendor.Phone, vendor.Email, vendor.DeliveryFrequency, pq.Array(vendor.DeliveryDay), pq.Array(vendor.ModeOfCommunication), vendor.Notes).Scan(&newVendorID)
 	if err != nil {
+		tx.Rollback() // Rollback the transaction due to an error
 		return nil, fmt.Errorf("error adding new vendor: %w", err)
 	}
 
@@ -160,17 +169,18 @@ func (s *PostgresStore) AddVendor(vendor *types.AddVendor) (*Vendor, error) {
 
 		// Check if the brand already exists
 		brandQuery := `SELECT id FROM brand WHERE LOWER(name) = $1`
-		err := s.db.QueryRow(brandQuery, brandNameLower).Scan(&brandID)
+		err = tx.QueryRow(brandQuery, brandNameLower).Scan(&brandID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				// If the brand does not exist, insert it into the brand table
 				insertBrandQuery := `INSERT INTO brand (name) VALUES ($1) RETURNING id`
-				err = s.db.QueryRow(insertBrandQuery, brandName).Scan(&brandID)
+				err = tx.QueryRow(insertBrandQuery, brandName).Scan(&brandID)
 				if err != nil {
+					tx.Rollback() // Rollback the transaction due to an error
 					return nil, fmt.Errorf("error inserting new brand: %w", err)
 				}
 			} else {
-				// If there was an error other than ErrNoRows, return the error
+				tx.Rollback() // Rollback the transaction due to an error
 				return nil, fmt.Errorf("error querying for brand: %w", err)
 			}
 		}
@@ -179,14 +189,21 @@ func (s *PostgresStore) AddVendor(vendor *types.AddVendor) (*Vendor, error) {
 		brandNames = append(brandNames, brandName)
 
 		// Insert the association between the vendor and the brand into the vendor_brand table
-		_, err = s.db.Exec(`INSERT INTO vendor_brand (vendor_id, brand_id) VALUES ($1, $2)`, newVendorID, brandID)
+		_, err = tx.Exec(`INSERT INTO vendor_brand (vendor_id, brand_id) VALUES ($1, $2)`, newVendorID, brandID)
 		if err != nil {
+			tx.Rollback() // Rollback the transaction due to an error
 			return nil, fmt.Errorf("error inserting into vendor_brand: %w", err)
 		}
 	}
 
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		tx.Rollback() // Ensure rollback in case of failure to commit
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
 	// Create and return the new Vendor struct populated with the new vendor's information and associated brands
-	newVendor := &Vendor{
+	newVendor := &types.Vendor{
 		ID:                  newVendorID,
 		Name:                vendor.Name,
 		Brands:              brandNames,
@@ -201,14 +218,82 @@ func (s *PostgresStore) AddVendor(vendor *types.AddVendor) (*Vendor, error) {
 	return newVendor, nil
 }
 
-type Vendor struct {
-	ID                  int      `json:"id"`
-	Name                string   `json:"name"`
-	Brands              []string `json:"brands"`
-	Phone               string   `json:"phone"`
-	Email               string   `json:"email"`
-	DeliveryFrequency   string   `json:"delivery_frequency"`
-	DeliveryDay         []string `json:"delivery_day"`
-	ModeOfCommunication []string `json:"mode_of_communication"`
-	Notes               string   `json:"notes"`
+func (s *PostgresStore) EditVendor(vendor types.Vendor) (*types.Vendor, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+
+	// Update vendor details in the `vendor` table
+	updateVendorQuery := `UPDATE vendor SET name = $1, phone = $2, email = $3, delivery_frequency = $4, delivery_day = $5, mode_of_communication = $6, notes = $7 WHERE id = $8`
+	_, err = tx.Exec(updateVendorQuery, vendor.Name, vendor.Phone, vendor.Email, vendor.DeliveryFrequency, pq.Array(vendor.DeliveryDay), pq.Array(vendor.ModeOfCommunication), vendor.Notes, vendor.ID)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error updating vendor: %w", err)
+	}
+
+	// Fetch current brand associations for the vendor
+	currentBrandsQuery := `SELECT brand_id FROM vendor_brand WHERE vendor_id = $1`
+	rows, err := tx.Query(currentBrandsQuery, vendor.ID)
+	if err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error fetching current brands: %w", err)
+	}
+	defer rows.Close()
+
+	currentBrandIDs := make(map[int]struct{})
+	for rows.Next() {
+		var brandID int
+		if err := rows.Scan(&brandID); err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("error scanning brand ID: %w", err)
+		}
+		currentBrandIDs[brandID] = struct{}{}
+	}
+
+	// Convert brand names to IDs
+	desiredBrandIDs := make(map[int]struct{})
+	for _, brandName := range vendor.Brands {
+		var brandID int
+		getBrandIDQuery := `SELECT id FROM brand WHERE LOWER(name) = LOWER($1)`
+		err := tx.QueryRow(getBrandIDQuery, brandName).Scan(&brandID)
+		if err != nil {
+			tx.Rollback()
+			return nil, fmt.Errorf("error getting brand ID by name '%s': %w", brandName, err)
+		}
+		desiredBrandIDs[brandID] = struct{}{}
+	}
+
+	// Delete brands no longer associated with the vendor
+	for brandID := range currentBrandIDs {
+		if _, exists := desiredBrandIDs[brandID]; !exists {
+			deleteBrandQuery := `DELETE FROM vendor_brand WHERE vendor_id = $1 AND brand_id = $2`
+			_, err = tx.Exec(deleteBrandQuery, vendor.ID, brandID)
+			if err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("error deleting brand association: %w", err)
+			}
+		}
+	}
+
+	// Add new brand associations for the vendor
+	for brandID := range desiredBrandIDs {
+		if _, exists := currentBrandIDs[brandID]; !exists {
+			insertBrandQuery := `INSERT INTO vendor_brand (vendor_id, brand_id) VALUES ($1, $2)`
+			_, err = tx.Exec(insertBrandQuery, vendor.ID, brandID)
+			if err != nil {
+				tx.Rollback()
+				return nil, fmt.Errorf("error inserting new brand association: %w", err)
+			}
+		}
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return &vendor, nil
 }

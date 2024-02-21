@@ -811,6 +811,14 @@ func (s *Server) handleAddVendor(res http.ResponseWriter, req *http.Request) err
 	return nil
 }
 
+func (s *Server) handleEditVendor(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "edit-vendor")
+		return s.goRoutineWrapper(VendorEdit, s.handleEditVendorDetails, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleBrand(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "brand")
