@@ -212,8 +212,20 @@ class _MyVerifyState extends State<MyVerify> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Container(
-        margin: const EdgeInsets.only(left: 25, right: 25),
-        alignment: Alignment.center,
+        height: MediaQuery.of(context).size.height,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.deepPurpleAccent, // Start color of the gradient
+                Colors.lightBlueAccent, // End color of the gradient
+              ],
+              stops: [
+                0.55,
+                1.0,
+              ]),
+        ),
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:pinput/pinput.dart';
 import 'package:pronto/login/legal/privacy.dart';
@@ -94,242 +95,321 @@ class _MyPhoneState extends State<MyPhone> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      body: UpgradeAlert(
-        dialogStyle: Platform.isIOS
-            ? UpgradeDialogStyle.cupertino
-            : UpgradeDialogStyle.material,
-        canDismissDialog: false,
-        showIgnore: false,
-        showLater: false,
-        child: Form(
-          key: formKey,
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        key: _scaffoldKey,
+        resizeToAvoidBottomInset: true,
+        body: SingleChildScrollView(
           child: Container(
-            color: Colors.white,
-            margin: const EdgeInsets.symmetric(horizontal: 15),
-            alignment: Alignment.center,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset(
-                    'assets/icon/icon.jpeg',
-                    height: 250,
-                  ),
-                  const SizedBox(
-                    height: 25,
-                  ),
-                  const Text(
-                    "Phone Verification",
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  const Text(
-                    "Let's Start Saving!",
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(
-                    height: 30,
-                  ),
-                  SizedBox(
-                    height: 80, // Increased height for a larger input area
-                    child: Pinput(
-                      separatorBuilder: (index) => Container(
-                        height: 80,
-                        width: 2,
-                        color:
-                            Colors.transparent, // Use a transparent separator
-                      ),
-                      length: 10, // Set the length of the input
-                      controller: phoneNumberController,
-                      pinputAutovalidateMode: PinputAutovalidateMode.onSubmit,
-                      onSubmitted: (pin) {
-                        // Handle submission logic here
-                      },
-                      defaultPinTheme: PinTheme(
-                        width: 70, // Increased width for larger input boxes
-                        height:
-                            60, // Add some spacing around each input box for the floating effect
-                        padding: EdgeInsets.zero,
-                        decoration: BoxDecoration(
-                          color: Colors
-                              .deepPurpleAccent, // Uniform color for each input box
-                          border: Border.all(
-                            color: Colors.deepPurpleAccent, // Border color
-                            width: 1, // Border width
+            height: MediaQuery.of(context).size.height,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Colors.deepPurpleAccent, // Start color of the gradient
+                    Colors.lightBlueAccent, // End color of the gradient
+                  ],
+                  stops: [
+                    0.55,
+                    1.0,
+                  ]),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Form(
+                  key: formKey,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.01,
+                        ),
+                        Container(
+                          margin: EdgeInsets.only(
+                              left: MediaQuery.of(context).size.width * 0.04),
+                          width: MediaQuery.of(context).size.width * 0.40,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(20.0),
+                            // Set the radius for rounded corners
+                            child: Transform.scale(
+                              scale:
+                                  1.0, // Adjust the scale to zoom in. 1.0 is the original size, so 1.1 zooms in slightly.
+                              child: Image.asset(
+                                'assets/icon/icon.jpeg',
+                                height: 120,
+                                fit: BoxFit
+                                    .cover, // Ensure the image covers the scaled area
+                              ),
+                            ),
                           ),
-                          borderRadius:
-                              BorderRadius.circular(25), // More rounded borders
-                          boxShadow: [
-                            // Shadow for the floating effect
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                              offset: const Offset(
-                                  0, 3), // changes position of shadow
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02,
+                        ),
+                        Row(
+                          children: [
+                            Container(
+                              margin: EdgeInsets.only(
+                                  left:
+                                      MediaQuery.of(context).size.width * 0.04),
+                              width: MediaQuery.of(context).size.width * 0.75,
+                              child: Text(
+                                "Groceries \ndelivered in\n5 minutes",
+                                style: GoogleFonts.ubuntu(
+                                  // Tinos is a serif font similar to Times New Roman
+                                  textStyle: TextStyle(
+                                      fontSize: 36,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                      height: 1.3),
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        textStyle: const TextStyle(
-                          fontSize:
-                              26, // Larger font size for better visibility
-                          color: Colors.white, // Text color
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.04,
                         ),
-                      ),
-                      focusedPinTheme: PinTheme(
-                        width:
-                            70, // Keep the width consistent with defaultPinTheme
-                        height: 60,
-                        decoration: BoxDecoration(
-                          color: Colors
-                              .white, // Color of the input box when focused
-                          border: Border.all(
-                            color:
-                                Colors.greenAccent, // Border color when focused
-                            width: 2,
+                        Container(
+                          height:
+                              50, // Increased height for a larger input area
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(35),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                spreadRadius: 1,
+                                blurRadius: 5,
+                                offset:
+                                    Offset(0, 3), // changes position of shadow
+                              ),
+                            ],
                           ),
-                          borderRadius: BorderRadius.circular(
-                              10), // Consistent border radius with defaultPinTheme
-                          boxShadow: [
-                            // Enhanced shadow for the floating effect when focused
-                            BoxShadow(
-                              color: Colors.greenAccent.withOpacity(0.5),
-                              spreadRadius: 2,
-                              blurRadius: 8,
-                              offset: const Offset(
-                                  0, 4), // changes position of shadow
+                          child: Row(
+                            children: [
+                              SizedBox(
+                                width: 2,
+                              ),
+                              Container(
+                                width: 50,
+                                child: Text(
+                                  "+91",
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.normal,
+                                      color: Colors.black),
+                                ),
+                              ),
+                              SizedBox(
+                                width: 3,
+                              ),
+                              Expanded(
+                                child: TextField(
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold),
+                                  keyboardType: TextInputType.phone,
+                                  controller: phoneNumberController,
+                                  decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: 'Enter phone number',
+                                      hintStyle: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.normal,
+                                      ),
+                                      counterText: ""),
+                                  maxLength: 10, // Limit the input to 10 digits
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.02,
+                        ),
+                        Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromARGB(255, 0, 11, 128),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(35),
+                              ),
                             ),
-                          ],
+                            onPressed: () {
+                              String phoneNumber = phoneNumberController.text;
+                              if (phoneNumber.length == 10) {
+                                sendOTP(phoneNumber).then((value) {
+                                  if (value == "success") {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => MyVerify(
+                                          number: phoneNumber,
+                                          isTester: false,
+                                        ),
+                                      ),
+                                    );
+                                  } else if (value == "test") {
+                                    print("TEST");
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const MyVerify(
+                                          number: '1234567890',
+                                          isTester: true,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    _showDialog(value ?? 'Failed to send OTP');
+                                  }
+                                });
+                              } else {
+                                _showDialog("Phone number must be 10 digits");
+                              }
+                            },
+                            child: const Text(
+                              "Continue",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
                         ),
-                        textStyle: const TextStyle(
-                          fontSize: 28,
-                          color: Colors.black, // Text color when focused
-                        ),
-                      ),
-                      // Add more customization to Pinput as needed
+                      ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 40,
-                  ),
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 15),
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurpleAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.1,
+                ),
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.1,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const Terms()),
+                            );
+                          },
+                          child: const Text(
+                            'Terms',
+                            style: TextStyle(color: Colors.black),
+                          ),
                         ),
                       ),
-                      onPressed: () {
-                        String phoneNumber = phoneNumberController.text;
-                        if (phoneNumber.length == 10) {
-                          sendOTP(phoneNumber).then((value) {
-                            if (value == "success") {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => MyVerify(
-                                    number: phoneNumber,
-                                    isTester: false,
-                                  ),
-                                ),
-                              );
-                            } else if (value == "test") {
-                              print("TEST");
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MyVerify(
-                                    number: '1234567890',
-                                    isTester: true,
-                                  ),
-                                ),
-                              );
-                            } else {
-                              _showDialog(value ?? 'Failed to send OTP');
-                            }
-                          });
-                        } else {
-                          _showDialog("Phone number must be 10 digits");
-                        }
-                      },
-                      child: const Text(
-                        "Send OTP code",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const Privacy()),
+                            );
+                          },
+                          child: const Text(
+                            'Privacy',
+                            style: TextStyle(color: Colors.black),
+                          ),
                         ),
                       ),
-                    ),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const SkipHomePage(
+                                        title: 'Otto Mart',
+                                      )),
+                            );
+                          },
+                          child: const Text(
+                            'Guest',
+                            style: TextStyle(color: Colors.black),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        color: Colors.white,
-        surfaceTintColor: Colors.white,
-        elevation: 0.0,
-        child: SizedBox(
-          height: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Terms()),
-                    );
-                  },
-                  child: const Text('Terms'),
-                ),
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const Privacy()),
-                    );
-                  },
-                  child: const Text('Privacy'),
-                ),
-              ),
-              Expanded(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const SkipHomePage(
-                                title: 'Otto Mart',
-                              )),
-                    );
-                  },
-                  child: const Text(
-                    'Guest User',
-                    style: TextStyle(color: Colors.black54),
+        /*
+        bottomNavigationBar: BottomAppBar(
+          color: Colors.amberAccent,
+          surfaceTintColor: Colors.white,
+          elevation: 0.0,
+          child: SizedBox(
+            height: 40,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Terms()),
+                      );
+                    },
+                    child: const Text('Terms'),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const Privacy()),
+                      );
+                    },
+                    child: const Text('Privacy'),
+                  ),
+                ),
+                Expanded(
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const SkipHomePage(
+                                  title: 'Otto Mart',
+                                )),
+                      );
+                    },
+                    child: const Text(
+                      'Guest User',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
+        */
       ),
     );
   }

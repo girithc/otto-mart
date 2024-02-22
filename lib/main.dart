@@ -21,7 +21,7 @@ import 'package:pronto/utils/network/service.dart';
 import 'package:pronto/utils/no_internet.dart';
 import 'package:pronto/utils/no_internet_api.dart';
 import 'package:provider/provider.dart';
-import 'package:upgrader/upgrader.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
 
@@ -131,31 +131,26 @@ class _MyAppState extends State<MyApp> {
 
     await storage.write(key: 'fcm', value: deviceToken);
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage remoteMessage) {
+    FirebaseMessaging.onMessageOpenedApp
+        .listen((RemoteMessage remoteMessage) async {
       String? title = remoteMessage.notification!.title;
       String? description = remoteMessage.notification!.body;
 
       //im gonna have an alertdialog when clicking from push notification
-      AlertDialog(
-        title: Text(title!),
-        content: Text(description!),
-        actions: <Widget>[
-          TextButton(
-            child: const Text("OK"),
-            onPressed: () {
-              // Close the dialog
-              Navigator.of(context).pop();
-            },
-          ),
-          TextButton(
-            child: const Text("Cancel"),
-            onPressed: () {
-              // Close the dialog
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      );
+    });
+
+    PackageInfo packageInfo = await PackageInfo.fromPlatform();
+
+    String appName = packageInfo.appName;
+    String packageName = packageInfo.packageName;
+    String version = packageInfo.version;
+    String buildNumber = packageInfo.buildNumber;
+
+    print({
+      "appName": appName,
+      "packageName": packageName,
+      "version": version,
+      "buildNumber": buildNumber
     });
   }
 
