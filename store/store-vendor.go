@@ -27,6 +27,30 @@ func (s *PostgresStore) CreateVendorTable(tx *sql.Tx) error {
 		return fmt.Errorf("error creating vendor table: %w", err)
 	}
 
+	// Check if the unique index already exists
+	var exists bool
+	checkIndexQuery := `SELECT EXISTS (
+        SELECT 1
+        FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relname = 'vendor_name_phone_unique'
+        AND n.nspname = 'public' -- or your specific schema if not public
+    );`
+
+	err = tx.QueryRow(checkIndexQuery).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("error checking for unique index: %w", err)
+	}
+
+	// If the unique index does not exist, create it
+	if !exists {
+		createIndexQuery := `CREATE UNIQUE INDEX vendor_name_phone_unique ON vendor (LOWER(name), phone);`
+		_, err = tx.Exec(createIndexQuery)
+		if err != nil {
+			return fmt.Errorf("error creating unique index on vendor(name, phone): %w", err)
+		}
+	}
+
 	return nil
 }
 

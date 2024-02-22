@@ -39,7 +39,6 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			lockExtended:  make(map[int]bool),               // Initialize the paymentStatus map
 			paymentStatus: make(map[int]bool),
 		}, nil
-
 	} else {
 		// Use Cloud SQL credentials
 		cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
