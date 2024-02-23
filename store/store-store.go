@@ -11,23 +11,26 @@ import (
 )
 
 func (s *PostgresStore) CreateStoreTable(tx *sql.Tx) error {
-	// fmt.Println("Entered CreateStoreTable")
-
-	query := `create table if not exists store (
-		id SERIAL PRIMARY KEY,
-		name VARCHAR(100) UNIQUE NOT NULL,
-		address VARCHAR(200) NOT NULL,
-		latitude DECIMAL(10,8),  
+	// Create the store table if it doesn't exist
+	createStoreTableQuery := `CREATE TABLE IF NOT EXISTS store (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        address VARCHAR(200) NOT NULL,
+        latitude DECIMAL(10,8),  
         longitude DECIMAL(11,8), 
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		created_by INT	
-	)`
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT
+    )`
+	_, err := tx.Exec(createStoreTableQuery)
+	if err != nil {
+		return err // Return early if there's an error creating the table
+	}
 
-	_, err := tx.Exec(query)
+	// Create a unique index on the lowercase of the name column to enforce case-insensitive uniqueness
+	createUniqueIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS store_name_lower_idx ON store (LOWER(name))`
+	_, err = tx.Exec(createUniqueIndexQuery)
 
-	// fmt.Println("Exiting CreateStoreTable")
-
-	return err
+	return err // Return any error that occurs when creating the index, or nil if successful
 }
 
 func (s *PostgresStore) Create_Store(st *types.Store) (*types.Store, error) {
