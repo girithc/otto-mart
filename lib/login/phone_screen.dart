@@ -32,6 +32,54 @@ class _MyPhoneState extends State<MyPhone> {
   void initState() {
     countryController.text = "+91";
     super.initState();
+    phoneNumberController.addListener(() {
+      String text = phoneNumberController.text;
+      if (text.length == 10) {
+        // Call your method to handle form submission here
+        _submitForm();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // Don't forget to dispose the controller when the widget is removed
+    phoneNumberController.dispose();
+    super.dispose();
+  }
+
+  void _submitForm() {
+    String phoneNumber = phoneNumberController.text;
+    if (phoneNumber.length == 10) {
+      sendOTP(phoneNumber).then((value) {
+        if (value == "success") {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => MyVerify(
+                number: phoneNumber,
+                isTester: false,
+              ),
+            ),
+          );
+        } else if (value == "test") {
+          print("TEST");
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const MyVerify(
+                number: '1234567890',
+                isTester: true,
+              ),
+            ),
+          );
+        } else {
+          _showDialog(value ?? 'Failed to send OTP');
+        }
+      });
+    } else {
+      _showDialog("Phone number must be 10 digits");
+    }
   }
 
   void _showDialog(String message) {
@@ -178,8 +226,8 @@ class _MyPhoneState extends State<MyPhone> {
                         ),
                         Container(
                           height:
-                              50, // Increased height for a larger input area
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
+                              48, // Increased height for a larger input area
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
                           padding: EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -242,7 +290,8 @@ class _MyPhoneState extends State<MyPhone> {
                           height: 50,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromARGB(255, 0, 11, 128),
+                              backgroundColor:
+                                  const Color.fromARGB(255, 0, 11, 128),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(35),
                               ),

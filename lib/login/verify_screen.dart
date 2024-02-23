@@ -193,18 +193,19 @@ class _MyVerifyState extends State<MyVerify> {
 
   @override
   Widget build(BuildContext context) {
-    const focusedBorderColor = Colors.deepPurpleAccent;
-    const fillColor = Color.fromRGBO(243, 246, 249, 0);
-    const borderColor = Colors.greenAccent;
+    const focusedBorderColor = Colors.greenAccent;
+    const fillColor = Colors.greenAccent;
+    const borderColor = Colors.white;
 
     final defaultPinTheme = PinTheme(
-      width: 56,
-      height: 56,
+      width: 40,
+      height: 50,
       textStyle: const TextStyle(
-        fontSize: 22,
-        color: Color.fromRGBO(30, 60, 87, 1),
+        fontSize: 18,
+        color: Colors.white,
       ),
       decoration: BoxDecoration(
+        color: Colors.white,
         borderRadius: BorderRadius.circular(19),
         border: Border.all(color: borderColor),
       ),
@@ -231,29 +232,26 @@ class _MyVerifyState extends State<MyVerify> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               //Text(fcmToken ?? 'FCM Token not found'),
-              Image.asset(
-                'assets/icon/icon.jpeg',
-                height: 250,
-              ),
-              const SizedBox(
-                height: 25,
+
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.25,
               ),
               const Text(
-                "Phone Verification",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                "OTP Verification",
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(
-                height: 5,
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.01,
               ),
               const Text(
-                "Enter One Time Password",
+                "Enter OTP sent to your phone number",
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(
-                height: 20,
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.04,
               ),
               AutofillGroup(
                 child: Pinput(
@@ -314,19 +312,49 @@ class _MyVerifyState extends State<MyVerify> {
                         isPinCorrect =
                             true; // Set flag to true if pin is correct
                       });
-                      return null;
+                      widget.isTester
+                          ? loginCustomer().then((isSuccess) {
+                              if (isSuccess) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(),
+                                  ),
+                                );
+                              } else {
+                                // Show an error message to the user or handle the failure appropriately.
+                              }
+                            })
+                          : null;
+
+                      String otp = pinController.text;
+                      isPinCorrect
+                          ? verifyOTP(widget.number, otp).then((value) {
+                              if (value!.type == 'success') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(const SnackBar(
+                                  content: Text('OTP Invalid'),
+                                  backgroundColor: Colors.deepOrangeAccent,
+                                ));
+                              }
+                            })
+                          : null; // Button is disabled if isPinCorrect is false
                     } else {
                       setState(() {
                         isPinCorrect =
                             false; // Set flag to false if pin is incorrect
                       });
-                      return null; // Validation message
                     }
                   },
-                  // onClipboardFound: (value) {
-                  //   debugPrint('onClipboardFound: $value');
-                  //   pinController.setText(value);
-                  // },
                   hapticFeedbackType: HapticFeedbackType.lightImpact,
                   onCompleted: (pin) {
                     debugPrint('onCompleted: $pin');
@@ -379,15 +407,17 @@ class _MyVerifyState extends State<MyVerify> {
                     ],
                   ),
                   focusedPinTheme: defaultPinTheme.copyWith(
+                    textStyle: TextStyle(color: Colors.black),
                     decoration: defaultPinTheme.decoration!.copyWith(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: focusedBorderColor),
-                    ),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white),
+                        color: Colors.greenAccent),
                   ),
                   submittedPinTheme: defaultPinTheme.copyWith(
+                    textStyle: TextStyle(color: Colors.black),
                     decoration: defaultPinTheme.decoration!.copyWith(
                       color: isPinCorrect
-                          ? Colors.lightGreenAccent
+                          ? Colors.greenAccent
                           : fillColor, // Change color based on pin correctness
                       borderRadius: BorderRadius.circular(19),
                       border: Border.all(color: focusedBorderColor),
@@ -398,18 +428,18 @@ class _MyVerifyState extends State<MyVerify> {
                   ),
                 ),
               ),
-              const SizedBox(
-                height: 20,
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.04,
               ),
               Container(
                 width: double.infinity,
-                margin: const EdgeInsets.symmetric(horizontal: 15),
-                height: 55,
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                height: 50,
                 child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
+                      backgroundColor: const Color.fromARGB(255, 0, 11, 128),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(35),
                       ),
                     ),
                     onPressed: () {
@@ -443,26 +473,32 @@ class _MyVerifyState extends State<MyVerify> {
                     )),
               ),
               Container(
-                margin: const EdgeInsets.only(top: 20, left: 12),
+                margin: EdgeInsets.only(
+                    top: MediaQuery.of(context).size.width * 0.05,
+                    left: MediaQuery.of(context).size.width * 0.04),
                 alignment: Alignment.centerLeft,
                 child: (_start > 0)
-                    ? Text(
-                        "Resend OTP: $_start seconds",
-                        style: const TextStyle(
-                            color: Colors.deepPurple,
-                            fontWeight: FontWeight.bold),
-                      )
+                    ? TextButton(
+                        onPressed: () => {},
+                        child: Text(
+                          "Resend OTP: $_start seconds",
+                          style: const TextStyle(
+                              color: Colors.black,
+                              fontWeight: FontWeight.normal),
+                        ))
                     : TextButton(
                         onPressed: () => resendOTP(),
                         child: const Text(
                           "Resend OTP",
-                          style: TextStyle(color: Colors.deepPurple),
+                          style: TextStyle(color: Colors.white),
                         ),
                       ),
               ),
-              Row(
-                children: [
-                  TextButton(
+              Container(
+                  alignment: Alignment.centerLeft,
+                  margin: EdgeInsets.only(
+                      left: MediaQuery.of(context).size.width * 0.04),
+                  child: TextButton(
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
@@ -474,11 +510,9 @@ class _MyVerifyState extends State<MyVerify> {
                       child: Text(
                         "Edit Phone Number ${widget.number} ? ",
                         style: const TextStyle(
-                          color: Colors.deepPurple,
+                          color: Colors.white,
                         ),
-                      ))
-                ],
-              )
+                      )))
             ],
           ),
         ),
