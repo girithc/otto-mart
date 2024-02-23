@@ -12,7 +12,7 @@ import (
 func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	// Define the ENUM type for unit
 	unitEnumQuery := `DO $$ BEGIN
-                        CREATE TYPE unit_enum AS ENUM ('g', 'mg', 'ml', 'l', 'kg', 'ct');
+                        CREATE TYPE unit_enum AS ENUM ('g', 'mg', 'ml', 'l', 'kg', 'ct', 'pcs');
                     EXCEPTION
                         WHEN duplicate_object THEN null;
                     END $$;`
@@ -24,7 +24,7 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	// Create the item table
 	createTableQuery := `CREATE TABLE IF NOT EXISTS item(
         id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL UNIQUE,
+        name VARCHAR(100) NOT NULL,
         brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
         quantity INT NOT NULL,
         barcode VARCHAR(15) UNIQUE,
@@ -38,11 +38,16 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 		return fmt.Errorf("error creating item table: %w", err)
 	}
 
-	// Create partial index for barcode
-	createIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nonempty_barcode ON item(barcode);
-	`
+	// Create a unique index on the lowercased name to ensure case-sensitive uniqueness
+	createNameIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS item_name_unique ON item (LOWER(name));`
+	_, err = tx.Exec(createNameIndexQuery)
+	if err != nil {
+		return fmt.Errorf("error creating unique index for name: %w", err)
+	}
 
-	_, err = tx.Exec(createIndexQuery)
+	// Create partial index for barcode, ensuring it remains unique where it is not null
+	createBarcodeIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nonempty_barcode ON item(barcode) WHERE barcode IS NOT NULL;`
+	_, err = tx.Exec(createBarcodeIndexQuery)
 	if err != nil {
 		return fmt.Errorf("error creating partial index for barcode: %w", err)
 	}

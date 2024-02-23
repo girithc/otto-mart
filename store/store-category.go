@@ -11,21 +11,30 @@ import (
 )
 
 func (s *PostgresStore) Create_Category_Table(tx *sql.Tx) error {
-	// fmt.Println("Entered CreateHigherLevelCategoryTable")
+	// fmt.Println("Entered Create_Category_Table")
 
-	query := `create table if not exists category (
-		id SERIAL PRIMARY KEY,
-    	name VARCHAR(100) NOT NULL UNIQUE,      
-		promotion BOOLEAN DEFAULT FALSE,        
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		created_by INT
-	)`
-
+	// Create the category table
+	query := `CREATE TABLE IF NOT EXISTS category (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,      
+        promotion BOOLEAN DEFAULT FALSE,        
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT
+    );`
 	_, err := tx.Exec(query)
+	if err != nil {
+		return err
+	}
 
-	// fmt.Println("Exiting CreateHigherLevelCategoryTable")
+	// Create a unique index on the lowercased name to ensure case-sensitive uniqueness
+	uniqueIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS category_name_unique ON category (LOWER(name));`
+	_, err = tx.Exec(uniqueIndexQuery)
+	if err != nil {
+		return err
+	}
 
-	return err
+	// fmt.Println("Exiting Create_Category_Table")
+	return nil
 }
 
 func (s *PostgresStore) Create_Category_Image_Table(tx *sql.Tx) error {

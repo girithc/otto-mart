@@ -12,18 +12,27 @@ import (
 func (s *PostgresStore) CreateHigherLevelCategoryTable(tx *sql.Tx) error {
 	// fmt.Println("Entered CreateHigherLevelCategoryTable")
 
-	query := `create table if not exists higher_level_category (
-		id SERIAL PRIMARY KEY,
-    	name VARCHAR(100) NOT NULL UNIQUE,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		created_by INT
-	)`
-
+	// Create the higher_level_category table
+	query := `CREATE TABLE IF NOT EXISTS higher_level_category (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by INT
+    );`
 	_, err := tx.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	// Create a unique index on the lowercased name to ensure case-sensitive uniqueness
+	uniqueIndexQuery := `CREATE UNIQUE INDEX IF NOT EXISTS higher_level_category_name_unique ON higher_level_category (LOWER(name));`
+	_, err = tx.Exec(uniqueIndexQuery)
+	if err != nil {
+		return err
+	}
 
 	// fmt.Println("Exiting CreateHigherLevelCategoryTable")
-
-	return err
+	return nil
 }
 
 func (s *PostgresStore) CreateHigherLevelCategoryImageTable(tx *sql.Tx) error {
