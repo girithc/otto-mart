@@ -11,6 +11,7 @@ var authRequirements = map[string]Permission{
 	CustomerLoginVerify:                   {Role: "Customer", AuthRequired: true},
 	CustomerGetAll:                        {Role: "Customer", AuthRequired: true},
 	CustomerLoginAuto:                     {Role: "Customer", AuthRequired: true},
+	ManagerLogin:                          {Role: "Customer", AuthRequired: true},
 	PackerLogin:                           {Role: "Customer", AuthRequired: true},
 	PackerGetAll:                          {Role: "Customer", AuthRequired: true},
 	ShoppingCartGetAllActive:              {Role: "Customer", AuthRequired: true},
@@ -93,6 +94,8 @@ var authRequirements = map[string]Permission{
 	OtpVerifyPacker:                       {Role: "Customer", AuthRequired: false},
 	OtpSendDeliveryPartner:                {Role: "Customer", AuthRequired: false},
 	OtpVerifyDeliveryPartner:              {Role: "Customer", AuthRequired: false},
+	OtpSendManager:                        {Role: "Customer", AuthRequired: false},
+	OtpVerifyManager:                      {Role: "Customer", AuthRequired: false},
 	ShelfCreate:                           {Role: "Customer", AuthRequired: true},
 	ShelfGetAll:                           {Role: "Customer", AuthRequired: true},
 	LockStockCloudTask:                    {Role: "Customer", AuthRequired: false},
@@ -188,6 +191,9 @@ const (
 	OtpVerifyPacker                       = "verify-otp-packer"
 	OtpSendDeliveryPartner                = "send-otp-delivery-partner"
 	OtpVerifyDeliveryPartner              = "verify-otp-delivery-partner"
+	OtpSendManager                        = "send-otp-manager"
+	OtpVerifyManager                      = "verify-otp-manager"
+	ManagerLogin                          = "manager-login"
 	ShelfCreate                           = "shelf-create"
 	ShelfGetAll                           = "shelf-get-all"
 	LockStockCloudTask                    = "lock-stock-cloud-task"

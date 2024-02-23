@@ -93,6 +93,21 @@ func (s *Server) goRoutineWrapper(handlerID string, handler HandlerFunc, res htt
 				} else {
 					resultChan <- fmt.Errorf("unauthorized access")
 				}
+			} else if strings.HasPrefix(handlerID, "manager") {
+				authenticated, err := s.store.AuthenticateRequestManager(requestBody.PhoneAuth, requestBody.TokenAuth)
+				if err != nil {
+					resultChan <- err
+					return
+				}
+
+				if authenticated {
+
+					handlerErr := handler(res, req)
+					resultChan <- handlerErr
+
+				} else {
+					resultChan <- fmt.Errorf("unauthorized access")
+				}
 			} else {
 
 				authenticated, role, err := s.store.AuthenticateRequest(requestBody.PhoneAuth, requestBody.TokenAuth)
@@ -906,6 +921,30 @@ func (s *Server) handleVerifyOtpDeliveryPartner(res http.ResponseWriter, req *ht
 	if req.Method == "POST" {
 		print_path("POST", "verify-otp-delivery-partner")
 		return s.goRoutineWrapper(OtpVerifyDeliveryPartner, s.handleVerifyOtpDeliveryPartnerMSG91, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleSendOtpManager(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "send-otp-manager")
+		return s.goRoutineWrapper(OtpSendManager, s.handleSendOtpManagerMSG91, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleVerifyOtpManager(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "verify-otp-manager")
+		return s.goRoutineWrapper(OtpVerifyManager, s.handleVerifyOtpManagerMSG91, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerLogin(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-login")
+		return s.goRoutineWrapper(ManagerLogin, s.HandleManagerLogin, res, req)
 	}
 	return nil
 }
