@@ -48,26 +48,38 @@ func (s *PostgresStore) CreateUpdateAppTable(tx *sql.Tx) error {
 
 func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, error) {
 	var versionNumber, buildNumber string
-	query := `SELECT version_number, build_number FROM updateapp WHERE package_name = $1 AND platform = $2 ORDER BY updated_at DESC LIMIT 1`
-	err := s.db.QueryRow(query, newReq.PackageName, newReq.PlatForm).Scan(&versionNumber, &buildNumber)
+	var maintenance bool
+	var maintenanceEndTime sql.NullTime // Use sql.NullTime to handle NULL values
+
+	// Updated query to select maintenance and maintenance_end_time
+	query := `SELECT version_number, build_number, maintenance, maintenance_end_time FROM updateapp WHERE package_name = $1 AND platform = $2 ORDER BY updated_at DESC LIMIT 1`
+	err := s.db.QueryRow(query, newReq.PackageName, newReq.Platform).Scan(&versionNumber, &buildNumber, &maintenance, &maintenanceEndTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No records found, possibly a new app, needs to update
-			return &UpdateResponse{UpdateRequired: true}, nil
+			return &UpdateResponse{UpdateRequired: false}, nil
 		}
 		// Handle other potential errors
 		return nil, fmt.Errorf("error querying updateapp table: %w", err)
 	}
 
-	// Initialize the default response to no update required
-	updateResponse := &UpdateResponse{UpdateRequired: false}
+	// Initialize the default response to no update required and check for maintenance
+	updateResponse := &UpdateResponse{
+		UpdateRequired:      false,
+		MaintenanceRequired: maintenance,
+	}
+
+	// Handle maintenance end time (only if not NULL)
+	if maintenanceEndTime.Valid {
+		updateResponse.MaintenanceEndTime = maintenanceEndTime.Time
+	}
 
 	// Compare version numbers
-	if newReq.Verion > versionNumber {
+	if newReq.Version > versionNumber {
 		// New request has a higher version, no need to update
 		return updateResponse, nil
-	} else if newReq.Verion == versionNumber {
-		if newReq.PlatForm == "ios" {
+	} else if newReq.Version == versionNumber {
+		if newReq.Platform == "ios" {
 			// For iOS, equal version number means no update needed
 			return updateResponse, nil
 		} else {
