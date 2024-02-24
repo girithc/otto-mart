@@ -26,6 +26,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:intl/intl.dart'; // Import the intl package
 
 import 'package:http/http.dart' as http;
 
@@ -174,8 +175,21 @@ class _MyAppState extends State<MyApp> {
     print("Resopnse: ${response.body} ${response.statusCode}  ");
     if (response.statusCode == 200) {
       bool updateRequired = json.decode(response.body)['update_required'];
+      bool maintenanceRequired =
+          json.decode(response.body)['maintenance_required'];
+      String endTimeString = json.decode(response.body)['end_time'];
+
+      // Creating a variable to store the end time value as a DateTime object
+      DateTime? maintenanceEndTime;
+
+      // Check if endTimeString is not null or empty
+      if (endTimeString.isNotEmpty) {
+        // Parsing the string to a DateTime object
+        maintenanceEndTime = DateTime.parse(endTimeString);
+      }
+
       print("Update Required: $updateRequired");
-      if (!updateRequired) {
+      if (updateRequired) {
         // ignore: use_build_context_synchronously
         showDialog(
           barrierColor: Colors.deepPurpleAccent
@@ -259,6 +273,81 @@ class _MyAppState extends State<MyApp> {
                             print('Could not launch $appStoreLink');
                           }
                         },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      } else if (maintenanceRequired) {
+        // Format the maintenance end time as a string
+        String formattedMaintenanceEndTime = "";
+        if (maintenanceEndTime != null) {
+          formattedMaintenanceEndTime =
+              DateFormat('yyyy-MM-dd – kk:mm').format(maintenanceEndTime);
+        }
+
+        showDialog(
+          barrierColor: Colors.deepPurpleAccent.withOpacity(0.7),
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return GestureDetector(
+              onTap: () async {},
+              child: Dialog(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0)),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      alignment: Alignment.topCenter,
+                      child: Image.asset(
+                        'assets/icon/icon.jpeg',
+                        height: MediaQuery.of(context).size.height * 0.2,
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Text(
+                        'Under Maintenance',
+                        style: TextStyle(
+                            fontSize: 24.0, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.all(16.0),
+                      // Use the formattedMaintenanceEndTime in the message
+                      child: Text(
+                        'The app is under maintenance until $formattedMaintenanceEndTime.',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.all(10),
+                      alignment: Alignment.bottomRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.pinkAccent, // Text color
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        onPressed: () =>
+                            Navigator.of(context).pop(), // Close the dialog
                       ),
                     ),
                   ],
