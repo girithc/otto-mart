@@ -81,6 +81,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     final response =
         await networkService.postWithAuth('/address', additionalData: body);
 
+    print("Address All: $response");
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
         final List<dynamic> jsonData = json.decode(response.body);
@@ -92,6 +93,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           isLoadingGetAddress = false;
         });
       } else {
+        if (response.contentLength == 3) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const AddressScreen()),
+          );
+        }
         setState(() {
           isLoadingGetAddress = false;
         });

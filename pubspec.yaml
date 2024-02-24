@@ -63,6 +63,8 @@ dependencies:
   shimmer: ^3.0.0
   skeletonizer: ^1.0.1
   package_info_plus: ^5.0.1
+  url_launcher: ^6.2.5
+  confetti: ^0.7.0
 
 dev_dependencies:
   flutter_test:
@@ -92,6 +94,7 @@ flutter:
     - assets/icon/icon.jpeg
     - assets/icon/phonepe.png
     - assets/pin.json
+    - assets/mark.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

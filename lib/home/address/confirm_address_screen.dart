@@ -73,15 +73,63 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Confirm Address"),
-        centerTitle: true,
+      appBar: PreferredSize(
+        preferredSize:
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.12),
+        child: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            color: Colors.white,
+            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Center(
+                  child: Text(
+                    "Location Information",
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black),
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(context);
+                  },
+                  child: Container(
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(15),
+                      border: Border.all(color: Colors.grey.shade500),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.search, size: 22, color: Colors.grey),
+                        SizedBox(width: 10),
+                        Text(
+                          "Search",
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
       body: _buildBody(),
       bottomNavigationBar: Container(
         color: Colors.white,
-        height: MediaQuery.of(context).size.height * 0.2,
-        margin: const EdgeInsets.only(bottom: 10),
+        height: MediaQuery.of(context).size.height * 0.20,
+        margin: const EdgeInsets.only(bottom: 20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -90,7 +138,13 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               minVerticalPadding: 0,
               title: Text(
-                _draggedAddress_one + _draggedAddress_two,
+                _draggedAddress_one,
+                style: const TextStyle(
+                  height: 1.3,
+                ),
+              ),
+              subtitle: Text(
+                _draggedAddress_two,
                 style: const TextStyle(
                   height: 1.3,
                 ),
@@ -101,9 +155,10 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
                   _gotoUserCurrentPosition();
                 },
                 child: const CircleAvatar(
-                  backgroundColor: Color(0xFF6200EE),
+                  backgroundColor: Color.fromARGB(255, 27, 0, 101),
                   child: Icon(
-                    Icons.location_city_outlined,
+                    Icons.restart_alt_sharp,
+                    size: 28,
                     color: Colors.white,
                   ),
                 ),
@@ -115,7 +170,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ReconfirmAddressInit(
-                      coordinates: _defaultLatLng,
+                      coordinates: _draggedLatlng,
                       lineOneAddress: _draggedAddress_one,
                       lineTwoAddress: _draggedAddress_two,
                       locality: _locality,
@@ -130,20 +185,20 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6200EE),
+                backgroundColor: Colors.pinkAccent, //const Color(0xFF6200EE),
                 padding: EdgeInsets.only(
                     left: MediaQuery.of(context).size.height * 0.05,
                     right: MediaQuery.of(context).size.height * 0.05,
                     top: MediaQuery.of(context).size.height * 0.02,
                     bottom: MediaQuery.of(context).size.height * 0.02),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(25),
                 ),
               ),
               child: const Text(
-                "Confirm Address",
+                "Confirm & Continue",
                 style: TextStyle(
-                    fontSize: 22,
+                    fontSize: 20,
                     color: Colors.white,
                     fontWeight: FontWeight.bold),
               ),
@@ -155,7 +210,14 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   }
 
   Widget _buildBody() {
-    return Stack(children: [_getMap(), _getCustomPin()]);
+    return Stack(children: [
+      _getMap(),
+      _getCustomPin(),
+      Positioned(
+          bottom: MediaQuery.of(context).size.height * 0.37,
+          left: MediaQuery.of(context).size.width * 0.25,
+          child: _getCustomPinGuide())
+    ]);
   }
 
   Widget _showDraggedAddress() {
@@ -181,6 +243,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
 
   Widget _getMap() {
     return GoogleMap(
+      myLocationButtonEnabled: false,
       initialCameraPosition: _cameraPosition!,
       mapType: MapType.normal,
       onCameraIdle: () {
@@ -199,9 +262,54 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
 
   Widget _getCustomPin() {
     return Center(
-      child: SizedBox(
-        width: 150,
-        child: Lottie.asset("assets/pin.json"),
+      child: Container(
+        // This padding becomes the border width
+        decoration: BoxDecoration(
+          color: Colors.transparent, // Container background color
+          shape: BoxShape
+              .circle, // Ensures the decoration is circular to match the CircleAvatar
+          border: Border.all(
+            color: Colors.deepPurpleAccent.shade400, // Border color
+            width: 2, // Border width
+          ),
+        ),
+        child: CircleAvatar(
+          backgroundColor: Colors.transparent,
+          radius: 25, // Adjust the radius as needed
+          child: Lottie.asset(
+            "assets/mark.json",
+            width: 200, // Lottie animation width
+            height: 200, // Lottie animation height
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _getCustomPinGuide() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 27, 0, 101),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 2.0,
+            spreadRadius: 1.0,
+            offset: Offset(0.0, 2.0),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          'Move the map to adjust\nthe location',
+          maxLines: 2,
+          textAlign:
+              TextAlign.center, // Aligns the text to the center horizontally
+
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
       ),
     );
   }

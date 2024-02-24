@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -46,187 +48,246 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
     return null;
   }
 
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
+  late CameraPosition
+      _kGooglePlex; // Declare _kGooglePlex here without initializing
+  final Set<Marker> _markers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize _kGooglePlex here using widget.coordinates
+    _kGooglePlex = CameraPosition(
+      target: widget.coordinates,
+      zoom: 16,
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId("selected-location"),
+        position: widget.coordinates,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartModel = context.watch<CartModel>();
-    print('locality: ${widget.locality}');
+    print(
+        "Widget Variables: coordinates${widget.coordinates} lineone ${widget.lineOneAddress} linetwo ${widget.lineTwoAddress} local ${widget.locality} postal ${widget.postalCode} sublocal ${widget.sublocality} thoroughfare ${widget.thoroughfare} subthour ${widget.subthoroughfare} admin ${widget.administrativeArea} subadmin ${widget.subAdministrativeArea}");
 
-    return Scaffold(
-      key: _scaffoldMessengerKey, // Use this key for ScaffoldMessenger
-      appBar: AppBar(
-        title: const Text('Address Details'),
-        surfaceTintColor: Colors.white,
-        centerTitle: true,
-      ),
-      body: FormBuilder(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            FormBuilderTextField(
-              name: 'flatBuildingName',
-              decoration: InputDecoration(
-                labelText: 'Flat No. and Building Name',
-                hintText: 'Flat - Building Name',
-                filled: true, // Enable filling of the input
-                fillColor:
-                    Colors.grey[200], // Set light grey color as the background
-                border: OutlineInputBorder(
-                  // Define the border
-                  borderRadius:
-                      BorderRadius.circular(10.0), // Circular rounded border
-                  borderSide: BorderSide.none, // No border side
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        key: _scaffoldMessengerKey, // Use this key for ScaffoldMessenger
+        appBar: AppBar(
+          title: const Text(
+            'Add Address Details',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          foregroundColor: Colors.black,
+          centerTitle: true,
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: [
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.02,
+              ),
+              Container(
+                height: MediaQuery.of(context).size.height * 0.25,
+                margin: EdgeInsets.symmetric(
+                  horizontal: MediaQuery.of(context).size.height * 0.03,
+                ),
+                padding: const EdgeInsets.all(1),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.all(Radius.circular(25)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.5),
+                      blurRadius: 2.0,
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  // Use ClipRRect to clip the child widget with rounded corners
+                  borderRadius: const BorderRadius.all(Radius.circular(
+                      15)), // Match the parent Container's borderRadius
+                  child: GoogleMap(
+                    mapType: MapType.normal,
+                    initialCameraPosition: _kGooglePlex,
+                    markers: _markers, // Use the _markers set here
+                    onMapCreated: (GoogleMapController controller) {
+                      _controller.complete(controller);
+                    },
+                    // ignore: prefer_collection_literals
+                    gestureRecognizers: Set(), // Disable gesture recognizers
+                    zoomGesturesEnabled: false, // Disable zoom gestures
+                    scrollGesturesEnabled: false, // Disable scroll gestures
+                    rotateGesturesEnabled: false, // Disable rotate gestures
+                    tiltGesturesEnabled: false,
+                    myLocationButtonEnabled: false,
+                  ),
                 ),
               ),
-              initialValue: '',
-              validator: _requiredValidator,
-            ),
-            const SizedBox(height: 25),
-            FormBuilderTextField(
-              name: 'landmark',
-              decoration: InputDecoration(
-                labelText: 'Landmark (optional)',
-                hintText: 'Landmark (optional)',
-                filled: true, // Enable filling of the input
-                fillColor:
-                    Colors.grey[200], // Set light grey color as the background
-                border: OutlineInputBorder(
-                  // Define the border
-                  borderRadius:
-                      BorderRadius.circular(10.0), // Circular rounded border
-                  borderSide: BorderSide.none, // No border side
+              Container(
+                margin: EdgeInsets.only(
+                  left: MediaQuery.of(context).size.height * 0.03,
+                  right: MediaQuery.of(context).size.height * 0.03,
+                  top: MediaQuery.of(context).size.height * 0.02,
+                ),
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.black,
+                    backgroundColor: Colors.white,
+                    surfaceTintColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    shape: RoundedRectangleBorder(
+                      side: const BorderSide(
+                          color: Colors.deepPurpleAccent, width: 2),
+                      borderRadius: BorderRadius.circular(35),
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('change'),
                 ),
               ),
-              initialValue: '',
-            ),
-            const SizedBox(height: 25),
-            FormBuilderTextField(
-              name: 'locality',
-              decoration: InputDecoration(
-                labelText: 'Locality',
-                hintText: 'Optional',
-                filled: true, // Enable filling of the input
-                fillColor:
-                    Colors.grey[200], // Set light grey color as the background
-                border: OutlineInputBorder(
-                  // Define the border
-                  borderRadius:
-                      BorderRadius.circular(10.0), // Circular rounded border
-                  borderSide: BorderSide.none, // No border side
-                ),
-              ),
-              initialValue:
-                  '${widget.subthoroughfare}, ${widget.subthoroughfare}, ${widget.sublocality}',
-              readOnly: true,
-            ),
-            const SizedBox(height: 25),
-            FormBuilderTextField(
-              name: 'lineOneAddress',
-              decoration: InputDecoration(
-                labelText: 'Line Address One',
-                filled: true, // Enable filling of the input
-                fillColor:
-                    Colors.grey[200], // Set light grey color as the background
-                border: OutlineInputBorder(
-                  // Define the border
-                  borderRadius:
-                      BorderRadius.circular(10.0), // Circular rounded border
-                  borderSide: BorderSide.none, // No border side
-                ),
-              ),
-              initialValue: widget.lineOneAddress,
-              readOnly: true,
-            ),
-            const SizedBox(height: 25),
-            FormBuilderTextField(
-              name: 'lineTwoAddress',
-              decoration: InputDecoration(
-                labelText: 'Line Address Two',
-                filled: true, // Enable filling of the input
-                fillColor:
-                    Colors.grey[200], // Set light grey color as the background
-                border: OutlineInputBorder(
-                  // Define the border
-                  borderRadius:
-                      BorderRadius.circular(10.0), // Circular rounded border
-                  borderSide: BorderSide.none, // No border side
-                ),
-              ),
-              initialValue: widget.lineTwoAddress,
-              readOnly: true,
-            ),
-            const SizedBox(height: 25),
-            FormBuilderTextField(
-              name: 'zipCode',
-              decoration: InputDecoration(
-                labelText: 'Pin Code',
-                hintText: 'Optional',
-                filled: true, // Enable filling of the input
-                fillColor:
-                    Colors.grey[200], // Set light grey color as the background
-                border: OutlineInputBorder(
-                  // Define the border
-                  borderRadius:
-                      BorderRadius.circular(10.0), // Circular rounded border
-                  borderSide: BorderSide.none, // No border side
-                ),
-              ),
-              initialValue: widget.postalCode,
-              readOnly: true,
-            ),
-            const SizedBox(height: 50),
-            ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.saveAndValidate()) {
-                  var formData = _formKey.currentState!.value;
-                  if (formData['flatBuildingName'].isEmpty) {
-                    _scaffoldMessengerKey.currentState!.showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            'Please fill out the Flat No. and Building Name.'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                    return;
-                  }
-                  bool isSuccess = await cartModel.postDeliveryAddress(
-                      formData['flatBuildingName'],
-                      formData['lineOneAddress'],
-                      formData['lineTwoAddress'],
-                      formData['city'],
-                      formData['zipCode'],
-                      formData['stateName'],
-                      widget.coordinates.latitude,
-                      widget.coordinates.longitude);
-
-                  if (isSuccess) {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                          builder: (context) => const AddressSelectionWidget(
-                                flag: true,
-                              )),
-                    );
-                  }
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF6200EE),
+              Container(
                 padding: EdgeInsets.symmetric(
-                    horizontal: MediaQuery.of(context).size.height * 0.03,
-                    vertical: MediaQuery.of(context).size.height * 0.02),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+                  horizontal: MediaQuery.of(context).size.height * 0.02,
+                  vertical: MediaQuery.of(context).size.height * 0.02,
+                ),
+                child: FormBuilder(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      FormBuilderTextField(
+                        name: 'flatBuildingName',
+                        decoration: InputDecoration(
+                          labelText: 'House Name, No. & Floor',
+                          hintText: '',
+                          filled: true, // Enable filling of the input
+                          fillColor: Colors.grey[
+                              200], // Set light grey color as the background
+                          border: OutlineInputBorder(
+                            // Define the border
+                            borderRadius: BorderRadius.circular(
+                                15.0), // Circular rounded border
+                            borderSide: BorderSide.none, // No border side
+                          ),
+                        ),
+                        initialValue: '',
+                        validator: _requiredValidator,
+                      ),
+                      const SizedBox(height: 25),
+                      FormBuilderTextField(
+                        name: 'lineOneAddress',
+                        decoration: InputDecoration(
+                          labelText: 'Landmark (optional)',
+                          filled: true, // Enable filling of the input
+                          fillColor: Colors.grey[
+                              200], // Set light grey color as the background
+                          border: OutlineInputBorder(
+                            // Define the border
+                            borderRadius: BorderRadius.circular(
+                                15.0), // Circular rounded border
+                            borderSide: BorderSide.none, // No border side
+                          ),
+                        ),
+                        initialValue: widget.lineOneAddress,
+                        validator: _requiredValidator,
+                        readOnly: false,
+                      ),
+                      const SizedBox(height: 25),
+                      FormBuilderTextField(
+                        name: 'lineTwoAddress',
+                        decoration: InputDecoration(
+                          labelText: 'Area Name',
+                          filled: true, // Enable filling of the input
+                          fillColor: Colors.grey[
+                              200], // Set light grey color as the background
+                          border: OutlineInputBorder(
+                            // Define the border
+                            borderRadius: BorderRadius.circular(
+                                15.0), // Circular rounded border
+                            borderSide: BorderSide.none, // No border side
+                          ),
+                        ),
+                        initialValue: widget.lineTwoAddress,
+                        readOnly: false,
+                      ),
+                      const SizedBox(height: 25),
+                      ElevatedButton(
+                        onPressed: () async {
+                          if (_formKey.currentState!.saveAndValidate()) {
+                            var formData = _formKey.currentState!.value;
+                            if (formData['flatBuildingName'].isEmpty) {
+                              _scaffoldMessengerKey.currentState!.showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                      'Please fill out the Flat No. and Building Name.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
+                            bool isSuccess =
+                                await cartModel.postDeliveryAddress(
+                                    formData['flatBuildingName'],
+                                    formData['lineOneAddress'],
+                                    formData['lineTwoAddress'],
+                                    widget.subAdministrativeArea.isEmpty
+                                        ? widget.locality
+                                        : widget.subAdministrativeArea,
+                                    widget.postalCode,
+                                    widget.administrativeArea.isEmpty
+                                        ? ""
+                                        : widget.administrativeArea,
+                                    widget.coordinates.latitude,
+                                    widget.coordinates.longitude);
+
+                            if (isSuccess) {
+                              Navigator.of(context).pushReplacement(
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const AddressSelectionWidget(
+                                          flag: true,
+                                        )),
+                              );
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.pinkAccent,
+                          padding: EdgeInsets.symmetric(
+                              horizontal:
+                                  MediaQuery.of(context).size.height * 0.03,
+                              vertical:
+                                  MediaQuery.of(context).size.height * 0.02),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        ),
+                        child: const Text(
+                          "Save Address",
+                          style: TextStyle(
+                              fontSize: 22,
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold),
+                        ),
+                      )
+                    ],
+                  ),
                 ),
               ),
-              child: const Text(
-                "Add Address",
-                style: TextStyle(
-                    fontSize: 22,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
-              ),
-            )
-          ],
+            ],
+          ),
         ),
       ),
     );

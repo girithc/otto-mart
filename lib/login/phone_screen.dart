@@ -151,7 +151,7 @@ class _MyPhoneState extends State<MyPhone> {
         body: SingleChildScrollView(
           child: Container(
             height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -175,9 +175,6 @@ class _MyPhoneState extends State<MyPhone> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.01,
-                        ),
                         Container(
                           margin: EdgeInsets.only(
                               left: MediaQuery.of(context).size.width * 0.04),
@@ -190,7 +187,7 @@ class _MyPhoneState extends State<MyPhone> {
                                   1.0, // Adjust the scale to zoom in. 1.0 is the original size, so 1.1 zooms in slightly.
                               child: Image.asset(
                                 'assets/icon/icon.jpeg',
-                                height: 120,
+                                height: 140,
                                 fit: BoxFit
                                     .cover, // Ensure the image covers the scaled area
                               ),
@@ -211,7 +208,7 @@ class _MyPhoneState extends State<MyPhone> {
                                 "Groceries \ndelivered in\n5 minutes",
                                 style: GoogleFonts.ubuntu(
                                   // Tinos is a serif font similar to Times New Roman
-                                  textStyle: TextStyle(
+                                  textStyle: const TextStyle(
                                       fontSize: 36,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.white,
@@ -228,7 +225,7 @@ class _MyPhoneState extends State<MyPhone> {
                           height:
                               48, // Increased height for a larger input area
                           margin: const EdgeInsets.symmetric(horizontal: 12),
-                          padding: EdgeInsets.symmetric(horizontal: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(35),
@@ -237,17 +234,17 @@ class _MyPhoneState extends State<MyPhone> {
                                 color: Colors.grey.withOpacity(0.5),
                                 spreadRadius: 1,
                                 blurRadius: 5,
-                                offset:
-                                    Offset(0, 3), // changes position of shadow
+                                offset: const Offset(
+                                    0, 3), // changes position of shadow
                               ),
                             ],
                           ),
                           child: Row(
                             children: [
-                              SizedBox(
+                              const SizedBox(
                                 width: 2,
                               ),
-                              Container(
+                              const SizedBox(
                                 width: 50,
                                 child: Text(
                                   "+91",
@@ -257,17 +254,17 @@ class _MyPhoneState extends State<MyPhone> {
                                       color: Colors.black),
                                 ),
                               ),
-                              SizedBox(
+                              const SizedBox(
                                 width: 3,
                               ),
                               Expanded(
                                 child: TextField(
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold),
                                   keyboardType: TextInputType.phone,
                                   controller: phoneNumberController,
-                                  decoration: InputDecoration(
+                                  decoration: const InputDecoration(
                                       border: InputBorder.none,
                                       hintText: 'Enter phone number',
                                       hintStyle: TextStyle(

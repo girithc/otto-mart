@@ -16,6 +16,7 @@ import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/login/verify_screen.dart';
 import 'package:pronto/plan/plan.dart';
 import 'package:pronto/setting/setting_screen.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:pronto/utils/no_internet.dart';
@@ -24,6 +25,9 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'cart/cart.dart';
 import 'login/login_status_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import 'package:http/http.dart' as http;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,8 +36,12 @@ void main() async {
   const storage = FlutterSecureStorage();
   String? initialCustomerId = await storage.read(key: 'customerId');
 
-  runApp(MyApp(
-    initialCustomerId: initialCustomerId,
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false, // Remove the debug banner
+
+    home: MyApp(
+      initialCustomerId: initialCustomerId,
+    ),
   ));
 }
 
@@ -121,6 +129,9 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     init();
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      needToUpdate(context);
+    });
     isLoggedIn = widget.initialCustomerId != null;
     showAddress = true;
     routeObserver = CustomRouteObserver();
@@ -130,28 +141,136 @@ class _MyAppState extends State<MyApp> {
     String deviceToken = await getDeviceToken();
 
     await storage.write(key: 'fcm', value: deviceToken);
+  }
 
-    FirebaseMessaging.onMessageOpenedApp
-        .listen((RemoteMessage remoteMessage) async {
-      String? title = remoteMessage.notification!.title;
-      String? description = remoteMessage.notification!.body;
-
-      //im gonna have an alertdialog when clicking from push notification
-    });
-
+  Future<void> needToUpdate(BuildContext context) async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
     String appName = packageInfo.appName;
     String packageName = packageInfo.packageName;
     String version = packageInfo.version;
     String buildNumber = packageInfo.buildNumber;
+    String platform = Platform.isAndroid
+        ? "android"
+        : Platform.isIOS
+            ? "ios"
+            : "";
 
-    print({
-      "appName": appName,
-      "packageName": packageName,
-      "version": version,
-      "buildNumber": buildNumber
-    });
+    print(
+        "App Info: $appName, $packageName, $version, $buildNumber, $platform");
+    var response = await http.post(
+      Uri.parse('$baseUrl/need-to-update'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'packageName': packageName,
+        'version': version,
+        'buildNumber': buildNumber,
+        'platform': platform,
+      }),
+    );
+
+    print("Resopnse: ${response.body} ${response.statusCode}  ");
+    if (response.statusCode == 200) {
+      bool updateRequired = json.decode(response.body)['update_required'];
+      print("Update Required: $updateRequired");
+      if (!updateRequired) {
+        // ignore: use_build_context_synchronously
+        showDialog(
+          barrierColor: Colors.deepPurpleAccent
+              .withOpacity(0.7), // Whitened-out background
+
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) {
+            return GestureDetector(
+              onTap: () async {
+                String appStoreLink = Platform.isAndroid
+                    ? 'https://play.google.com/store/apps/details?id=com.otto.pronto'
+                    : 'https://apps.apple.com/in/app/otto-mart/id6468983550'; // Use your actual App Store link
+
+                if (await canLaunch(appStoreLink)) {
+                  await launch(appStoreLink);
+                } else {
+                  print('Could not launch $appStoreLink');
+                }
+              },
+              child: Dialog(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(20.0)), // Rounded corners
+                child: Column(
+                  mainAxisSize:
+                      MainAxisSize.min, // To make the dialog wrap its content
+                  children: <Widget>[
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      alignment: Alignment.topCenter,
+                      child: Image.asset(
+                        'assets/icon/icon.jpeg',
+                        height: MediaQuery.of(context).size.height * 0.2,
+                      ),
+                    ), // Replace with your image asset
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Text(
+                        'Update Available',
+                        style: TextStyle(
+                            fontSize: 24.0, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Text(
+                        'Download the new version and get the latest item discounts.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.all(10),
+                      alignment: Alignment.bottomRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.pinkAccent, // Text color
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Update',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        onPressed: () async {
+                          String appStoreLink = Platform.isAndroid
+                              ? 'https://play.google.com/store/apps/details?id=com.otto.pronto'
+                              : 'https://apps.apple.com/in/app/otto-mart/id6468983550';
+
+                          if (await canLaunch(appStoreLink)) {
+                            await launch(appStoreLink);
+                          } else {
+                            print('Could not launch $appStoreLink');
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      }
+    } else {
+      print("Error: ${response.reasonPhrase}");
+    }
   }
 
   @override
@@ -188,6 +307,7 @@ class _MyAppState extends State<MyApp> {
               colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
               useMaterial3: true,
             ),
+            debugShowMaterialGrid: false,
           );
         },
       ),
