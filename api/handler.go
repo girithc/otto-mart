@@ -968,6 +968,14 @@ func (s *Server) handleLockStock(res http.ResponseWriter, req *http.Request) err
 	return nil
 }
 
+func (s *Server) handleNeedToUpdate(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "need-to-update")
+		return s.goRoutineWrapper(NeedToUpdate, s.HandleNeedToUpdate, res, req)
+	}
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }
