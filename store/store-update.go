@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -19,14 +20,16 @@ func (s *PostgresStore) CreateUpdateAppTable(tx *sql.Tx) error {
 		return fmt.Errorf("error creating platform_enum type: %w", err)
 	}
 
-	// Create the updateapp table with updated_at column
+	// Create the updateapp table with updated_at, maintenance, and maintenance_end_time columns
 	createTableQuery := `CREATE TABLE IF NOT EXISTS updateapp(
         id SERIAL PRIMARY KEY,
         build_number VARCHAR(50) NOT NULL,
         version_number VARCHAR(50) NOT NULL,
         package_name VARCHAR(255) NOT NULL,
         platform platform_enum NOT NULL,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        maintenance BOOLEAN DEFAULT false,
+        maintenance_end_time TIMESTAMP
     )`
 	_, err = tx.Exec(createTableQuery)
 	if err != nil {
@@ -82,5 +85,7 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, 
 }
 
 type UpdateResponse struct {
-	UpdateRequired bool `json:"update_required"`
+	UpdateRequired      bool      `json:"update_required"`
+	MaintenanceRequired bool      `json:"maintenance_required"`
+	MaintenanceEndTime  time.Time `json:"end_time"`
 }
