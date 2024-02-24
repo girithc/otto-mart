@@ -57,3 +57,15 @@ func (s *Server) HandleManagerLogin(res http.ResponseWriter, req *http.Request) 
 
 	return WriteJSON(res, http.StatusOK, packer)
 }
+
+func (s *Server) HandleManagerItems(res http.ResponseWriter, req *http.Request) error {
+
+	items, err := s.store.GetManagerItems()
+	if err != nil {
+		return err
+	}
+
+	// Check if User Exists
+
+	return WriteJSON(res, http.StatusOK, items)
+}

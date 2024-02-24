@@ -101,7 +101,6 @@ func (s *Server) goRoutineWrapper(handlerID string, handler HandlerFunc, res htt
 				}
 
 				if authenticated {
-
 					handlerErr := handler(res, req)
 					resultChan <- handlerErr
 
@@ -945,6 +944,14 @@ func (s *Server) handleManagerLogin(res http.ResponseWriter, req *http.Request) 
 	if req.Method == "POST" {
 		print_path("POST", "manager-login")
 		return s.goRoutineWrapper(ManagerLogin, s.HandleManagerLogin, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerItems(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("GET", "manager-items")
+		return s.goRoutineWrapper(ManagerItems, s.HandleManagerItems, res, req)
 	}
 	return nil
 }

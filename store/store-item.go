@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -997,4 +998,100 @@ func (s *PostgresStore) CreateItemAddQuick(params types.ItemAddQuick) (ItemAddQu
 
 type ItemAddQuickResponse struct {
 	Success bool `json:"success"`
+}
+
+type ManagerItem struct {
+	ID             int       `json:"id"`
+	Name           string    `json:"name"`
+	BrandID        int       `json:"brand_id"`
+	BrandName      string    `json:"brand_name"` // New field for the brand name
+	Quantity       int       `json:"quantity"`
+	Barcode        *string   `json:"barcode"`
+	UnitOfQuantity string    `json:"unit_of_quantity"`
+	Description    string    `json:"description"`
+	CreatedAt      time.Time `json:"created_at"`
+	CreatedBy      int       `json:"created_by"`
+	CategoryIDs    []int     `json:"category_ids"`
+	CategoryNames  []string  `json:"category_names"`
+	ImageURLs      []string  `json:"image_urls"`
+}
+
+func (s *PostgresStore) GetManagerItems() ([]ManagerItem, error) {
+	items := []ManagerItem{}
+
+	query := `
+SELECT
+    i.id,
+    i.name,
+    i.brand_id,
+    b.name as brand_name,  -- Select the brand name from the brand table
+    i.quantity,
+    COALESCE(i.barcode, '') as barcode,
+    i.unit_of_quantity,
+    i.description,
+    i.created_at,
+    COALESCE(i.created_by, 0) as created_by,
+    COALESCE(ARRAY_AGG(DISTINCT ic.category_id) FILTER (WHERE ic.category_id IS NOT NULL), ARRAY[]::INT[]) AS category_ids,
+    COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE ic.category_id IS NOT NULL), ARRAY[]::TEXT[]) AS category_names,
+    COALESCE(ARRAY_AGG(DISTINCT ii.image_url) FILTER (WHERE ii.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls
+FROM
+    item i
+LEFT JOIN brand b ON i.brand_id = b.id  -- Join with the brand table
+LEFT JOIN item_category ic ON i.id = ic.item_id
+LEFT JOIN category c ON ic.category_id = c.id
+LEFT JOIN item_image ii ON i.id = ii.item_id
+GROUP BY
+    i.id, b.name  -- Group by brand name as well
+`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error executing query for manager items: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var item ManagerItem
+		var barcode sql.NullString
+		var createdBy sql.NullInt64
+		var categoryIDs []sql.NullInt64
+		var categoryNames []sql.NullString
+		var imageUrls []sql.NullString
+
+		err = rows.Scan(&item.ID, &item.Name, &item.BrandID, &item.BrandName, &item.Quantity, &barcode, &item.UnitOfQuantity, &item.Description, &item.CreatedAt, &createdBy, pq.Array(&categoryIDs), pq.Array(&categoryNames), pq.Array(&imageUrls))
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row into ManagerItem: %w", err)
+		}
+
+		if barcode.Valid {
+			item.Barcode = &barcode.String
+		}
+		item.CreatedBy = int(createdBy.Int64) // Direct assignment as we're using COALESCE in SQL
+
+		for _, cid := range categoryIDs {
+			if cid.Valid {
+				item.CategoryIDs = append(item.CategoryIDs, int(cid.Int64))
+			}
+		}
+
+		for _, cname := range categoryNames {
+			if cname.Valid {
+				item.CategoryNames = append(item.CategoryNames, cname.String)
+			}
+		}
+
+		for _, url := range imageUrls {
+			if url.Valid {
+				item.ImageURLs = append(item.ImageURLs, url.String)
+			}
+		}
+
+		items = append(items, item)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over rows: %w", err)
+	}
+
+	return items, nil
 }

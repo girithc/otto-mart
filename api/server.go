@@ -97,6 +97,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/verify-otp-manager", makeHTTPHandleFunc(s.handleVerifyOtpManager))
 
 	http.HandleFunc("/manager-login", makeHTTPHandleFunc(s.handleManagerLogin))
+	http.HandleFunc("/manager-items", makeHTTPHandleFunc(s.handleManagerItems))
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))

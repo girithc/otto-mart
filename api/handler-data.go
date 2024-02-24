@@ -11,7 +11,8 @@ var authRequirements = map[string]Permission{
 	CustomerLoginVerify:                   {Role: "Customer", AuthRequired: true},
 	CustomerGetAll:                        {Role: "Customer", AuthRequired: true},
 	CustomerLoginAuto:                     {Role: "Customer", AuthRequired: true},
-	ManagerLogin:                          {Role: "Customer", AuthRequired: true},
+	ManagerLogin:                          {Role: "Manager", AuthRequired: true},
+	ManagerItems:                          {Role: "Manager", AuthRequired: false},
 	PackerLogin:                           {Role: "Customer", AuthRequired: true},
 	PackerGetAll:                          {Role: "Customer", AuthRequired: true},
 	ShoppingCartGetAllActive:              {Role: "Customer", AuthRequired: true},
@@ -194,6 +195,7 @@ const (
 	OtpSendManager                        = "send-otp-manager"
 	OtpVerifyManager                      = "verify-otp-manager"
 	ManagerLogin                          = "manager-login"
+	ManagerItems                          = "manager-items"
 	ShelfCreate                           = "shelf-create"
 	ShelfGetAll                           = "shelf-get-all"
 	LockStockCloudTask                    = "lock-stock-cloud-task"
