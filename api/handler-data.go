@@ -103,6 +103,7 @@ var authRequirements = map[string]Permission{
 	VendorGetAll:                          {Role: "Customer", AuthRequired: false},
 	VendorAdd:                             {Role: "Customer", AuthRequired: false},
 	VendorEdit:                            {Role: "Customer", AuthRequired: false},
+	NeedToUpdate:                          {Role: "Customer", AuthRequired: false},
 }
 
 const (
@@ -202,4 +203,5 @@ const (
 	VendorGetAll                          = "vendor-get-all"
 	VendorAdd                             = "vendor-add"
 	VendorEdit                            = "vendor-edit"
+	NeedToUpdate                          = "need-to-update"
 )
