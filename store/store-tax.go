@@ -22,33 +22,6 @@ func (s *PostgresStore) CreateTaxTable(tx *sql.Tx) error {
 		return fmt.Errorf("error creating tax table: %w", err)
 	}
 
-	// Create a trigger function to enforce cgst and sgst as half of gst
-	triggerFunctionQuery := `
-    CREATE OR REPLACE FUNCTION update_cgst_sgst()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        NEW.cgst := NEW.gst / 2;
-        NEW.sgst := NEW.gst / 2;
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;`
-
-	_, err = tx.Exec(triggerFunctionQuery)
-	if err != nil {
-		return fmt.Errorf("error creating trigger function: %w", err)
-	}
-
-	// Create the trigger on the 'tax' table
-	createTriggerQuery := `
-    CREATE TRIGGER enforce_cgst_sgst
-    BEFORE INSERT OR UPDATE ON tax
-    FOR EACH ROW EXECUTE FUNCTION update_cgst_sgst();`
-
-	_, err = tx.Exec(createTriggerQuery)
-	if err != nil {
-		return fmt.Errorf("error creating trigger: %w", err)
-	}
-
 	return nil
 }
 

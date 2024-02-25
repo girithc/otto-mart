@@ -70,15 +70,17 @@ func (s *PostgresStore) CreateVendorBrandTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) CreateBrandSchemeTable(tx *sql.Tx) error {
+func (s *PostgresStore) CreateItemSchemeTable(tx *sql.Tx) error {
 	createBrandSchemeTableQuery := `
-    CREATE TABLE IF NOT EXISTS brand_scheme (
+    CREATE TABLE IF NOT EXISTS item_scheme (
         id SERIAL PRIMARY KEY,
         brand_id INTEGER REFERENCES brand(id),
+		item_id INTEGER REFERENCES item(id),
         vendor_id INTEGER REFERENCES vendor(id),
         discount DECIMAL(5,2) CHECK (discount >= 0 AND discount <= 100), 
         start_date DATE,
         end_date DATE,
+		minimum_quantity INTEGER NOT NULL CHECK (minimum_quantity > 0),
         CONSTRAINT valid_dates CHECK (start_date <= end_date)
     );`
 

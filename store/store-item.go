@@ -22,8 +22,8 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 		return fmt.Errorf("error creating unit_enum type: %w", err)
 	}
 
-	// Create the item table
-	createTableQuery := `CREATE TABLE IF NOT EXISTS item(
+	createTableQuery := `
+    CREATE TABLE IF NOT EXISTS item(
         id SERIAL PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         brand_id INT REFERENCES brand(id) ON DELETE CASCADE,
@@ -33,7 +33,8 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
         description TEXT DEFAULT 'description',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         created_by INT
-    )`
+    );`
+
 	_, err = tx.Exec(createTableQuery)
 	if err != nil {
 		return fmt.Errorf("error creating item table: %w", err)
@@ -51,6 +52,24 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	_, err = tx.Exec(createBarcodeIndexQuery)
 	if err != nil {
 		return fmt.Errorf("error creating partial index for barcode: %w", err)
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) CreateItemFinancialTable(tx *sql.Tx) error {
+	createItemFinancialTableQuery := `
+    CREATE TABLE IF NOT EXISTS item_financial (
+        item_id INT PRIMARY KEY REFERENCES item(id) ON DELETE CASCADE,
+        buy_price DECIMAL(10, 2),  
+        margin DECIMAL(5, 2),  
+        mrp_price DECIMAL(10, 2),
+        current_scheme_id INT REFERENCES item_scheme(id) ON DELETE SET NULL
+    );`
+
+	_, err := tx.Exec(createItemFinancialTableQuery)
+	if err != nil {
+		return fmt.Errorf("error creating item_financial table: %w", err)
 	}
 
 	return nil

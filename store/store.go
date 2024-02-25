@@ -227,6 +227,26 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Update App Table")
 
+	if err := s.CreateTaxTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Tax Table")
+
+	if err := s.CreateItemTaxTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Tax Table")
+
+	if err := s.CreateItemSchemeTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Scheme Table")
+
+	if err := s.CreateItemFinancialTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Financial Table")
+
 	constraintQuery := `
     DO $$
     BEGIN
