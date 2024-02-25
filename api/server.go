@@ -98,6 +98,8 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/manager-login", makeHTTPHandleFunc(s.handleManagerLogin))
 	http.HandleFunc("/manager-items", makeHTTPHandleFunc(s.handleManagerItems))
+	http.HandleFunc("/manager-get-item", makeHTTPHandleFunc(s.handleManagerGetItem))
+	http.HandleFunc("/manager-item-edit", makeHTTPHandleFunc(s.handleItemEdit))
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))

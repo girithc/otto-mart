@@ -1114,3 +1114,154 @@ GROUP BY
 
 	return items, nil
 }
+
+func (s *PostgresStore) GetManagerItem(id int) (*ManagerItem, error) {
+	var item ManagerItem
+	var barcode sql.NullString
+	var createdBy sql.NullInt64
+	var categoryIDs []sql.NullInt64
+	var categoryNames []sql.NullString
+	var imageUrls []sql.NullString
+
+	query := `
+SELECT
+    i.id,
+    i.name,
+    i.brand_id,
+    b.name as brand_name,
+    i.quantity,
+    COALESCE(i.barcode, '') as barcode,
+    i.unit_of_quantity,
+    i.description,
+    i.created_at,
+    COALESCE(i.created_by, 0) as created_by,
+    COALESCE(ARRAY_AGG(DISTINCT ic.category_id) FILTER (WHERE ic.category_id IS NOT NULL), ARRAY[]::INT[]) AS category_ids,
+    COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE ic.category_id IS NOT NULL), ARRAY[]::TEXT[]) AS category_names,
+    COALESCE(ARRAY_AGG(DISTINCT ii.image_url) FILTER (WHERE ii.image_url IS NOT NULL), ARRAY[]::TEXT[]) AS image_urls
+FROM
+    item i
+LEFT JOIN brand b ON i.brand_id = b.id
+LEFT JOIN item_category ic ON i.id = ic.item_id
+LEFT JOIN category c ON ic.category_id = c.id
+LEFT JOIN item_image ii ON i.id = ii.item_id
+WHERE
+    i.id = $1
+GROUP BY
+    i.id, b.name
+`
+
+	row := s.db.QueryRow(query, id)
+	err := row.Scan(&item.ID, &item.Name, &item.BrandID, &item.BrandName, &item.Quantity, &barcode, &item.UnitOfQuantity, &item.Description, &item.CreatedAt, &createdBy, pq.Array(&categoryIDs), pq.Array(&categoryNames), pq.Array(&imageUrls))
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no ManagerItem found with ID %d", id)
+		}
+		return nil, fmt.Errorf("error scanning row into ManagerItem: %w", err)
+	}
+
+	// Handling nullable fields and converting them to their Go counterparts
+	if barcode.Valid {
+		item.Barcode = &barcode.String // use the address of barcode.String
+	}
+	if createdBy.Valid {
+		createdByValue := int(createdBy.Int64) // convert int64 to int
+		item.CreatedBy = createdByValue
+	}
+
+	for _, cid := range categoryIDs {
+		if cid.Valid {
+			item.CategoryIDs = append(item.CategoryIDs, int(cid.Int64))
+		}
+	}
+
+	for _, cname := range categoryNames {
+		if cname.Valid {
+			item.CategoryNames = append(item.CategoryNames, cname.String)
+		}
+	}
+
+	for _, url := range imageUrls {
+		if url.Valid {
+			item.ImageURLs = append(item.ImageURLs, url.String)
+		}
+	}
+
+	return &item, nil
+}
+
+func (s *PostgresStore) EditItem(item *types.ItemEdit) (*types.ItemEdit, error) {
+	// Begin a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Update the item in the 'item' table
+	updateItemQuery := `
+        UPDATE item
+        SET name = $2, brand_id = $3, quantity = $4, unit_of_quantity = $5, description = $6
+        WHERE id = $1;
+    `
+	_, err = tx.Exec(updateItemQuery, item.ID, item.Name, item.BrandID, item.Size, item.Unit, item.Description)
+	if err != nil {
+		return nil, fmt.Errorf("error updating item: %w", err)
+	}
+
+	// Fetch category IDs from the category names
+	var categoryIDs []int
+	fetchCategoriesQuery := `SELECT id FROM category WHERE name = ANY($1);`
+	rows, err := tx.Query(fetchCategoriesQuery, pq.Array(item.Categories))
+	if err != nil {
+		return nil, fmt.Errorf("error fetching category IDs: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			return nil, fmt.Errorf("error scanning category ID: %w", err)
+		}
+		categoryIDs = append(categoryIDs, id)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating category IDs: %w", err)
+	}
+
+	// Delete obsolete item-category associations
+	deleteObsoleteQuery := `
+        DELETE FROM item_category
+        WHERE item_id = $1 AND category_id != ALL($2);
+    `
+	_, err = tx.Exec(deleteObsoleteQuery, item.ID, pq.Array(categoryIDs))
+	if err != nil {
+		return nil, fmt.Errorf("error deleting obsolete item-category associations: %w", err)
+	}
+
+	// Insert new category associations, ignoring existing ones to avoid duplication errors
+	// Use a CTE to unnest the array and then perform the insert
+	insertNewQuery := `
+        WITH unnested AS (
+            SELECT unnest($2::int[]) AS category_id
+        )
+        INSERT INTO item_category (item_id, category_id)
+        SELECT $1, unnested.category_id
+        FROM unnested
+        WHERE NOT EXISTS (
+            SELECT 1 FROM item_category WHERE item_id = $1 AND category_id = unnested.category_id
+        )
+        ON CONFLICT (item_id, category_id) DO NOTHING;
+    `
+	_, err = tx.Exec(insertNewQuery, item.ID, pq.Array(categoryIDs))
+	if err != nil {
+		return nil, fmt.Errorf("error inserting new item-category associations: %w", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return item, nil
+}

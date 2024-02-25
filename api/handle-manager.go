@@ -59,7 +59,6 @@ func (s *Server) HandleManagerLogin(res http.ResponseWriter, req *http.Request) 
 }
 
 func (s *Server) HandleManagerItems(res http.ResponseWriter, req *http.Request) error {
-
 	items, err := s.store.GetManagerItems()
 	if err != nil {
 		return err
@@ -68,4 +67,23 @@ func (s *Server) HandleManagerItems(res http.ResponseWriter, req *http.Request) 
 	// Check if User Exists
 
 	return WriteJSON(res, http.StatusOK, items)
+}
+
+func (s *Server) HandleManagerGetItem(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(GetItem)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in HandleManagerGetItem()")
+		return err
+	}
+
+	item, err := s.store.GetManagerItem(new_req.ID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, item)
+}
+
+type GetItem struct {
+	ID int `json:"id"`
 }

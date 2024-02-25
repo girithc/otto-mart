@@ -162,19 +162,11 @@ func (s *PostgresStore) GetManagerByPhone(phone string, fcm string) (*types.Mana
 	}
 	defer tx.Rollback() // Ensure rollback in case of failure
 
-	// Clear FCM for any manager that might have it
-	clearFCMSQL := `UPDATE manager SET fcm = NULL WHERE fcm = $1`
-	if _, err := tx.Exec(clearFCMSQL, fcm); err != nil {
-		return nil, err
-	}
-
 	// Update FCM for the manager with the given phone and fetch necessary fields
-	updateFCMSQL := `
-        UPDATE manager
-        SET fcm = $1
-        WHERE phone = $2
-        RETURNING id, name, phone, created_at, token`
-	row := tx.QueryRow(updateFCMSQL, fcm, phone)
+	updateSQL := `
+        SELECT id, name, phone, created_at, token from manager
+        WHERE phone = $1`
+	row := tx.QueryRow(updateSQL, phone)
 
 	var manager types.ManagerData
 	var token sql.NullString
@@ -190,10 +182,10 @@ func (s *PostgresStore) GetManagerByPhone(phone string, fcm string) (*types.Mana
 	if err == sql.ErrNoRows {
 		newToken, _ := uuid.NewUUID() // Generate a new UUID for the token
 		insertSQL := `
-            INSERT INTO manager (name, phone, token, fcm)
-            VALUES ('', $1, $2, $3)
+            INSERT INTO manager (name, phone, token)
+            VALUES ('', $1, $2)
             RETURNING id, name, phone, created_at, token`
-		row = tx.QueryRow(insertSQL, phone, newToken, fcm)
+		row = tx.QueryRow(insertSQL, phone, newToken)
 
 		// Scan the new manager data
 		err = row.Scan(

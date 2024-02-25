@@ -9,6 +9,11 @@ type Brand struct {
 	Created_By int       `json:"created_by"`
 }
 
+type BrandList struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 type Create_Brand struct {
 	Name string `json:"name"`
 }

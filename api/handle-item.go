@@ -199,3 +199,18 @@ func (s *Server) HandleItemAddQuick(res http.ResponseWriter, req *http.Request) 
 
 	return WriteJSON(res, http.StatusOK, itemStockUpdate)
 }
+
+func (s *Server) handleItemEditBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.ItemEdit)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleItemEdit")
+		return err
+	}
+
+	item, err := s.store.EditItem(new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, item)
+}

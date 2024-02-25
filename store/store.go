@@ -246,6 +246,10 @@ func (s *PostgresStore) Init() error {
 		return err
 	}
 	fmt.Println("Success - Created Item Financial Table")
+	if err := s.CreateManagerTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Item Financial Table")
 
 	constraintQuery := `
     DO $$

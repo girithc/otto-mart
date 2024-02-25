@@ -190,3 +190,13 @@ type ItemAddQuick struct {
 	Discount      int    `json:"discount"`
 	StockQuantity int    `json:"stock_quantity"`
 }
+
+type ItemEdit struct {
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	Categories  []string `json:"categories"`
+	BrandID     int      `json:"brand_id"`
+	Description string   `json:"description"`
+	Size        int      `json:"size"`
+	Unit        string   `json:"unit"`
+}

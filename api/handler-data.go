@@ -46,6 +46,7 @@ var authRequirements = map[string]Permission{
 	ItemUpdate:                            {Role: "Customer", AuthRequired: true},
 	ItemDelete:                            {Role: "Customer", AuthRequired: true},
 	ItemAddStockAll:                       {Role: "Customer", AuthRequired: true},
+	ManagerItemEdit:                       {Role: "Manager", AuthRequired: true},
 	SearchItems:                           {Role: "Customer", AuthRequired: true},
 	ItemAddQuick:                          {Role: "Customer", AuthRequired: true},
 	PackerPackOrder:                       {Role: "Customer", AuthRequired: true},
@@ -104,6 +105,7 @@ var authRequirements = map[string]Permission{
 	VendorAdd:                             {Role: "Customer", AuthRequired: false},
 	VendorEdit:                            {Role: "Customer", AuthRequired: false},
 	NeedToUpdate:                          {Role: "Customer", AuthRequired: false},
+	ManagerGetItems:                       {Role: "Customer", AuthRequired: true},
 }
 
 const (
@@ -142,6 +144,7 @@ const (
 	ItemUpdate                            = "item-update"
 	ItemDelete                            = "item-delete"
 	ItemAddStockAll                       = "item-add-stock-all"
+	ManagerItemEdit                       = "manager-item-edit"
 	SearchItems                           = "search-items"
 	ItemAddQuick                          = "item-add-quick"
 	PackerLogin                           = "packer-login"
@@ -204,4 +207,5 @@ const (
 	VendorAdd                             = "vendor-add"
 	VendorEdit                            = "vendor-edit"
 	NeedToUpdate                          = "need-to-update"
+	ManagerGetItems                       = "manager-get-items"
 )

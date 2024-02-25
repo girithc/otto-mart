@@ -498,6 +498,14 @@ func (s *Server) handleItemAddQuick(res http.ResponseWriter, req *http.Request) 
 	return nil
 }
 
+func (s *Server) handleItemEdit(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "item-edit")
+		return s.goRoutineWrapper(ManagerItemEdit, s.handleItemEditBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")
@@ -952,6 +960,14 @@ func (s *Server) handleManagerItems(res http.ResponseWriter, req *http.Request) 
 	if req.Method == "GET" {
 		print_path("GET", "manager-items")
 		return s.goRoutineWrapper(ManagerItems, s.HandleManagerItems, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerGetItem(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-get-items")
+		return s.goRoutineWrapper(ManagerGetItems, s.HandleManagerGetItem, res, req)
 	}
 	return nil
 }
