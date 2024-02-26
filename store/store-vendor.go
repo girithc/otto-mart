@@ -92,6 +92,31 @@ func (s *PostgresStore) CreateItemSchemeTable(tx *sql.Tx) error {
 	return nil
 }
 
+func (s *PostgresStore) CreateInvoiceTable(tx *sql.Tx) error {
+	createInvoiceTableQuery := `
+	CREATE TABLE IF NOT EXISTS invoice (
+		id SERIAL PRIMARY KEY,
+		invoice_number VARCHAR(50) NOT NULL,
+		vendor_id INTEGER REFERENCES vendor(id),
+		store_id INTEGER REFERENCES store(id),
+		total_amount DECIMAL(10, 2) NOT NULL,
+		invoice_date DATE NOT NULL,
+		due_date DATE NOT NULL,
+		is_paid BOOLEAN NOT NULL DEFAULT FALSE,
+		paid_date DATE NULL,
+		credit_days INT NOT NULL DEFAULT 0,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		created_by INT
+	);`
+
+	_, err := tx.Exec(createInvoiceTableQuery)
+	if err != nil {
+		return fmt.Errorf("error creating invoice table: %w", err)
+	}
+
+	return nil
+}
+
 func (s *PostgresStore) CreateItemVendorTable(tx *sql.Tx) error {
 	createItemVendorTableQuery := `
     CREATE TABLE IF NOT EXISTS item_vendor (

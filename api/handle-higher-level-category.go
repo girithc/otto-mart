@@ -9,23 +9,9 @@ import (
 )
 
 func (s *Server) Handle_Create_Higher_Level_Category(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.Create_Higher_Level_Category)
+	_ = new(types.Create_Higher_Level_Category)
 
-	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
-		fmt.Println("Error in Decoding req.body in CreateCategory()")
-		return err
-	}
-
-	new_higher_level_category, err := types.New_Higher_Level_Category(new_req.Name, new_req.Image)
-	if err != nil {
-		return err
-	}
-	higher_level_category, err := s.store.Create_Higher_Level_Category(new_higher_level_category)
-	if err != nil {
-		return err
-	}
-
-	return WriteJSON(res, http.StatusOK, higher_level_category)
+	return nil
 }
 
 func (s *Server) Handle_Get_Higher_Level_Categories(res http.ResponseWriter, req *http.Request) error {

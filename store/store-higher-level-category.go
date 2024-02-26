@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -50,68 +51,12 @@ func (s *PostgresStore) CreateHigherLevelCategoryImageTable(tx *sql.Tx) error {
 	return err
 }
 
-func (s *PostgresStore) Create_Higher_Level_Category(hlc *types.Higher_Level_Category) (*types.Higher_Level_Category, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
-
-	// 1. Check if a category with the same name already exists
-	checkQuery := `SELECT id, name, created_at, created_by FROM higher_level_category WHERE name = $1`
-	existingCat := &types.Higher_Level_Category{}
-	err = tx.QueryRow(checkQuery, hlc.Name).Scan(&existingCat.ID, &existingCat.Name, &existingCat.Created_At, &existingCat.Created_By)
-
-	// If category is found, then also fetch the image info
-	if err == nil {
-		imageQuery := `SELECT image, position FROM higher_level_category_image WHERE higher_level_category_id = $1`
-		err = tx.QueryRow(imageQuery, existingCat.ID).Scan(&existingCat.Image, &existingCat.Position)
-		if err != nil {
-			return nil, err
-		}
-		return existingCat, nil
-	} else if err != sql.ErrNoRows {
-		return nil, err
-	}
-
-	// 2. If no existing category is found, then insert new category
-	categoryInsertQuery := `
-	INSERT INTO higher_level_category (name, created_by) 
-	VALUES ($1, $2) 
-	RETURNING id, name, created_at, created_by`
-
-	result := &types.Higher_Level_Category{}
-	err = tx.QueryRow(categoryInsertQuery, hlc.Name, hlc.Created_By).Scan(&result.ID, &result.Name, &result.Created_At, &result.Created_By)
-	if err != nil {
-		return nil, err
-	}
-
-	// Inserting default image at position 1 in category_image and returning the fields
-	imageInsertQuery := `
-	INSERT INTO higher_level_category_image (higher_level_category_id, image, position, created_by)
-	VALUES ($1, $2, $3, $4)
-	RETURNING image, position`
-
-	err = tx.QueryRow(imageInsertQuery, result.ID, hlc.Image, 1, hlc.Created_By).Scan(&result.Image, &result.Position)
-	if err != nil {
-		return nil, err
-	}
-
-	// Commit the transaction
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 func (s *PostgresStore) Get_Higher_Level_Categories() ([]*types.Higher_Level_Category, error) {
 	query := `
-	SELECT c.id, c.name, ci.image, ci.position, c.created_at, c.created_by 
-	FROM higher_level_category c
-	LEFT JOIN higher_level_category_image ci ON c.id = ci.higher_level_category_id AND ci.position = 1
-	`
+    SELECT c.id, c.name, ci.image, ci.position, c.created_at, c.created_by 
+    FROM higher_level_category c
+    LEFT JOIN higher_level_category_image ci ON c.id = ci.higher_level_category_id AND ci.position = 1
+    `
 
 	rows, err := s.db.Query(query)
 	if err != nil {
@@ -121,18 +66,41 @@ func (s *PostgresStore) Get_Higher_Level_Categories() ([]*types.Higher_Level_Cat
 
 	categories := []*types.Higher_Level_Category{}
 	for rows.Next() {
-		category := &types.Higher_Level_Category{}
-		err := rows.Scan(
-			&category.ID,
-			&category.Name,
-			&category.Image,
-			&category.Position,
-			&category.Created_At,
-			&category.Created_By,
+		var (
+			id        int
+			name      string
+			image     sql.NullString // Placeholder variable for image
+			position  sql.NullInt64  // Placeholder variable for position
+			createdAt time.Time
+			createdBy sql.NullInt64 // Placeholder variable for createdBy
 		)
+
+		err := rows.Scan(&id, &name, &image, &position, &createdAt, &createdBy)
 		if err != nil {
 			return nil, err
 		}
+
+		// Create a new category and assign values, converting SQL nulls as needed
+		category := &types.Higher_Level_Category{
+			ID:         id,
+			Name:       name,
+			Image:      "", // Default to empty string
+			Position:   0,  // Default to 0
+			Created_At: createdAt,
+			Created_By: 0, // Default to 0 or another value that represents "null" for your use case
+		}
+
+		// Only overwrite Image and Position if valid (not NULL)
+		if image.Valid {
+			category.Image = image.String
+		}
+		if position.Valid {
+			category.Position = int(position.Int64) // Convert to int if your struct expects an int
+		}
+		if createdBy.Valid {
+			category.Created_By = int(createdBy.Int64) // Convert to int
+		}
+
 		categories = append(categories, category)
 	}
 

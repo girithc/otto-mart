@@ -24,24 +24,3 @@ func (s *PostgresStore) CreateTaxTable(tx *sql.Tx) error {
 
 	return nil
 }
-
-func (s *PostgresStore) CreateItemTaxTable(tx *sql.Tx) error {
-	// SQL query to create the 'ItemTax' table with a default value for 'hsn_code'
-	createItemTaxTableQuery := `
-    CREATE TABLE IF NOT EXISTS ItemTax (
-        item_id INT NOT NULL,
-        tax_id INT NOT NULL,
-        hsn_code TEXT NOT NULL DEFAULT '',
-        PRIMARY KEY (item_id, tax_id),
-        FOREIGN KEY (item_id) REFERENCES item(id) ON DELETE CASCADE,
-        FOREIGN KEY (tax_id) REFERENCES tax(id) ON DELETE CASCADE
-    );`
-
-	// Execute the query using the provided transaction
-	_, err := tx.Exec(createItemTaxTableQuery)
-	if err != nil {
-		return fmt.Errorf("error creating ItemTax table: %w", err)
-	}
-
-	return nil
-}

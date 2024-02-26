@@ -62,14 +62,41 @@ func (s *PostgresStore) CreateItemFinancialTable(tx *sql.Tx) error {
     CREATE TABLE IF NOT EXISTS item_financial (
         item_id INT PRIMARY KEY REFERENCES item(id) ON DELETE CASCADE,
         buy_price DECIMAL(10, 2),  
-        margin DECIMAL(5, 2),  
+        gst_on_buy DECIMAL(10, 2),
+        buy_price_without_gst DECIMAL(10, 2) GENERATED ALWAYS AS (buy_price - gst_on_buy) STORED,
         mrp_price DECIMAL(10, 2),
+        gst_on_mrp DECIMAL(10, 2),
+        mrp_price_without_gst DECIMAL(10, 2) GENERATED ALWAYS AS (mrp_price - gst_on_mrp) STORED,
+        margin_net DECIMAL(5, 2) GENERATED ALWAYS AS (CASE WHEN (mrp_price - gst_on_mrp) = 0 THEN NULL ELSE (1 - (buy_price - gst_on_buy) / (mrp_price - gst_on_mrp)) * 100 END) STORED,
+        margin DECIMAL(5, 2),
+		tax_id INT REFERENCES tax(id) ON DELETE SET NULL,  
         current_scheme_id INT REFERENCES item_scheme(id) ON DELETE SET NULL
     );`
 
 	_, err := tx.Exec(createItemFinancialTableQuery)
 	if err != nil {
 		return fmt.Errorf("error creating item_financial table: %w", err)
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) CreateItemTaxTable(tx *sql.Tx) error {
+	// SQL query to create the 'ItemTax' table with a default value for 'hsn_code'
+	createItemTaxTableQuery := `
+    CREATE TABLE IF NOT EXISTS ItemTax (
+        item_id INT NOT NULL,
+        tax_id INT NOT NULL,
+        hsn_code TEXT NOT NULL DEFAULT '',
+        PRIMARY KEY (item_id, tax_id),
+        FOREIGN KEY (item_id) REFERENCES item(id) ON DELETE CASCADE,
+        FOREIGN KEY (tax_id) REFERENCES tax(id) ON DELETE CASCADE
+    );`
+
+	// Execute the query using the provided transaction
+	_, err := tx.Exec(createItemTaxTableQuery)
+	if err != nil {
+		return fmt.Errorf("error creating ItemTax table: %w", err)
 	}
 
 	return nil
@@ -121,7 +148,6 @@ func (s *PostgresStore) CreateItemStoreTable(tx *sql.Tx) error {
         CREATE TABLE IF NOT EXISTS item_store (
             id SERIAL PRIMARY KEY,
             item_id INT REFERENCES item(id) ON DELETE CASCADE,
-            mrp_price INT NOT NULL,
             store_price INT NOT NULL,
             discount INT NOT NULL,
             store_id INT REFERENCES store(id) ON DELETE CASCADE,
@@ -1261,6 +1287,46 @@ func (s *PostgresStore) EditItem(item *types.ItemEdit) (*types.ItemEdit, error) 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
 		return nil, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return item, nil
+}
+
+func (s *PostgresStore) AddItemFinancials(item *types.ItemFinancials) (*types.ItemFinancials, error) {
+	// Begin a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if p := recover(); p != nil {
+			tx.Rollback()
+			panic(p) // re-throw panic after Rollback
+		} else if err != nil {
+			tx.Rollback() // err is non-nil; don't change it
+		} else {
+			err = tx.Commit() // if Commit returns error update err with commit err
+		}
+	}()
+
+	// Calculate GST amounts for both buy price and MRP
+	gstOnBuy := item.BuyPrice * item.GSTRate / 100
+	gstOnMRP := item.MRPPrice * item.GSTRate / 100
+
+	// Calculate prices without GST
+	buyPriceWithoutGST := item.BuyPrice - gstOnBuy
+	mrpPriceWithoutGST := item.MRPPrice - gstOnMRP
+
+	// Prepare the insert statement for the item_financial table
+	insertItemFinancialQuery := `
+        INSERT INTO item_financial (item_id, buy_price, gst_on_buy, buy_price_without_gst, mrp_price, gst_on_mrp, mrp_price_without_gst, margin, current_scheme_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    `
+
+	// Execute the insert statement with the item financial data
+	_, err = tx.Exec(insertItemFinancialQuery, item.ItemID, item.BuyPrice, gstOnBuy, buyPriceWithoutGST, item.MRPPrice, gstOnMRP, mrpPriceWithoutGST, item.Margin, item.CurrentSchemeID)
+	if err != nil {
+		return nil, fmt.Errorf("error inserting into item_financial: %w", err)
 	}
 
 	return item, nil

@@ -200,3 +200,13 @@ type ItemEdit struct {
 	Size        int      `json:"size"`
 	Unit        string   `json:"unit"`
 }
+
+type ItemFinancials struct {
+	ItemID          int     `json:"item_id"`
+	BuyPrice        float64 `json:"buy_price"`
+	MRPPrice        float64 `json:"mrp_price"`
+	GSTRate         float64 `json:"gst_rate"` // GST rate as a percentage
+	CreatedBy       int     `json:"created_by"`
+	Margin          float64 `json:"margin"`            // Margin as a percentage
+	CurrentSchemeID int     `json:"current_scheme_id"` // Optional, based on your requirements
+}

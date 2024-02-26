@@ -1,6 +1,8 @@
 package types
 
-import "time"
+import (
+	"time"
+)
 
 type Higher_Level_Category struct {
 	ID         int       `json:"id"`
@@ -8,7 +10,7 @@ type Higher_Level_Category struct {
 	Image      string    `json:"image"`
 	Position   int       `json:"position"`
 	Created_At time.Time `json:"created_at"`
-	Created_By int       `json:"created_by"`
+	Created_By int       `json:"created_by"` // Updated to sql.NullInt64
 }
 
 type Create_Higher_Level_Category struct {
@@ -24,15 +26,6 @@ type Update_Higher_Level_Category struct {
 
 type Delete_Higher_Level_Category struct {
 	ID int `json:"id"`
-}
-
-func New_Higher_Level_Category(name string, image string) (*Higher_Level_Category, error) {
-	return &Higher_Level_Category{
-		Name:       name,
-		Image:      image,
-		Position:   1,
-		Created_By: 1,
-	}, nil
 }
 
 func New_Update_Higher_Level_Category(name string, id int) (*Update_Higher_Level_Category, error) {

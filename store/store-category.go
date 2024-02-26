@@ -110,11 +110,11 @@ func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, e
 
 func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error) {
 	query := `
-	SELECT c.id, c.name, c.promotion, COALESCE(ci.image, '') as image, COALESCE(ci.position, 0) as position, c.created_at, COALESCE(c.created_by, 0) 
-	FROM category c
-	LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
-	WHERE c.promotion = $1
-	`
+    SELECT c.id, c.name, c.promotion, COALESCE(ci.image, '') AS image, COALESCE(ci.position, 0) AS position, c.created_at, COALESCE(c.created_by, 0) AS created_by
+    FROM category c
+    LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
+    WHERE c.promotion = $1
+    `
 
 	rows, err := s.db.Query(query, promotion)
 	if err != nil {
@@ -129,8 +129,8 @@ func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error
 			&category.ID,
 			&category.Name,
 			&category.Promotion,
-			&category.Image,    // Will be an empty string if no category_image record exists
-			&category.Position, // Will be 0 if no category_image record exists
+			&category.Image,    // Directly scanning into the struct, expecting no NULLs due to COALESCE
+			&category.Position, // Directly scanning into the struct
 			&category.Created_At,
 			&category.Created_By,
 		)
