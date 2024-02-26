@@ -506,6 +506,14 @@ func (s *Server) handleItemEdit(res http.ResponseWriter, req *http.Request) erro
 	return nil
 }
 
+func (s *Server) handleManagerSearchItem(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-search-item")
+		return s.goRoutineWrapper(ManagerSearchItem, s.handleManagerSearchItemBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")

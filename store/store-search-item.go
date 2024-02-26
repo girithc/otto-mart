@@ -6,6 +6,7 @@ import (
 
 	"github.com/girithc/pronto-go/types"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -71,4 +72,62 @@ ORDER BY item.id
 	}
 
 	return items, nil
+}
+
+func (s *PostgresStore) ManagerSearchItem(name string) ([]ManagerSearchItem, error) {
+	var items []ManagerSearchItem
+
+	query := `
+	SELECT i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name as brand_name, i.brand_id, COALESCE(if.mrp_price, 0) as mrp_price, COALESCE(array_agg(ii.image_url) FILTER (WHERE ii.image_url IS NOT NULL), ARRAY[]::VARCHAR[]) as images
+	FROM item i
+	LEFT JOIN brand b ON i.brand_id = b.id
+	LEFT JOIN item_financial if ON i.id = if.item_id
+	LEFT JOIN item_image ii ON i.id = ii.item_id
+	WHERE LOWER(i.name) LIKE LOWER($1)
+	GROUP BY i.id, b.name, if.mrp_price
+	`
+
+	rows, err := s.db.Query(query, "%"+name+"%")
+	if err != nil {
+		return nil, fmt.Errorf("error executing search query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var item ManagerSearchItem
+		var images pq.StringArray // Using pq.StringArray to handle the array of images
+
+		err := rows.Scan(&item.Id, &item.Name, &item.Description, &item.Quantity, &item.UnitOfQuantity, &item.BrandName, &item.BrandId, &item.MRPPrice, pq.Array(&images))
+		if err != nil {
+			return nil, fmt.Errorf("error scanning row: %w", err)
+		}
+
+		// Convert pq.StringArray to a regular slice of strings
+		item.Images = make([]string, 0, len(images))
+		for _, img := range images {
+			if img != "" { // This check is technically redundant due to the COALESCE and FILTER in the query, but included for robustness
+				item.Images = append(item.Images, img)
+			}
+		}
+
+		items = append(items, item)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating through rows: %w", err)
+	}
+
+	return items, nil
+}
+
+type ManagerSearchItem struct {
+	Id             int      `json:"id"`
+	Name           string   `json:"name"`
+	Description    string   `json:"description"`
+	Quantity       int      `json:"size"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	BrandName      string   `json:"brand_name"`
+	BrandId        int      `json:"brand_id"`
+	MRPPrice       float64  `json:"mrp_price"`
+	Images         []string `json:"images"`
 }
