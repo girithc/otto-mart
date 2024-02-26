@@ -8,14 +8,16 @@ class HomeApiClient {
   HomeApiClient(this.localbaseUrl);
 
   Future<List<Category>> fetchCategories() async {
-    var request =
-        http.Request('GET', Uri.parse('$baseUrl/higher-level-category'));
+    var url = Uri.parse('$baseUrl/higher-level-category');
 
-    http.StreamedResponse response = await request.send();
+    // Use http.get for a simpler GET request
+    http.Response response = await http.get(url);
+
+    // Print the status code and body of the response
+    print("Response: ${response.statusCode} ${response.body}");
 
     if (response.statusCode == 200) {
-      final String responseBody = await response.stream.bytesToString();
-      final List<dynamic> jsonData = json.decode(responseBody);
+      final List<dynamic> jsonData = json.decode(response.body);
       final List<Category> categories =
           jsonData.map((item) => Category.fromJson(item)).toList();
       return categories;

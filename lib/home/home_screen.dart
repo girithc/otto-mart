@@ -215,122 +215,6 @@ class _MyHomePageState extends State<MyHomePage>
                           return Column(
                             children: [
                               // Your other body content
-                              Container(
-                                color: Colors.white,
-                                padding: const EdgeInsets.all(2),
-                                height: 65,
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 22, // Flex 3 for the address
-                                      child: GestureDetector(
-                                        onTap: () {
-                                          context.go('/select-address');
-                                        },
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 5, vertical: 0),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius:
-                                                BorderRadius.circular(8.0),
-                                            border: Border.all(
-                                                color: Colors.deepPurpleAccent,
-                                                width: 1),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.grey.shade300,
-                                                spreadRadius: 2,
-                                                blurRadius: 3,
-                                                offset: const Offset(0, 3),
-                                              ),
-                                            ],
-                                          ), // No background color for the first child
-                                          child: Center(
-                                            child: Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
-                                              children: [
-                                                const Icon(
-                                                  Icons
-                                                      .location_on, // Location marker icon
-                                                  color:
-                                                      Colors.deepPurpleAccent,
-                                                  size: 20,
-                                                ),
-                                                const SizedBox(
-                                                    width:
-                                                        8), // Provides a gap between the icon and the text
-                                                Expanded(
-                                                  // Makes the text widget flexible
-                                                  child: Text(
-                                                    cart.deliveryAddress
-                                                        .streetAddress,
-                                                    style:
-                                                        GoogleFonts.cantoraOne(
-                                                            fontSize: 18,
-                                                            fontStyle: FontStyle
-                                                                .normal,
-                                                            color:
-                                                                Colors.black),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                    maxLines:
-                                                        2, // Ensures the text does not wrap to more than one line
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 1,
-                                      child: Container(),
-                                    ),
-                                    Expanded(
-                                      flex: 42, // Flex 42 for the main content
-                                      child: Container(
-                                        padding: const EdgeInsets.only(
-                                            left: 5.0, top: 12, bottom: 12),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.grey.shade300,
-                                              spreadRadius: 2,
-                                              blurRadius: 3,
-                                              offset: const Offset(0, 3),
-                                            ),
-                                          ],
-                                        ),
-                                        child: Row(
-                                          // Align content to the start of the Row
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                          children: [
-                                            // Spacing between icon and text
-                                            Text(
-                                              "Free delivery @ 149",
-                                              style: GoogleFonts.cantoraOne(
-                                                  fontSize: 24,
-                                                  fontStyle: FontStyle.normal,
-                                                  fontWeight: FontWeight.normal,
-                                                  color: Colors.black),
-                                              maxLines:
-                                                  1, // Ensures the text does not wrap to more than one line
-                                              // Add ellipsis when text overflows
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
 
                               promotions.isNotEmpty
                                   ? Highlights(
@@ -363,13 +247,14 @@ class _MyHomePageState extends State<MyHomePage>
                           const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 4,
                         crossAxisSpacing: 2,
-                        mainAxisSpacing: 4,
-                        childAspectRatio: 0.64,
+                        mainAxisSpacing: 8,
+                        childAspectRatio: 0.62,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
                           return _buildCategoryContainer(
                               context,
+                              index,
                               categories[index].id,
                               categories[index].name,
                               categories[index].image);
@@ -513,8 +398,8 @@ class _MyHomePageState extends State<MyHomePage>
     );
   }
 
-  Widget _buildCategoryContainer(
-      BuildContext context, int categoryID, String categoryName, String image) {
+  Widget _buildCategoryContainer(BuildContext context, int index,
+      int categoryID, String categoryName, String image) {
     return GestureDetector(
       onTap: () => {
         Navigator.push(
@@ -526,62 +411,81 @@ class _MyHomePageState extends State<MyHomePage>
         )
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        padding: const EdgeInsets.only(left: 0, right: 0, bottom: 0),
-        color: Colors.white,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                height: MediaQuery.of(context).size.height * 0.10,
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: Colors.white),
-                  boxShadow: const [],
-                ),
-                child: Image.network(
-                  image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (BuildContext context, Object exception,
-                      StackTrace? stackTrace) {
-                    return Container(
-                      height: 120,
-                      color: Colors.grey[200],
-                      alignment: Alignment.center,
-                      child: const Center(
-                        child: Text(
-                          'no image',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.01,
-              ),
-              SizedBox(
-                height: MediaQuery.of(context).size.height * 0.06,
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: Text(
-                    categoryName,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                        height: 1.3,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black), // Adjusting the line spacing here
-                  ),
-                ),
-              ),
+        margin: (index % 4 == 0)
+            ? const EdgeInsets.only(left: 5, right: 2.5, bottom: 1)
+            : (index % 4 == 3)
+                ? const EdgeInsets.only(left: 2.5, right: 5, bottom: 1)
+                : const EdgeInsets.only(left: 2.5, right: 2.5, bottom: 1),
+        padding: const EdgeInsets.only(left: 0, right: 0, bottom: 5),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10.0),
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              // Top color of the gradient
+              Colors.deepPurpleAccent.shade200.withOpacity(0.25),
+              Colors.deepPurpleAccent.shade100
+                  .withOpacity(0.1), // Bottom color of the gradient
             ],
           ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Container(
+              height: MediaQuery.of(context).size.height * 0.12,
+              margin: const EdgeInsets.only(left: 3, right: 3, top: 3),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10.0),
+                border: Border.all(color: Colors.white),
+                boxShadow: const [],
+              ),
+              child: Image.network(
+                image,
+                fit: BoxFit.cover,
+                errorBuilder: (BuildContext context, Object exception,
+                    StackTrace? stackTrace) {
+                  return Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10.0),
+                      border: Border.all(color: Colors.white),
+                      boxShadow: const [],
+                    ),
+                    alignment: Alignment.center,
+                    child: const Center(
+                      child: Text(
+                        'image',
+                        style: TextStyle(fontSize: 12, color: Colors.grey),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.01,
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.04,
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: Text(
+                  categoryName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      height: 1.3,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black), // Adjusting the line spacing here
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -721,7 +625,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(130); // Increased height to accommodate content
+      const Size.fromHeight(140); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {
@@ -732,116 +636,200 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
         // When a tap is detected, reset the focus
         FocusScope.of(context).unfocus();
       },
-      child: AppBar(
-        surfaceTintColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading:
-            false, // This line removes the default back button
-        backgroundColor:
-            Colors.white, //Theme.of(context).colorScheme.inversePrimary,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  height: 40.0, // Set height of the container
-                  width: 40.0, // Set width of the container
-                  decoration: const BoxDecoration(
-                    // Background color of the container
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        Colors.deepPurpleAccent,
-                        Colors.purpleAccent
-                      ], // Gradient colors
-                    ), // Circular shape
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.deepPurpleAccent.shade100
+                  .withOpacity(0.1), // Top color of the gradient
+              Colors.deepPurpleAccent.shade200
+                  .withOpacity(0.25), // Bottom color of the gradient
+            ],
+          ),
+        ),
+        child: AppBar(
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading:
+              false, // This line removes the default back button
+          backgroundColor: Colors
+              .transparent, //Theme.of(context).colorScheme.inversePrimary,
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => context.go('/setting'),
+                    child: Container(
+                        alignment: Alignment.topLeft,
+                        height: 35.0, // Set height of the container
+                        width: 35.0, // Set width of the container
+                        margin: const EdgeInsets.only(right: 5),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.black.withOpacity(0.2),
+                              Colors.black.withOpacity(0.35)
+                            ], // Gradient colors
+                          ), // Circular shape
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.person, color: Colors.white),
+                        )),
                   ),
-                  child: IconButton(
-                      icon: const Icon(Icons.person),
-                      color: Colors.white, // Icon color
-                      onPressed: () {
-                        context.push('/setting');
-                      }),
-                ),
-                const Spacer(),
-                Text(
-                  "Delivery in $randomNumber minutes",
-                  style: GoogleFonts.cantoraOne(
-                      fontSize: 24,
-                      fontStyle: FontStyle.normal,
-                      color: Colors.black),
-                  maxLines:
-                      1, // Ensures the text does not wrap to more than one line
-                  // Add ellipsis when text overflows
-                ),
-                Image.asset(
-                  "assets/images/scooter.jpg", // Path to your scooter image
-                  height: 50, // Set an appropriate height for the icon
-                ),
-              ],
-            ),
-            const SizedBox(
-              height: 5,
-            ),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(6.0),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.deepPurpleAccent,
-                    spreadRadius: 1,
-                    blurRadius: 2,
-                    offset: Offset(0, 2),
+                  Consumer<CartModel>(
+                    // Wrap the Expanded widget with Consumer<CartModel>
+                    builder: (context, cart, child) {
+                      return Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment
+                              .center, // Center the column in the expanded space
+                          crossAxisAlignment: CrossAxisAlignment
+                              .center, // Center the text horizontally
+                          children: [
+                            SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.01),
+                            RichText(
+                              textAlign: TextAlign.center, // Center the text
+                              text: TextSpan(
+                                style: const TextStyle(
+                                  fontSize:
+                                      20, // Base font size for the whole text
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors
+                                      .black, // Base color for the whole text
+                                ),
+                                children: <TextSpan>[
+                                  const TextSpan(
+                                    text:
+                                        'Delivery in ', // First part of the text
+                                  ),
+                                  TextSpan(
+                                    text:
+                                        '$randomNumber Mins', // Part of the text you want to style differently
+                                    style: const TextStyle(
+                                      color: Colors
+                                          .deepPurpleAccent, // Different color for this part
+                                      // You can add more styles here if needed
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.006),
+                            GestureDetector(
+                              onTap: () => context.go(
+                                  '/select-address'), // Navigate to the settings page on tap
+                              child: Row(
+                                mainAxisSize: MainAxisSize
+                                    .min, // Use the minimum space needed by the children
+                                mainAxisAlignment: MainAxisAlignment
+                                    .center, // Center the row contents
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      "${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}", // Placeholder for the second line of text
+                                      textAlign: TextAlign.center,
+                                      style: const TextStyle(
+                                        fontSize:
+                                            16, // Adjust the font size as needed
+                                        color: Colors.black,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons
+                                        .keyboard_arrow_down, // Downward caret icon
+                                    color: Colors.black, // Icon color
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                  Container(
+                    alignment: Alignment.topRight,
+                    height: 20.0, // Set height of the container
+                    width: 40.0, // Set width of the container
+                    decoration: const BoxDecoration(
+                        shape: BoxShape.circle, color: Colors.transparent),
+                    child: IconButton(
+                        icon: const Icon(Icons.person),
+                        color: Colors.transparent, // Icon color
+                        onPressed: () {}),
                   ),
                 ],
               ),
-              margin: const EdgeInsets.symmetric(horizontal: 0.0),
-              padding: const EdgeInsets.symmetric(horizontal: 0.0),
-              height: 50, // Increased height to contain the input field
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: () {
-                      // Your search logic here
-                    },
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const SearchTopLevel()),
-                        )
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.015,
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(15.0),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                margin: const EdgeInsets.symmetric(horizontal: 0.0),
+                padding: const EdgeInsets.symmetric(horizontal: 0.0),
+                height: MediaQuery.of(context).size.height *
+                    0.06, // Increased height to contain the input field
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: () {
+                        // Your search logic here
                       },
-                      child: const AbsorbPointer(
-                        absorbing: true,
-                        child: TextField(
-                          readOnly: true,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.black,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Search For Groceries',
-                            border: InputBorder.none,
+                    ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const SearchTopLevel()),
+                          )
+                        },
+                        child: const AbsorbPointer(
+                          absorbing: true,
+                          child: TextField(
+                            readOnly: true,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Search For Groceries',
+                              hintStyle: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                              border: InputBorder.none,
+                            ),
                           ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+          toolbarHeight: MediaQuery.of(context).size.height * 0.16,
         ),
-        toolbarHeight: 120,
       ),
     );
   }

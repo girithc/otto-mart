@@ -13,8 +13,6 @@ class ItemApiClient {
       throw Exception('fetchItems parameters are not valid');
     }
 
-    //print("(ItemApiClient) Parameters are valid");
-
     var queryParams = {
       'category_id': categoryId.toString(),
       'store_id': storeId.toString()
@@ -23,6 +21,9 @@ class ItemApiClient {
 
     //print("Query Params $queryParams");
     http.Response response = await http.get(url);
+
+    print("Query Params $queryParams");
+    print("Response Item: ${response.statusCode} ${response.body} ");
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);

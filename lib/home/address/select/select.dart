@@ -81,17 +81,40 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     final response =
         await networkService.postWithAuth('/address', additionalData: body);
 
-    print("Address All: $response");
+    //print("Address All: ${response.body}");
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
         final List<dynamic> jsonData = json.decode(response.body);
         final List<Address> items =
             jsonData.map((item) => Address.fromJson(item)).toList();
         setState(() {
-          print("Success $addresses");
           addresses = items;
           isLoadingGetAddress = false;
         });
+
+        if (widget.flag) {
+          deliverToAddress(items[0].id).then(
+            (resp) async => {
+              if (resp!.deliverable)
+                {
+                  await storage
+                      .write(key: 'storeId', value: resp.storeId.toString())
+                      .then((value) => {
+                            storage
+                                .write(
+                                    key: 'cartId',
+                                    value: resp.cartId.toString())
+                                .then((value) => {context.push('/home')})
+                          })
+                }
+              else
+                {
+                  await storage.delete(key: 'storeId'),
+                  context.push('/coming-soon')
+                }
+            },
+          );
+        }
       } else {
         if (response.contentLength == 3) {
           Navigator.of(context).push(
@@ -107,7 +130,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   }
 
   Future<AddressResponse?> setDefaultAddress(int addressId) async {
-    print("Enter Set Default address");
+    //print("Enter Set Default address");
     final Map<String, String> headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
@@ -127,9 +150,9 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           await networkService.postWithAuth('/address', additionalData: body);
 
       if (response.statusCode == 200) {
-        print(">>>>>>>>>>>>>>");
-        print(response.body.toString());
-        print(">>>>>>>>>>>>>>");
+        //print(">>>>>>>>>>>>>>");
+        //print(response.body.toString());
+        //print(">>>>>>>>>>>>>>");
 
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
@@ -217,7 +240,14 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        leading: Container(),
+        leading: widget.flag
+            ? Container()
+            : IconButton(
+                onPressed: () => context.go('/home'),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_outlined,
+                  color: Colors.white,
+                )),
       ),
       body: UpgradeAlert(
         dialogStyle: Platform.isIOS

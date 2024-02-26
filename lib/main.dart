@@ -100,7 +100,9 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/select-address-login',
       builder: (BuildContext context, GoRouterState state) {
-        return const AddressSelectionWidget();
+        return const AddressSelectionWidget(
+          flag: true,
+        );
       },
     ),
     GoRoute(

@@ -206,8 +206,6 @@ class _ListOfItemsState extends State<ListOfItems> {
             child: Material(
               elevation: 4.0,
               child: Container(
-                //surfaceTintColor: Colors.white,
-                //shadowColor: Colors.grey,
                 margin: const EdgeInsets.symmetric(vertical: 5),
                 padding: EdgeInsets.zero,
                 color: Colors.white,
@@ -345,36 +343,74 @@ class CategoryItem extends StatelessWidget {
               categoryID: categoryID, storeID: 1, categoryName: categoryName));
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 12),
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
-                    begin: Alignment.centerRight,
-                    end: Alignment.centerLeft,
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                     colors: [
-                      Colors.pinkAccent.shade100,
-                      Colors.white,
+                      Colors.deepPurpleAccent.shade200.withOpacity(0.25),
+                      Colors.deepPurpleAccent.shade100.withOpacity(0.1),
                     ],
                     stops: const [0.1, 1.0],
                   )
                 : null, // No gradient when not selected
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(15),
-              bottomRight: Radius.circular(15),
+            borderRadius: const BorderRadius.all(
+              Radius.circular(10.0),
             ),
           ),
-          child: Center(
-            child: Text(
-              categoryName,
-              textAlign: TextAlign.center,
-              style: isSelected
-                  ? const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black,
-                      fontWeight: FontWeight.normal)
-                  : const TextStyle(fontSize: 14, color: Colors.black),
-            ),
+          child: Column(
+            children: [
+              Container(
+                height: MediaQuery.of(context).size.height * 0.1,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.white),
+                  boxShadow: const [],
+                ),
+                child: Center(
+                  child: Image.network(
+                    categoryImage,
+                    fit: BoxFit.cover,
+                    errorBuilder: (BuildContext context, Object exception,
+                        StackTrace? stackTrace) {
+                      return Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          border: Border.all(color: Colors.white),
+                          boxShadow: const [],
+                        ),
+                        alignment: Alignment.center,
+                        child: const Center(
+                          child: Text(
+                            'image',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              Container(
+                alignment: Alignment.bottomCenter,
+                child: Text(
+                  categoryName,
+                  textAlign: TextAlign.center,
+                  style: isSelected
+                      ? const TextStyle(
+                          fontSize: 14,
+                          color: Colors.black,
+                          fontWeight: FontWeight.normal)
+                      : const TextStyle(fontSize: 14, color: Colors.black),
+                ),
+              ),
+            ],
           ),
         ));
   }
@@ -724,16 +760,12 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      elevation: 2.0,
+      elevation: 1.0,
+      color: Colors.white,
+      shadowColor: Colors.white,
       child: Container(
-        padding: const EdgeInsets.only(top: 5),
+        padding: const EdgeInsets.only(top: 1),
         margin: const EdgeInsets.all(0),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey,
-            width: 1.0, // Adjust the border width as needed
-          ),
-        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment:
@@ -759,7 +791,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
             Container(
               alignment: Alignment.bottomCenter,
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 10, top: 10),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: Colors.white,
@@ -772,8 +804,9 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
                 style: const TextStyle(
                   color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  fontSize: 20,
+                  fontSize: 18,
                 ),
+                textAlign: TextAlign.center,
               ),
             ),
             const Spacer(), // Expands to fill available space
