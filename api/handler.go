@@ -546,6 +546,14 @@ func (s *Server) handleManagerItemStoreCombo(res http.ResponseWriter, req *http.
 	return nil
 }
 
+func (s *Server) handleManagerAddNewItem(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-add-new-item")
+		return s.goRoutineWrapper(ManagerAddNewItem, s.handleManagerAddNewItemBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")

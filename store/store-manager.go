@@ -286,3 +286,68 @@ func (s *PostgresStore) ManagerItemStoreCombo() (bool, error) {
 
 	return true, nil
 }
+
+func (s *PostgresStore) ManagerAddNewItem(item types.ItemBasic) (types.ItemBasicReturn, error) {
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return types.ItemBasicReturn{}, fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer tx.Rollback() // Ensure rollback in case of failure
+
+	// Verify if the brand exists
+	var exists bool
+	err = tx.QueryRow("SELECT EXISTS(SELECT 1 FROM brand WHERE id = $1)", item.BrandId).Scan(&exists)
+	if err != nil {
+		return types.ItemBasicReturn{}, fmt.Errorf("failed to query brand existence: %w", err)
+	}
+	if !exists {
+		return types.ItemBasicReturn{}, fmt.Errorf("brand with ID %d does not exist", item.BrandId)
+	}
+
+	// Insert the item
+	insertQuery := `
+        INSERT INTO item (name, brand_id, quantity, unit_of_quantity, description)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id;`
+	var itemId int
+	err = tx.QueryRow(insertQuery, item.Name, item.BrandId, item.Quantity, item.UnitOfQuantity, item.Description).Scan(&itemId)
+	if err != nil {
+		return types.ItemBasicReturn{}, fmt.Errorf("failed to insert item: %w", err)
+	}
+
+	// Retrieve category IDs from category names
+	var categoryIds []int
+	for _, categoryName := range item.CategoryNames {
+		var categoryId int
+		err = tx.QueryRow("SELECT id FROM category WHERE name = $1", categoryName).Scan(&categoryId)
+		if err != nil {
+			return types.ItemBasicReturn{}, fmt.Errorf("failed to retrieve category ID for %s: %w", categoryName, err)
+		}
+		categoryIds = append(categoryIds, categoryId)
+	}
+
+	// Insert into item_category table for each category ID
+	for _, categoryId := range categoryIds {
+		_, err = tx.Exec("INSERT INTO item_category (item_id, category_id) VALUES ($1, $2)", itemId, categoryId)
+		if err != nil {
+			return types.ItemBasicReturn{}, fmt.Errorf("failed to insert into item_category: %w", err)
+		}
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return types.ItemBasicReturn{}, fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	// Return the inserted item with category names
+	return types.ItemBasicReturn{
+		Name:           item.Name,
+		BrandId:        item.BrandId,
+		Quantity:       item.Quantity,
+		UnitOfQuantity: item.UnitOfQuantity,
+		Description:    item.Description,
+		CategoryNames:  item.CategoryNames,
+		Id:             itemId,
+	}, nil
+}

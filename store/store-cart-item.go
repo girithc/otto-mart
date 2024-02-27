@@ -147,7 +147,6 @@ func (s *PostgresStore) Update_Cart_Item_Quantity(cart_id int, item_id int, quan
 
 func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*types.CartDetails, error) {
 	// Begin a new transaction
-
 	var outOfStock bool = false
 	var finalQuantity int = 0
 	tx, err := s.db.Begin()
@@ -181,7 +180,8 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 			tx.Rollback()
 			return nil, fmt.Errorf("item not in cart")
 		} else if quantity > 0 {
-			_, err = tx.Exec("INSERT INTO cart_item (cart_id, item_id, quantity, sold_price) VALUES ($1, $2, $3, (SELECT store_price FROM item_store WHERE item_id=$2 AND store_id=1))", cartId, itemId, quantity)
+			// Calculate sold price by subtracting discount from MRP price
+			_, err = tx.Exec("INSERT INTO cart_item (cart_id, item_id, quantity, sold_price) VALUES ($1, $2, $3, (SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$2))", cartId, itemId, quantity)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
@@ -201,11 +201,11 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 			if stockQuantity <= 0 {
 				_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
 			} else {
-				_, err = tx.Exec("UPDATE cart_item SET quantity=$1 WHERE cart_id=$2 AND item_id=$3", stockQuantity, cartId, itemId)
+				_, err = tx.Exec("UPDATE cart_item SET quantity=$1, sold_price=(SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$3) WHERE cart_id=$2 AND item_id=$3", stockQuantity, cartId, itemId)
 				finalQuantity = stockQuantity
 			}
 		} else {
-			_, err = tx.Exec("UPDATE cart_item SET quantity=$1 WHERE cart_id=$2 AND item_id=$3", newTotalQuantity, cartId, itemId)
+			_, err = tx.Exec("UPDATE cart_item SET quantity=$1, sold_price=(SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$3) WHERE cart_id=$2 AND item_id=$3", newTotalQuantity, cartId, itemId)
 			finalQuantity = newTotalQuantity
 		}
 		if err != nil {
@@ -222,8 +222,18 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 		return nil, err
 	}
 
-	// Recalculate cart totals after adding/removing item
-	err = s.CalculateCartTotal(cartId)
+	cartItem.CartId = cartId
+	cartItem.ItemId = itemId
+	cartItem.Quantity = finalQuantity
+	cartItem.OutOfStock = outOfStock
+
+	// Return the cart item details
+	return cartItem, nil
+}
+
+func (s *PostgresStore) GetCartDetails(cartId int, cartItem types.CartDetails) (*types.CartDetails, error) {
+
+	err := s.CalculateCartTotal(cartId)
 	if err != nil {
 		fmt.Print("Error in CalculateCartTotal() inside Add_Cart_Item()", err)
 	}
@@ -245,12 +255,9 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 	}
 
 	cartItem.CartId = cartId
-	cartItem.ItemId = itemId
-	cartItem.Quantity = finalQuantity
-	cartItem.OutOfStock = outOfStock
 
 	// Return the cart item details
-	return cartItem, nil
+	return &cartItem, nil
 }
 
 func (s *PostgresStore) Get_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_Item, error) {
@@ -275,9 +282,9 @@ func (s *PostgresStore) Get_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_It
 func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_Item_Item_List, error) {
 	rows, err := s.db.Query(`
         SELECT 
-            ci.item_id,  -- Changed from i.id to ci.item_id for clarity
+            ci.item_id, 
             i.name, 
-            istore.mrp_price::numeric::float8, 
+            ifin.mrp_price::numeric::float8, 
             ii.image_url, 
             istore.stock_quantity, 
             ci.quantity, 
@@ -285,9 +292,10 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
             (istore.stock_quantity >= ci.quantity) AS in_stock 
         FROM cart_item ci
         JOIN item_store istore ON ci.item_id = istore.item_id
+        JOIN item_financial ifin ON ci.item_id = ifin.item_id
         JOIN item i ON istore.item_id = i.id
-        LEFT JOIN item_image ii ON i.id = ii.item_id
-        WHERE ci.cart_id = $1;
+        LEFT JOIN item_image ii ON i.id = ii.item_id AND ii.order_position = 1
+        WHERE ci.cart_id = $1
     `, cart_id)
 	if err != nil {
 		return nil, err
@@ -377,7 +385,7 @@ func (s *PostgresStore) fetchCartItems(tx *sql.Tx, cartId int) ([]*types.Cart_It
         SELECT 
             i.id, 
             i.name, 
-            istore.mrp_price::numeric::float8 AS price, 
+            ifin.mrp_price::numeric::float8 AS price, 
             MIN(ii.image_url) AS main_image, 
             istore.stock_quantity, 
             ci.quantity, 
@@ -385,12 +393,13 @@ func (s *PostgresStore) fetchCartItems(tx *sql.Tx, cartId int) ([]*types.Cart_It
         FROM 
             cart_item ci
             JOIN item_store istore ON ci.item_id = istore.item_id
+			JOIN item_financial ifin ON istore.item_id = ifin.item_id
             JOIN item i ON istore.item_id = i.id
             LEFT JOIN item_image ii ON i.id = ii.item_id
         WHERE 
             ci.cart_id = $1
         GROUP BY 
-            i.id, i.name, istore.mrp_price, istore.stock_quantity, ci.quantity, ci.sold_price
+            i.id, i.name, ifin.mrp_price, istore.stock_quantity, ci.quantity, ci.sold_price
     `
 
 	rows, err := tx.Query(query, cartId)

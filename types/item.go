@@ -218,3 +218,22 @@ type ItemFinance struct {
 	GST      float64 `json:"gst"`
 	Margin   float64 `json:"margin"`
 }
+
+type ItemBasic struct {
+	Name           string   `json:"name"`
+	BrandId        int      `json:"brand_id"`
+	Quantity       int      `json:"quantity"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	CategoryNames  []string `json:"category_names"`
+	Description    string   `json:"description"`
+}
+
+type ItemBasicReturn struct {
+	Name           string   `json:"name"`
+	BrandId        int      `json:"brand_id"`
+	Quantity       int      `json:"quantity"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	Description    string   `json:"description"`
+	CategoryNames  []string `json:"category_names"`
+	Id             int      `json:"id"`
+}
