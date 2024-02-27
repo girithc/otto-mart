@@ -24,3 +24,35 @@ func (s *PostgresStore) CreateTaxTable(tx *sql.Tx) error {
 
 	return nil
 }
+
+func (s *PostgresStore) GetTaxDetails() ([]TaxDetail, error) {
+	var taxDetails []TaxDetail
+
+	query := `SELECT id, gst, cess FROM tax`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("error executing tax details query: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var taxDetail TaxDetail
+		if err := rows.Scan(&taxDetail.ID, &taxDetail.GST, &taxDetail.CESS); err != nil {
+			return nil, fmt.Errorf("error scanning tax row: %w", err)
+		}
+		taxDetails = append(taxDetails, taxDetail)
+	}
+
+	// Check for any error that might have occurred during iteration
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating tax rows: %w", err)
+	}
+
+	return taxDetails, nil
+}
+
+type TaxDetail struct {
+	ID   int
+	GST  int
+	CESS int
+}

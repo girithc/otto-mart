@@ -118,7 +118,7 @@ type Get_Items_By_CategoryID_And_StoreID struct {
 	Category         string    `json:"category"`
 	Stock_Quantity   int       `json:"stock_quantity"`
 	Locked_Quantity  int       `json:"locked_quantity"`
-	Image            string    `json:"image"`
+	Images           []string  `json:"image"`
 	Brand            string    `json:"brand"`
 	Quantity         int       `json:"quantity"`
 	Unit_Of_Quantity string    `json:"unit_of_quantity"`
@@ -209,4 +209,12 @@ type ItemFinancials struct {
 	CreatedBy       int     `json:"created_by"`
 	Margin          float64 `json:"margin"`            // Margin as a percentage
 	CurrentSchemeID int     `json:"current_scheme_id"` // Optional, based on your requirements
+}
+
+type ItemFinance struct {
+	ItemID   int     `json:"item_id"`
+	BuyPrice float64 `json:"buy_price"`
+	MRPPrice float64 `json:"mrp_price"`
+	GST      float64 `json:"gst"`
+	Margin   float64 `json:"margin"`
 }

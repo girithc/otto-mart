@@ -131,7 +131,6 @@ func (s *PostgresStore) CreateItemStoreTable(tx *sql.Tx) error {
             locked_quantity INT DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_by INT,
-            CHECK (mrp_price = store_price + discount),
             UNIQUE (item_id, store_id) 
         )
     `
@@ -376,31 +375,33 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 	}
 
 	query := `
-	SELECT 
-		i.id, 
-		i.name, 
-		i.quantity,
-		i.unit_of_quantity,
-		b.name AS brand_name,
-		istore.mrp_price, 
-		istore.discount, 
-		istore.store_price,
-		s.name AS store_name,
-		c.name AS category_name,
-		istore.stock_quantity,
-		istore.locked_quantity,
-		ii.image_url, 
-		i.created_at,
-		i.created_by
-	FROM item i
-	JOIN item_category ic ON i.id = ic.item_id
-	JOIN item_store istore ON i.id = istore.item_id
-	JOIN brand b ON i.brand_id = b.id
-	JOIN store s ON istore.store_id = s.id
-	JOIN category c ON ic.category_id = c.id
-	LEFT JOIN item_image ii ON i.id = ii.item_id AND ii.order_position = 1
-	WHERE ic.category_id = $1 AND istore.store_id = $2
-	`
+    SELECT 
+        i.id, 
+        i.name, 
+        i.quantity,
+        i.unit_of_quantity,
+        b.name AS brand_name,
+        ifin.mrp_price, 
+        istore.discount,  
+        (ifin.mrp_price - istore.discount) AS store_price, 
+        s.name AS store_name,
+        c.name AS category_name,
+        istore.stock_quantity,
+        istore.locked_quantity,
+        array_agg(COALESCE(ii.image_url, 'default_image')) FILTER (WHERE ii.image_url IS NOT NULL) AS images, 
+        i.created_at,
+        COALESCE(i.created_by, 0) AS created_by
+    FROM item i
+    JOIN item_category ic ON i.id = ic.item_id
+    JOIN item_store istore ON i.id = istore.item_id
+    JOIN item_financial ifin ON i.id = ifin.item_id 
+    JOIN brand b ON i.brand_id = b.id
+    JOIN store s ON istore.store_id = s.id
+    JOIN category c ON ic.category_id = c.id
+    LEFT JOIN item_image ii ON i.id = ii.item_id
+    WHERE ic.category_id = $1 AND istore.store_id = $2
+    GROUP BY i.id, b.name, s.name, c.name, ifin.mrp_price, istore.discount, istore.stock_quantity, istore.locked_quantity
+    `
 
 	rows, err := tx.Query(query, category_id, store_id)
 	if err != nil {
@@ -412,6 +413,7 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 	items := []*types.Get_Items_By_CategoryID_And_StoreID{}
 	for rows.Next() {
 		item := &types.Get_Items_By_CategoryID_And_StoreID{}
+		var images []string
 		err := rows.Scan(
 			&item.ID,
 			&item.Name,
@@ -425,7 +427,7 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 			&item.Category,
 			&item.Stock_Quantity,
 			&item.Locked_Quantity,
-			&item.Image,
+			pq.Array(&images),
 			&item.Created_At,
 			&item.Created_By,
 		)
@@ -433,6 +435,7 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
 			tx.Rollback()
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
+		item.Images = images
 		items = append(items, item)
 	}
 

@@ -108,6 +108,9 @@ var authRequirements = map[string]Permission{
 	ManagerGetItems:                       {Role: "Customer", AuthRequired: true},
 	ManagerSearchItem:                     {Role: "Customer", AuthRequired: true},
 	ManagerItemFinanceGet:                 {Role: "Customer", AuthRequired: true},
+	ManagerItemFinanceEdit:                {Role: "Customer", AuthRequired: true},
+	ManagerGetTax:                         {Role: "Customer", AuthRequired: true},
+	ManagerItemStoreCombo:                 {Role: "Manager", AuthRequired: true},
 }
 
 const (
@@ -212,4 +215,7 @@ const (
 	ManagerGetItems                       = "manager-get-items"
 	ManagerSearchItem                     = "manager-search-item"
 	ManagerItemFinanceGet                 = "manager-item-finance-get"
+	ManagerItemFinanceEdit                = "manager-item-finance-edit"
+	ManagerGetTax                         = "manager-get-tax"
+	ManagerItemStoreCombo                 = "manager-item-store-combo"
 )

@@ -514,10 +514,34 @@ func (s *Server) handleManagerGetItemFinancial(res http.ResponseWriter, req *htt
 	return nil
 }
 
+func (s *Server) handleManagerEditItemFinancial(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "item-finance-edit")
+		return s.goRoutineWrapper(ManagerItemFinanceEdit, s.handleManagerEditItemFinanceBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleManagerSearchItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "manager-search-item")
 		return s.goRoutineWrapper(ManagerSearchItem, s.handleManagerSearchItemBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerGetTax(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("GET", "manager-get-tax")
+		return s.goRoutineWrapper(ManagerGetTax, s.handleManagerGetTaxBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerItemStoreCombo(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-item-store-combo")
+		return s.goRoutineWrapper(ManagerItemStoreCombo, s.handleManagerItemStoreComboBasic, res, req)
 	}
 	return nil
 }

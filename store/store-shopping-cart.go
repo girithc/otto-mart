@@ -100,9 +100,9 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	SELECT 
 		COALESCE(SUM(ci.sold_price * ci.quantity), 0),
 		COALESCE(SUM(ci.quantity), 0),  
-		COALESCE(SUM((istore.mrp_price - ci.sold_price) * ci.quantity), 0)
+		COALESCE(SUM((ifin.mrp_price - ci.sold_price) * ci.quantity), 0)
 	FROM cart_item ci
-	JOIN item_store istore ON ci.item_id = istore.id
+	JOIN item_financial ifin ON ci.item_id = ifin.item_id
 	WHERE ci.cart_id = $1`
 
 	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &numberOfItems, &discounts)
@@ -113,42 +113,40 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	// Calculate delivery fee based on item cost
 	switch {
 	case itemCost <= 99:
-		deliveryFee = 39
-	case itemCost <= 249:
-		deliveryFee = 29
-	case itemCost <= 399:
-		deliveryFee = 19
+		deliveryFee = 25
+	case itemCost <= 149:
+		deliveryFee = 20
 	default:
-		deliveryFee = 9
+		deliveryFee = 0
 	}
 
 	// Calculate small order fee based on item cost
 	switch {
+	case itemCost <= 50:
+		smallOrderFee = 20
 	case itemCost <= 99:
-		smallOrderFee = 29
-	case itemCost <= 249:
-		smallOrderFee = 19
-	case itemCost <= 399:
-		smallOrderFee = 9
+		smallOrderFee = 15
+	case itemCost <= 149:
+		smallOrderFee = 10
 	default:
 		smallOrderFee = 0
 	}
 
 	switch {
 	case itemCost > 999:
-		platformFee = 9
-	case itemCost > 399:
 		platformFee = 5
+	case itemCost > 399:
+		platformFee = 4
 	default:
-		platformFee = 3
+		platformFee = 2
 	}
 
 	// Calculate packaging fee based on item cost
 	switch {
 	case itemCost > 999:
-		packagingFee = 9
-	case itemCost > 399:
 		packagingFee = 5
+	case itemCost > 399:
+		packagingFee = 2
 	default:
 		packagingFee = 2
 	}

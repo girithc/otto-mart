@@ -57,3 +57,12 @@ func (s *Server) HandlePackerLogin(res http.ResponseWriter, req *http.Request) e
 
 	return WriteJSON(res, http.StatusOK, packer)
 }
+
+func (s *Server) handleManagerItemStoreComboBasic(res http.ResponseWriter, req *http.Request) error {
+	item, err := s.store.ManagerItemStoreCombo()
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, item)
+}

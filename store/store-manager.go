@@ -243,3 +243,46 @@ func (s *PostgresStore) AuthenticateRequestManager(phone, token string) (bool, e
 
 	return false, nil
 }
+
+func (s *PostgresStore) ManagerItemStoreCombo() (bool, error) {
+	// Retrieve all items
+	itemsQuery := `SELECT id FROM item`
+	rows, err := s.db.Query(itemsQuery)
+	if err != nil {
+		return false, fmt.Errorf("error retrieving items: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var itemID int
+		if err := rows.Scan(&itemID); err != nil {
+			return false, fmt.Errorf("error scanning item ID: %w", err)
+		}
+
+		// Check if the item already exists in item_store
+		var exists bool
+		checkQuery := `SELECT EXISTS(SELECT 1 FROM item_store WHERE item_id = $1)`
+		if err := s.db.QueryRow(checkQuery, itemID).Scan(&exists); err != nil {
+			return false, fmt.Errorf("error checking item_store: %w", err)
+		}
+
+		if !exists {
+			// Get mrp_price from item_financial, if available
+			var mrpPrice float64
+			financialQuery := `SELECT mrp_price FROM item_financial WHERE item_id = $1`
+			err := s.db.QueryRow(financialQuery, itemID).Scan(&mrpPrice)
+			if err != nil {
+				// If there's no financial record, default mrpPrice to 0
+				mrpPrice = 0
+			}
+
+			// Insert a new record into item_store
+			insertQuery := `INSERT INTO item_store (item_id, store_price, discount, stock_quantity, store_id) VALUES ($1, $2, 0, 0, 1)` // Assuming store_id is 1 for simplicity
+			if _, err := s.db.Exec(insertQuery, itemID, mrpPrice); err != nil {
+				return false, fmt.Errorf("error inserting into item_store: %w", err)
+			}
+		}
+	}
+
+	return true, nil
+}

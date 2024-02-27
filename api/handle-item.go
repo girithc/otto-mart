@@ -229,3 +229,27 @@ func (s *Server) handleManagerGetItemFinanceBasic(res http.ResponseWriter, req *
 
 	return WriteJSON(res, http.StatusOK, item)
 }
+
+func (s *Server) handleManagerEditItemFinanceBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.ItemFinance)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerEditItemFinancial")
+		return err
+	}
+
+	item, err := s.store.ManagerEditItemFinancialByItemId(*new_req) // Pass the dereferenced value of new_req
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, item)
+}
+
+func (s *Server) handleManagerGetTaxBasic(res http.ResponseWriter, req *http.Request) error {
+	taxDetails, err := s.store.GetTaxDetails()
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, taxDetails)
+}
