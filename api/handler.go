@@ -506,6 +506,14 @@ func (s *Server) handleItemEdit(res http.ResponseWriter, req *http.Request) erro
 	return nil
 }
 
+func (s *Server) handleManagerGetItemFinancial(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "item-finance")
+		return s.goRoutineWrapper(ManagerItemFinanceGet, s.handleManagerGetItemFinanceBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleManagerSearchItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "manager-search-item")

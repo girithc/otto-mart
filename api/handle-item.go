@@ -214,3 +214,18 @@ func (s *Server) handleItemEditBasic(res http.ResponseWriter, req *http.Request)
 
 	return WriteJSON(res, http.StatusOK, item)
 }
+
+func (s *Server) handleManagerGetItemFinanceBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(GetItem)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerGetItem")
+		return err
+	}
+
+	item, err := s.store.ManagerGetItemFinancialByItemId(new_req.ID)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, item)
+}

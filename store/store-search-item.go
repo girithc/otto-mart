@@ -78,7 +78,7 @@ func (s *PostgresStore) ManagerSearchItem(name string) ([]ManagerSearchItem, err
 	var items []ManagerSearchItem
 
 	query := `
-	SELECT i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name as brand_name, i.brand_id, COALESCE(if.mrp_price, 0) as mrp_price, COALESCE(array_agg(ii.image_url) FILTER (WHERE ii.image_url IS NOT NULL), ARRAY[]::VARCHAR[]) as images
+	SELECT i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name AS brand_name, i.brand_id, COALESCE(if.mrp_price, 0) AS mrp_price, array_remove(array_agg(DISTINCT ii.image_url), NULL) AS images
 	FROM item i
 	LEFT JOIN brand b ON i.brand_id = b.id
 	LEFT JOIN item_financial if ON i.id = if.item_id
@@ -95,20 +95,16 @@ func (s *PostgresStore) ManagerSearchItem(name string) ([]ManagerSearchItem, err
 
 	for rows.Next() {
 		var item ManagerSearchItem
-		var images pq.StringArray // Using pq.StringArray to handle the array of images
+		var images pq.StringArray // Properly using pq.StringArray to handle the array of images
 
-		err := rows.Scan(&item.Id, &item.Name, &item.Description, &item.Quantity, &item.UnitOfQuantity, &item.BrandName, &item.BrandId, &item.MRPPrice, pq.Array(&images))
+		// Scan the row with the correct type for the images column
+		err := rows.Scan(&item.Id, &item.Name, &item.Description, &item.Quantity, &item.UnitOfQuantity, &item.BrandName, &item.BrandId, &item.MRPPrice, &images)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
 
-		// Convert pq.StringArray to a regular slice of strings
-		item.Images = make([]string, 0, len(images))
-		for _, img := range images {
-			if img != "" { // This check is technically redundant due to the COALESCE and FILTER in the query, but included for robustness
-				item.Images = append(item.Images, img)
-			}
-		}
+		// Convert pq.StringArray directly to a slice of strings
+		item.Images = []string(images)
 
 		items = append(items, item)
 	}

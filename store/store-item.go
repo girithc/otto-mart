@@ -57,30 +57,6 @@ func (s *PostgresStore) CreateItemTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) CreateItemFinancialTable(tx *sql.Tx) error {
-	createItemFinancialTableQuery := `
-    CREATE TABLE IF NOT EXISTS item_financial (
-        item_id INT PRIMARY KEY REFERENCES item(id) ON DELETE CASCADE,
-        buy_price DECIMAL(10, 2),  
-        gst_on_buy DECIMAL(10, 2),
-        buy_price_without_gst DECIMAL(10, 2) GENERATED ALWAYS AS (buy_price - gst_on_buy) STORED,
-        mrp_price DECIMAL(10, 2),
-        gst_on_mrp DECIMAL(10, 2),
-        mrp_price_without_gst DECIMAL(10, 2) GENERATED ALWAYS AS (mrp_price - gst_on_mrp) STORED,
-        margin_net DECIMAL(5, 2) GENERATED ALWAYS AS (CASE WHEN (mrp_price - gst_on_mrp) = 0 THEN NULL ELSE (1 - (buy_price - gst_on_buy) / (mrp_price - gst_on_mrp)) * 100 END) STORED,
-        margin DECIMAL(5, 2),
-		tax_id INT REFERENCES tax(id) ON DELETE SET NULL,  
-        current_scheme_id INT REFERENCES item_scheme(id) ON DELETE SET NULL
-    );`
-
-	_, err := tx.Exec(createItemFinancialTableQuery)
-	if err != nil {
-		return fmt.Errorf("error creating item_financial table: %w", err)
-	}
-
-	return nil
-}
-
 func (s *PostgresStore) CreateItemTaxTable(tx *sql.Tx) error {
 	// SQL query to create the 'ItemTax' table with a default value for 'hsn_code'
 	createItemTaxTableQuery := `

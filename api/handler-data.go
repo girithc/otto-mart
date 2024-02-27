@@ -107,6 +107,7 @@ var authRequirements = map[string]Permission{
 	NeedToUpdate:                          {Role: "Customer", AuthRequired: false},
 	ManagerGetItems:                       {Role: "Customer", AuthRequired: true},
 	ManagerSearchItem:                     {Role: "Customer", AuthRequired: true},
+	ManagerItemFinanceGet:                 {Role: "Customer", AuthRequired: true},
 }
 
 const (
@@ -210,4 +211,5 @@ const (
 	NeedToUpdate                          = "need-to-update"
 	ManagerGetItems                       = "manager-get-items"
 	ManagerSearchItem                     = "manager-search-item"
+	ManagerItemFinanceGet                 = "manager-item-finance-get"
 )

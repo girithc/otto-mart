@@ -100,6 +100,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/manager-items", makeHTTPHandleFunc(s.handleManagerItems))
 	http.HandleFunc("/manager-get-item", makeHTTPHandleFunc(s.handleManagerGetItem))
 	http.HandleFunc("/manager-item-edit", makeHTTPHandleFunc(s.handleItemEdit))
+	http.HandleFunc("/manager-item-finance-get", makeHTTPHandleFunc(s.handleManagerGetItemFinancial))
 	http.HandleFunc("/manager-search-item", makeHTTPHandleFunc(s.handleManagerSearchItem))
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
