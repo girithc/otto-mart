@@ -264,7 +264,9 @@ class _MyVerifyState extends State<MyVerify> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const AddressSelectionWidget(),
+                                        const AddressSelectionWidget(
+                                      flag: true,
+                                    ),
                                   ),
                                 );
                               } else {
@@ -281,7 +283,9 @@ class _MyVerifyState extends State<MyVerify> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const AddressSelectionWidget(),
+                                        const AddressSelectionWidget(
+                                      flag: true,
+                                    ),
                                   ),
                                 );
                               } else {
@@ -319,7 +323,9 @@ class _MyVerifyState extends State<MyVerify> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const AddressSelectionWidget(),
+                                        const AddressSelectionWidget(
+                                      flag: true,
+                                    ),
                                   ),
                                 );
                               } else {
@@ -336,7 +342,9 @@ class _MyVerifyState extends State<MyVerify> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const AddressSelectionWidget(),
+                                        const AddressSelectionWidget(
+                                      flag: true,
+                                    ),
                                   ),
                                 );
                               } else {
@@ -365,7 +373,9 @@ class _MyVerifyState extends State<MyVerify> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const AddressSelectionWidget(),
+                                      const AddressSelectionWidget(
+                                    flag: true,
+                                  ),
                                 ),
                               );
                             } else {
@@ -382,7 +392,9 @@ class _MyVerifyState extends State<MyVerify> {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      const AddressSelectionWidget(),
+                                      const AddressSelectionWidget(
+                                    flag: true,
+                                  ),
                                 ),
                               );
                             } else {
@@ -451,7 +463,9 @@ class _MyVerifyState extends State<MyVerify> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const AddressSelectionWidget(),
+                                        const AddressSelectionWidget(
+                                      flag: true,
+                                    ),
                                   ),
                                 );
                               } else {

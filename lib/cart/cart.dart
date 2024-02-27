@@ -345,9 +345,11 @@ class CartModel extends ChangeNotifier {
     String? cartID = await storage.read(key: 'cartId');
     String? customerId = await storage.read(key: 'customerId');
 
+    /*
     print("Before Add Item To Cart");
     print("Cart Id $cartID");
     print("Customer Id $customerId");
+    */
 
     // Define the body for the POST request
     if (item.quantity > 0) {
@@ -382,15 +384,20 @@ class CartModel extends ChangeNotifier {
             outOfStock: _cartDetails!.outOfStock);
 
         if (_cartDetails?.cartId.toString() != cartID) {
+          /*
           print("\n");
           print("Old Cart Id $cartID");
           print("New Cart Id ${_cartDetails?.cartId}");
           print("\n");
+          */
           storage.write(key: 'cartId', value: _cartDetails?.cartId.toString());
         }
         final List<dynamic> cartItemsList = jsonData['cart_items_list'];
         final List<CartItem> items =
             cartItemsList.map((item) => CartItem.fromJson(item)).toList();
+
+        //print()
+        print("Cart Items List $items");
 
         _items.clear();
         _items.addAll(items);

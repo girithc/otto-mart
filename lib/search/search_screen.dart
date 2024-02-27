@@ -859,7 +859,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
       : super(key: key);
 
   @override
-  Size get preferredSize => const Size.fromHeight(65);
+  Size get preferredSize => const Size.fromHeight(82);
 
   @override
   State<CustomAppBar> createState() => _CustomAppBarState();
@@ -899,7 +899,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       shadowColor: Colors.deepPurpleAccent,
       child: Container(
         padding: const EdgeInsets.only(
-          top: 60,
+          top: 20,
         ),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(

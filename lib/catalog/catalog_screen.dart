@@ -554,12 +554,12 @@ class _ListItem2State extends State<ListItem2> {
                   boxShadow: const [],
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
                     Container(
                       padding: const EdgeInsets.only(
                           top: 0, bottom: 10, left: 0, right: 0),
-                      height: MediaQuery.of(context).size.height * 0.15,
+                      height: MediaQuery.of(context).size.height * 0.17,
                       child: Center(
                         child: Image.network(
                           widget.image,
@@ -567,7 +567,7 @@ class _ListItem2State extends State<ListItem2> {
                           errorBuilder: (BuildContext context, Object exception,
                               StackTrace? stackTrace) {
                             return Container(
-                              height: MediaQuery.of(context).size.height * 0.15,
+                              height: MediaQuery.of(context).size.height * 0.16,
                               color: Colors.grey[200],
                               alignment: Alignment.center,
                               child: const Center(
@@ -814,7 +814,7 @@ class _ListItem2State extends State<ListItem2> {
                 : const SizedBox.shrink(),
             if (widget.stockQuantity <= 0)
               Container(
-                height: MediaQuery.of(context).size.height * 0.14,
+                height: MediaQuery.of(context).size.height * 0.16,
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.3),
                   borderRadius: const BorderRadius.only(

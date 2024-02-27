@@ -218,7 +218,7 @@ class _MyCartState extends State<MyCart> {
                             children: [
                               Container(
                                 padding: const EdgeInsets.only(
-                                    left: 12, right: 12, bottom: 10, top: 0),
+                                    left: 20, right: 20, bottom: 10, top: 2),
                                 height: MediaQuery.of(context).size.height *
                                     (0.18 - 0.065),
                                 child: ElevatedButton(
@@ -320,14 +320,12 @@ class _MyCartState extends State<MyCart> {
                                   child: Center(
                                       child: !(cart.isEmpty())
                                           ? Row(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.center,
                                               children: [
                                                 Container(
                                                   padding: const EdgeInsets
                                                       .symmetric(
-                                                      horizontal: 20,
-                                                      vertical: 20),
+                                                      horizontal: 30,
+                                                      vertical: 15),
                                                   decoration: BoxDecoration(
                                                     color: Colors.pinkAccent,
                                                     borderRadius:
@@ -342,7 +340,7 @@ class _MyCartState extends State<MyCart> {
                                                   child: const Text(
                                                     'Complete Payment',
                                                     style: TextStyle(
-                                                        fontSize: 24,
+                                                        fontSize: 22,
                                                         color: Colors
                                                             .white), // Consistent text size
                                                   ),
@@ -354,7 +352,7 @@ class _MyCartState extends State<MyCart> {
                                                   child: Text(
                                                     '\u{20B9}${cart.totalPrice}',
                                                     style: const TextStyle(
-                                                        fontSize: 18,
+                                                        fontSize: 16,
                                                         fontWeight:
                                                             FontWeight.normal,
                                                         color: Colors.black),
@@ -389,6 +387,7 @@ class _CartList extends StatelessWidget {
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
     var itemNameStyle = Theme.of(context).textTheme.titleMedium;
+    print("Cart items ${cart.items.length}");
 
     if (cart.isEmpty()) {
       return Center(

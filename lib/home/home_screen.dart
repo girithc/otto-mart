@@ -664,24 +664,25 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   GestureDetector(
                     onTap: () => context.go('/setting'),
                     child: Container(
-                        alignment: Alignment.topLeft,
-                        height: 35.0, // Set height of the container
-                        width: 35.0, // Set width of the container
-                        margin: const EdgeInsets.only(right: 5),
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              Colors.black.withOpacity(0.2),
-                              Colors.black.withOpacity(0.35)
-                            ], // Gradient colors
-                          ), // Circular shape
-                        ),
-                        child: const Center(
-                          child: Icon(Icons.person, color: Colors.white),
-                        )),
+                      alignment: Alignment.topLeft,
+                      height: 35.0, // Set height of the container
+                      width: 35.0, // Set width of the container
+                      margin: const EdgeInsets.only(right: 5),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.2),
+                            Colors.black.withOpacity(0.35)
+                          ], // Gradient colors
+                        ), // Circular shape
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.person, color: Colors.white),
+                      ),
+                    ),
                   ),
                   Consumer<CartModel>(
                     // Wrap the Expanded widget with Consumer<CartModel>
