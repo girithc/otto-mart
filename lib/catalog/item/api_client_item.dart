@@ -44,34 +44,47 @@ class Item {
   final int discount;
   final int storePrice;
   final int stockQuantity;
-  final String image;
+  final List<String> image; // This should be a list of strings
   final int quantity;
   final String unitOfQuantity;
   final String brand;
 
-  Item(
-      {required this.id,
-      required this.name,
-      required this.mrpPrice,
-      required this.discount,
-      required this.storePrice,
-      required this.stockQuantity,
-      required this.image,
-      required this.quantity,
-      required this.unitOfQuantity,
-      required this.brand});
+  Item({
+    required this.id,
+    required this.name,
+    required this.mrpPrice,
+    required this.discount,
+    required this.storePrice,
+    required this.stockQuantity,
+    required this.image, // Ensure this is passed as a List<String>
+    required this.quantity,
+    required this.unitOfQuantity,
+    required this.brand,
+  });
 
   factory Item.fromJson(Map<String, dynamic> json) {
+    // Convert the image field to a List<String>, handling null and single string cases
+    List<String> images = [''];
+    var imageField = json['image'];
+    if (imageField != null) {
+      if (imageField is List) {
+        images = List<String>.from(imageField);
+      } else if (imageField is String) {
+        images = [imageField];
+      }
+    }
+
     return Item(
-        id: json['id'],
-        name: json['name'],
-        mrpPrice: json['mrp_price'],
-        discount: json['discount'],
-        storePrice: json['store_price'],
-        stockQuantity: json['stock_quantity'],
-        image: json['image'],
-        quantity: json['quantity'],
-        unitOfQuantity: json['unit_of_quantity'],
-        brand: json['brand']);
+      id: json['id'],
+      name: json['name'],
+      mrpPrice: json['mrp_price'],
+      discount: json['discount'],
+      storePrice: json['store_price'],
+      stockQuantity: json['stock_quantity'],
+      image: images, // Pass the processed list of images
+      quantity: json['quantity'],
+      unitOfQuantity: json['unit_of_quantity'],
+      brand: json['brand'],
+    );
   }
 }

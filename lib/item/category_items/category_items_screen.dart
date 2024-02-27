@@ -189,7 +189,7 @@ class _CategoryItemsBodyState extends State<CategoryItemsBody> {
               discount: items[index].discount,
               storePrice: items[index].storePrice,
               stockQuantity: items[index].stockQuantity,
-              image: items[index].image,
+              image: items[index].image[0],
               quantity: items[index].quantity,
               unitOfQuantity: items[index].unitOfQuantity,
               brand: items[index].brand,
