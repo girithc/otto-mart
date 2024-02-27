@@ -65,7 +65,6 @@ func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinanc
 		&details.MRPPrice, &details.GSTOnMRP, &details.MRPPriceWithoutGST,
 		&details.MarginNet, &details.Margin, &details.TaxID, &details.CurrentSchemeID,
 	)
-
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no item found with ID %d", itemID)
@@ -74,4 +73,49 @@ func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinanc
 	}
 
 	return &details, nil
+}
+
+func (s *PostgresStore) ManagerEditItemFinancialByItemId(itemFinance ItemFinance) (*ItemFinancialDetails, error) {
+	var existingID int
+	checkExistenceQuery := `SELECT item_id FROM item_financial WHERE item_id = $1`
+	err := s.db.QueryRow(checkExistenceQuery, itemFinance.ItemID).Scan(&existingID)
+
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error checking for existing item financial record: %w", err)
+	}
+
+	if err == sql.ErrNoRows {
+		// Record does not exist, insert a new record
+		insertQuery := `
+		INSERT INTO item_financial (item_id, buy_price, mrp_price, gst_on_buy, margin)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING item_id
+		`
+		err = s.db.QueryRow(insertQuery, itemFinance.ItemID, itemFinance.BuyPrice, itemFinance.MRPPrice, itemFinance.GST, itemFinance.Margin).Scan(&existingID)
+		if err != nil {
+			return nil, fmt.Errorf("error inserting new item financial record: %w", err)
+		}
+	} else {
+		// Record exists, update the existing record
+		updateQuery := `
+		UPDATE item_financial
+		SET buy_price = $2, mrp_price = $3, gst_on_buy = $4, margin = $5
+		WHERE item_id = $1
+		`
+		_, err = s.db.Exec(updateQuery, itemFinance.ItemID, itemFinance.BuyPrice, itemFinance.MRPPrice, itemFinance.GST, itemFinance.Margin)
+		if err != nil {
+			return nil, fmt.Errorf("error updating existing item financial record: %w", err)
+		}
+	}
+
+	// Retrieve the updated/inserted item financial details
+	return s.ManagerGetItemFinancialByItemId(itemFinance.ItemID)
+}
+
+type ItemFinance struct {
+	ItemID   int     `json:"item_id"`
+	BuyPrice float64 `json:"buy_price"`
+	MRPPrice float64 `json:"mrp_price"`
+	GST      float64 `json:"gst"`
+	Margin   float64 `json:"margin"`
 }
