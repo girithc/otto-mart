@@ -39,10 +39,13 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 	}
 	fmt.Println("cartItemList", cartItemList)
 
+	print("cartDetails, ", cart)
+
 	cart, err = s.store.GetCartDetails(validCart.CartId, *cart)
 	if err != nil {
 		return err
 	}
+	print("updated cartDetails, ", cart)
 
 	cartResponse := types.CartItemResponse{
 		CartDetails:   cart,

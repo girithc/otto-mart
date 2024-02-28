@@ -93,23 +93,22 @@ func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (
 
 func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	print("Calculating cart total for cart_id: ", cart_id)
-	var itemCost, discounts, numberOfItems, deliveryFee, smallOrderFee, platformFee, packagingFee int
+	var itemCost, discounts, numberOfItems, deliveryFee, smallOrderFee, platformFee, packagingFee float64 // Changed to float64 to handle decimal values
 
 	// Calculate total item cost and discounts from cart_item and item_store
 	query := `
-	SELECT 
-		COALESCE(SUM(ci.sold_price * ci.quantity), 0),
-		COALESCE(SUM(ci.quantity), 0),  
-		COALESCE(SUM((ifin.mrp_price - ci.sold_price) * ci.quantity), 0)
-	FROM cart_item ci
-	JOIN item_financial ifin ON ci.item_id = ifin.item_id
-	WHERE ci.cart_id = $1`
+    SELECT 
+        COALESCE(SUM(CAST(ci.sold_price AS DECIMAL(10, 2)) * ci.quantity), 0), 
+        COALESCE(SUM(ci.quantity), 0),  
+        COALESCE(SUM((ifin.mrp_price - CAST(ci.sold_price AS DECIMAL(10, 2))) * ci.quantity), 0)
+    FROM cart_item ci
+    JOIN item_financial ifin ON ci.item_id = ifin.item_id
+    WHERE ci.cart_id = $1`
 
 	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &numberOfItems, &discounts)
 	if err != nil {
 		return err
 	}
-
 	// Calculate delivery fee based on item cost
 	switch {
 	case itemCost <= 99:

@@ -35,7 +35,7 @@ func (s *PostgresStore) lockItems(cartItems []*types.Checkout_Cart_Item, tx *sql
 	for _, checkout_cart_item := range cartItems {
 		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
 
-		res, err := tx.Exec(`UPDATE item_store SET stock_quantity = stock_quantity - $1, locked_quantity = locked_quantity + $1 WHERE id = $2 AND stock_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+		res, err := tx.Exec(`UPDATE item_store SET stock_quantity = stock_quantity - $1, locked_quantity = locked_quantity + $1 WHERE item_id = $2 AND stock_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
 		if err != nil {
 			return false, fmt.Errorf("error update item %d %d", checkout_cart_item.Item_Id, err)
 		}
