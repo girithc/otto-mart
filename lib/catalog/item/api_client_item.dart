@@ -17,6 +17,7 @@ class ItemApiClient {
       'category_id': categoryId.toString(),
       'store_id': storeId.toString()
     };
+
     url = url.replace(queryParameters: queryParams);
 
     //print("Query Params $queryParams");

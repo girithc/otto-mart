@@ -72,6 +72,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   Future<void> fetchOrderDetails() async {
     // Retrieve customerId and cartId from secure storage
+
     String? customerId = await _storage.read(key: 'customerId');
     String? cartId;
     final networkService = NetworkService();
@@ -139,6 +140,22 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     }
   }
 
+  Future<void> fetchOrderInfo() async {
+    final customerId = await _storage.read(key: 'customerId');
+    final cartId = await _storage.read(key: 'placedCartId');
+    print("PlacedCart ID: $cartId");
+    final Map<String, dynamic> body = {
+      'customer_id': int.parse(customerId!),
+      'cart_id': int.parse(cartId!),
+    };
+
+    final networkService = NetworkService();
+    final response = await networkService.postWithAuth('/customer-placed-order',
+        additionalData: body);
+
+    print("Response From Refresh Order: ${response.body}");
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -146,137 +163,145 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       cart.clearCart();
     }
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.deepPurpleAccent,
-          title: const Text(
-            'Otto Mart ',
-            style: TextStyle(color: Colors.white),
+      appBar: AppBar(
+        backgroundColor: Colors.deepPurpleAccent,
+        title: const Text(
+          'Otto Mart ',
+          style: TextStyle(color: Colors.white),
+        ),
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_outlined,
+            color: Colors.white,
           ),
-          leading: IconButton(
+          onPressed: () {
+            // Navigate to the HomeScreen, replacing the current route
+
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                  builder: (context) => const MyHomePage(
+                        title: 'Otto',
+                      )),
+            );
+          },
+        ),
+        actions: <Widget>[
+          IconButton(
             icon: const Icon(
-              Icons.arrow_back_outlined,
+              Icons.refresh,
               color: Colors.white,
             ),
             onPressed: () {
-              // Navigate to the HomeScreen, replacing the current route
-
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                    builder: (context) => const MyHomePage(
-                          title: 'Otto',
-                        )),
-              );
+              fetchOrderInfo();
             },
           ),
-          centerTitle: true,
-        ),
-        body: _isLoading
-            ? const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                    Center(child: CircularProgressIndicator()),
-                  ])
-            : _isError
-                ? Center(child: Text(_errorMsg!))
-                : SingleChildScrollView(
-                    // Enables scrolling
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Container(
-                            height: MediaQuery.of(context).size.height * 0.24,
-                            width: MediaQuery.of(context).size.width * 0.95,
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 2),
-                            padding: const EdgeInsets.only(bottom: 10.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Center(
-                              // Center the Lottie animation within the container
-                              child: Transform.scale(
-                                scale:
-                                    orderLottieTransform, // Increase the size by 30%
-                                child: Lottie.network(
-                                  orderLottie,
-                                  fit: BoxFit.contain,
-                                ),
+        ],
+        centerTitle: true,
+      ),
+      body: _isLoading
+          ? const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                  Center(child: CircularProgressIndicator()),
+                ])
+          : _isError
+              ? Center(child: Text(_errorMsg!))
+              : SingleChildScrollView(
+                  // Enables scrolling
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          height: MediaQuery.of(context).size.height * 0.24,
+                          width: MediaQuery.of(context).size.width * 0.95,
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          padding: const EdgeInsets.only(bottom: 10.0),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            // Center the Lottie animation within the container
+                            child: Transform.scale(
+                              scale:
+                                  orderLottieTransform, // Increase the size by 30%
+                              child: Lottie.network(
+                                orderLottie,
+                                fit: BoxFit.contain,
                               ),
                             ),
                           ),
-                          Container(
-                            margin: const EdgeInsets.only(
-                                left: 10, right: 10, top: 15, bottom: 5),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(15), // Rounded corners
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 2,
-                                  blurRadius: 4,
-                                  offset: const Offset(
-                                      0, 2), // Changes position of shadow
-                                ),
-                              ],
-                              border:
-                                  Border.all(color: Colors.white, width: 1.0),
-                            ),
-                            child: Align(
-                              alignment: Alignment.center,
-                              child: Text(
-                                orderStatus,
-                                style: const TextStyle(
-                                    fontSize: 22, // Increased font size
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors
-                                        .deepPurpleAccent // Bold font weight
-                                    ),
-                                textAlign: TextAlign
-                                    .center, // Ensure text is centered horizontally
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(
+                              left: 10, right: 10, top: 0, bottom: 0),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                                BorderRadius.circular(10), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 1,
+                                blurRadius: 2,
+                                offset: const Offset(
+                                    0, 1), // Changes position of shadow
                               ),
+                            ],
+                            border: Border.all(color: Colors.white, width: 1.0),
+                          ),
+                          child: Center(
+                            child: Text(
+                              orderStatus,
+                              style: const TextStyle(
+                                  fontSize: 18, // Increased font size
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors
+                                      .deepPurpleAccent // Bold font weight
+                                  ),
+                              // Ensure text is centered horizontally
                             ),
                           ),
-                          Container(
-                            width: MediaQuery.of(context).size.width,
-                            margin: const EdgeInsets.only(
-                                left: 10, right: 10, top: 5, bottom: 5),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius:
-                                  BorderRadius.circular(15), // Rounded corners
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  spreadRadius: 2,
-                                  blurRadius: 4,
-                                  offset: const Offset(
-                                      0, 2), // Changes position of shadow
-                                ),
-                              ],
-                              border:
-                                  Border.all(color: Colors.white, width: 1.0),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Number of Items: $_numberOfItems'),
-                                Text('Address: $_customerAddress'),
-                                Text('Payment Type: $_paymentType'),
-                                Text('Order Date: $_orderDate'),
-                              ],
-                            ),
+                        ),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.only(
+                              left: 10, right: 10, top: 5, bottom: 5),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                                BorderRadius.circular(10), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 2,
+                                offset: const Offset(
+                                    0, 1), // Changes position of shadow
+                              ),
+                            ],
+                            border: Border.all(color: Colors.white, width: 1.0),
                           ),
-                          const ItemList(),
-                          const ItemTotal(),
-                        ],
-                      ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Number of Items: $_numberOfItems'),
+                              Text('Address: $_customerAddress'),
+                              Text('Payment Type: $_paymentType'),
+                              Text('Order Date: $_orderDate'),
+                            ],
+                          ),
+                        ),
+                        //const ItemList(),
+                        //const ItemTotal(),
+                      ],
                     ),
-                  ));
+                  ),
+                ),
+    );
   }
 }
 

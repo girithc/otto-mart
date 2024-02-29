@@ -6,11 +6,8 @@ import 'package:pronto/payments/phonepe.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:pronto/cart/cart.dart';
-import 'package:pronto/cart/order/place_order_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 
 class PaymentsPage extends StatefulWidget {
   const PaymentsPage(
@@ -28,7 +25,7 @@ class PaymentsPage extends StatefulWidget {
 class _PaymentsPageState extends State<PaymentsPage> {
   late final WebViewController controller;
   var loadingPercentage = 0;
-  final String _selectedPayment = 'PhonePe';
+  //final String _selectedPayment = 'PhonePe';
   final storage = const FlutterSecureStorage();
 
   @override
@@ -58,7 +55,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
   }
 
   Future<bool> checkoutCancelItems(int cartId, String sign) async {
-    const String apiUrl = '$baseUrl/checkout-cancel';
+    //const String apiUrl = '$baseUrl/checkout-cancel';
     final Map<String, dynamic> payload = {
       'cart_id': cartId,
       'sign': widget.sign,
@@ -73,7 +70,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
-        final jsonResponse = json.decode(response.body);
+        //final jsonResponse = json.decode(response.body);
         return true;
       } else {
         // Handle the case when the server does not respond with a success code
@@ -182,7 +179,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>();
+    //var cart = context.watch<CartModel>();
 
     return Scaffold(
       appBar: AppBar(
