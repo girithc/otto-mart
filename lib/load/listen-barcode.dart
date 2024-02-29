@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_barcode_listener/flutter_barcode_listener.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:http/http.dart' as http;
+import 'package:packer/load/loaditem.dart';
 import 'package:packer/main.dart';
-import 'package:packer/quick-add/add-item.dart';
+import 'package:packer/load/add-item.dart';
 import 'package:packer/utils/constants.dart';
+import 'package:packer/utils/network/service.dart';
 
 class ListenBarcodePage extends StatefulWidget {
   const ListenBarcodePage({super.key});
@@ -18,7 +20,7 @@ class ListenBarcodePage extends StatefulWidget {
 
 class _ListenBarcodePageState extends State<ListenBarcodePage> {
   String _scanBarcodeResult = '-1';
-  Future<ItemAdd?> scanBarcode() async {
+  Future<void> scanBarcode() async {
     String barcodeScanRes;
     try {
       barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
@@ -33,7 +35,7 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
     }
 
     if (_scanBarcodeResult != '-1') {
-      return _fetchItemDetails(_scanBarcodeResult);
+      _fetchItemDetails(_scanBarcodeResult);
     }
 
     if (!mounted) {
@@ -42,9 +44,12 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
     return null;
   }
 
-  Future<ItemAdd?> _fetchItemDetails(String barcode) async {
+  Future<void> _fetchItemDetails(String barcode) async {
+    String? selectedColumn;
+    int? selectedRow;
+
     if (barcode != '-1') {
-      var url = Uri.parse('$baseUrl/item-add-stock');
+      var url = Uri.parse('$baseUrl/packer-find-item');
 
       if (barcode.isEmpty) {
         throw Exception('(ItemDetailApiClient) Parameters are not valid');
@@ -56,14 +61,22 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
       print("Body Params $bodyParams");
 
       try {
-        http.Response response = await http.post(url,
-            headers: headers, body: json.encode(bodyParams));
-
+        final networkService = NetworkService();
+        final int storeId = 1;
+        Map<String, dynamic> data = {
+          "store_id": storeId,
+          "barcode": barcode,
+        };
+        final response = await networkService.postWithAuth('/packer-find-item',
+            additionalData: data);
         if (response.statusCode == 200) {
           final dynamic jsonData = json.decode(response.body);
-          print(response.body);
 
-          return ItemAdd.fromJson(jsonData);
+          final item = FindItemResponse.fromJson(jsonData);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoadItem(findItem: item)),
+          );
         } else {
           print(response.body);
         }
@@ -94,16 +107,7 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
       body: BarcodeKeyboardListener(
         onBarcodeScanned: (String code) async {
           _fetchItemDetails(code).then(
-            (value) => {
-              if (value != null)
-                {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => AddItemScreen(item: value)),
-                  ),
-                }
-            },
+            (value) => {{}},
           );
           // Close the listening dialog
           // Set the barcode in your state, if needed
@@ -130,19 +134,7 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  scanBarcode().then(
-                    (value) => {
-                      if (value != null)
-                        {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    AddItemScreen(item: value)),
-                          ),
-                        }
-                    },
-                  );
+                  scanBarcode();
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color.fromARGB(255, 108, 55, 255),
@@ -214,6 +206,31 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class FindItemResponse {
+  final String itemName;
+  final int itemId;
+  final int? shelfHorizontal; // Make this nullable
+  final String? shelfVertical; // Make this nullable
+
+  FindItemResponse({
+    required this.itemName,
+    required this.itemId,
+    this.shelfHorizontal, // Now nullable
+    this.shelfVertical, // Now nullable
+  });
+
+  factory FindItemResponse.fromJson(Map<String, dynamic> json) {
+    return FindItemResponse(
+      itemName: json['item_name'],
+      itemId: json['item_id'],
+      shelfHorizontal: json[
+          'shelf_horizontal'], // This can now be null without causing an error
+      shelfVertical: json[
+          'shelf_vertical'], // This can now be null without causing an error
     );
   }
 }

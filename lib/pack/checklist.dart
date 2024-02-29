@@ -838,6 +838,8 @@ class PackedItem {
   String unitOfQuantity;
   int itemQuantity;
   List<String> imageURLs;
+  int shelfHorizontal;
+  String shelfVertical;
 
   PackedItem({
     required this.itemId,
@@ -848,6 +850,8 @@ class PackedItem {
     required this.unitOfQuantity,
     required this.itemQuantity,
     required this.imageURLs,
+    required this.shelfHorizontal,
+    required this.shelfVertical,
   });
 
   factory PackedItem.fromJson(Map<String, dynamic> json) {
@@ -860,6 +864,8 @@ class PackedItem {
       unitOfQuantity: json['unit_of_quantity'],
       itemQuantity: json['item_quantity'],
       imageURLs: List<String>.from(json['image_urls']),
+      shelfHorizontal: json['shelf_horizontal'],
+      shelfVertical: json['shelf_vertical'],
     );
   }
 }

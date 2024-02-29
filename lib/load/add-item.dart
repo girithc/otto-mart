@@ -4,7 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:packer/main.dart';
-import 'package:packer/quick-add/listen-barcode.dart';
+import 'package:packer/load/listen-barcode.dart';
 import 'package:packer/stock/add-stock.dart';
 import 'package:packer/utils/constants.dart';
 

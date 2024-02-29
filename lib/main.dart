@@ -7,7 +7,7 @@ import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/pack/scanner.dart';
-import 'package:packer/quick-add/listen-barcode.dart';
+import 'package:packer/load/listen-barcode.dart';
 import 'package:packer/shelf/shelf.dart';
 import 'package:packer/store/item-detail/item-detail.dart';
 import 'package:packer/pack/checklist.dart';
