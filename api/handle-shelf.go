@@ -19,7 +19,7 @@ func (s *Server) HandleCreateShelf(res http.ResponseWriter, req *http.Request) e
 		return err
 	}
 
-	items, err := s.store.CreateShelf(new_req.StoreId, new_req.Horizontal, new_req.Barcode, new_req.Vertical)
+	items, err := s.store.CreateShelf(new_req.StoreId, new_req.Horizontal, new_req.Vertical)
 	if err != nil {
 		return err
 	}

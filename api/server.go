@@ -13,6 +13,7 @@ type Server struct {
 	listen_address string
 	store          *store.PostgresStore
 	workerPool     *worker.WorkerPool
+	
 }
 
 func NewServer(listen_address string, store *store.PostgresStore, workerPool *worker.WorkerPool) *Server {
@@ -52,6 +53,10 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/checkout-payment", makeHTTPHandleFunc(s.handleCheckoutPayment))
 	http.HandleFunc("/checkout-cancel", makeHTTPHandleFunc(s.handleCancelCheckout))
 
+	http.HandleFunc("/customer-placed-order", makeHTTPHandleFunc(s.handleCustomerPlacedOrder))
+
+	http.HandleFunc("/packer-find-item", makeHTTPHandleFunc(s.handlePackerFindItem))
+	http.HandleFunc("/packer-load-item", makeHTTPHandleFunc(s.handlePackerLoadItem))
 	http.HandleFunc("/packer-pack-order", makeHTTPHandleFunc(s.handlePackerPackOrder))
 	http.HandleFunc("/packer-fetch-item", makeHTTPHandleFunc(s.handlePackerFetchItem))
 	http.HandleFunc("/packer-get-items", makeHTTPHandleFunc(s.handlePackerGetAllItems))
@@ -106,6 +111,10 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/manager-tax-get", makeHTTPHandleFunc(s.handleManagerGetTax))
 	http.HandleFunc("/manager-item-store-combo", makeHTTPHandleFunc(s.handleManagerItemStoreCombo))
 	http.HandleFunc("/manager-add-new-item", makeHTTPHandleFunc(s.handleManagerAddNewItem))
+	http.HandleFunc("/manager-update-item-barcode", makeHTTPHandleFunc(s.handleManagerUpdateItemBarcode))
+	http.HandleFunc("/manager-init-shelf", makeHTTPHandleFunc(s.handleManagerInitShelf))
+	http.HandleFunc("/manager-assign-item-shelf", makeHTTPHandleFunc(s.handleManagerAssignItemShelf))
+	http.HandleFunc("/manager-find-item", makeHTTPHandleFunc(s.handleManagerFindItem))
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))

@@ -78,13 +78,14 @@ func (s *PostgresStore) ManagerSearchItem(name string) ([]ManagerSearchItem, err
 	var items []ManagerSearchItem
 
 	query := `
-	SELECT i.id, i.name, i.description, i.quantity, i.unit_of_quantity, b.name AS brand_name, i.brand_id, COALESCE(if.mrp_price, 0) AS mrp_price, array_remove(array_agg(DISTINCT ii.image_url), NULL) AS images
+	SELECT i.id, i.name, COALESCE(i.barcode, '') AS barcode, i.description, i.quantity, i.unit_of_quantity, b.name AS brand_name, i.brand_id, COALESCE(if.mrp_price, 0) AS mrp_price, array_remove(array_agg(DISTINCT ii.image_url), NULL) AS images
 	FROM item i
 	LEFT JOIN brand b ON i.brand_id = b.id
 	LEFT JOIN item_financial if ON i.id = if.item_id
 	LEFT JOIN item_image ii ON i.id = ii.item_id
 	WHERE LOWER(i.name) LIKE LOWER($1)
 	GROUP BY i.id, b.name, if.mrp_price
+
 	`
 
 	rows, err := s.db.Query(query, "%"+name+"%")
@@ -98,7 +99,7 @@ func (s *PostgresStore) ManagerSearchItem(name string) ([]ManagerSearchItem, err
 		var images pq.StringArray // Properly using pq.StringArray to handle the array of images
 
 		// Scan the row with the correct type for the images column
-		err := rows.Scan(&item.Id, &item.Name, &item.Description, &item.Quantity, &item.UnitOfQuantity, &item.BrandName, &item.BrandId, &item.MRPPrice, &images)
+		err := rows.Scan(&item.Id, &item.Name, &item.Barcode, &item.Description, &item.Quantity, &item.UnitOfQuantity, &item.BrandName, &item.BrandId, &item.MRPPrice, &images)
 		if err != nil {
 			return nil, fmt.Errorf("error scanning row: %w", err)
 		}
@@ -126,4 +127,5 @@ type ManagerSearchItem struct {
 	BrandId        int      `json:"brand_id"`
 	MRPPrice       float64  `json:"mrp_price"`
 	Images         []string `json:"images"`
+	Barcode        string   `json:"barcode"`
 }

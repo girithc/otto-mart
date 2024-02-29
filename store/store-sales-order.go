@@ -196,6 +196,99 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 	return &so, nil
 }
 
+type CustomerOrderDetails struct {
+	OrderStatus         string      `json:"order_status"`
+	OrderDeliveryStatus string      `json:"order_dp_status"`
+	PaymentType         string      `json:"payment_type"`
+	PaidStatus          bool        `json:"paid_status"`
+	OrderDate           string      `json:"order_date"` // Assuming the date is in string format
+	TotalAmountPaid     int         `json:"total_amount_paid"`
+	Items               []OrderItem `json:"items"`
+	Address             string      `json:"address"` // Added to include the street address
+
+}
+
+// OrderItem holds information about an item in an order
+type OrderItem struct {
+	Name           string `json:"name"`
+	Image          string `json:"image"` // Assuming there's a way to determine the primary image
+	Quantity       int    `json:"quantity"`
+	UnitOfQuantity string `json:"unit_of_quantity"`
+	Size           int    `json:"size"`
+}
+
+func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*CustomerOrderDetails, error) {
+	orderDetails := &CustomerOrderDetails{}
+	var transactionId int
+
+	// Start by getting the basic order details and the transaction ID for further queries
+	orderQuery := `
+		SELECT so.order_status, so.order_dp_status, so.payment_type, so.paid, so.order_date, so.transaction_id
+		FROM sales_order so
+		WHERE so.customer_id = $1 AND so.cart_id = $2
+	`
+	err := s.db.QueryRow(orderQuery, customerId, cartId).Scan(&orderDetails.OrderStatus, &orderDetails.OrderDeliveryStatus, &orderDetails.PaymentType, &orderDetails.PaidStatus, &orderDetails.OrderDate, &transactionId)
+	if err != nil {
+		return nil, fmt.Errorf("error getting order details: %w", err)
+	}
+
+	// Next, get the total amount paid from the transaction table using the transaction ID
+	amountQuery := `
+		SELECT t.amount
+		FROM transaction t
+		WHERE t.id = $1
+	`
+	err = s.db.QueryRow(amountQuery, transactionId).Scan(&orderDetails.TotalAmountPaid)
+	if err != nil {
+		return nil, fmt.Errorf("error getting transaction amount: %w", err)
+	}
+
+	// Finally, get the item details from the cart_item and item tables
+	itemsQuery := `
+		SELECT i.name, i.quantity, i.unit_of_quantity, (SELECT image_url FROM item_image WHERE item_id = i.id AND order_position = 1 LIMIT 1) AS image, ci.quantity
+		FROM cart_item ci
+		JOIN item i ON ci.item_id = i.id
+		WHERE ci.cart_id = $1
+	`
+	rows, err := s.db.Query(itemsQuery, cartId)
+	if err != nil {
+		return nil, fmt.Errorf("error querying for item details: %w", err)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("error querying for item details: %w", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var item OrderItem
+		if err := rows.Scan(&item.Name, &item.Quantity, &item.UnitOfQuantity, &item.Image, &item.Quantity); err != nil {
+			return nil, fmt.Errorf("error scanning item details: %w", err)
+		}
+		orderDetails.Items = append(orderDetails.Items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating item details: %w", err)
+	}
+
+	// Address query to fetch the customer's street address
+	addressQuery := `
+        SELECT a.street_address
+        FROM address a
+        JOIN shopping_cart sc ON a.id = sc.address_id
+        WHERE sc.id = $1
+    `
+
+	// Execute the address query and scan the result into the orderDetails.Address field
+	err = s.db.QueryRow(addressQuery, cartId).Scan(&orderDetails.Address)
+	if err != nil {
+		return nil, fmt.Errorf("error querying for address details: %w", err)
+	}
+
+	return orderDetails, nil
+}
+
 func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*SalesOrderItem, error) {
 	var salesOrderItems []*SalesOrderItem
 
@@ -578,8 +671,6 @@ func (s *PostgresStore) GetCombinedOrderDetails(storeId int, phoneNumber string)
 }
 
 func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem, error) {
-	// Step 1: Retrieve the actual packerId using the phone number
-
 	var packerId int
 	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
 	err := s.db.QueryRow(packerIdQuery, phoneNumber).Scan(&packerId)
@@ -587,23 +678,19 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 		return nil, fmt.Errorf("error finding packer ID: %w", err)
 	}
 
-	// New Step: Check if the packer already has an accepted order
 	var existingOrderId int
 	checkOrderQuery := `SELECT id FROM sales_order WHERE packer_id = $1 AND order_status = 'accepted'`
 	err = s.db.QueryRow(checkOrderQuery, packerId).Scan(&existingOrderId)
 	if err == nil {
-		// Packer already has an accepted order, fetching items for this order
 		items, err := s.fetchPackedItems(existingOrderId)
 		if err != nil {
 			return nil, fmt.Errorf("error fetching items for existing order: %w", err)
 		}
 		return items, nil
 	} else if err != sql.ErrNoRows {
-		// Some other error occurred
 		return nil, fmt.Errorf("error checking for existing accepted orders: %w", err)
 	}
 
-	// Step 2: Combined query to retrieve and update the oldest order using the retrieved packerId
 	var orderId int
 	combinedQuery := `
         WITH updated_order AS (
@@ -626,13 +713,16 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 	}
 
 	itemsQuery := `
-			SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity 
-			FROM cart_item ci
-			JOIN item i ON ci.item_id = i.id
-			JOIN brand b ON i.brand_id = b.id
-			WHERE ci.cart_id = (SELECT cart_id FROM sales_order WHERE id = $1)
-		`
-	rows, err := s.db.Query(itemsQuery, orderId)
+        SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity, 
+               s.horizontal, s.vertical
+        FROM cart_item ci
+        JOIN item i ON ci.item_id = i.id
+        JOIN brand b ON i.brand_id = b.id
+        LEFT JOIN shelf s ON i.id = s.item_id AND s.store_id = $2
+        WHERE ci.cart_id = (SELECT cart_id FROM sales_order WHERE id = $1)
+    `
+
+	rows, err := s.db.Query(itemsQuery, orderId, storeId)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching items: %w", err)
 	}
@@ -641,11 +731,22 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 	var packedItems []PackedItem
 	for rows.Next() {
 		var item PackedItem
-		if err := rows.Scan(&item.ItemID, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
+		var horizontal sql.NullInt64
+		var vertical sql.NullString
+		if err := rows.Scan(&item.ItemID, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity, &horizontal, &vertical); err != nil {
 			return nil, fmt.Errorf("error scanning items: %w", err)
 		}
 
-		// Fetch images for each item
+		if horizontal.Valid {
+			item.ShelfHorizontal = new(int)
+			*item.ShelfHorizontal = int(horizontal.Int64)
+		}
+
+		if vertical.Valid {
+			item.ShelfVertical = new(string)
+			*item.ShelfVertical = vertical.String
+		}
+
 		images, err := s.getItemImages(item.ItemID)
 		if err != nil {
 			return nil, err
@@ -660,12 +761,16 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 
 func (s *PostgresStore) fetchPackedItems(orderId int) ([]PackedItem, error) {
 	itemsQuery := `
-			SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity 
-			FROM cart_item ci
-			JOIN item i ON ci.item_id = i.id
-			JOIN brand b ON i.brand_id = b.id
-			WHERE ci.cart_id = (SELECT cart_id FROM sales_order WHERE id = $1)
-		`
+        SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity, 
+               s.horizontal, s.vertical
+        FROM cart_item ci
+        JOIN item i ON ci.item_id = i.id
+        JOIN brand b ON i.brand_id = b.id
+        LEFT JOIN shelf s ON i.id = s.item_id AND s.store_id = (
+            SELECT store_id FROM sales_order WHERE id = $1
+        )
+        WHERE ci.cart_id = (SELECT cart_id FROM sales_order WHERE id = $1)
+    `
 	rows, err := s.db.Query(itemsQuery, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching items: %w", err)
@@ -675,11 +780,23 @@ func (s *PostgresStore) fetchPackedItems(orderId int) ([]PackedItem, error) {
 	var packedItems []PackedItem
 	for rows.Next() {
 		var item PackedItem
-		if err := rows.Scan(&item.ItemID, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity); err != nil {
+		var horizontal sql.NullInt64
+		var vertical sql.NullString
+		if err := rows.Scan(&item.ItemID, &item.Name, &item.Brand, &item.Quantity, &item.UnitOfQuantity, &item.ItemQuantity, &horizontal, &vertical); err != nil {
 			return nil, fmt.Errorf("error scanning items: %w", err)
 		}
 
-		// Fetch images for each item
+		// Handling NULL values for shelf horizontal and vertical
+		if horizontal.Valid {
+			item.ShelfHorizontal = new(int)
+			*item.ShelfHorizontal = int(horizontal.Int64)
+		}
+
+		if vertical.Valid {
+			item.ShelfVertical = new(string)
+			*item.ShelfVertical = vertical.String
+		}
+
 		images, err := s.getItemImages(item.ItemID)
 		if err != nil {
 			return nil, err
@@ -688,6 +805,7 @@ func (s *PostgresStore) fetchPackedItems(orderId int) ([]PackedItem, error) {
 		item.Order_ID = orderId
 		packedItems = append(packedItems, item)
 	}
+
 	return packedItems, nil
 }
 
@@ -714,14 +832,16 @@ func (s *PostgresStore) getItemImages(itemId int) ([]string, error) {
 
 // PackedItem represents the structure of an item in the packed order
 type PackedItem struct {
-	ItemID         int      `json:"item_id"`
-	Order_ID       int      `json:"order_id"`
-	Name           string   `json:"name"`
-	Brand          string   `json:"brand"`
-	Quantity       int      `json:"quantity"`
-	UnitOfQuantity string   `json:"unit_of_quantity"`
-	ItemQuantity   int      `json:"item_quantity"`
-	ImageURLs      []string `json:"image_urls"` // Using camelCase for consistency
+	ItemID          int      `json:"item_id"`
+	Order_ID        int      `json:"order_id"`
+	Name            string   `json:"name"`
+	Brand           string   `json:"brand"`
+	Quantity        int      `json:"quantity"`
+	UnitOfQuantity  string   `json:"unit_of_quantity"`
+	ItemQuantity    int      `json:"item_quantity"`
+	ShelfHorizontal *int     `json:"shelf_horizontal"` // Pointer to handle NULLs
+	ShelfVertical   *string  `json:"shelf_vertical"`   // Pointer to handle NULLs
+	ImageURLs       []string `json:"image_urls"`
 }
 
 func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone string, salesOrderId int, storeId int, image string) (AllocationInfo, error) {

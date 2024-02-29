@@ -383,3 +383,101 @@ func (s *PostgresStore) GetPackerByPhone(phone string, fcm string) (*types.Packe
 	fmt.Println("Transaction Successful")
 	return &packer, nil
 }
+
+func (s *PostgresStore) PackerFindItem(req types.FindItemBasic) (FindItemResponse, error) {
+	var response FindItemResponse
+	var horizontal sql.NullInt64 // Use sql.NullInt64 for nullable integers
+	var vertical sql.NullString  // Use sql.NullString for nullable strings
+
+	query := `
+    SELECT i.name, i.id, s.horizontal, s.vertical
+    FROM Item i
+    LEFT JOIN Shelf s ON i.id = s.item_id
+    WHERE i.barcode = $1 AND (s.store_id = $2 OR s.store_id IS NULL);
+    `
+	err := s.db.QueryRow(query, req.Barcode, req.StoreID).Scan(&response.ItemName, &response.ItemId, &horizontal, &vertical)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return response, fmt.Errorf("item with barcode '%s' not found", req.Barcode)
+		}
+		return response, fmt.Errorf("error finding item: %v", err)
+	}
+
+	// Convert sql.NullInt64 and sql.NullString to *int and *string
+	if horizontal.Valid {
+		response.ShelfHorizontal = new(int)
+		*response.ShelfHorizontal = int(horizontal.Int64) // Convert int64 to int and assign
+	}
+	if vertical.Valid {
+		response.ShelfVertical = new(string)
+		*response.ShelfVertical = vertical.String // Assign directly
+	}
+
+	return response, nil
+}
+
+type FindItemResponse struct {
+	ItemName        string  `json:"item_name"`
+	ItemId          int     `json:"item_id"`
+	ShelfHorizontal *int    `json:"shelf_horizontal"` // Changed to pointer to int
+	ShelfVertical   *string `json:"shelf_vertical"`   // Changed to pointer to string
+}
+
+func (s *PostgresStore) PackerLoadItem(req types.LoadItemBasic) (LoadItemResponse, error) {
+	var response LoadItemResponse
+
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return response, fmt.Errorf("error starting transaction: %v", err)
+	}
+
+	// Step 1: Increase stock quantity in the item_store table within the transaction
+	updateQuery := `
+	UPDATE item_store
+	SET stock_quantity = stock_quantity + $1
+	WHERE item_id = $2 AND store_id = $3
+	RETURNING id;
+	`
+	var itemStoreId int
+	err = tx.QueryRow(updateQuery, req.Quantity, req.ItemID, req.StoreID).Scan(&itemStoreId)
+	if err != nil {
+		tx.Rollback() // Roll back the transaction in case of error
+		if err == sql.ErrNoRows {
+			return response, fmt.Errorf("item_store record not found for item_id '%d' in store_id '%d'", req.ItemID, req.StoreID)
+		}
+		return response, fmt.Errorf("error updating stock quantity: %v", err)
+	}
+
+	// Step 2: Retrieve item and shelf details within the transaction
+	detailsQuery := `
+	SELECT i.name, i.id, s.horizontal, s.vertical
+	FROM item i
+	JOIN shelf s ON i.id = s.item_id
+	WHERE i.id = $1 AND s.store_id = $2;
+	`
+	err = tx.QueryRow(detailsQuery, req.ItemID, req.StoreID).Scan(&response.ItemName, &response.ItemId, &response.ShelfHorizontal, &response.ShelfVertical)
+	if err != nil {
+		tx.Rollback() // Roll back the transaction in case of error
+		return response, fmt.Errorf("error retrieving item and shelf details: %v", err)
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return response, fmt.Errorf("error committing transaction: %v", err)
+	}
+
+	// Set the quantity in the response
+	response.Quantity = req.Quantity
+
+	return response, nil
+}
+
+type LoadItemResponse struct {
+	ItemName        string `json:"item_name"`
+	ItemId          int    `json:"item_id"`
+	ShelfHorizontal int    `json:"shelf_horizontal"`
+	ShelfVertical   string `json:"shelf_vertical"`
+	Quantity        int    `json:"quantity"`
+}

@@ -228,6 +228,27 @@ type ItemBasic struct {
 	Description    string   `json:"description"`
 }
 
+type FindItemBasic struct {
+	Barcode string `json:"barcode"`
+	StoreID int    `json:"store_id"`
+}
+
+type LoadItemBasic struct {
+	ItemID   int `json:"item_id"`
+	Quantity int `json:"quantity"`
+	StoreID  int `json:"store_id"`
+}
+
+type ItemBarcodeBasic struct {
+	ItemID  int    `json:"item_id"`
+	Barcode string `json:"barcode"`
+}
+type ItemBarcodeBasicReturn struct {
+	ItemID   int    `json:"item_id"`
+	Barcode  string `json:"barcode"`
+	ItemName string `json:"item_name"`
+}
+
 type ItemBasicReturn struct {
 	Name           string   `json:"name"`
 	BrandId        int      `json:"brand_id"`

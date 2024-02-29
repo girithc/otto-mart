@@ -99,6 +99,7 @@ func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string
 		} else {
 			fmt.Println("Task with token created successfully", task.GetName())
 		}
+		
 	}
 
 	return nil

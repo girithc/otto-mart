@@ -351,3 +351,25 @@ func (s *PostgresStore) ManagerAddNewItem(item types.ItemBasic) (types.ItemBasic
 		Id:             itemId,
 	}, nil
 }
+
+func (s *PostgresStore) ManagerUpdateItemBarcode(item types.ItemBarcodeBasic) (types.ItemBarcodeBasicReturn, error) {
+	// Prepare the update query to change the barcode for the given item ID
+	updateQuery := `UPDATE item SET barcode = $1 WHERE id = $2 RETURNING name;`
+
+	// Variable to store the item's name after the update
+	var itemName string
+
+	// Execute the update query and scan the returned item name
+	err := s.db.QueryRow(updateQuery, item.Barcode, item.ItemID).Scan(&itemName)
+	if err != nil {
+		// Handle the error, possibly no rows were affected or a database error occurred
+		return types.ItemBarcodeBasicReturn{}, fmt.Errorf("error updating item barcode: %w", err)
+	}
+
+	// Return the updated item details
+	return types.ItemBarcodeBasicReturn{
+		ItemID:   item.ItemID,
+		Barcode:  item.Barcode,
+		ItemName: itemName,
+	}, nil
+}

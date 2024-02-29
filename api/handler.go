@@ -554,6 +554,54 @@ func (s *Server) handleManagerAddNewItem(res http.ResponseWriter, req *http.Requ
 	return nil
 }
 
+func (s *Server) handleManagerUpdateItemBarcode(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-update-item-barcode")
+		return s.goRoutineWrapper(ManagerUpdateItemBarcode, s.handleManagerUpdateItemBarcodeBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerInitShelf(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-init-shelf")
+		return s.goRoutineWrapper(ManagerInitShelf, s.handleManagerInitShelfBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerAssignItemShelf(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-assign-item-shelf")
+		return s.goRoutineWrapper(ManagerAssignItemShelf, s.handleManagerAssignItemShelfBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handlePackerFindItem(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-find-item")
+		return s.goRoutineWrapper(PackerFindItem, s.handlePackerFindItemBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleManagerFindItem(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-find-item")
+		return s.goRoutineWrapper(ManagerFindItem, s.handlePackerFindItemBasic, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handlePackerLoadItem(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-load-item")
+		return s.goRoutineWrapper(PackerLoadItem, s.handlePackerLoadItemBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerPackOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")
@@ -622,6 +670,14 @@ func (s *Server) handleCancelCheckout(res http.ResponseWriter, req *http.Request
 	if req.Method == "POST" {
 		print_path("POST", "cancel-checkout")
 		return s.goRoutineWrapper(CheckoutCancel, s.HandleCancelCheckoutCart, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleCustomerPlacedOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "customer-placed-order")
+		return s.goRoutineWrapper(CustomerPlacedOrder, s.handleGetCustomerPlacedOrder, res, req)
 	}
 	return nil
 }

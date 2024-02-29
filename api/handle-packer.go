@@ -81,3 +81,48 @@ func (s *Server) handleManagerAddNewItemBasic(res http.ResponseWriter, req *http
 
 	return WriteJSON(res, http.StatusOK, result)
 }
+
+func (s *Server) handleManagerUpdateItemBarcodeBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.ItemBarcodeBasic)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerUpdateItemBarcode")
+		return err
+	}
+
+	result, err := s.store.ManagerUpdateItemBarcode(*new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
+func (s *Server) handlePackerFindItemBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.FindItemBasic)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handlePackerFindItemBasic")
+		return err
+	}
+
+	result, err := s.store.PackerFindItem(*new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
+func (s *Server) handlePackerLoadItemBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.LoadItemBasic)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handlePackerLoadItemBasic")
+		return err
+	}
+
+	result, err := s.store.PackerLoadItem(*new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}

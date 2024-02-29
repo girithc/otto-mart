@@ -87,3 +87,33 @@ func (s *Server) HandleManagerGetItem(res http.ResponseWriter, req *http.Request
 type GetItem struct {
 	ID int `json:"id"`
 }
+
+func (s *Server) handleManagerInitShelfBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.GetShelf)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerInitShelf")
+		return err
+	}
+
+	result, err := s.store.ManagerInitShelf(new_req.StoreId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
+func (s *Server) handleManagerAssignItemShelfBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.AssignItemShelf)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerAssignItemShelf")
+		return err
+	}
+
+	result, err := s.store.ManagerAssignItemToShelf(*new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}

@@ -49,6 +49,8 @@ var authRequirements = map[string]Permission{
 	ManagerItemEdit:                       {Role: "Manager", AuthRequired: true},
 	SearchItems:                           {Role: "Customer", AuthRequired: true},
 	ItemAddQuick:                          {Role: "Customer", AuthRequired: true},
+	PackerFindItem:                        {Role: "Customer", AuthRequired: true},
+	PackerLoadItem:                        {Role: "Customer", AuthRequired: true},
 	PackerPackOrder:                       {Role: "Customer", AuthRequired: true},
 	PackerFetchItem:                       {Role: "Customer", AuthRequired: true},
 	PackerGetPackedItems:                  {Role: "Customer", AuthRequired: true},
@@ -58,6 +60,7 @@ var authRequirements = map[string]Permission{
 	CheckoutLockItems:                     {Role: "Customer", AuthRequired: true},
 	CheckoutPayment:                       {Role: "Customer", AuthRequired: true},
 	CheckoutCancel:                        {Role: "Customer", AuthRequired: true},
+	CustomerPlacedOrder:                   {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerLogin:                  {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerGet:                    {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerUpdate:                 {Role: "Customer", AuthRequired: true},
@@ -112,6 +115,10 @@ var authRequirements = map[string]Permission{
 	ManagerGetTax:                         {Role: "Customer", AuthRequired: true},
 	ManagerItemStoreCombo:                 {Role: "Manager", AuthRequired: true},
 	ManagerAddNewItem:                     {Role: "Manager", AuthRequired: true},
+	ManagerUpdateItemBarcode:              {Role: "Manager", AuthRequired: true},
+	ManagerInitShelf:                      {Role: "Manager", AuthRequired: true},
+	ManagerFindItem:                       {Role: "Manager", AuthRequired: true},
+	ManagerAssignItemShelf:                {Role: "Manager", AuthRequired: true},
 }
 
 const (
@@ -156,6 +163,8 @@ const (
 	PackerLogin                           = "packer-login"
 	PackerGetAll                          = "packer-get-all"
 	PackerPackOrder                       = "packer-pack-order"
+	PackerFindItem                        = "packer-find-item"
+	PackerLoadItem                        = "packer-load-item"
 	PackerFetchItem                       = "packer-fetch-item"
 	PackerGetPackedItems                  = "packer-get-packed-items"
 	PackerPackItem                        = "packer-pack-item"
@@ -164,6 +173,7 @@ const (
 	CheckoutLockItems                     = "checkout-lock-items"
 	CheckoutPayment                       = "checkout-payment"
 	CheckoutCancel                        = "checkout-cancel"
+	CustomerPlacedOrder                   = "customer-placed-order"
 	DeliveryPartnerLogin                  = "delivery-partner-login"
 	DeliveryPartnerGet                    = "delivery-partner-get"
 	DeliveryPartnerUpdate                 = "delivery-partner-update"
@@ -220,4 +230,8 @@ const (
 	ManagerGetTax                         = "manager-get-tax"
 	ManagerItemStoreCombo                 = "manager-item-store-combo"
 	ManagerAddNewItem                     = "manager-add-new-item"
+	ManagerUpdateItemBarcode              = "manager-update-item-barcode"
+	ManagerInitShelf                      = "manager-init-shelf"
+	ManagerAssignItemShelf                = "manager-assign-item-shelf"
+	ManagerFindItem                       = "manager-find-item"
 )
