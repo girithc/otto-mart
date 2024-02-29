@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
@@ -26,6 +28,7 @@ Future<void> main() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
   }
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => LoginProvider(),
@@ -34,8 +37,53 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  RemoteMessage? initialMessage;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    getfcm();
+    firebaseInit();
+  }
+
+  void firebaseInit() {
+    FirebaseMessaging.onMessage.listen((event) {
+      RemoteNotification? notification = event.notification;
+      AndroidNotification? android = event.notification?.android;
+
+      if (notification != null && android != null) {
+        print("Notification: ${notification.title}");
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text(notification.title!),
+            content: Text(notification.body!),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('Ok'),
+              )
+            ],
+          ),
+        );
+      }
+    });
+  }
+
+  Future<void> getfcm() async {
+    initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +98,14 @@ class MyApp extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.done) {
             // If the user is logged in
             if (snapshot.data == true) {
-              return const MyHomePage();
+              if (initialMessage != null) {
+                print("Initial Message: ${initialMessage!.data}");
+                return const MyHomePage();
+
+                // Handle the initial message here
+              } else {
+                return const MyHomePage();
+              }
             } else {
               // If the user is not logged in
               return const MyPhone();
@@ -536,196 +591,6 @@ class _InventoryManagementState extends State<InventoryManagement> {
                       ),
                     ),
                   ),
-                  /*
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () => {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const Stores()),
-                      )
-                    },
-                    child: Center(
-                      child: Container(
-                        height: MediaQuery.of(context).size.height * 0.1,
-                        width: MediaQuery.of(context).size.width * 0.85,
-                        decoration: BoxDecoration(
-                          borderRadius:
-                              BorderRadius.circular(15), // Rounded borders
-                          color: Colors.white,
-                          boxShadow: [
-                            BoxShadow(
-                              color:
-                                  Colors.grey.withOpacity(0.25), // Shadow color
-                              spreadRadius: 0,
-                              blurRadius: 20, // Increased shadow blur
-                              offset: const Offset(
-                                  0, 10), // Increased vertical offset
-                            ),
-                          ],
-                        ),
-                        child: const Center(
-                          child: Text(
-                            'Stores',
-                            style: TextStyle(
-                                fontSize: 25,
-                                color: Colors.black,
-                                fontWeight: FontWeight.normal),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ListenBarcodePage()),
-                      );
-                    },
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.1,
-                      width: MediaQuery.of(context).size.width * 0.85,
-                      decoration: BoxDecoration(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded borders
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.grey.withOpacity(0.25), // Shadow color
-                            spreadRadius: 0,
-                            blurRadius: 20, // Increased shadow blur
-                            offset: const Offset(
-                                0, 10), // Increased vertical offset
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Add+ Item Detail',
-                          style: TextStyle(
-                              fontSize: 25,
-                              color: Colors.black,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: scanBarcode,
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.1,
-                      width: MediaQuery.of(context).size.width * 0.85,
-                      decoration: BoxDecoration(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded borders
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.grey.withOpacity(0.25), // Shadow color
-                            spreadRadius: 0,
-                            blurRadius: 20, // Increased shadow blur
-                            offset: const Offset(
-                                0, 10), // Increased vertical offset
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Add+ Item Quick',
-                          style: TextStyle(
-                              fontSize: 25,
-                              color: Colors.black,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const ShelfPage()),
-                      );
-                    },
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.1,
-                      width: MediaQuery.of(context).size.width * 0.85,
-                      decoration: BoxDecoration(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded borders
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.grey.withOpacity(0.25), // Shadow color
-                            spreadRadius: 0,
-                            blurRadius: 20, // Increased shadow blur
-                            offset: const Offset(
-                                0, 10), // Increased vertical offset
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Shelf Management',
-                          style: TextStyle(
-                              fontSize: 25,
-                              color: Colors.black,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const Scanner(),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      height: MediaQuery.of(context).size.height * 0.1,
-                      width: MediaQuery.of(context).size.width * 0.85,
-                      decoration: BoxDecoration(
-                        borderRadius:
-                            BorderRadius.circular(15), // Rounded borders
-                        color: Colors.white,
-                        boxShadow: [
-                          BoxShadow(
-                            color:
-                                Colors.grey.withOpacity(0.25), // Shadow color
-                            spreadRadius: 0,
-                            blurRadius: 20, // Increased shadow blur
-                            offset: const Offset(
-                                0, 10), // Increased vertical offset
-                          ),
-                        ],
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Scanner',
-                          style: TextStyle(
-                              fontSize: 25,
-                              color: Colors.black,
-                              fontWeight: FontWeight.normal),
-                        ),
-                      ),
-                    ),
-                  ),
-                  */
                 ],
               ),
             ),
