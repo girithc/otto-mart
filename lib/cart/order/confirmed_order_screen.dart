@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:lottie/lottie.dart';
@@ -23,29 +25,34 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   bool _isError = false;
   String? _errorMsg;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  Timer? _timer; // Declare a Timer variable
 
   String orderStatus = 'Preparing Order';
   String orderLottie =
       'https://lottie.host/ddddb99c-f46d-4ab1-a351-fe15819b4831/TrZJOISt7Y.json';
   double orderLottieTransform = 1.8;
   Map<String, OrderStatusInfo> orderStatusToInfo = {
-    'Preparing Order': OrderStatusInfo(
+    'received': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/ddddb99c-f46d-4ab1-a351-fe15819b4831/TrZJOISt7Y.json',
         transform: 1.4),
-    'Order Packed': OrderStatusInfo(
+    'accepted': OrderStatusInfo(
+        lottieUrl:
+            'https://lottie.host/ddddb99c-f46d-4ab1-a351-fe15819b4831/TrZJOISt7Y.json',
+        transform: 1.4),
+    'packed': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/179d84ef-a18b-4b26-b03c-85d5e928fd14/HOR0cKFnFZ.json',
         transform: 1.0),
-    'Order Picked by Delivery Executive': OrderStatusInfo(
+    'dispatched': OrderStatusInfo(
         lottieUrl:
             'https://assets1.lottiefiles.com/packages/lf20_jmejybvu.json',
         transform: 1.5),
-    'Arrived': OrderStatusInfo(
+    'arrived': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/af0a126c-e39f-42c0-897d-4885692650f3/IVv3ey2PJW.json',
         transform: 0.9),
-    'Order Completed': OrderStatusInfo(
+    'completed': OrderStatusInfo(
         lottieUrl:
             'https://lottie.host/3974166c-0ce3-45be-847b-3a39ab3131ec/cKXCS62FCY.json',
         transform: 1.9),
@@ -68,6 +75,19 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   void initState() {
     super.initState();
     fetchOrderDetails();
+    _setupPeriodicFetch(); // Set up periodic fetch of order info
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer when the widget is disposed
+    super.dispose();
+  }
+
+  void _setupPeriodicFetch() {
+    _timer =
+        Timer.periodic(Duration(minutes: 2), (Timer t) => fetchOrderInfo());
+    // This sets up a timer that calls fetchOrderInfo every 2 minutes
   }
 
   Future<void> fetchOrderDetails() async {
@@ -153,7 +173,17 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     final response = await networkService.postWithAuth('/customer-placed-order',
         additionalData: body);
 
-    print("Response From Refresh Order: ${response.body}");
+    print("Response: ${response.statusCode} ${response.body}  ");
+    // Deserialize the JSON response
+    final jsonResponse = json.decode(response.body);
+    final orderInfo = OrderInfo.fromJson(jsonResponse);
+    // Use the parsed orderInfo object to update your UI
+    // For example, you might want to set some state variables and call setState to refresh the UI
+    setState(() {
+      orderStatus = orderInfo.orderStatus;
+      orderLottie = orderStatusToInfo[orderStatus]!.lottieUrl;
+      orderLottieTransform = orderStatusToInfo[orderStatus]!.transform;
+    });
   }
 
   @override
@@ -537,4 +567,65 @@ class OrderStatusInfo {
   double transform;
 
   OrderStatusInfo({required this.lottieUrl, required this.transform});
+}
+
+class OrderInfo {
+  final String orderStatus;
+  final String orderDpStatus;
+  final String paymentType;
+  final bool paidStatus;
+  final String orderDate;
+  final int totalAmountPaid;
+  final List<Item> items;
+  final String address;
+
+  OrderInfo({
+    required this.orderStatus,
+    required this.orderDpStatus,
+    required this.paymentType,
+    required this.paidStatus,
+    required this.orderDate,
+    required this.totalAmountPaid,
+    required this.items,
+    required this.address,
+  });
+
+  factory OrderInfo.fromJson(Map<String, dynamic> json) {
+    return OrderInfo(
+      orderStatus: json['order_status'],
+      orderDpStatus: json['order_dp_status'],
+      paymentType: json['payment_type'],
+      paidStatus: json['paid_status'],
+      orderDate: json['order_date'],
+      totalAmountPaid: json['total_amount_paid'],
+      items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
+      address: json['address'],
+    );
+  }
+}
+
+class Item {
+  final String name;
+  final String image;
+  final int quantity;
+  final String unitOfQuantity;
+  final int size;
+
+  Item({
+    required this.name,
+    required this.image,
+    required this.quantity,
+    required this.unitOfQuantity,
+    required this.size,
+  });
+
+  factory Item.fromJson(Map<String, dynamic> json) {
+    return Item(
+      name: json['name'],
+      image: json['image'],
+      quantity: json['quantity'],
+      unitOfQuantity: json['unit_of_quantity'],
+      size: json['size'],
+    );
+  }
 }

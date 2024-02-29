@@ -47,6 +47,8 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     );
     */
 
+    print("Response Order Details: ${response.statusCode} ${response.body}");
+
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
