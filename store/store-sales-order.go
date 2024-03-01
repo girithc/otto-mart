@@ -680,6 +680,7 @@ func (s *PostgresStore) GetCombinedOrderDetails(storeId int, phoneNumber string)
 }
 
 func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem, error) {
+	println("Entered PackOrder")
 	var packerId int
 	packerIdQuery := `SELECT id FROM packer WHERE phone = $1`
 	err := s.db.QueryRow(packerIdQuery, phoneNumber).Scan(&packerId)
@@ -687,40 +688,45 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 		return nil, fmt.Errorf("error finding packer ID: %w", err)
 	}
 
+	println("Checkpoint I")
+
 	var existingOrderId int
-	checkOrderQuery := `SELECT id FROM sales_order WHERE packer_id = $1 AND order_status = 'accepted'`
+	// Modified to check for 'received' or 'accepted' orders
+	checkOrderQuery := `SELECT id FROM sales_order WHERE packer_id = $1 AND (order_status = 'received' OR order_status = 'accepted')`
 	err = s.db.QueryRow(checkOrderQuery, packerId).Scan(&existingOrderId)
 	if err == nil {
 		items, err := s.fetchPackedItems(existingOrderId)
+		println("Checkpoint II")
+
 		if err != nil {
 			return nil, fmt.Errorf("error fetching items for existing order: %w", err)
 		}
 		return items, nil
 	} else if err != sql.ErrNoRows {
-		return nil, fmt.Errorf("error checking for existing accepted orders: %w", err)
+		return nil, fmt.Errorf("error checking for existing orders: %w", err)
 	}
+	println("Checkpoint III")
 
 	var orderId int
+	// This query already handles switching from 'received' to 'accepted', no changes needed here
 	combinedQuery := `
-        WITH updated_order AS (
-            UPDATE sales_order 
-            SET order_status = 'accepted', packer_id = $1
-            WHERE id = (
-                SELECT id FROM sales_order
-                WHERE store_id = $2 AND order_status = 'received'
-                ORDER BY order_date ASC
-                LIMIT 1
-            )
-            RETURNING id
-        )
-        SELECT id FROM updated_order;
-    `
+    UPDATE sales_order
+    SET order_status = 'accepted', packer_id = $1
+    WHERE id = (
+        SELECT id FROM sales_order
+        WHERE store_id = $2 AND (order_status = 'received' OR order_status = 'accepted')
+        ORDER BY order_date ASC
+        LIMIT 1
+    )
+    RETURNING id;
+`
 
 	err = s.db.QueryRow(combinedQuery, packerId, storeId).Scan(&orderId)
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving and updating oldest order: %w", err)
 	}
 
+	// Fetching items for the updated order, no changes needed
 	itemsQuery := `
         SELECT i.id, i.name, b.name, i.quantity, i.unit_of_quantity, ci.quantity, 
                s.horizontal, s.vertical

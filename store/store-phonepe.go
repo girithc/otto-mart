@@ -490,18 +490,37 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		paymentInstrument = upi
 	case "CARD": // Assuming "CARD"  is the type for credit/debit cards
 		var card types.CardPaymentInstrument
-		modeOfPayment = card.CardType
-		if modeOfPayment == "CREDIT_CARD" {
-			modeOfPayment = "credit card"
-		} else {
-			modeOfPayment = "debit card"
-		}
 		err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &card)
 		if err != nil {
 			fmt.Printf("Error unmarshalling CARD payment instrument: %v\n", err)
 			return nil, err
 		}
 		paymentInstrument = card
+
+		// Check the card type explicitly and set modeOfPayment accordingly
+		if card.CardType == "CREDIT_CARD" {
+			modeOfPayment = "credit card"
+		} else if card.CardType == "DEBIT_CARD" {
+			modeOfPayment = "debit card"
+		} else {
+			modeOfPayment = "debit card"
+		}
+
+		/*
+			var card types.CardPaymentInstrument
+			modeOfPayment = card.CardType
+			if modeOfPayment == "CREDIT_CARD" {
+				modeOfPayment = "credit card"
+			} else {
+				modeOfPayment = "debit card"
+			}
+			err = json.Unmarshal(paymentResponse.Data.PaymentInstrument, &card)
+			if err != nil {
+				fmt.Printf("Error unmarshalling CARD payment instrument: %v\n", err)
+				return nil, err
+			}
+			paymentInstrument = card
+		*/
 	case "NETBANKING": // Assuming "NETBANKING" is the type for net banking
 		var netBanking types.NetBankingPaymentInstrument
 		modeOfPayment = "net banking"
@@ -534,16 +553,18 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		return nil, err
 	}
 
-	// Insert a new cart_lock record with lock-type paid, completed as success
-	insertCartLockQuery := `
-    INSERT INTO cart_lock (cart_id, lock_type, completed)
-    VALUES ($1, 'paid', 'success')`
+	/*
+			// Insert a new cart_lock record with lock-type paid, completed as success
+			insertCartLockQuery := `
+		    INSERT INTO cart_lock (cart_id, lock_type, completed)
+		    VALUES ($1, 'paid', 'success')`
 
-	if _, err = tx.Exec(insertCartLockQuery, cartID); err != nil {
-		tx.Rollback()
-		fmt.Printf("Error inserting new cart lock record: %v\n", err)
-		return nil, err
-	}
+			if _, err = tx.Exec(insertCartLockQuery, cartID); err != nil {
+				tx.Rollback()
+				fmt.Printf("Error inserting new cart lock record: %v\n", err)
+				return nil, err
+			}
+	*/
 
 	var payDetails TransactionDetails
 	payDetails.Status = paymentResponse.Data.State
@@ -560,23 +581,54 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		return nil, err
 	}
 
-	_, err = s.CreateOrder(tx, cartID, payDetails.PaymentMethod, payDetails.MerchantTransactionID)
-	if err != nil {
-		tx.Rollback() // Rollback the transaction on error
-		return nil, err
-	}
-
-	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		fmt.Printf("Error committing transaction: %v\n", err)
 		return nil, err
 	}
 
-	// Create the result struct
-	result := &types.PaymentCallbackResult{
-		PaymentResponse:   paymentResponse,
-		PaymentInstrument: paymentInstrument,
+	tx, err = s.db.Begin()
+	if err != nil {
+		fmt.Printf("Error starting transaction: %v\n", err)
+		return nil, err
 	}
 
-	return result, nil
+	if payDetails.ResponseCode == "SUCCESS" {
+		_, err = s.CreateOrder(tx, cartID, payDetails.PaymentMethod, payDetails.MerchantTransactionID)
+		if err != nil {
+			tx.Rollback() // Rollback the transaction on error
+			return nil, err
+		}
+
+		// Commit the transaction
+		if err = tx.Commit(); err != nil {
+			fmt.Printf("Error committing transaction: %v\n", err)
+			return nil, err
+		}
+
+		// Create the result struct
+		result := &types.PaymentCallbackResult{
+			PaymentResponse:   paymentResponse,
+			PaymentInstrument: paymentInstrument,
+		}
+
+		return result, nil
+	} else {
+		err = s.ResetLockedQuantities(tx, cartID)
+		if err != nil {
+			//tx.Rollback() // Rollback the transaction on error
+			return nil, err
+		}
+
+		if err = tx.Commit(); err != nil {
+			fmt.Printf("Error committing transaction: %v\n", err)
+			return nil, err
+		}
+
+		result := &types.PaymentCallbackResult{
+			PaymentResponse:   paymentResponse,
+			PaymentInstrument: paymentInstrument,
+		}
+		return result, nil
+	}
+
 }
