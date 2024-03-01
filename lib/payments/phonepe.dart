@@ -34,6 +34,7 @@ class PhonePeWebView extends StatefulWidget {
 class _PhonePeWebViewState extends State<PhonePeWebView> {
   late final WebViewController _controller;
   final storage = const FlutterSecureStorage();
+  double _currentZoomLevel = 1.0; // Default zoom level
 
   @override
   void initState() {
@@ -102,7 +103,17 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
     _controller = controller;
 
     _controller
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      //..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setJavaScriptMode(JavaScriptMode.unrestricted).then((_) {
+        _controller.runJavaScript("""
+        (function() {
+          var metaTag=document.createElement('meta');
+          metaTag.name = "viewport";
+          metaTag.content = "width=400";
+          document.getElementsByTagName('head')[0].appendChild(metaTag);
+        })();
+      """);
+      })
       ..addJavaScriptChannel(
         'SnackBar',
         onMessageReceived: (message) {
@@ -125,16 +136,6 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
       final networkService = NetworkService();
       final response = await networkService.postWithAuth('/checkout-cancel',
           additionalData: payload);
-
-      /*
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: json.encode(payload),
-      );
-      */
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
@@ -166,13 +167,6 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
     request.headers.addAll(headers);
 
     try {
-      /*
-      final http.Response response = await http.post(
-          Uri.parse('$baseUrl/checkout-payment'),
-          body: request.body,
-          headers: headers);
-      */
-
       final networkService = NetworkService();
       final response = await networkService.postWithAuth('/checkout-payment',
           additionalData: body);

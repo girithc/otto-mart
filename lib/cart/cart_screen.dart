@@ -632,24 +632,30 @@ class _TaxAndDelivery extends StatelessWidget {
                     font: const TextStyle(fontSize: 16),
                   )
                 : Container(),
-            _CustomListItem(
-              icon: Icons.electric_bike_outlined,
-              label: 'Delivery Fee',
-              amount: '${cart.deliveryFee}',
-              font: const TextStyle(fontSize: 16),
-            ),
-            _CustomListItem(
-              icon: Icons.shopping_bag_outlined,
-              label: 'Platform Fee',
-              amount: '${cart.platformFee}',
-              font: const TextStyle(fontSize: 16),
-            ),
-            _CustomListItem(
-              icon: Icons.shopping_bag_outlined,
-              label: 'Packaging Fee',
-              amount: '${cart.packagingFee}',
-              font: const TextStyle(fontSize: 16),
-            ),
+            cart.deliveryFee > 0
+                ? _CustomListItem(
+                    icon: Icons.electric_bike_outlined,
+                    label: 'Delivery Fee',
+                    amount: '${cart.deliveryFee}',
+                    font: const TextStyle(fontSize: 16),
+                  )
+                : Container(),
+            cart.platformFee > 0
+                ? _CustomListItem(
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Platform Fee',
+                    amount: '${cart.platformFee}',
+                    font: const TextStyle(fontSize: 16),
+                  )
+                : Container(),
+            cart.packagingFee > 0
+                ? _CustomListItem(
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Packaging Fee',
+                    amount: '${cart.packagingFee}',
+                    font: const TextStyle(fontSize: 16),
+                  )
+                : Container(),
             cart.deliveryPartnerTip > 0
                 ? _CustomListItem(
                     icon: Icons.volunteer_activism_outlined,

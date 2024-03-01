@@ -311,7 +311,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  mainAxisSpacing: 0.0,
+                  mainAxisSpacing: 1.0,
                   crossAxisSpacing: 0.0,
                   childAspectRatio: 0.63),
               itemCount: items.length,

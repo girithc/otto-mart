@@ -248,7 +248,7 @@ class _MyHomePageState extends State<MyHomePage>
                         crossAxisCount: 4,
                         crossAxisSpacing: 2,
                         mainAxisSpacing: 8,
-                        childAspectRatio: 0.62,
+                        childAspectRatio: 0.63,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {
@@ -416,7 +416,7 @@ class _MyHomePageState extends State<MyHomePage>
             : (index % 4 == 3)
                 ? const EdgeInsets.only(left: 2.5, right: 5, bottom: 1)
                 : const EdgeInsets.only(left: 2.5, right: 2.5, bottom: 1),
-        padding: const EdgeInsets.only(left: 0, right: 0, bottom: 5),
+        padding: const EdgeInsets.only(left: 0, right: 0, bottom: 1),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10.0),
           gradient: LinearGradient(
@@ -471,7 +471,7 @@ class _MyHomePageState extends State<MyHomePage>
               height: MediaQuery.of(context).size.height * 0.01,
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.04,
+              height: MediaQuery.of(context).size.height * 0.05,
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Text(
