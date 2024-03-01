@@ -51,6 +51,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   int? orderId;
   int totalQuantity = 0; // New variable to store total quantity
 
+  int? selectedRow;
+  String? selectedColumn;
+
   @override
   void initState() {
     super.initState();
@@ -103,20 +106,113 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   }
 
   Future<void> scanMobileBarcodeAssignSpace() async {
-    String barcodeScanRes;
-    try {
-      barcodeScanRes = await FlutterBarcodeScanner.scanBarcode(
-          '#ff6666', 'Cancel', true, ScanMode.BARCODE);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Container(
+            decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(15),
+                color: Colors.white,
+                border: Border.all(color: Colors.black, width: 1.0)),
+            child: Text(
+              'Assign Space',
+              textAlign: TextAlign.center,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: selectedColumn,
+                      decoration: InputDecoration(
+                          fillColor: Colors.white,
+                          labelText: 'Column',
+                          border: OutlineInputBorder(),
+                          filled: true),
+                      items: List<String>.from(['A', 'B', 'C', 'D'])
+                          .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(
+                            value,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedColumn = newValue;
+                        });
+                      },
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: DropdownButtonFormField<int>(
+                      value: selectedRow,
+                      decoration: InputDecoration(
+                          labelText: 'Row',
+                          border: OutlineInputBorder(),
+                          fillColor: Colors.white,
+                          filled: true),
+                      items: List.generate(4, (index) => index + 1)
+                          .map<DropdownMenuItem<int>>((int value) {
+                        return DropdownMenuItem<int>(
+                          value: value,
+                          child: Text(value.toString()),
+                        );
+                      }).toList(),
+                      onChanged: (newValue) {
+                        setState(() {
+                          selectedRow = newValue;
+                        });
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                child: Text(
+                  'Done',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+                  primary: Colors.deepPurpleAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                onPressed: () {
+                  if (selectedRow != null && selectedColumn != null) {
+                    scanBarcodeAssignSpace(selectedColumn!, selectedRow!);
+                    Navigator.of(context).pop();
+                  } else {
+                    // Handle case where row or column is not selected
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.white,
 
-      if (barcodeScanRes != '-1') {
-        scanBarcodeAssignSpace(barcodeScanRes);
-      }
-    } on PlatformException {
-      barcodeScanRes = 'Failed to get platform version';
-      // TODO
-    }
-
-    if (!mounted) return;
+                        content: Text(
+                          'Please select both row and column',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                        duration: Duration(
+                            seconds: 2), // Customize duration as needed
+                      ),
+                    );
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> scanBarcode(String code) async {
@@ -147,52 +243,64 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
-  Future<void> scanBarcodeAssignSpace(String code) async {
+  Future<void> scanBarcodeAssignSpace(String vertical, int horizontal) async {
+    print("Entered scanBarcodeAssignSpace");
+    print("Vertical: $vertical Horizontal ${horizontal.toString()}");
+    String? phone = await _storage.read(key: "phone");
     String? packerId = await _storage.read(key: "packerId");
-    String? storeId = await _storage.read(key: "storeId");
 
-    if (code != '-1') {
+    //String? storeId = await _storage.read(key: "storeId");
+    print("Checkpoint 1");
+
+    setState(() {
+      _isAssigningSpace = true; // Start loading
+    });
+    final path =
+        'packer/sales-order/$packerId/${widget.orderId}-${TimeOfDay.now()}';
+    final ref = FirebaseStorage.instance.ref().child(path);
+    String urlDownloaded = ''; // Initialize urlDownloaded with an empty string
+
+    try {
       setState(() {
-        _isAssigningSpace = true; // Start loading
+        uploadTask = ref.putFile(_image!);
       });
-      final path =
-          'packer/sales-order/$packerId/${widget.orderId}-${TimeOfDay.now()}';
+      final snapshot = await uploadTask!.whenComplete(() => {});
+      urlDownloaded = await snapshot.ref
+          .getDownloadURL(); // Attempt to get the download URL
+      print('Downloaded Link: $urlDownloaded');
+    } catch (e) {
+      // If the upload fails, urlDownloaded remains an empty string
+      print('Image upload failed: $e');
+    } finally {
+      // Ensure uploadTask is set to null whether upload succeeds or fails
+      setState(() {
+        uploadTask = null;
+      });
+    }
+    try {
+      print("Checkpoint III");
 
-      final ref = FirebaseStorage.instance.ref().child(path);
-      String urlDownloaded;
-      try {
-        setState(() {
-          uploadTask = ref.putFile(_image!);
-        });
-        final snapshot = await uploadTask!.whenComplete(() => {});
-        urlDownloaded = await snapshot.ref.getDownloadURL();
-        print('Downloaded Link: $urlDownloaded');
-        setState(() {
-          uploadTask = null;
-        });
-
-        apiClient
-            .orderAssignSpace(
-                code, packerId!, widget.orderId, "1", urlDownloaded)
-            .then((allocationInfo) {
-          // Show the allocation details in a dialog
-          _showAllocationDetailsDialog(allocationInfo);
-          setState(() {
-            _isAssigningSpace = false;
-          });
-        }, onError: (error) {
-          _showErrorDialog("Error: $error"); // Show error dialog
-
-          setState(() {
-            _isAssigningSpace = false;
-          });
-        });
-      } catch (e) {
+      apiClient
+          .orderAssignSpace(
+              vertical, horizontal, phone!, widget.orderId, "1", urlDownloaded)
+          .then((allocationInfo) {
+        // Show the allocation details in a dialog
+        _showAllocationDetailsDialog(allocationInfo);
         setState(() {
           _isAssigningSpace = false;
         });
-        _showErrorDialog("Error: $e");
-      }
+      }, onError: (error) {
+        _showErrorDialog("Error: $error"); // Show error dialog
+
+        setState(() {
+          _isAssigningSpace = false;
+        });
+      });
+    } catch (e) {
+      setState(() {
+        _isAssigningSpace = false;
+      });
+      _showErrorDialog("Error: $e");
     }
   }
 
@@ -209,7 +317,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                 Image.network(allocationInfo.image),
                 Text('Order ID: ${allocationInfo.salesOrderId}'),
                 Text(
-                    'Shelf Name ${allocationInfo.column}${allocationInfo.row}'),
+                    'Shelf Name ${allocationInfo.vertical}${allocationInfo.horizontal}'),
                 Text('Shelf ID: ${allocationInfo.shelfId}'),
               ],
             ),
@@ -319,7 +427,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
       body: BarcodeKeyboardListener(
         onBarcodeScanned: (String code) {
           if (widget.allPacked) {
-            scanBarcodeAssignSpace(code);
+            //scanBarcodeAssignSpace(code);
           } else {
             scanBarcode(code);
           }
@@ -727,31 +835,32 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
         child: Container(
           padding: const EdgeInsets.only(bottom: 10, top: 5, left: 5, right: 5),
           child: widget.allPacked
-              ? (pictureTaken
-                  ? ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pinkAccent, // Background color
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 12), // Makes the button longer and taller
-                        shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(20), // Roundish borders
+              ? (ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.pinkAccent, // Background color
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 12), // Makes the button longer and taller
+                    shape: RoundedRectangleBorder(
+                      borderRadius:
+                          BorderRadius.circular(20), // Roundish borders
+                    ),
+                  ),
+                  onPressed: scanMobileBarcodeAssignSpace,
+                  child: _isAssigningSpace
+                      ? const CircularProgressIndicator()
+                      : const Text(
+                          'Complete Packing',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
-                      onPressed: scanMobileBarcodeAssignSpace,
-                      child: _isAssigningSpace
-                          ? const CircularProgressIndicator()
-                          : const Text(
-                              'Complete Packing',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                    )
-                  : ElevatedButton(
+                )
+
+                  /*
+                  ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.pinkAccent, // Background color
                         padding: const EdgeInsets.symmetric(
@@ -771,7 +880,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                           color: Colors.white,
                         ),
                       ),
-                    ))
+                    )
+                    */
+                  )
               : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
