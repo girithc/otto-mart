@@ -288,7 +288,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
 
   Future<bool> fetchItems() async {
     String? phone = await _storage.read(key: "phone");
-    String? storeId = await _storage.read(key: "storeId");
+    //String? storeId = await _storage.read(key: "storeId");
 
     Map<String, dynamic> data = {"store_id": 1, "packer_phone": phone};
 
@@ -299,7 +299,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
         additionalData: data);
 
     if (response.statusCode == 200) {
-      print('response: ${response.body}');
+      print('response pack: ${response.body}');
       final jsonResponse = json.decode(response.body);
       if (jsonResponse.isNotEmpty) {
         final combinedResponse = CombinedOrderResponse.fromJson(jsonResponse);
