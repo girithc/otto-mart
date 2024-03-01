@@ -197,6 +197,11 @@ func (s *PostgresStore) Init() error {
 	}
 	fmt.Println("Success - Created Shelf Table")
 
+	if err := s.CreateDeliveryShelfTable(tx); err != nil {
+		return err
+	}
+	fmt.Println("Success - Created Delivery Shelf Table")
+
 	if err := s.CreatePackerShelfTable(tx); err != nil {
 		return err
 	}
@@ -249,6 +254,7 @@ func (s *PostgresStore) Init() error {
 	if err := s.CreateManagerTable(tx); err != nil {
 		return err
 	}
+
 	fmt.Println("Success - Created Item Financial Table")
 
 	constraintQuery := `

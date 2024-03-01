@@ -273,7 +273,7 @@ func (s *PostgresStore) PhonePePaymentComplete(cart_id int) error {
 
 func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string, merchantTransactionID string) (*types.PhonePeResponsePlus, error) {
 	phonepe := &types.PhonePeInit{
-		MerchantId:        "PGTESTPAYUAT",
+		MerchantId:        "M1LQ34O3ZJ6O",
 		RedirectUrl:       "https://youtube.com/redirect-url",
 		RedirectMode:      "REDIRECT",
 		CallbackUrl:       fmt.Sprintf("https://otto-mart-2cta4tgbnq-el.a.run.app/phonepe-callback?cart_id=%d&sign=%s", cart_id, url.QueryEscape(sign)),
@@ -314,7 +314,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string, merchantTra
 	phonepe.Amount = (100 * amount)
 
 	// Salt key and other configurations
-	saltKey := "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"
+	saltKey := "73ee0c82-28b1-44e8-9d2e-babb59184243" //"099eb0cd-02cf-4e2a-8aca-3e6c6aff0399"
 	saltIndex := "1"
 
 	// Convert payload to JSON
@@ -333,7 +333,7 @@ func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string, merchantTra
 
 	// Prepare the request
 	requestPayload := []byte(fmt.Sprintf(`{"request":"%s"}`, encodedPayload))
-	req, err := http.NewRequest("POST", "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay", bytes.NewBuffer(requestPayload))
+	req, err := http.NewRequest("POST", "https://api.phonepe.com/apis/hermes/pg/v1/pay", bytes.NewBuffer(requestPayload))
 	if err != nil {
 		return nil, err
 	}
@@ -560,25 +560,6 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		return nil, err
 	}
 
-	/*
-			// Prepare and execute the SQL update query
-			updateQuery := `
-		    UPDATE transaction
-		    SET status = $1,
-		        response_code = $2,
-		        payment_details = $3,
-		        payment_method = $4,
-		        merchant_id = $5,
-		        payment_gateway_name = $6
-		    WHERE merchant_transaction_id = $7`
-
-			if _, err = tx.Exec(updateQuery, paymentResponse.Data.State, paymentResponse.Data.ResponseCode,
-				paymentInstrument, instrumentType, paymentResponse.Data.MerchantId, "PhonePe", paymentResponse.Data.MerchantTransactionId); err != nil {
-				tx.Rollback()
-				fmt.Printf("Error updating transaction record: %v\n", err)
-				return nil, err
-			}
-	*/
 	_, err = s.CreateOrder(tx, cartID, payDetails.PaymentMethod, payDetails.MerchantTransactionID)
 	if err != nil {
 		tx.Rollback() // Rollback the transaction on error

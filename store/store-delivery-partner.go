@@ -314,15 +314,16 @@ func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (
 }
 
 type PickupOrderInfo struct {
-	CustomerName   string    `json:"customer_name"`
-	CustomerPhone  string    `json:"customer_phone"`
-	Latitude       float64   `json:"latitude"`
-	Longitude      float64   `json:"longitude"`
-	LineOneAddress string    `json:"line_one_address"`
-	LineTwoAddress string    `json:"line_two_address"`
-	StreetAddress  string    `json:"street_address"`
-	OrderDate      time.Time `json:"order_date"`
-	OrderStatus    string    `json:"order_status"`
+	CustomerName    string    `json:"customer_name"`
+	CustomerPhone   string    `json:"customer_phone"`
+	Latitude        float64   `json:"latitude"`
+	Longitude       float64   `json:"longitude"`
+	LineOneAddress  string    `json:"line_one_address"`
+	LineTwoAddress  string    `json:"line_two_address"`
+	StreetAddress   string    `json:"street_address"`
+	OrderDate       time.Time `json:"order_date"`
+	OrderStatus     string    `json:"order_status"`
+	AmountToCollect int       `json:"amount_to_collect"`
 }
 
 func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (*PickupOrderInfo, error) {
@@ -335,17 +336,17 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
 		return nil, err
 	}
 
-	// Query to get order, customer information, and address_id from shopping_cart or sales_order
 	orderQuery := `
     SELECT c.name, c.phone, so.order_date, so.order_status,
-           COALESCE(sc.address_id, so.address_id) AS address_id
+           COALESCE(sc.address_id, so.address_id) AS address_id, t.amount
     FROM sales_order so
     LEFT JOIN shopping_cart sc ON so.cart_id = sc.id
     INNER JOIN customer c ON so.customer_id = c.id
+    LEFT JOIN transaction t ON so.transaction_id = t.id
     WHERE so.id = $1 AND so.delivery_partner_id = $2 AND so.order_dp_status = 'accepted' AND so.order_status != 'completed';`
 
 	var addressID int
-	err = s.db.QueryRow(orderQuery, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.OrderDate, &info.OrderStatus, &addressID)
+	err = s.db.QueryRow(orderQuery, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.OrderDate, &info.OrderStatus, &addressID, &info.AmountToCollect)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +380,7 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	if err != nil {
 		return nil, err
 	}
-	defer tx.Rollback()
+	defer tx.Rollback() // Ensure transaction is rolled back in case of error
 
 	// Verify the sales order's current status is 'packed'
 	var currentStatus string
@@ -400,34 +401,20 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	}
 
 	// Update the order_status to 'dispatched' in sales_order
-	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed' ", order_id, deliveryPartnerIDFromDB)
+	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed'", order_id, deliveryPartnerIDFromDB)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check for an existing delivery_order record
-	var existingDeliveryOrderID int
-	err = tx.QueryRow("SELECT id FROM delivery_order WHERE sales_order_id = $1 AND delivery_partner_id = $2", order_id, deliveryPartnerIDFromDB).Scan(&existingDeliveryOrderID)
+	// Remove the sales_order_id from delivery_shelf for the given order_id
+	_, err = tx.Exec("UPDATE delivery_shelf SET order_id = NULL WHERE order_id = $1", order_id)
+	if err != nil {
+		return nil, err
+	}
 
-	// Update or insert delivery_order record
-	if err == sql.ErrNoRows {
-		// Insert a new delivery_order record with order_picked_date as current timestamp
-		_, err = tx.Exec(`
-            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_picked_date)
-            VALUES ($1, $2, CURRENT_TIMESTAMP);`, order_id, deliveryPartnerIDFromDB)
-		if err != nil {
-			return nil, err
-		}
-	} else if err == nil {
-		// Update the existing record's order_picked_date
-		_, err = tx.Exec(`
-            UPDATE delivery_order
-            SET order_picked_date = CURRENT_TIMESTAMP
-            WHERE id = $1;`, existingDeliveryOrderID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	// Update the pickup_time and set active to false in packer_shelf for the associated sales_order_id
+	_, err = tx.Exec("UPDATE packer_shelf SET pickup_time = CURRENT_TIMESTAMP, active = false WHERE sales_order_id = $1", order_id)
+	if err != nil {
 		return nil, err
 	}
 

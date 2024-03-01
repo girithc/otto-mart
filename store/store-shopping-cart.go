@@ -112,9 +112,9 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	// Calculate delivery fee based on item cost
 	switch {
 	case itemCost <= 99:
-		deliveryFee = 25
+		deliveryFee = 0
 	case itemCost <= 149:
-		deliveryFee = 20
+		deliveryFee = 0
 	default:
 		deliveryFee = 0
 	}
@@ -122,32 +122,32 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	// Calculate small order fee based on item cost
 	switch {
 	case itemCost <= 50:
-		smallOrderFee = 20
+		smallOrderFee = 0
 	case itemCost <= 99:
-		smallOrderFee = 15
+		smallOrderFee = 0
 	case itemCost <= 149:
-		smallOrderFee = 10
+		smallOrderFee = 0
 	default:
 		smallOrderFee = 0
 	}
 
 	switch {
 	case itemCost > 999:
-		platformFee = 5
+		platformFee = 0
 	case itemCost > 399:
-		platformFee = 4
+		platformFee = 0
 	default:
-		platformFee = 2
+		platformFee = 0
 	}
 
 	// Calculate packaging fee based on item cost
 	switch {
 	case itemCost > 999:
-		packagingFee = 5
+		packagingFee = 0
 	case itemCost > 399:
-		packagingFee = 2
+		packagingFee = 0
 	default:
-		packagingFee = 2
+		packagingFee = 0
 	}
 
 	// Update shopping_cart record

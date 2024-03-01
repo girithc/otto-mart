@@ -285,7 +285,7 @@ func (s *PostgresStore) Get_Items_List_From_Cart_Items_By_Cart_Id(cart_id int) (
             ci.item_id, 
             i.name, 
             ifin.mrp_price::numeric::float8, 
-            ii.image_url, 
+            COALESCE(ii.image_url, '') AS image_url, 
             istore.stock_quantity, 
             ci.quantity, 
             ci.sold_price,

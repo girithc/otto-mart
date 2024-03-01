@@ -225,7 +225,7 @@ func (s *Server) PackerAllocateSpace(res http.ResponseWriter, req *http.Request)
 		return err
 	}
 
-	records, err := s.store.PackerOrderAllocateSpace(new_req.Barcode, new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreId, new_req.Image)
+	records, err := s.store.PackerOrderAllocateSpace(*new_req)
 	if err != nil {
 		return err
 	}

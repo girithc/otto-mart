@@ -332,7 +332,7 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 	}
 
 	// Use Haversine distance to determine if the address is deliverable
-	const deliveryRadius = 1.0 // Delivery radius in km
+	const deliveryRadius = 0.1 // Delivery radius in km
 	if minHDistance <= deliveryRadius {
 		deliverable.Deliverable = true
 		deliverable.StoreId = nearestStoreID

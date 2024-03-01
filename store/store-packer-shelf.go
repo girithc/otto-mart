@@ -8,43 +8,32 @@ func (s *PostgresStore) CreatePackerShelfTable(tx *sql.Tx) error {
         id SERIAL PRIMARY KEY,
         sales_order_id INT REFERENCES Sales_Order(id) ON DELETE CASCADE,
         packer_id INT REFERENCES Packer(id) ON DELETE CASCADE,
-        shelf_id INT REFERENCES Shelf(id) ON DELETE CASCADE,
+        delivery_shelf_id INT REFERENCES delivery_shelf(id) ON DELETE CASCADE,
         active BOOLEAN NOT NULL DEFAULT true,
         drop_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         pickup_time TIMESTAMP,
-        image_url TEXT NOT NULL
+        image_url TEXT NULL
     );
-
-    CREATE OR REPLACE FUNCTION update_active()
-    RETURNS TRIGGER AS $$
-    BEGIN
-        IF NEW.pickup_time IS NOT NULL THEN
-            NEW.active := false;
-        END IF;
-        RETURN NEW;
-    END;
-    $$ LANGUAGE plpgsql;
-
-    DROP TRIGGER IF EXISTS trg_update_active ON Packer_Shelf;
-
-    CREATE OR REPLACE TRIGGER trg_update_active
-    BEFORE UPDATE ON Packer_Shelf
-    FOR EACH ROW
-    EXECUTE FUNCTION update_active();
-
-    DO $$
-    BEGIN
-        IF NOT EXISTS (
-            SELECT 1 FROM pg_class c
-            JOIN pg_namespace n ON n.oid = c.relnamespace
-            WHERE c.relname = 'idx_unique_active_shelf' AND n.nspname = 'public'
-        ) THEN
-            CREATE UNIQUE INDEX idx_unique_active_shelf ON Packer_Shelf(id) WHERE active;
-        END IF;
-    END
-    $$;
     `
 
 	_, err := tx.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	// Alter the table to add image_url column if it doesn't exist
+	alterQuery := `
+    DO $$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns 
+            WHERE table_name = 'packer_shelf' AND column_name = 'image_url'
+        ) THEN
+            ALTER TABLE Packer_Shelf ADD COLUMN image_url TEXT NULL;
+        END IF;
+    END
+    $$;`
+
+	_, err = tx.Exec(alterQuery)
 	return err
 }

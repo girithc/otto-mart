@@ -150,6 +150,15 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 		tx.Rollback()
 		return nil, err
 	}
+	// Update the address_id in the shopping cart
+	updateCartQuery := `UPDATE shopping_cart
+                        SET address_id = $1
+                        WHERE customer_id = $2 AND active = true
+                        RETURNING id`
+	err = tx.QueryRow(updateCartQuery, so.AddressID, customerID).Scan(&so.NewCartID)
+	if err != nil {
+		return nil, err // The transaction will be rolled back by the deferred function
+	}
 
 	productListQuery := `SELECT ci.id, ci.item_id, ci.quantity, i.name, i.brand_id, i.quantity AS item_quantity, i.unit_of_quantity, i.description
                          FROM cart_item ci
@@ -844,63 +853,63 @@ type PackedItem struct {
 	ImageURLs       []string `json:"image_urls"`
 }
 
-func (s *PostgresStore) PackerOrderAllocateSpace(barcode string, packerPhone string, salesOrderId int, storeId int, image string) (AllocationInfo, error) {
+func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (AllocationInfo, error) {
 	var info AllocationInfo
 
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
-		return info, err
+		return info, fmt.Errorf("error starting transaction: %w", err)
 	}
+	defer tx.Rollback() // Rollback transaction in case of any error
 
-	// Rollback transaction in case of any error
-	defer tx.Rollback()
-
-	// 1. Obtain shelf_id using the provided barcode
-	var shelfID, row int
-	var column string
-	shelfQuery := `SELECT id, horizontal, vertical FROM Shelf WHERE barcode = $1`
-	err = tx.QueryRow(shelfQuery, barcode).Scan(&shelfID, &row, &column)
+	// 1. Find delivery_shelf using horizontal, vertical, and store_id
+	var deliveryShelfID int
+	deliveryShelfQuery := `SELECT id FROM delivery_shelf WHERE horizontal = $1 AND vertical = $2 AND store_id = $3`
+	err = tx.QueryRow(deliveryShelfQuery, req.Horizontal, req.Vertical, req.StoreId).Scan(&deliveryShelfID)
 	if err != nil {
-		return info, err
+		return info, fmt.Errorf("error finding delivery shelf: %w", err)
 	}
 
-	// 2. Create a Packer_Shelf record
-	packerShelfQuery := `INSERT INTO Packer_Shelf (sales_order_id, packer_id, shelf_id, image_url, active) VALUES ($1, (SELECT id FROM Packer WHERE phone = $2), $3, $4, true)`
-	_, err = tx.Exec(packerShelfQuery, salesOrderId, packerPhone, shelfID, image)
+	// 2. Insert into Packer_Shelf
+	packerShelfQuery := `
+		INSERT INTO Packer_Shelf (sales_order_id, packer_id, delivery_shelf_id, image_url, active)
+		VALUES ($1, (SELECT id FROM Packer WHERE phone = $2), $3, $4, true)`
+	_, err = tx.Exec(packerShelfQuery, req.SalesOrderID, req.PackerPhone, deliveryShelfID, req.Image)
 	if err != nil {
-		return info, err
+		return info, fmt.Errorf("error inserting into Packer_Shelf: %w", err)
 	}
 
-	// 3. Update the order status to 'transit'
+	// 3. Update sales_order
 	orderStatusQuery := `UPDATE sales_order SET order_status = 'packed' WHERE id = $1 AND order_status = 'accepted'`
-	_, err = tx.Exec(orderStatusQuery, salesOrderId)
+	_, err = tx.Exec(orderStatusQuery, req.SalesOrderID)
 	if err != nil {
-		return info, err
+		return info, fmt.Errorf("error updating sales_order status: %w", err)
 	}
 
 	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {
-		return info, err
+		return info, fmt.Errorf("error committing transaction: %w", err)
 	}
 
 	// Set return values
 	info = AllocationInfo{
-		SalesOrderID: salesOrderId,
-		Row:          row,
-		Column:       column,
-		ShelfID:      shelfID,
-		Image:        image,
+		SalesOrderID: req.SalesOrderID,
+		Horizontal:   req.Horizontal,
+		Vertical:     req.Vertical,
+		ShelfID:      deliveryShelfID,
+		Image:        req.Image,
 	}
 
 	return info, nil
 }
 
+// Modified AllocationInfo struct
 type AllocationInfo struct {
 	SalesOrderID int    `json:"sales_order_id"`
-	Row          int    `json:"row"`
-	Column       string `json:"column"`
+	Horizontal   int    `json:"horizontal"` // Replaces Row
+	Vertical     string `json:"vertical"`   // Replaces Column
 	ShelfID      int    `json:"shelf_id"`
 	Image        string `json:"image"`
 }
