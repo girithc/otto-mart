@@ -292,6 +292,8 @@ class _InventoryManagementState extends State<InventoryManagement> {
 
     Map<String, dynamic> data = {"store_id": 1, "packer_phone": phone};
 
+    print("Data: $data");
+
     final networkService = NetworkService();
     var response = await networkService.postWithAuth('/packer-pack-order',
         additionalData: data);

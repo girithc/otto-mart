@@ -563,7 +563,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                                                 10.0), // Set the rounded corner radius
                                                           )),
                                                   child: Text(
-                                                    'amount: ${item.itemQuantity}',
+                                                    'Amount: ${item.itemQuantity}',
                                                     style: const TextStyle(
                                                         fontSize: 20),
                                                   ),
@@ -583,8 +583,8 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                                                   Radius
                                                                       .circular(
                                                                           10))),
-                                                  child: const Text(
-                                                    'Aisle 1A',
+                                                  child: Text(
+                                                    'Location  ${item.shelfVertical}-${item.shelfHorizontal}',
                                                     style:
                                                         TextStyle(fontSize: 20),
                                                   ),
@@ -863,7 +863,9 @@ class PackedItem {
       quantity: json['quantity'],
       unitOfQuantity: json['unit_of_quantity'],
       itemQuantity: json['item_quantity'],
-      imageURLs: List<String>.from(json['image_urls']),
+      imageURLs: json['image_urls'] != null
+          ? List<String>.from(json['image_urls'])
+          : [],
       shelfHorizontal: json['shelf_horizontal'],
       shelfVertical: json['shelf_vertical'],
     );
@@ -916,19 +918,18 @@ class CombinedOrderResponse {
   List<PackerItemDetail> packedDetails;
   bool allPacked;
 
-  CombinedOrderResponse(
-      {required this.packedItems,
-      required this.packedDetails,
-      required this.allPacked});
+  CombinedOrderResponse({
+    required this.packedItems,
+    required this.packedDetails,
+    required this.allPacked,
+  });
 
   factory CombinedOrderResponse.fromJson(Map<String, dynamic> json) {
-    // Handle packed_items
     var packedItemsJson = json['packed_items'] as List<dynamic>?;
     var packedItems = packedItemsJson != null
         ? packedItemsJson.map((x) => PackedItem.fromJson(x)).toList()
         : <PackedItem>[];
 
-    // Handle packed_details
     var packedDetailsJson = json['packed_details'] as List<dynamic>?;
     var packedDetails = packedDetailsJson != null
         ? packedDetailsJson.map((x) => PackerItemDetail.fromJson(x)).toList()
@@ -937,8 +938,9 @@ class CombinedOrderResponse {
     var allPacked = json['all_packed'] as bool;
 
     return CombinedOrderResponse(
-        packedItems: packedItems,
-        packedDetails: packedDetails,
-        allPacked: allPacked);
+      packedItems: packedItems,
+      packedDetails: packedDetails,
+      allPacked: allPacked,
+    );
   }
 }
