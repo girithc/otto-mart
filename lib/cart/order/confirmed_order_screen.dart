@@ -86,7 +86,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   void _setupPeriodicFetch() {
     _timer =
-        Timer.periodic(Duration(minutes: 2), (Timer t) => fetchOrderInfo());
+        Timer.periodic(Duration(minutes: 1), (Timer t) => fetchOrderInfo());
     // This sets up a timer that calls fetchOrderInfo every 2 minutes
   }
 
