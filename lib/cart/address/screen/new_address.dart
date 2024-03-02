@@ -3,13 +3,11 @@ import 'package:pronto/cart/address/screen/confirm_address.dart';
 import 'package:pronto/cart/address/worker/debouncer.dart';
 import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
-import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/utils/constants.dart';
 
 import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
-import 'package:provider/provider.dart';
 
 class AddressScreen extends StatefulWidget {
   const AddressScreen({super.key});
@@ -35,7 +33,7 @@ class _AddressScreenState extends State<AddressScreen> {
       "key": modApikey,
     });
 
-    print('Api Key: $modApikey');
+    //print('Api Key: $modApikey');
 
     await Future.delayed(const Duration(seconds: 2));
 
@@ -45,8 +43,8 @@ class _AddressScreenState extends State<AddressScreen> {
       PlaceAutoCompleteResponse result =
           PlaceAutoCompleteResponse.parseAutocompleteResult(response);
 
-      String? predictions = result.predictions?[0].description;
-      print("Prediction[0].description  $predictions");
+      //String? predictions = result.predictions?[0].description;
+      //print("Prediction[0].description  $predictions");
 
       if (result.predictions != null) {
         setState(() {
@@ -59,7 +57,7 @@ class _AddressScreenState extends State<AddressScreen> {
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>();
+    //var cart = context.watch<CartModel>();
     return Scaffold(
       appBar: AppBar(
         title: const Text("Delivery Address"),

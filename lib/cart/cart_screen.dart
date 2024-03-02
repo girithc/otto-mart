@@ -40,7 +40,7 @@ class _MyCartState extends State<MyCart> {
   }
 
   Future<LockStockResponse> checkoutLockItems(int cartId) async {
-    const String apiUrl = '$baseUrl/checkout-lock-items';
+    //const String apiUrl = '$baseUrl/checkout-lock-items';
     final Map<String, dynamic> body = {'cart_id': cartId};
     final networkService = NetworkService();
 

@@ -22,6 +22,7 @@ class SearchItemApiClient {
     final response =
         await networkService.postWithAuth('/search-item', additionalData: body);
 
+    print("Search Response: ${response.body}");
     /*
     var response = await http.post(
       url,

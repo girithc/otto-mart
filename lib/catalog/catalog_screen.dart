@@ -822,10 +822,18 @@ class _ListItem2State extends State<ListItem2> {
                     topRight: Radius.circular(10.0),
                   ),
                 ),
-                child: const Center(
-                  child: Text(
-                    'Out of Stock',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
+                child: Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 2), // Adjust padding as needed
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Text(
+                      'Out of Stock',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
                   ),
                 ),
               ),
