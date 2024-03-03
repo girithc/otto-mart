@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_avif/flutter_avif.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -443,7 +444,7 @@ class _MyHomePageState extends State<MyHomePage>
                 border: Border.all(color: Colors.white),
                 boxShadow: const [],
               ),
-              child: Image.network(
+              child: AvifImage.network(
                 image,
                 fit: BoxFit.cover,
                 errorBuilder: (BuildContext context, Object exception,
