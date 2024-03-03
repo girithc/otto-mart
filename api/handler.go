@@ -642,6 +642,14 @@ func (s *Server) handlePackerCancelOrder(res http.ResponseWriter, req *http.Requ
 	return nil
 }
 
+func (s *Server) handlePackerCheckOrderToPack(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-check-order-to-pack")
+		return s.goRoutineWrapper(PackerCheckOrderToPack, s.PackerCheckOrderToPack, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerAllocateSpace(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-allocate-space")
@@ -824,6 +832,14 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 		} else if len(requestBody) == (2 + numAuthFields) {
 			return s.goRoutineWrapper(SalesOrderGetByCartIdCustomerId, s.handleOrdersByCartIdCustomerId, res, newReq)
 		}
+	}
+	return nil
+}
+
+func (s *Server) handleCheckForPlacedOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "check-for-placed-order")
+		return s.goRoutineWrapper(CheckForPlacedOrder, s.CheckForPlacedOrder, res, req)
 	}
 	return nil
 }

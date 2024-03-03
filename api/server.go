@@ -13,7 +13,6 @@ type Server struct {
 	listen_address string
 	store          *store.PostgresStore
 	workerPool     *worker.WorkerPool
-	
 }
 
 func NewServer(listen_address string, store *store.PostgresStore, workerPool *worker.WorkerPool) *Server {
@@ -62,6 +61,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/packer-get-items", makeHTTPHandleFunc(s.handlePackerGetAllItems))
 	http.HandleFunc("/packer-pack-item", makeHTTPHandleFunc(s.handlePackerPackItem))
 	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
+	http.HandleFunc("/packer-check-order-to-pack", makeHTTPHandleFunc(s.handlePackerCheckOrderToPack))
 
 	http.HandleFunc("/packer-space-order", makeHTTPHandleFunc(s.handlePackerAllocateSpace))
 
@@ -82,6 +82,8 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/store-sales-order", makeHTTPHandleFunc(s.handleStoreSalesOrder))
 	http.HandleFunc("/sales-order-details", makeHTTPHandleFunc(s.handleSalesOrderDetails))
 	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
+
+	http.HandleFunc("/check-for-placed-order", makeHTTPHandleFunc(s.handleCheckForPlacedOrder))
 
 	http.HandleFunc("/phonepe-payment-init", makeHTTPHandleFunc(s.handlePhonePe))
 	http.HandleFunc("/phonepe-callback", makeHTTPHandleFunc(s.handlePhonePeCallback))

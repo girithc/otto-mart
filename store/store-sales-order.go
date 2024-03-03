@@ -254,7 +254,7 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 
 	// Finally, get the item details from the cart_item and item tables
 	itemsQuery := `
-		SELECT i.name, i.quantity, i.unit_of_quantity, (SELECT image_url FROM item_image WHERE item_id = i.id AND order_position = 1 LIMIT 1) AS image, ci.quantity
+		SELECT i.name, i.quantity, i.unit_of_quantity, COALESCE((SELECT image_url FROM item_image WHERE item_id = i.id AND order_position = 1 LIMIT 1), '') AS image, ci.quantity
 		FROM cart_item ci
 		JOIN item i ON ci.item_id = i.id
 		WHERE ci.cart_id = $1
@@ -272,7 +272,7 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 
 	for rows.Next() {
 		var item OrderItem
-		if err := rows.Scan(&item.Name, &item.Quantity, &item.UnitOfQuantity, &item.Image, &item.Quantity); err != nil {
+		if err := rows.Scan(&item.Name, &item.Size, &item.UnitOfQuantity, &item.Image, &item.Quantity); err != nil {
 			return nil, fmt.Errorf("error scanning item details: %w", err)
 		}
 		orderDetails.Items = append(orderDetails.Items, item)

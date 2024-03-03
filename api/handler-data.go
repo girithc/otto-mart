@@ -56,6 +56,7 @@ var authRequirements = map[string]Permission{
 	PackerGetPackedItems:                  {Role: "Customer", AuthRequired: true},
 	PackerPackItem:                        {Role: "Customer", AuthRequired: true},
 	PackerCancelOrder:                     {Role: "Customer", AuthRequired: true},
+	PackerCheckOrderToPack:                {Role: "Customer", AuthRequired: true},
 	PackerAllocateSpace:                   {Role: "Customer", AuthRequired: true},
 	CheckoutLockItems:                     {Role: "Customer", AuthRequired: true},
 	CheckoutPayment:                       {Role: "Customer", AuthRequired: true},
@@ -70,6 +71,7 @@ var authRequirements = map[string]Permission{
 	DeliveryPartnerDispatchOrder:          {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerArrive:                 {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerCompleteOrder:          {Role: "Customer", AuthRequired: true},
+	CheckForPlacedOrder:                   {Role: "Customer", AuthRequired: true},
 	SalesOrderGetAll:                      {Role: "Customer", AuthRequired: true},
 	SalesOrderGetByDeliveryPartner:        {Role: "Customer", AuthRequired: true},
 	SalesOrderGetByCustomer:               {Role: "Customer", AuthRequired: true},
@@ -169,6 +171,7 @@ const (
 	PackerGetPackedItems                  = "packer-get-packed-items"
 	PackerPackItem                        = "packer-pack-item"
 	PackerCancelOrder                     = "packer-cancel-order"
+	PackerCheckOrderToPack                = "packer-check-order-to-pack"
 	PackerAllocateSpace                   = "packer-allocate-space"
 	CheckoutLockItems                     = "checkout-lock-items"
 	CheckoutPayment                       = "checkout-payment"
@@ -183,6 +186,7 @@ const (
 	DeliveryPartnerDispatchOrder          = "packer-dispatch-order"
 	DeliveryPartnerArrive                 = "delivery-partner-arrive"
 	DeliveryPartnerCompleteOrder          = "delivery-partner-complete-order"
+	CheckForPlacedOrder                   = "check-for-placed-order"
 	SalesOrderGetAll                      = "sales-order-get-all"
 	SalesOrderGetByDeliveryPartner        = "sales-order-get-by-delivery-partner"
 	SalesOrderGetByCustomer               = "sales-order-get-by-customer"

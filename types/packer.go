@@ -25,3 +25,7 @@ type PackerFCM struct {
 	Phone string `json:"phone"`
 	FCM   string `json:"fcm"`
 }
+
+type PackerPhone struct {
+	Phone string `json:"phone"`
+}

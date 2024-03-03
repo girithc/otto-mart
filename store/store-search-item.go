@@ -15,27 +15,27 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 
 	rows, err := s.db.Query(`
     SELECT 
-    item.id, 
-    item.name, 
-    item_store.mrp_price, 
-    item_store.discount,
-    item_store.store_price,
-    store.name AS store_name,
-    item_store.stock_quantity, 
-    item_store.locked_quantity, 
-    (SELECT image_url FROM item_image WHERE item_image.item_id = item.id ORDER BY order_position LIMIT 1) AS image_url,
-    brand.name AS brand_name,
-    item.quantity,
-    item.unit_of_quantity,
-    item.created_at, 
-    item.created_by 
-FROM item
-LEFT JOIN item_store ON item.id = item_store.item_id
-LEFT JOIN store ON item_store.store_id = store.id
-LEFT JOIN brand ON item.brand_id = brand.id
-WHERE item.name ILIKE '%' || $1 || '%'
-ORDER BY item.id
- 
+        item.id, 
+        item.name, 
+        item_financial.mrp_price, 
+        item_store.discount,
+        item_store.store_price,
+        store.name AS store_name,
+        item_store.stock_quantity, 
+        item_store.locked_quantity, 
+        (SELECT image_url FROM item_image WHERE item_image.item_id = item.id ORDER BY order_position LIMIT 1) AS image_url, 
+		brand.name,
+        item.quantity,
+        item.unit_of_quantity,
+        item.created_at, 
+        item.created_by  
+    FROM item
+    INNER JOIN item_store ON item.id = item_store.item_id 
+    INNER JOIN item_financial ON item.id = item_financial.item_id 
+    LEFT JOIN store ON item_store.store_id = store.id
+    LEFT JOIN brand ON item.brand_id = brand.id
+    WHERE item.name ILIKE '%' || $1 || '%'
+    ORDER BY item.id
     `, query)
 	if err != nil {
 		return nil, err
@@ -47,11 +47,13 @@ ORDER BY item.id
 	for rows.Next() {
 		item := &types.Get_Items_By_CategoryID_And_StoreID_noCategory{}
 		var imageURL sql.NullString
+		var createdBy sql.NullInt64
+		var mrpPrice sql.NullFloat64 // No need for NullFloat64 anymore as INNER JOIN guarantees a value, but kept for compatibility
 
 		err := rows.Scan(
 			&item.ID,
 			&item.Name,
-			&item.MRP_Price,
+			&mrpPrice, // Scan into sql.NullFloat64
 			&item.Discount,
 			&item.Store_Price,
 			&item.Store,
@@ -62,12 +64,31 @@ ORDER BY item.id
 			&item.Quantity,
 			&item.Unit_Of_Quantity,
 			&item.Created_At,
-			&item.Created_By,
+			&createdBy,
 		)
 		if err != nil {
 			return nil, err
 		}
-		item.Image = imageURL.String
+
+		// mrpPrice is always valid now due to INNER JOIN, but keeping the check for safety
+		if mrpPrice.Valid {
+			item.MRP_Price = mrpPrice.Float64
+		} else {
+			item.MRP_Price = 0.0 // Fallback, should not be needed
+		}
+
+		if imageURL.Valid {
+			item.Image = imageURL.String
+		} else {
+			item.Image = "" // Fallback for image URL
+		}
+
+		if createdBy.Valid {
+			item.Created_By = int(createdBy.Int64)
+		} else {
+			item.Created_By = 0 // Fallback for created_by
+		}
+
 		items = append(items, item)
 	}
 

@@ -126,3 +126,18 @@ func (s *Server) handlePackerLoadItemBasic(res http.ResponseWriter, req *http.Re
 
 	return WriteJSON(res, http.StatusOK, result)
 }
+
+func (s *Server) PackerCheckOrderToPack(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.PackerPhone)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in PackerCheckOrderToPack")
+		return err
+	}
+
+	result, err := s.store.PackerCheckOrderToPack(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}

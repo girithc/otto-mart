@@ -481,3 +481,28 @@ type LoadItemResponse struct {
 	ShelfVertical   string `json:"shelf_vertical"`
 	Quantity        int    `json:"quantity"`
 }
+
+func (s *PostgresStore) PackerCheckOrderToPack(phone string) (bool, error) {
+	// Updated SQL query to check for orders that are either 'received'
+
+	query := `
+        SELECT EXISTS (
+            SELECT 1 FROM sales_order
+            WHERE order_status = 'received'
+            OR (
+                order_status = 'accepted'
+                AND packer_id = (SELECT id FROM packer WHERE phone = $1)
+            )
+        );`
+
+	var isOrderToPack bool
+	// Execute the query, passing in the phone as a parameter
+	err := s.db.QueryRow(query, phone).Scan(&isOrderToPack)
+	if err != nil {
+		// If there's an error executing the query or scanning the result, return false and the error
+		return false, err
+	}
+
+	// Return true if an order is found, false otherwise
+	return isOrderToPack, nil
+}

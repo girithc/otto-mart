@@ -56,7 +56,7 @@ func (s *PostgresStore) Get_Higher_Level_Categories() ([]*types.Higher_Level_Cat
     SELECT c.id, c.name, ci.image, ci.position, c.created_at, c.created_by 
     FROM higher_level_category c
     LEFT JOIN higher_level_category_image ci ON c.id = ci.higher_level_category_id AND ci.position = 1
-    `
+    ORDER BY c.id ASC` // Added ORDER BY clause here
 
 	rows, err := s.db.Query(query)
 	if err != nil {
