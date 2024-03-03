@@ -214,7 +214,6 @@ type CustomerOrderDetails struct {
 	TotalAmountPaid     int         `json:"total_amount_paid"`
 	Items               []OrderItem `json:"items"`
 	Address             string      `json:"address"` // Added to include the street address
-
 }
 
 // OrderItem holds information about an item in an order
@@ -298,23 +297,34 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 	return orderDetails, nil
 }
 
+type SalesOrderItem struct {
+	ItemName             string    `json:"item_name"`
+	UnitOfQuantity       string    `json:"unit_of_quantity"`
+	Quantity             int       `json:"quantity"`
+	SoldPrice            int       `json:"sold_price"`
+	OrderDate            time.Time `json:"order_date"`
+	Subtotal             int       `json:"subtotal"`
+	DeliveryFee          int       `json:"delivery_fee"`
+	PlatformFee          int       `json:"platform_fee"`
+	SmallOrderFee        int       `json:"small_order_fee"`
+	RainFee              int       `json:"rain_fee"`
+	HighTrafficSurcharge int       `json:"high_traffic_surcharge"`
+	PackingFee           int       `json:"packing_fee"`
+}
+
 func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*SalesOrderItem, error) {
 	var salesOrderItems []*SalesOrderItem
 
 	query := `
-        SELECT i.name, ci.sold_price AS price, sc.discounts, st.name AS store, 
-               (SELECT image_url FROM item_image WHERE item_id = i.id ORDER BY order_position ASC LIMIT 1) AS image, 
-               b.name AS brand, ci.quantity, i.unit_of_quantity, i.id, i.quantity, 
-               sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, ci.sold_price * ci.quantity AS item_cost, so.order_date
+        SELECT i.name AS item_name, i.unit_of_quantity, ci.quantity, ci.sold_price, so.order_date, 
+               sc.subtotal, sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, 
+               sc.high_traffic_surcharge, sc.packaging_fee
         FROM sales_order so
         JOIN shopping_cart sc ON so.cart_id = sc.id
         JOIN cart_item ci ON sc.id = ci.cart_id
         JOIN item_store istore ON ci.item_id = istore.id
         JOIN item i ON istore.item_id = i.id
-        JOIN store st ON istore.store_id = st.id
-        LEFT JOIN brand b ON i.brand_id = b.id
         WHERE so.id = $1 AND so.customer_id = $2
-        GROUP BY i.id, i.name, ci.sold_price, sc.discounts, st.name, b.name, ci.quantity, i.unit_of_quantity, sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.subtotal, so.order_date
     `
 
 	rows, err := s.db.Query(query, salesOrderID, customerID)
@@ -326,30 +336,22 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 	for rows.Next() {
 		var soi SalesOrderItem
 		err := rows.Scan(
-			&soi.Name,
-			&soi.Price,
-			&soi.Discount,
-			&soi.Store,
-			&soi.Image,
-			&soi.Brand,
-			&soi.Quantity,
+			&soi.ItemName,
 			&soi.UnitOfQuantity,
-			&soi.ItemID,
-			&soi.ItemQuantity,
+			&soi.Quantity,
+			&soi.SoldPrice,
+			&soi.OrderDate,
+			&soi.Subtotal,
 			&soi.DeliveryFee,
 			&soi.PlatformFee,
 			&soi.SmallOrderFee,
 			&soi.RainFee,
 			&soi.HighTrafficSurcharge,
 			&soi.PackingFee,
-			&soi.Subtotal,
-			&soi.ItemCost,
-			&soi.OrderDate,
 		)
 		if err != nil {
 			return nil, err
 		}
-		soi.ID = salesOrderID
 		salesOrderItems = append(salesOrderItems, &soi)
 	}
 
@@ -358,29 +360,6 @@ func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*S
 	}
 
 	return salesOrderItems, nil
-}
-
-type SalesOrderItem struct {
-	ID                   int       `json:"id"`
-	Name                 string    `json:"name"`
-	Price                int       `json:"price"`
-	Discount             int       `json:"discount"`
-	Store                string    `json:"store"`
-	Image                string    `json:"image"`
-	Brand                string    `json:"brand"`
-	Quantity             int       `json:"quantity"`
-	ItemID               int       `json:"item_id"`
-	UnitOfQuantity       string    `json:"unit_of_quantity"`
-	ItemQuantity         int       `json:"item_quantity"`
-	OrderDate            time.Time `json:"order_date"`
-	DeliveryFee          int       `json:"delivery_fee"`
-	PlatformFee          int       `json:"platform_fee"`
-	SmallOrderFee        int       `json:"small_order_fee"`
-	RainFee              int       `json:"rain_fee"`
-	HighTrafficSurcharge int       `json:"high_traffic_surcharge"`
-	PackingFee           int       `json:"packing_fee"`
-	Subtotal             int       `json:"subtotal"`
-	ItemCost             int       `json:"item_cost"` // Assuming this is the total cost of the item
 }
 
 // ... rest of the implementation remains the same
