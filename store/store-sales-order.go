@@ -938,3 +938,25 @@ type CombinedOrderResponse struct {
 	PackedDetails []PackerItemDetail `json:"packed_details"`
 	AllPacked     bool               `json:"all_packed"`
 }
+
+type CheckForPlacedOrder struct {
+	OrderId int    `json:"order_id"`
+	Status  string `json:"status"`
+}
+
+func (s *PostgresStore) CheckForPlacedOrder(phone string) (CheckForPlacedOrder, error) {
+	var order CheckForPlacedOrder
+	query := `
+        SELECT id, order_status
+        FROM sales_order
+        WHERE customer_id = (SELECT id FROM customer WHERE phone = $1)
+          AND order_status NOT IN ('completed', 'denied')
+        ORDER BY order_date DESC
+        LIMIT 1
+    `
+	err := s.db.QueryRow(query, phone).Scan(&order.OrderId, &order.Status)
+	if err != nil {
+		return order, err
+	}
+	return order, nil
+}

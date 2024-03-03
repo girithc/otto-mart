@@ -232,3 +232,19 @@ func (s *Server) PackerAllocateSpace(res http.ResponseWriter, req *http.Request)
 
 	return WriteJSON(res, http.StatusOK, records)
 }
+
+func (s *Server) CheckForPlacedOrder(res http.ResponseWriter, req *http.Request) error {
+	print("Enter CheckForPlacedOrder")
+	new_req := new(types.CustomerPhone)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in CheckForPlacedOrder()")
+		return err
+	}
+
+	records, err := s.store.CheckForPlacedOrder(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}

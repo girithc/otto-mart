@@ -153,3 +153,7 @@ type CancelRecentOrder struct {
 	PackerPhone string `json:"packer_phone"`
 	OrderID     int    `json:"order_id"`
 }
+
+type CustomerPhone struct {
+	Phone string `json:"phone"`
+}
