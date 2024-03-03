@@ -249,7 +249,7 @@ class _MyHomePageState extends State<MyHomePage>
                         crossAxisCount: 4,
                         crossAxisSpacing: 2,
                         mainAxisSpacing: 8,
-                        childAspectRatio: 0.63,
+                        childAspectRatio: 0.625,
                       ),
                       delegate: SliverChildBuilderDelegate(
                         (BuildContext context, int index) {

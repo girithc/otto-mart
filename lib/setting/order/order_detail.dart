@@ -36,17 +36,6 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final response = await networkService.postWithAuth('/sales-order-details',
         additionalData: body);
 
-    /*
-    final response = await http.post(
-      url,
-      headers: {"Content-Type": "application/json"},
-      body: json.encode({
-        'sales_order_id': widget.salesOrderId,
-        'customer_id': int.parse(customerId!)
-      }),
-    );
-    */
-
     print("Response Order Details: ${response.statusCode} ${response.body}");
 
     if (response.statusCode == 200) {

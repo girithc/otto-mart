@@ -261,59 +261,83 @@ class _SettingScreenState extends State<SettingScreen> {
               const SizedBox(
                 height: 10,
               ),
-              ListTile(
-                  minVerticalPadding: 10,
-                  onTap: () {
-                    signOutUser(context).then(
-                      (value) => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const MyPhone()),
+              Container(
+                decoration: BoxDecoration(
+                  // Apply a border only at the top of the Container
+                  border: Border(
+                    top: BorderSide(
+                        color: Colors.grey.withOpacity(0.4),
+                        width:
+                            1.0), // Specify the color and width of the top border
+                  ),
+                  borderRadius: BorderRadius.circular(
+                      2), // Apply the same borderRadius as your ListTile
+                  color:
+                      Colors.white, // Set the background color of the Container
+                ),
+                child: ListTile(
+                    onTap: () {
+                      signOutUser(context).then(
+                        (value) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const MyPhone()),
+                        ),
+                      );
+                    },
+                    title: const Center(
+                      child: Text(
+                        'Sign Out',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
                       ),
-                    );
-                  },
-                  title: const Center(
-                    child: Text(
-                      'Sign Out',
-                      style: TextStyle(fontSize: 18, color: Colors.black),
                     ),
-                  ),
-                  tileColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2),
-                    side: BorderSide(
-                        color: Colors.grey.withOpacity(0.5), width: 2),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+                    tileColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+              ),
               const SizedBox(height: 10),
-              ListTile(
-                  minVerticalPadding: 10,
-                  onTap: () {
-                    _showConfirmationDialog(context).then((confirmed) {
-                      if (confirmed) {
-                        signOutUser(context).then(
-                          (value) => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => const MyPhone()),
-                          ),
-                        );
-                      }
-                    });
-                  },
-                  title: const Center(
-                    child: Text(
-                      'Delete User',
-                      style: TextStyle(fontSize: 18, color: Colors.black),
+              Container(
+                decoration: BoxDecoration(
+                  // Apply a border only at the top of the Container
+                  border: Border(
+                    top: BorderSide(
+                        color: Colors.grey.withOpacity(0.4),
+                        width:
+                            1.0), // Specify the color and width of the top border
+                  ),
+                  borderRadius: BorderRadius.circular(
+                      2), // Apply the same borderRadius as your ListTile
+                  color:
+                      Colors.white, // Set the background color of the Container
+                ),
+                child: ListTile(
+                    onTap: () {
+                      _showConfirmationDialog(context).then((confirmed) {
+                        if (confirmed) {
+                          signOutUser(context).then(
+                            (value) => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const MyPhone()),
+                            ),
+                          );
+                        }
+                      });
+                    },
+                    title: const Center(
+                      child: Text(
+                        'Delete User',
+                        style: TextStyle(fontSize: 16, color: Colors.black),
+                      ),
                     ),
-                  ),
-                  tileColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2),
-                    side: BorderSide(
-                        color: Colors.grey.withOpacity(0.5), width: 2),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+                    tileColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+              ),
             ],
           ),
         );

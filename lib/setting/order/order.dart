@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -110,6 +111,12 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: orders.length,
               itemBuilder: (context, index) {
+                // Parse the order date string into a DateTime object
+                DateTime orderDateTime = DateTime.parse(orders[index].date!);
+                // Format the date and time in a more readable form
+                String formattedDateTime =
+                    DateFormat('MMMM d, y \'at\' h:mma').format(orderDateTime);
+
                 return GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -122,58 +129,55 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                     );
                   },
                   child: Container(
-                    height: MediaQuery.of(context).size.height * 0.20,
-                    margin: const EdgeInsets.symmetric(
-                        horizontal: 10.0, vertical: 5),
+                    height: MediaQuery.of(context).size.height * 0.18,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 15.0, vertical: 10),
                     decoration: BoxDecoration(
                       color: Colors.white,
+                      border: Border(
+                        top: BorderSide(
+                            color: Colors.grey.withOpacity(0.4),
+                            width:
+                                1.0), // Specify the color and width of the top border
+                      ),
                       borderRadius:
                           BorderRadius.circular(15), // Rounded corners
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.5),
-                          spreadRadius: 2,
-                          blurRadius: 4,
-                          offset:
-                              const Offset(0, 2), // Changes position of shadow
-                        ),
-                      ],
-                      border: Border.all(color: Colors.white, width: 1.0),
+                      boxShadow: const [],
                     ),
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment
                             .center, // Centers the column content
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            "Address ${orders[index].address!}",
-                            style: GoogleFonts.robotoMono(fontSize: 14),
-                            maxLines: 1,
+                            orders[index].address!,
+                            style: const TextStyle(fontSize: 14),
+                            maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             textAlign:
-                                TextAlign.center, // Center-aligns the text
+                                TextAlign.start, // Center-aligns the text
                           ),
                           Text(
-                            " Order Date ${orders[index].date!}",
-                            style: GoogleFonts.robotoMono(fontSize: 14),
-                          ),
-                          Text(
-                            " Order Id ${orders[index].id!}",
-                            style: GoogleFonts.robotoMono(fontSize: 14),
+                            formattedDateTime, // Use the formatted date
+                            style: const TextStyle(fontSize: 14),
                           ),
                           const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               Text(
-                                'More Information',
+                                'Details',
                                 style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.normal,
                                     color: Colors.deepPurpleAccent),
                               ),
+                              SizedBox(
+                                width: 5,
+                              ),
                               Icon(
-                                Icons.arrow_forward_outlined,
+                                Icons.info_outlined,
+                                size: 14,
                                 color: Colors.deepPurpleAccent,
                               )
                             ],
