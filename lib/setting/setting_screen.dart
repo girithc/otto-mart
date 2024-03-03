@@ -110,7 +110,7 @@ class _SettingScreenState extends State<SettingScreen> {
       key: _scaffoldKey,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        backgroundColor: Colors.deepPurpleAccent,
+        backgroundColor: Colors.white,
         title: InkWell(
           child: ShaderMask(
             shaderCallback: (bounds) => const RadialGradient(
@@ -120,11 +120,11 @@ class _SettingScreenState extends State<SettingScreen> {
               tileMode: TileMode.mirror,
             ).createShader(bounds),
             child: const Text(
-              'Otto Mart',
+              'My Account ',
               style: TextStyle(
-                fontSize: 25,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Colors.black,
               ),
             ),
           ),
@@ -149,7 +149,7 @@ class _SettingScreenState extends State<SettingScreen> {
           },
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () async {
             final storeId = await storage.read(key: 'storeId');
             if (storeId == null || storeId.isEmpty) {
@@ -225,9 +225,22 @@ class _SettingScreenState extends State<SettingScreen> {
         return SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 10),
-              ListTile(
-                  minVerticalPadding: 25,
+              Container(
+                decoration: BoxDecoration(
+                  // Apply a border only at the top of the Container
+                  border: Border(
+                    top: BorderSide(
+                        color: Colors.grey.withOpacity(0.4),
+                        width:
+                            1.0), // Specify the color and width of the top border
+                  ),
+                  borderRadius: BorderRadius.circular(
+                      2), // Apply the same borderRadius as your ListTile
+                  color:
+                      Colors.white, // Set the background color of the Container
+                ),
+                child: ListTile(
+                  minVerticalPadding: 10,
                   onTap: () {
                     Navigator.push(
                       context,
@@ -241,13 +254,10 @@ class _SettingScreenState extends State<SettingScreen> {
                       style: TextStyle(fontSize: 20, color: Colors.black),
                     ),
                   ),
-                  tileColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(2),
-                    side: BorderSide(
-                        color: Colors.grey.withOpacity(0.5), width: 2),
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
+                  // Remove tileColor and shape from ListTile since it's now wrapped in a Container
+                  trailing: const Icon(Icons.arrow_forward_ios_outlined),
+                ),
+              ),
               const SizedBox(
                 height: 10,
               ),
