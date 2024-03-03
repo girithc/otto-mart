@@ -10,6 +10,8 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:pronto/cart/address/screen/confirm_address.dart';
+import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
@@ -40,6 +42,10 @@ class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   final HomeApiClient apiClient = HomeApiClient('https://localhost:3000');
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final network = NetworkService();
+  String? orderStatus;
+  int? orderId;
+
   List<Category> categories = [];
   List<Category> promotions = [];
   List<Address> addresses = [];
@@ -68,8 +74,7 @@ class _MyHomePageState extends State<MyHomePage>
 
     fetchCategories();
     fetchPromotions();
-
-    _checkAddressAndLoginStatus();
+    checkForPlacedOrder();
     retrieveCustomerInfo();
   }
 
@@ -155,39 +160,28 @@ class _MyHomePageState extends State<MyHomePage>
     setState(() {}); // Trigger a rebuild if your widget is stateful
   }
 
-  Future<void> _checkAddressAndLoginStatus() async {
-    final network = NetworkService();
-    var headers = {
-      'Content-Type': 'application/json',
-      'Cookie': 'token=your_token'
-    };
-    var request = http.Request('POST', Uri.parse('$baseUrl/address'));
-    String? storedCustomerId = await storage.read(key: 'customerId');
+  Future<void> checkForPlacedOrder() async {
+    final phone = await storage.read(key: 'phone');
 
-    final Map<String, dynamic> body = {
-      "customer_id": int.parse(storedCustomerId!),
-      "is_default": true
+    Map<String, dynamic> body = {
+      "phone": phone,
     };
-    request.headers.addAll(headers);
-    final response =
-        await network.postWithAuth('/address', additionalData: body);
+
+    final response = await network.postWithAuth('/check-for-placed-order',
+        additionalData: body);
 
     if (response.statusCode == 200) {
-      final List<dynamic> jsonData = json.decode(response.body);
-      final List<Address> items =
-          jsonData.map((item) => Address.fromJson(item)).toList();
+      final data = jsonDecode(response.body);
       setState(() {
+        orderId = data['order_id'];
+        orderStatus = data['status'];
         isLoading = false;
-        //print("Address Fetched ${items[0]}");
-        showDialogVisible = false;
-        defaultAddress = items[0];
       });
     } else {
       setState(() {
         isLoading = false;
-        showDialogVisible = true;
       });
-      print(response.reasonPhrase);
+      // Handle the error; maybe set isLoading to false or show a message
     }
   }
 
@@ -267,6 +261,28 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
               ),
             ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      floatingActionButton: orderStatus != null
+          ? GestureDetector(
+              onTap: () {
+                // Navigate to Cart
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) =>
+                          OrderConfirmed(newOrder: false, orderId: orderId)),
+                );
+              },
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.greenAccent,
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Text('Order  Completed'),
+              ),
+            )
+          : null,
       bottomNavigationBar: Container(
         padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).size.height * 0.025,

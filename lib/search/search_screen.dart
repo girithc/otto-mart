@@ -898,8 +898,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
       elevation: 4.0,
       shadowColor: Colors.deepPurpleAccent,
       child: Container(
-        padding: const EdgeInsets.only(
-          top: 20,
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).size.height * 0.04,
         ),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(

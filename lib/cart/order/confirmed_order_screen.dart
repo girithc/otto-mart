@@ -11,9 +11,10 @@ import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 
 class OrderConfirmed extends StatefulWidget {
-  const OrderConfirmed({super.key, required this.newOrder});
+  const OrderConfirmed({super.key, required this.newOrder, this.orderId});
 
   final bool newOrder;
+  final int? orderId; // Optional int parameter
 
   @override
   _OrderConfirmedState createState() => _OrderConfirmedState();
@@ -100,8 +101,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       cartId = await _storage.read(key: 'cartId');
       print("Cart ID: $cartId");
     } else {
-      cartId = await _storage.read(key: 'placedCartId');
-      print("PlacedCart ID: $cartId");
+      cartId = widget.orderId.toString();
+      //print("PlacedCart ID: $cartId");
     }
 
     if (cartId == null || customerId == null) {
