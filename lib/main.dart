@@ -638,18 +638,20 @@ class DeliveryPartnerDispatchResult {
   final String deliveryPartnerName;
   final int salesOrderId;
   final String orderStatus;
+  final int location;
 
-  DeliveryPartnerDispatchResult({
-    required this.deliveryPartnerName,
-    required this.salesOrderId,
-    required this.orderStatus,
-  });
+  DeliveryPartnerDispatchResult(
+      {required this.deliveryPartnerName,
+      required this.salesOrderId,
+      required this.orderStatus,
+      required this.location});
 
   factory DeliveryPartnerDispatchResult.fromJson(Map<String, dynamic> json) {
     return DeliveryPartnerDispatchResult(
       deliveryPartnerName: json['delivery_partner_name'],
       salesOrderId: json['sales_order_id'],
       orderStatus: json['order_status'],
+      location: json['location'],
     );
   }
 }
