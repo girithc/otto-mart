@@ -195,15 +195,15 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     }
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
+        backgroundColor: Colors.white,
         title: const Text(
           'Otto Mart ',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.deepPurpleAccent),
         ),
         leading: IconButton(
           icon: const Icon(
-            Icons.arrow_back_outlined,
-            color: Colors.white,
+            Icons.close,
+            color: Colors.black,
           ),
           onPressed: () {
             // Navigate to the HomeScreen, replacing the current route

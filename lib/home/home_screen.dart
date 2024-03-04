@@ -485,10 +485,10 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.01,
+              height: MediaQuery.of(context).size.height * 0.005,
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.05,
+              height: MediaQuery.of(context).size.height * 0.04,
               child: Align(
                 alignment: Alignment.topCenter,
                 child: Text(

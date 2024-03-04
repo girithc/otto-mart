@@ -899,7 +899,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       shadowColor: Colors.deepPurpleAccent,
       child: Container(
         padding: EdgeInsets.only(
-          top: MediaQuery.of(context).size.height * 0.04,
+          top: MediaQuery.of(context).size.height * 0.05,
         ),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(

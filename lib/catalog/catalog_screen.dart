@@ -559,7 +559,7 @@ class _ListItem2State extends State<ListItem2> {
                     Container(
                       padding: const EdgeInsets.only(
                           top: 0, bottom: 10, left: 0, right: 0),
-                      height: MediaQuery.of(context).size.height * 0.17,
+                      height: MediaQuery.of(context).size.height * 0.165,
                       child: Center(
                         child: Image.network(
                           widget.image,
@@ -814,7 +814,7 @@ class _ListItem2State extends State<ListItem2> {
                 : const SizedBox.shrink(),
             if (widget.stockQuantity <= 0)
               Container(
-                height: MediaQuery.of(context).size.height * 0.16,
+                height: MediaQuery.of(context).size.height * 0.155,
                 decoration: BoxDecoration(
                   color: Colors.black.withOpacity(0.3),
                   borderRadius: const BorderRadius.only(
