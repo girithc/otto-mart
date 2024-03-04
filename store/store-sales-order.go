@@ -892,8 +892,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 // Modified AllocationInfo struct
 type AllocationInfo struct {
 	SalesOrderID int    `json:"sales_order_id"`
-	Horizontal   int    `json:"horizontal"` // Replaces Row
-	Vertical     string `json:"vertical"`   // Replaces Column
+	Location     int    `json:"location"`
 	ShelfID      int    `json:"shelf_id"`
 	Image        string `json:"image"`
 }
