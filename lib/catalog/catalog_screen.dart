@@ -313,7 +313,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
                   crossAxisCount: 2,
                   mainAxisSpacing: 1.0,
                   crossAxisSpacing: 0.0,
-                  childAspectRatio: 0.63),
+                  childAspectRatio: 0.615),
               itemCount: items.length,
               itemBuilder: (context, index) {
                 return ListItem2(
