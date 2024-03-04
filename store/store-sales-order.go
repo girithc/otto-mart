@@ -850,7 +850,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 
 	// 1. Find delivery_shelf using horizontal, vertical, and store_id
 	var deliveryShelfID int
-	deliveryShelfQuery := `SELECT id FROM delivery_shelf WHERE location = $1  AND store_id = $2`
+	deliveryShelfQuery := `SELECT id FROM delivery_shelf WHERE location = $1 AND store_id = $2`
 	err = tx.QueryRow(deliveryShelfQuery, req.Location, req.StoreId).Scan(&deliveryShelfID)
 	if err != nil {
 		return info, fmt.Errorf("error finding delivery shelf: %w", err)
@@ -892,7 +892,8 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 // Modified AllocationInfo struct
 type AllocationInfo struct {
 	SalesOrderID int    `json:"sales_order_id"`
-	Location     int    `json:"location"` // Replaces Row
+	Horizontal   int    `json:"horizontal"` // Replaces Row
+	Vertical     string `json:"vertical"`   // Replaces Column
 	ShelfID      int    `json:"shelf_id"`
 	Image        string `json:"image"`
 }
