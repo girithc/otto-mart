@@ -850,8 +850,8 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 
 	// 1. Find delivery_shelf using horizontal, vertical, and store_id
 	var deliveryShelfID int
-	deliveryShelfQuery := `SELECT id FROM delivery_shelf WHERE horizontal = $1 AND vertical = $2 AND store_id = $3`
-	err = tx.QueryRow(deliveryShelfQuery, req.Horizontal, req.Vertical, req.StoreId).Scan(&deliveryShelfID)
+	deliveryShelfQuery := `SELECT id FROM delivery_shelf WHERE location = $1  AND store_id = $2`
+	err = tx.QueryRow(deliveryShelfQuery, req.Location, req.StoreId).Scan(&deliveryShelfID)
 	if err != nil {
 		return info, fmt.Errorf("error finding delivery shelf: %w", err)
 	}
@@ -881,8 +881,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 	// Set return values
 	info = AllocationInfo{
 		SalesOrderID: req.SalesOrderID,
-		Horizontal:   req.Horizontal,
-		Vertical:     req.Vertical,
+		Location:     req.Location,
 		ShelfID:      deliveryShelfID,
 		Image:        req.Image,
 	}
@@ -893,8 +892,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 // Modified AllocationInfo struct
 type AllocationInfo struct {
 	SalesOrderID int    `json:"sales_order_id"`
-	Horizontal   int    `json:"horizontal"` // Replaces Row
-	Vertical     string `json:"vertical"`   // Replaces Column
+	Location     int    `json:"location"` // Replaces Row
 	ShelfID      int    `json:"shelf_id"`
 	Image        string `json:"image"`
 }
@@ -940,21 +938,21 @@ type CombinedOrderResponse struct {
 }
 
 type CheckForPlacedOrder struct {
-	OrderId int    `json:"order_id"`
-	Status  string `json:"status"`
+	CartId int    `json:"cart_id"`
+	Status string `json:"status"`
 }
 
 func (s *PostgresStore) CheckForPlacedOrder(phone string) (CheckForPlacedOrder, error) {
 	var order CheckForPlacedOrder
 	query := `
-        SELECT id, order_status
+        SELECT cart_id, order_status 
         FROM sales_order
         WHERE customer_id = (SELECT id FROM customer WHERE phone = $1)
-          AND order_status NOT IN ('completed', 'denied')
+          AND order_status NOT IN ('completed')
         ORDER BY order_date DESC
         LIMIT 1
     `
-	err := s.db.QueryRow(query, phone).Scan(&order.OrderId, &order.Status)
+	err := s.db.QueryRow(query, phone).Scan(&order.CartId, &order.Status)
 	if err != nil {
 		return order, err
 	}
