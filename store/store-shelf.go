@@ -27,10 +27,9 @@ func (s *PostgresStore) CreateDeliveryShelfTable(tx *sql.Tx) error {
     CREATE TABLE IF NOT EXISTS delivery_shelf (
         id SERIAL PRIMARY KEY,
         store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
-        horizontal INT NOT NULL,
+        location INT NOT NULL,
         order_id INT REFERENCES sales_order(id) ON DELETE CASCADE,
-        vertical VARCHAR(1) NOT NULL,
-        UNIQUE(store_id, horizontal, vertical)
+        UNIQUE(store_id, location)
     );`
 
 	_, err := tx.Exec(query)
@@ -117,24 +116,18 @@ func (s *PostgresStore) ManagerInitShelf(storeID int) (bool, error) {
 		}
 	}
 
-	verticals = []string{"A", "B", "C", "D"}
 	success = true
 
-	for _, vertical := range verticals {
-		for horizontal := 1; horizontal <= 4; horizontal++ {
-			query := `
-			INSERT INTO Delivery_Shelf (store_id, horizontal, vertical)
-			VALUES ($1, $2, $3)
-			ON CONFLICT (store_id, horizontal, vertical) DO NOTHING;
+	for location := 1; location <= 4; location++ {
+		query := `
+			INSERT INTO Delivery_Shelf (store_id, location)
+			VALUES ($1, $2)
+			ON CONFLICT (store_id, location) DO NOTHING;
 			`
-			_, err := s.db.Exec(query, storeID, horizontal, vertical)
-			if err != nil {
-				success = false
-				// Log the error (consider using a logging library)
-				fmt.Printf("Failed to insert shelf: %v\n", err)
-				// Decide if you want to continue or return on the first error
-				// For this example, we'll continue trying to insert other shelves
-			}
+		_, err := s.db.Exec(query, storeID, location)
+		if err != nil {
+			success = false
+			fmt.Printf("Failed to insert shelf: %v\n", err)
 		}
 	}
 
