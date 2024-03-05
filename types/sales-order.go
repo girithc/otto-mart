@@ -156,3 +156,26 @@ type CancelRecentOrder struct {
 type CustomerPhone struct {
 	Phone string `json:"phone"`
 }
+
+type DPOrderDetails struct {
+	ID                int            `json:"id"`
+	DeliveryPartnerID int            `json:"delivery_partner_id"`
+	CartID            int            `json:"cart_id"`
+	PaymentType       string         `json:"payment_type"`
+	StoreID           int            `json:"store_id"`
+	StoreName         string         `json:"store_name"`
+	CustomerID        int            `json:"customer_id"`
+	CustomerName      string         `json:"customer_name"`
+	CustomerPhone     string         `json:"customer_phone"`
+	Subtotal          int            `json:"subtotal"`
+	OrderDate         time.Time      `json:"order_date"`
+	DeliveryAddress   AddressDetails `json:"delivery_address"`
+}
+
+type AddressDetails struct {
+	StreetAddress  string  `json:"street_address"`
+	LineOneAddress string  `json:"line_one_address"`
+	LineTwoAddress string  `json:"line_two_address"`
+	Latitude       float64 `json:"latitude"`
+	Longitude      float64 `json:"longitude"`
+}

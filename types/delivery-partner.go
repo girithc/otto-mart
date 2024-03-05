@@ -33,6 +33,12 @@ type DeliveryPartnerPhone struct {
 	Phone string `json:"phone"`
 }
 
+type DeliveryPartnerOrderDetails struct {
+	DeliveryPartnerPhone string `json:"delivery_partner_phone"`
+	CustomerPhone        string `json:"customer_phone"`
+	SalesOrderId         int    `json:"sales_order_id"`
+}
+
 type DeliveryPhoneFCM struct {
 	Phone string `json:"phone"`
 	FCM   string `json:"fcm"`

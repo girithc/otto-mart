@@ -375,6 +375,8 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
 }
 
 func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int) (*DeliveryPartnerDispatchResult, error) {
+	var location int
+
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -390,6 +392,13 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	}
 	if currentStatus != "packed" {
 		return nil, errors.New("order is not in packed status")
+	}
+
+	// Retrieve the location from delivery_shelf for the given order_id
+	err = tx.QueryRow("SELECT location FROM delivery_shelf WHERE order_id = $1 LIMIT 1", order_id).Scan(&location)
+	if err != nil {
+		// Handle the error if the location is not found or any other database error occurs
+		return nil, err
 	}
 
 	// Verify the delivery partner ID and retrieve delivery partner name
@@ -428,6 +437,7 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 		DeliveryPartnerName: deliveryPartnerName,
 		SalesOrderID:        order_id,
 		OrderStatus:         "dispatched",
+		Location:            location,
 	}
 
 	return result, nil
@@ -545,6 +555,44 @@ func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order
 	return result, nil
 }
 
+func (s *PostgresStore) DeliveryPartnerGetOrderDetails(new_req types.DeliveryPartnerOrderDetails) (*types.DPOrderDetails, error) {
+	// Step 1: Retrieve the delivery_partner_id using the phone number
+	var deliveryPartnerID int
+	err := s.db.QueryRow("SELECT id FROM delivery_partner WHERE phone = $1", new_req.DeliveryPartnerPhone).Scan(&deliveryPartnerID)
+	if err != nil {
+		// Error handling with more detail
+		return nil, fmt.Errorf("error retrieving delivery partner ID: %w", err)
+	}
+
+	// Step 2: Use the deliveryPartnerID to fetch order details
+	query := `
+        SELECT so.id, so.delivery_partner_id, so.cart_id, so.payment_type, so.store_id, s.name, so.customer_id, c.phone,
+               a.street_address, a.line_one_address, a.line_two_address, a.latitude, a.longitude, sc.subtotal, so.order_date
+        FROM sales_order so
+        JOIN store s ON so.store_id = s.id
+        JOIN customer c ON so.customer_id = c.id
+        JOIN address a ON so.address_id = a.id
+        JOIN shopping_cart sc ON so.cart_id = sc.id
+        WHERE so.id = $1 AND so.delivery_partner_id = $2
+    `
+
+	// Variable to hold the order details
+	order := &types.DPOrderDetails{}
+
+	// Execute the updated query
+	err = s.db.QueryRow(query, new_req.SalesOrderId, deliveryPartnerID).Scan(
+		&order.ID, &order.DeliveryPartnerID, &order.CartID, &order.PaymentType, &order.StoreID, &order.StoreName,
+		&order.CustomerID, &order.CustomerPhone, &order.DeliveryAddress.StreetAddress,
+		&order.DeliveryAddress.LineOneAddress, &order.DeliveryAddress.LineTwoAddress, &order.DeliveryAddress.Latitude,
+		&order.DeliveryAddress.Longitude, &order.Subtotal, &order.OrderDate)
+	if err != nil {
+		// Error handling with more detail
+		return nil, fmt.Errorf("error fetching order details: %w", err)
+	}
+
+	return order, nil
+}
+
 type DeliveryCompletionResult struct {
 	SalesOrderID int    `json:"sales_order_id"`
 	OrderStatus  string `json:"order_status"`
@@ -555,6 +603,7 @@ type DeliveryPartnerDispatchResult struct {
 	DeliveryPartnerName string `json:"delivery_partner_name"`
 	SalesOrderID        int    `json:"sales_order_id"`
 	OrderStatus         string `json:"order_status"`
+	Location            int    `json:"location"`
 }
 
 type DeliveryPartnerArriveResult struct {
@@ -766,7 +815,7 @@ func (s *PostgresStore) GetOldestUnassignedOrder() (int, error) {
 	query := `
         SELECT cart_id 
         FROM sales_order
-        WHERE delivery_partner_id IS NULL
+        WHERE delivery_partner_id IS NULL AND order_status != 'completed'
         ORDER BY order_date ASC
         LIMIT 1
     `

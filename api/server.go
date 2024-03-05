@@ -73,6 +73,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/delivery-partner-dispatch-order", makeHTTPHandleFunc(s.handleDeliveryPartnerDispatchOrder))
 	http.HandleFunc("/delivery-partner-arrive", makeHTTPHandleFunc(s.handleDeliveryPartnerArrive))
 	http.HandleFunc("/delivery-partner-complete-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCompleteOrder))
+	http.HandleFunc("/delivery-partner-get-order-details", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderDetails))
 
 	http.HandleFunc("/address", makeHTTPHandleFunc(s.handleAddress))
 	http.HandleFunc("/deliver-to", makeHTTPHandleFunc(s.handleDeliverTo))

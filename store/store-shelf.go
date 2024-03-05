@@ -99,7 +99,7 @@ func (s *PostgresStore) ManagerInitShelf(storeID int) (bool, error) {
 	success := true
 
 	for _, vertical := range verticals {
-		for horizontal := 1; horizontal <= 100; horizontal++ {
+		for horizontal := 1; horizontal <= 130; horizontal++ {
 			query := `
 			INSERT INTO Shelf (store_id, horizontal, vertical)
 			VALUES ($1, $2, $3)
@@ -118,7 +118,7 @@ func (s *PostgresStore) ManagerInitShelf(storeID int) (bool, error) {
 
 	success = true
 
-	for location := 1; location <= 4; location++ {
+	for location := 1; location <= 28; location++ {
 		query := `
 			INSERT INTO Delivery_Shelf (store_id, location)
 			VALUES ($1, $2)

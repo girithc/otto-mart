@@ -168,6 +168,21 @@ func (s *Server) DeliveryPartnerCompleteOrder(res http.ResponseWriter, req *http
 	return WriteJSON(res, http.StatusOK, order)
 }
 
+func (s *Server) DeliveryPartnerGetOrderDetails(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerOrderDetails)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerGetOrderDetails()")
+		return err
+	}
+
+	order, err := s.store.DeliveryPartnerGetOrderDetails(*new_req)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
 type OrderStatusError struct {
 	Status string
 }
