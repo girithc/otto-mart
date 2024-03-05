@@ -92,19 +92,16 @@ class ItemDetailApiClient {
     }
   }
 
-  Future<AllocationInfo> orderAssignSpace(String vertical, int horizontal,
-      String packerPhone, int orderId, String storeId, String image) async {
+  Future<AllocationInfo> orderAssignSpace(int horizontal, String packerPhone,
+      int orderId, String storeId, String image) async {
     //var url = Uri.parse('$baseUrl/packer-space-order');
     final Map<String, dynamic> requestData = {
       "store_id": int.parse(storeId),
-      "vertical": vertical,
-      "horizontal": horizontal,
+      "location": horizontal,
       "packer_phone": packerPhone,
       "sales_order_id": orderId,
       "image_url": image
-      //"image": image
     };
-    //rint('Uploaded Image: $image');
 
     final networkService = NetworkService();
     final response = await networkService.postWithAuth('/packer-space-order',
@@ -330,23 +327,20 @@ class ItemPackOrder {
 
 class AllocationInfo {
   final int salesOrderId;
-  final int horizontal;
-  final String vertical;
+  final int location;
   final int shelfId;
   final String image;
 
   AllocationInfo(
       {required this.salesOrderId,
-      required this.horizontal,
-      required this.vertical,
+      required this.location,
       required this.shelfId,
       required this.image});
 
   factory AllocationInfo.fromJson(Map<String, dynamic> json) {
     return AllocationInfo(
         salesOrderId: json['sales_order_id'],
-        horizontal: json['horizontal'],
-        vertical: json['vertical'],
+        location: json['location'],
         shelfId: json['shelf_id'],
         image: json['image']);
   }

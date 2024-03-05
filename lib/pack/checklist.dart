@@ -126,39 +126,14 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
               Row(
                 children: <Widget>[
                   Expanded(
-                    child: DropdownButtonFormField<String>(
-                      value: selectedColumn,
-                      decoration: InputDecoration(
-                          fillColor: Colors.white,
-                          labelText: 'Column',
-                          border: OutlineInputBorder(),
-                          filled: true),
-                      items: List<String>.from(['A', 'B', 'C', 'D'])
-                          .map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(
-                            value,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (newValue) {
-                        setState(() {
-                          selectedColumn = newValue;
-                        });
-                      },
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Expanded(
                     child: DropdownButtonFormField<int>(
                       value: selectedRow,
                       decoration: InputDecoration(
-                          labelText: 'Row',
+                          labelText: 'Location',
                           border: OutlineInputBorder(),
                           fillColor: Colors.white,
                           filled: true),
-                      items: List.generate(4, (index) => index + 1)
+                      items: List.generate(28, (index) => index + 1)
                           .map<DropdownMenuItem<int>>((int value) {
                         return DropdownMenuItem<int>(
                           value: value,
@@ -188,8 +163,8 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                   ),
                 ),
                 onPressed: () {
-                  if (selectedRow != null && selectedColumn != null) {
-                    scanBarcodeAssignSpace(selectedColumn!, selectedRow!);
+                  if (selectedRow != null) {
+                    scanBarcodeAssignSpace(selectedRow!);
                     Navigator.of(context).pop();
                   } else {
                     // Handle case where row or column is not selected
@@ -243,9 +218,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
-  Future<void> scanBarcodeAssignSpace(String vertical, int horizontal) async {
+  Future<void> scanBarcodeAssignSpace(int horizontal) async {
     print("Entered scanBarcodeAssignSpace");
-    print("Vertical: $vertical Horizontal ${horizontal.toString()}");
+    print(" Location ${horizontal.toString()}");
     String? phone = await _storage.read(key: "phone");
     String? packerId = await _storage.read(key: "packerId");
 
@@ -282,7 +257,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
 
       apiClient
           .orderAssignSpace(
-              vertical, horizontal, phone!, widget.orderId, "1", urlDownloaded)
+              horizontal, phone!, widget.orderId, "1", urlDownloaded)
           .then((allocationInfo) {
         // Show the allocation details in a dialog
         _showAllocationDetailsDialog(allocationInfo);
@@ -316,8 +291,7 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
               children: <Widget>[
                 Image.network(allocationInfo.image),
                 Text('Order ID: ${allocationInfo.salesOrderId}'),
-                Text(
-                    'Shelf Name ${allocationInfo.vertical}${allocationInfo.horizontal}'),
+                Text('Shelf ${allocationInfo.location}'),
                 Text('Shelf ID: ${allocationInfo.shelfId}'),
               ],
             ),
