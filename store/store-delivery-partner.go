@@ -380,7 +380,7 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	// Start a transaction
 	tx, err := s.db.Begin()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to begin transaction: %w", err)
 	}
 	defer tx.Rollback() // Ensure transaction is rolled back in case of error
 
@@ -388,17 +388,16 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	var currentStatus string
 	err = tx.QueryRow("SELECT order_status FROM sales_order WHERE id = $1", order_id).Scan(&currentStatus)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to verify order status for order ID %d: %w", order_id, err)
 	}
 	if currentStatus != "packed" {
-		return nil, errors.New("order is not in packed status")
+		return nil, fmt.Errorf("order %d is not in packed status", order_id)
 	}
 
 	// Retrieve the location from delivery_shelf for the given order_id
 	err = tx.QueryRow("SELECT location FROM delivery_shelf WHERE order_id = $1 LIMIT 1", order_id).Scan(&location)
 	if err != nil {
-		// Handle the error if the location is not found or any other database error occurs
-		return nil, err
+		return nil, fmt.Errorf("failed to retrieve location for order ID %d: %w", order_id, err)
 	}
 
 	// Verify the delivery partner ID and retrieve delivery partner name
@@ -406,30 +405,30 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 	var deliveryPartnerIDFromDB int
 	err = tx.QueryRow("SELECT id, name FROM delivery_partner WHERE phone = $1", phone).Scan(&deliveryPartnerIDFromDB, &deliveryPartnerName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to verify delivery partner for phone %s: %w", phone, err)
 	}
 
 	// Update the order_status to 'dispatched' in sales_order
 	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed'", order_id, deliveryPartnerIDFromDB)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update order status to 'dispatched' for order ID %d: %w", order_id, err)
 	}
 
 	// Remove the sales_order_id from delivery_shelf for the given order_id
 	_, err = tx.Exec("UPDATE delivery_shelf SET order_id = NULL WHERE order_id = $1", order_id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update delivery_shelf for order ID %d: %w", order_id, err)
 	}
 
 	// Update the pickup_time and set active to false in packer_shelf for the associated sales_order_id
 	_, err = tx.Exec("UPDATE packer_shelf SET pickup_time = CURRENT_TIMESTAMP, active = false WHERE sales_order_id = $1", order_id)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to update packer_shelf for order ID %d: %w", order_id, err)
 	}
 
 	// Commit the transaction
 	if err := tx.Commit(); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	// Return the dispatch result
