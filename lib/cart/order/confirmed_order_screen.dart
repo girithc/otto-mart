@@ -9,6 +9,7 @@ import 'dart:convert';
 
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 class OrderConfirmed extends StatefulWidget {
   const OrderConfirmed({super.key, required this.newOrder, this.orderId});
@@ -59,6 +60,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
         transform: 1.9),
   };
 
+  String formatOrderDate(String orderDate) {
+    DateTime parsedDate = DateTime.parse(orderDate);
+    // Customize the format as needed
+    return DateFormat('MMMM d, y \'at\' h:mma').format(parsedDate);
+  }
+
   int _numberOfItems = 0;
   String _customerAddress = '';
   String _paymentType = '';
@@ -76,6 +83,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   void initState() {
     super.initState();
     fetchOrderDetails();
+    !widget.newOrder ? fetchOrderInfo() : null;
     _setupPeriodicFetch(); // Set up periodic fetch of order info
   }
 
@@ -102,7 +110,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       print("Cart ID: $cartId");
     } else {
       cartId = widget.orderId.toString();
-      //print("PlacedCart ID: $cartId");
     }
 
     if (cartId == null || customerId == null) {
@@ -113,6 +120,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       'customer_id': int.parse(customerId),
       'cart_id': int.parse(cartId),
     };
+
+    print("Body: $body ");
 
     final response =
         await networkService.postWithAuth('/sales-order', additionalData: body);
@@ -163,7 +172,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   Future<void> fetchOrderInfo() async {
     final customerId = await _storage.read(key: 'customerId');
-    final cartId = await _storage.read(key: 'placedCartId');
+    String? cartId = await _storage.read(key: 'placedCartId');
+    if (cartId == null) {
+      cartId = widget.orderId.toString();
+    }
     print("PlacedCart ID: $cartId");
     final Map<String, dynamic> body = {
       'customer_id': int.parse(customerId!),
@@ -220,7 +232,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
           IconButton(
             icon: const Icon(
               Icons.refresh,
-              color: Colors.white,
+              color: Colors.black,
             ),
             onPressed: () {
               fetchOrderInfo();
@@ -239,7 +251,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
               ? Center(child: Text(_errorMsg!))
               : SingleChildScrollView(
                   // Enables scrolling
-                  child: Center(
+                  child: Container(
+                    color: Colors.white,
                     child: Column(
                       children: [
                         Container(
@@ -322,7 +335,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               Text('Number of Items: $_numberOfItems'),
                               Text('Address: $_customerAddress'),
                               Text('Payment Type: $_paymentType'),
-                              Text('Order Date: $_orderDate'),
+                              Text(
+                                  'Order Date: ${formatOrderDate(_orderDate)}'),
                             ],
                           ),
                         ),

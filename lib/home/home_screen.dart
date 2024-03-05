@@ -7,12 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_avif/flutter_avif.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:pronto/cart/address/screen/confirm_address.dart';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
-import 'package:pronto/home/address/address_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
@@ -23,7 +20,6 @@ import 'package:pronto/home/models/place_auto_complete_response.dart';
 import 'package:pronto/home/models/prediction_auto_complete.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/search/search_screen.dart';
-import 'package:pronto/utils/globals.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:pronto/item/category_items/category_items_screen.dart';
@@ -170,10 +166,11 @@ class _MyHomePageState extends State<MyHomePage>
     final response = await network.postWithAuth('/check-for-placed-order',
         additionalData: body);
 
+    print("Response ${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
-        orderId = data['order_id'];
+        orderId = data['cart_id'];
         orderStatus = data['status'];
         isLoading = false;
       });
@@ -261,34 +258,15 @@ class _MyHomePageState extends State<MyHomePage>
                 ),
               ),
             ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: orderStatus != null
-          ? GestureDetector(
-              onTap: () {
-                // Navigate to Cart
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          OrderConfirmed(newOrder: false, orderId: orderId)),
-                );
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.greenAccent,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: Text('Order  Completed'),
-              ),
-            )
-          : null,
       bottomNavigationBar: Container(
+        height: orderStatus != null
+            ? MediaQuery.of(context).size.height * 0.14
+            : MediaQuery.of(context).size.height * 0.095,
         padding: EdgeInsets.only(
             bottom: MediaQuery.of(context).size.height * 0.025,
             top: 5,
-            left: 15,
-            right: 15),
+            left: 5,
+            right: 5),
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white, width: 1),
@@ -303,111 +281,143 @@ class _MyHomePageState extends State<MyHomePage>
           ],
           color: Colors.white,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          mainAxisSize: MainAxisSize.max,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to Home
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          const MyHomePage(title: 'Otto Mart')),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Background color
-                surfaceTintColor: Colors.white,
-                elevation: 0.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Squarish shape
+            if (orderStatus !=
+                null) // Use Dart's collection-if to include a widget conditionally
+              GestureDetector(
+                onTap: () {
+                  // Navigate to Cart
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            OrderConfirmed(newOrder: false, orderId: orderId)),
+                  );
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  width: MediaQuery.of(context).size.width,
+                  decoration: BoxDecoration(
+                    color: Colors.greenAccent.withOpacity(0.8),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white),
+                  ),
+                  child: Center(
+                      child: Text(
+                    'Order $orderStatus',
+                    style: TextStyle(color: Colors.black),
+                  )),
                 ),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.home_outlined,
-                      size: 15, color: Colors.black87), // Icon for Home
-                  SizedBox(width: 4),
-                  Text('Home',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
-                ],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to Cart
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const SearchTopLevel()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Background color
-                surfaceTintColor: Colors.white,
-                elevation: 0.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Squarish shape
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to Home
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              const MyHomePage(title: 'Otto Mart')),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white, // Background color
+                    surfaceTintColor: Colors.white,
+                    elevation: 0.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8), // Squarish shape
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.home_outlined,
+                          size: 15, color: Colors.black87), // Icon for Home
+                      SizedBox(width: 4),
+                      Text('Home',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
+                    ],
+                  ),
                 ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.travel_explore_outlined,
-                    size: 15,
-                    color: Colors.black87,
-                  ), // Icon for Cart
-                  SizedBox(width: 4),
-                  Text('Explore',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
-                ],
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                // Navigate to Cart
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MyCart()),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white, // Background color
-                surfaceTintColor: Colors.white,
-                elevation: 0.0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8), // Squarish shape
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to Cart
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const SearchTopLevel()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white, // Background color
+                    surfaceTintColor: Colors.white,
+                    elevation: 0.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8), // Squarish shape
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.travel_explore_outlined,
+                        size: 15,
+                        color: Colors.black87,
+                      ), // Icon for Cart
+                      SizedBox(width: 4),
+                      Text('Explore',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
+                    ],
+                  ),
                 ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.shopping_cart_outlined,
-                    size: 15,
-                    color: Colors.black87,
-                  ), // Icon for Cart
-                  SizedBox(width: 4),
-                  Text('Cart',
-                      style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87)),
-                ],
-              ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Navigate to Cart
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyCart()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white, // Background color
+                    surfaceTintColor: Colors.white,
+                    elevation: 0.0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8), // Squarish shape
+                    ),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.shopping_cart_outlined,
+                        size: 15,
+                        color: Colors.black87,
+                      ), // Icon for Cart
+                      SizedBox(width: 4),
+                      Text('Cart',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black87)),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ],
         ),
