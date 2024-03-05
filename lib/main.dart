@@ -221,7 +221,8 @@ class _InventoryManagementState extends State<InventoryManagement> {
             '/delivery-partner-dispatch-order',
             additionalData: body);
 
-        print("response: ${response.body}");
+        print(
+            "response: ${response.body} ${response.statusCode} ${response.request}");
 
         if (response.statusCode == 200) {
           final result = json.decode(response.body);

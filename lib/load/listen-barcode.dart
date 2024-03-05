@@ -69,6 +69,8 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
         };
         final response = await networkService.postWithAuth('/packer-find-item',
             additionalData: data);
+
+        print("Respone: ${response.body}");
         if (response.statusCode == 200) {
           final dynamic jsonData = json.decode(response.body);
 
