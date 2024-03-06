@@ -425,10 +425,33 @@ class _InventoryManagementState extends State<InventoryManagement> {
                                 content: SingleChildScrollView(
                                   child: ListBody(
                                     children: <Widget>[
-                                      Text(
-                                          'Delivery Partner Name: ${value.deliveryPartnerName}'),
-                                      Text(
-                                          'Order Status: ${value.orderStatus}'),
+                                      Text('Delivery Partner'),
+                                      Container(
+                                        padding: EdgeInsets.all(15),
+                                        decoration:
+                                            BoxDecoration(color: Colors.white),
+                                        child: Text(value.deliveryPartnerName),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text('Order Status'),
+                                      Container(
+                                        padding: EdgeInsets.all(15),
+                                        decoration:
+                                            BoxDecoration(color: Colors.white),
+                                        child: Text(value.orderStatus),
+                                      ),
+                                      SizedBox(
+                                        height: 10,
+                                      ),
+                                      Text('Shelf'),
+                                      Container(
+                                        padding: EdgeInsets.all(15),
+                                        decoration:
+                                            BoxDecoration(color: Colors.white),
+                                        child: Text(value.location.toString()),
+                                      ),
                                     ],
                                   ),
                                 ),
