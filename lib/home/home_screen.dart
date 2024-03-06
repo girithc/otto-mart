@@ -263,7 +263,9 @@ class _MyHomePageState extends State<MyHomePage>
             ? MediaQuery.of(context).size.height * 0.14
             : MediaQuery.of(context).size.height * 0.095,
         padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).size.height * 0.025,
+            bottom: orderStatus != null
+                ? MediaQuery.of(context).size.height * 0.012
+                : MediaQuery.of(context).size.height * 0.014,
             top: 5,
             left: 5,
             right: 5),
@@ -470,29 +472,56 @@ class _MyHomePageState extends State<MyHomePage>
                 border: Border.all(color: Colors.white),
                 boxShadow: const [],
               ),
-              child: AvifImage.network(
-                image,
-                fit: BoxFit.cover,
-                errorBuilder: (BuildContext context, Object exception,
-                    StackTrace? stackTrace) {
-                  return Container(
-                    height: 120,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: Colors.white),
-                      boxShadow: const [],
+              child: image.contains('.avif')
+                  ? AvifImage.network(
+                      image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (BuildContext context, Object exception,
+                          StackTrace? stackTrace) {
+                        return Container(
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10.0),
+                            border: Border.all(color: Colors.white),
+                            boxShadow: const [],
+                          ),
+                          alignment: Alignment.center,
+                          child: const Center(
+                            child: Text(
+                              'image',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : Image.network(
+                      image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (BuildContext context, Object exception,
+                          StackTrace? stackTrace) {
+                        return Container(
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10.0),
+                            border: Border.all(color: Colors.white),
+                            boxShadow: const [],
+                          ),
+                          alignment: Alignment.center,
+                          child: const Center(
+                            child: Text(
+                              'coming\nsoon',
+                              textAlign: TextAlign.center,
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    alignment: Alignment.center,
-                    child: const Center(
-                      child: Text(
-                        'image',
-                        style: TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ),
-                  );
-                },
-              ),
             ),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.005,

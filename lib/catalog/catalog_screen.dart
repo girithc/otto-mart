@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 import 'package:flutter/material.dart';
+import 'package:flutter_avif/flutter_avif.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
@@ -357,16 +358,15 @@ class CategoryItem extends StatelessWidget {
               categoryID: categoryID, storeID: 1, categoryName: categoryName));
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 6),
-          padding: const EdgeInsets.symmetric(vertical: 2, horizontal: 8),
+          margin: const EdgeInsets.symmetric(vertical: 2),
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.pinkAccent.shade200.withOpacity(0.35),
-                      Colors.pinkAccent.shade100.withOpacity(0.25),
+                      Colors.pinkAccent.shade200.withOpacity(0.15),
+                      Colors.pinkAccent.shade100.withOpacity(0.2),
                     ],
                     stops: const [0.1, 1.0],
                   )
@@ -378,38 +378,91 @@ class CategoryItem extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                height: MediaQuery.of(context).size.height * 0.1,
+                height: MediaQuery.of(context).size.height * 0.08,
+                margin: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(10.0),
-                  border: Border.all(color: Colors.white),
-                  boxShadow: const [],
+                  borderRadius: BorderRadius.circular(20.0),
+                  border: Border.all(
+                      color: Colors.deepPurpleAccent.withOpacity(0.2)),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 0,
+                            blurRadius: 1,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 0,
+                            blurRadius: 1,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
                 ),
                 child: Center(
-                  child: Image.network(
-                    categoryImage,
-                    fit: BoxFit.cover,
-                    errorBuilder: (BuildContext context, Object exception,
-                        StackTrace? stackTrace) {
-                      return Container(
-                        height: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.white),
-                          boxShadow: const [],
-                        ),
-                        alignment: Alignment.center,
-                        child: const Center(
-                          child: Text(
-                            'image',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                    child: categoryImage.isNotEmpty
+                        ? categoryImage.contains('.avif')
+                            ? AvifImage.network(
+                                categoryImage,
+                                fit: BoxFit.cover,
+                                errorBuilder: (BuildContext context,
+                                    Object exception, StackTrace? stackTrace) {
+                                  return Container(
+                                    height: 80,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      border: Border.all(color: Colors.white),
+                                      boxShadow: const [],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Center(
+                                      child: Text(
+                                        'image',
+                                        style: TextStyle(
+                                            fontSize: 12, color: Colors.black),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Image.network(
+                                categoryImage,
+                                fit: BoxFit.cover,
+                                errorBuilder: (BuildContext context,
+                                    Object exception, StackTrace? stackTrace) {
+                                  return Container(
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      border: Border.all(color: Colors.white),
+                                      boxShadow: const [],
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const Center(
+                                      child: Text(
+                                        'image',
+                                        style: TextStyle(
+                                            fontSize: 12, color: Colors.grey),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                        : Container(
+                            child: Center(
+                                child: Text(
+                              "image",
+                              style: TextStyle(
+                                fontSize: 10,
+                              ),
+                            )),
+                          )),
               ),
               Container(
                 alignment: Alignment.bottomCenter,
@@ -827,11 +880,11 @@ class _ListItem2State extends State<ListItem2> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 2), // Adjust padding as needed
                     decoration: BoxDecoration(
-                      color: Colors.black54,
+                      color: Colors.deepPurpleAccent.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     child: Text(
-                      'Out of Stock',
+                      'Coming Soon',
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
