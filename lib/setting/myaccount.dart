@@ -1,25 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/login/login_status_provider.dart';
 import 'package:pronto/login/phone_screen.dart';
-import 'package:pronto/plan/plan.dart';
-import 'package:pronto/setting/myaccount.dart';
-import 'package:pronto/setting/order/order.dart';
-import 'package:pronto/payments/phonepe.dart';
 import 'package:provider/provider.dart';
 
-class SettingScreen extends StatefulWidget {
-  const SettingScreen({Key? key}) : super(key: key);
+class MyAccountPage extends StatefulWidget {
+  const MyAccountPage({super.key});
 
   @override
-  _SettingScreenState createState() => _SettingScreenState();
+  State<MyAccountPage> createState() => _MyAccountPageState();
 }
 
-class _SettingScreenState extends State<SettingScreen> {
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+class _MyAccountPageState extends State<MyAccountPage> {
   final storage = const FlutterSecureStorage();
 
   Future<void> signOutUser(BuildContext context) async {
@@ -37,7 +31,6 @@ class _SettingScreenState extends State<SettingScreen> {
     // For example, you might want to navigate to the login screen
   }
 
-  // Function to show confirmation dialog
   Future<bool> _showConfirmationDialog(BuildContext context) async {
     return await showDialog(
           context: context,
@@ -105,7 +98,6 @@ class _SettingScreenState extends State<SettingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
@@ -181,27 +173,28 @@ class _SettingScreenState extends State<SettingScreen> {
                     Colors.white, // Set the background color of the Container
               ),
               child: ListTile(
-                minVerticalPadding: 10,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const MyOrdersPage()),
-                  );
-                },
-                title: const Center(
-                  child: Text(
-                    'Orders',
-                    style: TextStyle(fontSize: 18, color: Colors.black),
+                  onTap: () {
+                    signOutUser(context).then(
+                      (value) => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyPhone()),
+                      ),
+                    );
+                  },
+                  title: const Center(
+                    child: Text(
+                      'Sign Out',
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    ),
                   ),
-                ),
-                // Remove tileColor and shape from ListTile since it's now wrapped in a Container
-                trailing: const Icon(Icons.arrow_forward_ios_outlined),
-              ),
+                  tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
             ),
-            const SizedBox(
-              height: 10,
-            ),
+            const SizedBox(height: 10),
             Container(
               decoration: BoxDecoration(
                 // Apply a border only at the top of the Container
@@ -217,116 +210,34 @@ class _SettingScreenState extends State<SettingScreen> {
                     Colors.white, // Set the background color of the Container
               ),
               child: ListTile(
-                minVerticalPadding: 10,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const MyAccountPage()),
-                  );
-                },
-                title: const Center(
-                  child: Text(
-                    'My Account',
-                    style: TextStyle(fontSize: 18, color: Colors.black),
+                  onTap: () {
+                    _showConfirmationDialog(context).then((confirmed) {
+                      if (confirmed) {
+                        signOutUser(context).then(
+                          (value) => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const MyPhone()),
+                          ),
+                        );
+                      }
+                    });
+                  },
+                  title: const Center(
+                    child: Text(
+                      'Delete User',
+                      style: TextStyle(fontSize: 16, color: Colors.black),
+                    ),
                   ),
-                ),
-                // Remove tileColor and shape from ListTile since it's now wrapped in a Container
-                trailing: const Icon(Icons.arrow_forward_ios_outlined),
-              ),
-            ),
-            const SizedBox(
-              height: 10,
+                  tileColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios_outlined)),
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildBodySection() {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              // Apply a border only at the top of the Container
-              border: Border(
-                top: BorderSide(
-                    color: Colors.grey.withOpacity(0.4),
-                    width:
-                        1.0), // Specify the color and width of the top border
-              ),
-              borderRadius: BorderRadius.circular(
-                  2), // Apply the same borderRadius as your ListTile
-              color: Colors.white, // Set the background color of the Container
-            ),
-            child: ListTile(
-              minVerticalPadding: 10,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const MyOrdersPage()),
-                );
-              },
-              title: const Center(
-                child: Text(
-                  'Orders',
-                  style: TextStyle(fontSize: 18, color: Colors.black),
-                ),
-              ),
-              // Remove tileColor and shape from ListTile since it's now wrapped in a Container
-              trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-          Container(
-            decoration: BoxDecoration(
-              // Apply a border only at the top of the Container
-              border: Border(
-                top: BorderSide(
-                    color: Colors.grey.withOpacity(0.4),
-                    width:
-                        1.0), // Specify the color and width of the top border
-              ),
-              borderRadius: BorderRadius.circular(
-                  2), // Apply the same borderRadius as your ListTile
-              color: Colors.white, // Set the background color of the Container
-            ),
-            child: ListTile(
-              minVerticalPadding: 10,
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const MyAccountPage()),
-                );
-              },
-              title: const Center(
-                child: Text(
-                  'My Account',
-                  style: TextStyle(fontSize: 18, color: Colors.black),
-                ),
-              ),
-              // Remove tileColor and shape from ListTile since it's now wrapped in a Container
-              trailing: const Icon(Icons.arrow_forward_ios_outlined),
-            ),
-          ),
-          const SizedBox(
-            height: 10,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-enum DrawerSections {
-  profile,
-  wallet,
-  orders,
-  support,
-  // add more as required
 }

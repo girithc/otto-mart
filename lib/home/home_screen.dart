@@ -72,6 +72,7 @@ class _MyHomePageState extends State<MyHomePage>
     fetchPromotions();
     checkForPlacedOrder();
     retrieveCustomerInfo();
+    cartInit();
   }
 
   Future<void> retrieveCustomerInfo() async {
@@ -112,6 +113,11 @@ class _MyHomePageState extends State<MyHomePage>
     } catch (err) {
       _logger.e('(home)fetchPromotions error $err');
     }
+  }
+
+  Future<void> cartInit() async {
+    final cart = context.read<CartModel>();
+    cart.addItemToCart()
   }
 
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =

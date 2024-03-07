@@ -16,9 +16,12 @@ import 'package:upgrader/upgrader.dart';
 // Import other necessary packages
 
 class AddressSelectionWidget extends StatefulWidget {
-  const AddressSelectionWidget({this.flag = false, Key? key}) : super(key: key);
+  const AddressSelectionWidget(
+      {this.flag = false, this.initLogin = false, Key? key})
+      : super(key: key);
   final bool
       flag; // Make `flag` final to follow best practices for immutable widget properties
+  final bool initLogin;
   @override
   State<AddressSelectionWidget> createState() => _AddressSelectionWidgetState();
 }
@@ -92,7 +95,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           isLoadingGetAddress = false;
         });
 
-        if (widget.flag) {
+        if (widget.flag && !widget.initLogin) {
           deliverToAddress(items[0].id).then(
             (resp) async => {
               if (resp!.deliverable)
@@ -518,133 +521,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       },
     );
   }
-
-/*
-  Widget _buildActionButton() {
-    var cart = context.watch<CartModel>();
-    return Container(
-      width: MediaQuery.of(context).size.width,
-      padding: const EdgeInsets.only(bottom: 20, left: 5, right: 5),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-      ),
-      child: ElevatedButton(
-        onPressed: () async {
-          try {
-            bool deliverable = true;
-            print("Button Press: SelectedAddressindex $selectedAddressIndex");
-            if (selectedAddressIndex != null) {
-              if (selectedAddressIndex! >= 1) {
-                print("1a Branch");
-                showAddress = false;
-                setDefaultAddress(addresses[selectedAddressIndex! - 1].id).then(
-                  (address) async {
-                    if (!mounted) return;
-
-                    if (address?.address != null) {
-                      cart.deliveryAddress = address!.address;
-                    }
-                    if (!address!.deliverable) {
-                      print('Not Deliverable');
-                      deliverable = false;
-                    }
-
-                    if (deliverable) {
-                      print('Go To Home');
-                      await storage
-                          .write(
-                              key: 'storeId', value: address.storeId.toString())
-                          .then((value) => {
-                                storage
-                                    .write(
-                                        key: 'cartId',
-                                        value: address.cartId.toString())
-                                    .then((value) => {context.push('/home')})
-                              });
-                    } else {
-                      await storage.delete(key: 'storeId');
-                      print('Coming Soon');
-                      context.push('/coming-soon');
-                    }
-                  },
-                );
-              } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
-                print("1b Branch");
-
-                deliverToAddress(cart.deliveryAddress.id).then(
-                  (resp) async => {
-                    if (resp!.deliverable)
-                      {
-                        await storage
-                            .write(
-                                key: 'storeId', value: resp.storeId.toString())
-                            .then((value) => {
-                                  storage
-                                      .write(
-                                          key: 'cartId',
-                                          value: resp.cartId.toString())
-                                      .then((value) => {context.push('/home')})
-                                })
-                      }
-                    else
-                      {
-                        await storage.delete(key: 'storeId'),
-                        context.push('/coming-soon')
-                      }
-                  },
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Please Add Address.'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            } else {
-              print("2nd Branch");
-              if (!mounted) {
-                return; // Check if the widget is still mounted
-              }
-              showDialog(
-                  context: context,
-                  builder: (context) {
-                    Future.delayed(const Duration(seconds: 1), () {
-                      Navigator.of(context).pop(true);
-                    });
-                    return const AlertDialog(
-                      title: Text('No Address Selected'),
-                    );
-                  });
-            }
-
-            // Close the bottom sheet
-          } catch (error) {
-            print(error);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Error Found'),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        },
-        style: ElevatedButton.styleFrom(
-          foregroundColor: Colors.white,
-          backgroundColor: Colors.deepPurpleAccent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          elevation: 5,
-          padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.04,
-              vertical: MediaQuery.of(context).size.width * 0.04),
-        ),
-        child: const Text("Deliver To Address", style: TextStyle(fontSize: 22)),
-      ),
-    );
-  }
-*/
 }
 
 // Define other necessary classes/models like Address, etc.

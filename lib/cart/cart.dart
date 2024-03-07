@@ -95,7 +95,7 @@ class ItemInCart {
 }
 
 class CartModel extends ChangeNotifier {
-  final List<CartItem> _items = [];
+  final List<CartItem> itemList = [];
   final NetworkService _networkService = NetworkService();
 
   CartDetails? _cartDetails;
@@ -145,7 +145,7 @@ class CartModel extends ChangeNotifier {
   }
 
   void clearCart() {
-    _items.clear();
+    itemList.clear();
     //_fetchDefaultAddress();
     //_fetchCartId().then((_) {
     //  _fetchCartItems(); // Then fetch cart items from the server
@@ -193,8 +193,8 @@ class CartModel extends ChangeNotifier {
           final List<CartItem> items =
               cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
-          _items.clear();
-          _items.addAll(items);
+          itemList.clear();
+          itemList.addAll(items);
           notifyListeners();
         } else {
           print("Response: $response");
@@ -313,7 +313,7 @@ class CartModel extends ChangeNotifier {
     }
   }
 
-  List<CartItem> get items => _items;
+  List<CartItem> get items => itemList;
 
   int get numberOfItems => _cartDetails!.quantity;
   int get totalPriceItems => _cartDetails!.itemCost;
@@ -345,13 +345,6 @@ class CartModel extends ChangeNotifier {
     String? cartID = await storage.read(key: 'cartId');
     String? customerId = await storage.read(key: 'customerId');
 
-    /*
-    print("Before Add Item To Cart");
-    print("Cart Id $cartID");
-    print("Customer Id $customerId");
-    */
-
-    // Define the body for the POST request
     if (item.quantity > 0) {
       item.quantity = 1;
     } else {
@@ -384,23 +377,16 @@ class CartModel extends ChangeNotifier {
             outOfStock: _cartDetails!.outOfStock);
 
         if (_cartDetails?.cartId.toString() != cartID) {
-          /*
-          print("\n");
-          print("Old Cart Id $cartID");
-          print("New Cart Id ${_cartDetails?.cartId}");
-          print("\n");
-          */
           storage.write(key: 'cartId', value: _cartDetails?.cartId.toString());
         }
         final List<dynamic> cartItemsList = jsonData['cart_items_list'];
         final List<CartItem> items =
             cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
-        //print()
         print("Cart Items List $items");
 
-        _items.clear();
-        _items.addAll(items);
+        itemList.clear();
+        itemList.addAll(items);
         notifyListeners();
 
         return outOfStock;
@@ -423,11 +409,11 @@ class CartModel extends ChangeNotifier {
   }
 
   bool isEmpty() {
-    return _items.isEmpty;
+    return itemList.isEmpty;
   }
 
   void printItems(List<CartItem> items) {
-    for (var item in _items) {
+    for (var item in itemList) {
       _logger.e("Item Id {${item.productId}}");
       _logger.e("Item Name ${item.productName}");
     }

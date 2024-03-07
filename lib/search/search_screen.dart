@@ -1,5 +1,6 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_avif/flutter_avif.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
@@ -512,8 +513,8 @@ class SearchItemListState extends State<SearchItemList> {
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 0.0,
-                crossAxisSpacing: 0.0,
+                mainAxisSpacing: 6.0,
+                crossAxisSpacing: 6.0,
                 childAspectRatio: 0.82,
               ),
               itemCount: searchResults.length,
@@ -615,43 +616,62 @@ class ListItem extends StatelessWidget {
                 ),
               ],
             ),
-            margin: index == 0
-                ? const EdgeInsets.only(
-                    top: 5,
-                    left: 5,
-                  )
-                : const EdgeInsets.only(top: 5, left: 5.0, right: 5.0),
-            padding: const EdgeInsets.only(bottom: 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.only(
-                      top: 25, bottom: 10, left: 10, right: 10),
+                      top: 2, bottom: 2, left: 2, right: 2),
                   height: MediaQuery.of(context).size.height * 0.15,
                   child: Center(
-                    child: Image.network(
-                      image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (BuildContext context, Object exception,
-                          StackTrace? stackTrace) {
-                        return Container(
-                          height: 120,
-                          color: Colors.grey[200],
-                          alignment: Alignment.center,
-                          child: const Center(
-                            child: Text(
-                              'no image',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
+                    child: image.contains('.avif')
+                        ? AvifImage.network(
+                            image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (BuildContext context,
+                                Object exception, StackTrace? stackTrace) {
+                              return Container(
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10.0),
+                                  border: Border.all(color: Colors.white),
+                                  boxShadow: const [],
+                                ),
+                                alignment: Alignment.center,
+                                child: const Center(
+                                  child: Text(
+                                    'image',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.black),
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : Image.network(
+                            image,
+                            fit: BoxFit.cover,
+                            errorBuilder: (BuildContext context,
+                                Object exception, StackTrace? stackTrace) {
+                              return Container(
+                                height: 120,
+                                color: Colors.grey[200],
+                                alignment: Alignment.center,
+                                child: const Center(
+                                  child: Text(
+                                    'no image',
+                                    style: TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ),
                 Container(
+                  margin: const EdgeInsets.only(top: 5),
                   padding: const EdgeInsets.symmetric(horizontal: 8.0),
                   alignment: Alignment.centerLeft,
                   height: 37,
@@ -785,38 +805,63 @@ class ListItem extends StatelessWidget {
                                 onPressed: () async {
                                   // Create an instance of FlutterSecureStorage
                                   const storage = FlutterSecureStorage();
+                                  if (stockQuantity > 0) {
+                                    // Read the cartId from storage
+                                    String? cartId =
+                                        await storage.read(key: 'cartId');
 
-                                  // Read the cartId from storage
-                                  String? cartId =
-                                      await storage.read(key: 'cartId');
-
-                                  final cartItem = CartItem(
-                                    productId: id.toString(),
-                                    productName: name,
-                                    price: mrpPrice,
-                                    soldPrice: storePrice,
-                                    quantity: 1,
-                                    stockQuantity: stockQuantity,
-                                    image: image,
-                                  );
-                                  cart.addItemToCart(cartItem);
+                                    final cartItem = CartItem(
+                                      productId: id.toString(),
+                                      productName: name,
+                                      price: mrpPrice,
+                                      soldPrice: storePrice,
+                                      quantity: 1,
+                                      stockQuantity: stockQuantity,
+                                      image: image,
+                                    );
+                                    cart.addItemToCart(cartItem);
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Center(
+                                          child: Text(
+                                            'Item Coming Soon !',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ),
+                                        backgroundColor: Colors.greenAccent,
+                                      ),
+                                    );
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                     surfaceTintColor: Colors.white,
                                     backgroundColor: Colors.white,
                                     padding: const EdgeInsets.all(2),
-                                    side: const BorderSide(
+                                    side: BorderSide(
                                       width: 1.0,
-                                      color: Colors.pinkAccent,
+                                      color: stockQuantity <= 0
+                                          ? Colors.greenAccent
+                                          : Colors.pinkAccent,
                                     ),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10.0),
                                     )),
-                                child: const Text(
-                                  'Add',
-                                  style: TextStyle(
-                                      color: Colors.pinkAccent, fontSize: 13),
-                                ),
+                                child: stockQuantity <= 0
+                                    ? Text(
+                                        'Notify',
+                                        style: TextStyle(
+                                            color: Colors.black, fontSize: 13),
+                                      )
+                                    : Text(
+                                        'Add',
+                                        style: TextStyle(
+                                            color: Colors.pinkAccent,
+                                            fontSize: 13),
+                                      ),
                               ),
                             )
                     ],
@@ -825,25 +870,53 @@ class ListItem extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            top: 6, // Adjust the position as needed
-            left: 6, // Adjust the position as needed
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+          discount > 0
+              ? Positioned(
+                  top: 6, // Adjust the position as needed
+                  left: 6, // Adjust the position as needed
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: Colors.deepPurpleAccent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '\u{20B9}$discount OFF',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+          if (stockQuantity <= 0)
+            Container(
+              height: MediaQuery.of(context).size.height * 0.155,
               decoration: BoxDecoration(
-                color: Colors.deepPurpleAccent,
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.black.withOpacity(0.3),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(10.0),
+                  topRight: Radius.circular(10.0),
+                ),
               ),
-              child: Text(
-                '\u{20B9}$discount OFF',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              child: Center(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 5, vertical: 2), // Adjust padding as needed
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurpleAccent.withOpacity(0.85),
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Text(
+                    'Coming Soon',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
               ),
             ),
-          ),
         ],
       ),
     );

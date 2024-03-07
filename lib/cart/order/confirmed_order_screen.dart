@@ -28,6 +28,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   String? _errorMsg;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   Timer? _timer; // Declare a Timer variable
+  OrderInfo? _orderInfo;
 
   String orderStatus = 'Preparing Order';
   String orderLottie =
@@ -189,11 +190,11 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     print("Response: ${response.statusCode} ${response.body}  ");
     // Deserialize the JSON response
     final jsonResponse = json.decode(response.body);
-    final orderInfo = OrderInfo.fromJson(jsonResponse);
+    _orderInfo = OrderInfo.fromJson(jsonResponse);
     // Use the parsed orderInfo object to update your UI
     // For example, you might want to set some state variables and call setState to refresh the UI
     setState(() {
-      orderStatus = orderInfo.orderStatus;
+      orderStatus = _orderInfo!.orderStatus;
       orderLottie = orderStatusToInfo[orderStatus]!.lottieUrl;
       orderLottieTransform = orderStatusToInfo[orderStatus]!.transform;
     });
@@ -340,6 +341,71 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             ],
                           ),
                         ),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.only(
+                              left: 10, right: 10, top: 5, bottom: 5),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                                BorderRadius.circular(10), // Rounded corners
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.1),
+                                spreadRadius: 1,
+                                blurRadius: 2,
+                                offset: const Offset(
+                                    0, 1), // Changes position of shadow
+                              ),
+                            ],
+                            border: Border.all(color: Colors.white, width: 1.0),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                "Order Info",
+                                style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.normal),
+                              ),
+                              const SizedBox(
+                                  height:
+                                      10), // Provide some spacing after the title
+                              Wrap(
+                                spacing: 10, // Horizontal space between widgets
+                                runSpacing:
+                                    10, // Vertical space between widgets
+                                children: _orderInfo!.items.map((item) {
+                                  return Row(
+                                    mainAxisSize: MainAxisSize
+                                        .min, // To make the Row take minimum space
+                                    children: [
+                                      Text('${item.quantity.toString()} x ',
+                                          style: const TextStyle(fontSize: 14)),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        item.name,
+                                        style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.normal),
+                                        overflow: TextOverflow
+                                            .ellipsis, // To handle long item names
+                                      ),
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        '${item.size}${item.unitOfQuantity}',
+                                        style: const TextStyle(fontSize: 14),
+                                      ),
+                                    ],
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ),
+                        ),
+
                         //const ItemList(),
                         //const ItemTotal(),
                       ],
@@ -593,6 +659,16 @@ class OrderInfo {
   final int totalAmountPaid;
   final List<Item> items;
   final String address;
+  // Added fields for fees and subtotal
+  final int itemCost;
+  final int deliveryFee;
+  final int platformFee;
+  final int smallOrderFee;
+  final int rainFee;
+  final int highTrafficSurcharge;
+  final int packagingFee;
+  final int peakTimeSurcharge;
+  final int subtotal;
 
   OrderInfo({
     required this.orderStatus,
@@ -603,6 +679,15 @@ class OrderInfo {
     required this.totalAmountPaid,
     required this.items,
     required this.address,
+    required this.itemCost,
+    required this.deliveryFee,
+    required this.platformFee,
+    required this.smallOrderFee,
+    required this.rainFee,
+    required this.highTrafficSurcharge,
+    required this.packagingFee,
+    required this.peakTimeSurcharge,
+    required this.subtotal,
   });
 
   factory OrderInfo.fromJson(Map<String, dynamic> json) {
@@ -615,6 +700,15 @@ class OrderInfo {
       totalAmountPaid: json['total_amount_paid'],
       items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
       address: json['address'],
+      itemCost: json['item_cost'],
+      deliveryFee: json['delivery_fee'],
+      platformFee: json['platform_fee'],
+      smallOrderFee: json['small_order_fee'],
+      rainFee: json['rain_fee'],
+      highTrafficSurcharge: json['high_traffic_surcharge'],
+      packagingFee: json['packaging_fee'],
+      peakTimeSurcharge: json['peak_time_surcharge'],
+      subtotal: json['subtotal'],
     );
   }
 }
@@ -625,6 +719,7 @@ class Item {
   final int quantity;
   final String unitOfQuantity;
   final int size;
+  final int soldPrice; // Added field
 
   Item({
     required this.name,
@@ -632,6 +727,7 @@ class Item {
     required this.quantity,
     required this.unitOfQuantity,
     required this.size,
+    required this.soldPrice, // Initialize the new field
   });
 
   factory Item.fromJson(Map<String, dynamic> json) {
@@ -641,6 +737,7 @@ class Item {
       quantity: json['quantity'],
       unitOfQuantity: json['unit_of_quantity'],
       size: json['size'],
+      soldPrice: json['sold_price'], // Map the JSON field
     );
   }
 }

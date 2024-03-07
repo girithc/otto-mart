@@ -266,6 +266,7 @@ class _MyVerifyState extends State<MyVerify> {
                                     builder: (context) =>
                                         const AddressSelectionWidget(
                                       flag: true,
+                                      initLogin: true,
                                     ),
                                   ),
                                 );
@@ -285,6 +286,7 @@ class _MyVerifyState extends State<MyVerify> {
                                     builder: (context) =>
                                         const AddressSelectionWidget(
                                       flag: true,
+                                      initLogin: true,
                                     ),
                                   ),
                                 );
@@ -325,6 +327,7 @@ class _MyVerifyState extends State<MyVerify> {
                                     builder: (context) =>
                                         const AddressSelectionWidget(
                                       flag: true,
+                                      initLogin: true,
                                     ),
                                   ),
                                 );
@@ -344,6 +347,7 @@ class _MyVerifyState extends State<MyVerify> {
                                     builder: (context) =>
                                         const AddressSelectionWidget(
                                       flag: true,
+                                      initLogin: true,
                                     ),
                                   ),
                                 );
@@ -375,6 +379,7 @@ class _MyVerifyState extends State<MyVerify> {
                                   builder: (context) =>
                                       const AddressSelectionWidget(
                                     flag: true,
+                                    initLogin: true,
                                   ),
                                 ),
                               );
@@ -394,6 +399,7 @@ class _MyVerifyState extends State<MyVerify> {
                                   builder: (context) =>
                                       const AddressSelectionWidget(
                                     flag: true,
+                                    initLogin: true,
                                   ),
                                 ),
                               );
@@ -465,6 +471,7 @@ class _MyVerifyState extends State<MyVerify> {
                                     builder: (context) =>
                                         const AddressSelectionWidget(
                                       flag: true,
+                                      initLogin: true,
                                     ),
                                   ),
                                 );

@@ -125,8 +125,8 @@ class _CatalogPageState extends State<CatalogPage> {
                 borderRadius: BorderRadius.circular(10.0),
               ),
             ),
-            child: cart.numberOfItems > 0
-                ? (cart.numberOfItems > 1
+            child: cart.itemList.isNotEmpty
+                ? (cart.itemList.length > 1
                     ? Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
