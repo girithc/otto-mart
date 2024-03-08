@@ -29,3 +29,7 @@ type PackerFCM struct {
 type PackerPhone struct {
 	Phone string `json:"phone"`
 }
+
+type PackerGetOrderItems struct {
+	SalesOrderId int `json:"sales_order_id"`
+}

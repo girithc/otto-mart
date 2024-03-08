@@ -12,6 +12,7 @@ import (
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -394,12 +395,6 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 		return nil, fmt.Errorf("order %d is not in packed status", order_id)
 	}
 
-	// Retrieve the location from delivery_shelf for the given order_id
-	err = tx.QueryRow("SELECT location FROM delivery_shelf WHERE order_id = $1 LIMIT 1", order_id).Scan(&location)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve location for order ID %d: %w", order_id, err)
-	}
-
 	// Verify the delivery partner ID and retrieve delivery partner name
 	var deliveryPartnerName string
 	var deliveryPartnerIDFromDB int
@@ -408,16 +403,22 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 		return nil, fmt.Errorf("failed to verify delivery partner for phone %s: %w", phone, err)
 	}
 
+	// Retrieve the location of the delivery shelf associated with the sales order
+	var deliveryShelfID int
+	err = tx.QueryRow("SELECT delivery_shelf_id FROM packer_shelf WHERE sales_order_id = $1", order_id).Scan(&deliveryShelfID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve delivery shelf ID for order ID %d: %w", order_id, err)
+	}
+
+	err = tx.QueryRow("SELECT location FROM delivery_shelf WHERE id = $1", deliveryShelfID).Scan(&location)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve location for delivery shelf ID %d: %w", deliveryShelfID, err)
+	}
+
 	// Update the order_status to 'dispatched' in sales_order
 	_, err = tx.Exec("UPDATE sales_order SET order_status = 'dispatched' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed'", order_id, deliveryPartnerIDFromDB)
 	if err != nil {
 		return nil, fmt.Errorf("failed to update order status to 'dispatched' for order ID %d: %w", order_id, err)
-	}
-
-	// Remove the sales_order_id from delivery_shelf for the given order_id
-	_, err = tx.Exec("UPDATE delivery_shelf SET order_id = NULL WHERE order_id = $1", order_id)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update delivery_shelf for order ID %d: %w", order_id, err)
 	}
 
 	// Update the pickup_time and set active to false in packer_shelf for the associated sales_order_id
@@ -436,10 +437,55 @@ func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int)
 		DeliveryPartnerName: deliveryPartnerName,
 		SalesOrderID:        order_id,
 		OrderStatus:         "dispatched",
-		Location:            location,
+		Location:            location, // Now includes the location from the delivery shelf
 	}
 
 	return result, nil
+}
+
+func (s *PostgresStore) PackerDispatchOrderHistory(storeId int) ([]DispatchOrderHistory, error) {
+	query := `
+    SELECT ps.pickup_time, ps.drop_time, ds.location, p.name as packer_name, p.phone as packer_phone, dp.name as delivery_partner_name, dp.phone as delivery_partner_phone
+    FROM Packer_Shelf ps
+    INNER JOIN Packer p ON ps.packer_id = p.id
+    INNER JOIN Delivery_Shelf ds ON ps.delivery_shelf_id = ds.id
+    INNER JOIN Sales_Order so ON ps.sales_order_id = so.id
+    INNER JOIN Delivery_Partner dp ON so.delivery_partner_id = dp.id
+    WHERE ds.store_id = $1
+    ORDER BY ps.pickup_time DESC
+    `
+
+	rows, err := s.db.Query(query, storeId)
+	if err != nil {
+		return nil, fmt.Errorf("error querying dispatch order history: %w", err)
+	}
+	defer rows.Close()
+
+	var histories []DispatchOrderHistory
+	for rows.Next() {
+		var history DispatchOrderHistory
+		err := rows.Scan(&history.PickupTime, &history.DropTime, &history.Location, &history.PackerName, &history.PackerPhone, &history.DeliveryPartnerName, &history.DeliveryPartnerPhone)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning dispatch order history: %w", err)
+		}
+		histories = append(histories, history)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating through dispatch order history results: %w", err)
+	}
+
+	return histories, nil
+}
+
+type DispatchOrderHistory struct {
+	PickupTime           pq.NullTime // Using pq.NullTime for time fields that can be null
+	DropTime             pq.NullTime
+	Location             sql.NullInt64 // Using sql.NullInt64 for an integer field that can be null
+	PackerName           sql.NullString
+	PackerPhone          sql.NullString
+	DeliveryPartnerName  sql.NullString
+	DeliveryPartnerPhone sql.NullString
 }
 
 func (s *PostgresStore) DeliveryPartnerArrive(phone string, order_id int, status string) (*DeliveryPartnerArriveResult, error) {

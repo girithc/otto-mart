@@ -19,6 +19,10 @@ type Create_Store struct {
 	Address string `json:"address"`
 }
 
+type StoreId struct {
+	StoreId int `json:"store_id"`
+}
+
 type Update_Store struct {
 	ID      int    `json:"id"`
 	Name    string `json:"name"`

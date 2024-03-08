@@ -423,7 +423,7 @@ func (s *PostgresStore) InitiatePayment(cart_id int, sign string, merchantTransa
 
 	// Create a new cart_lock record for the payment phase
 	query = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) 
-         VALUES ($1, 'lock-stock-pay', 'started', CURRENT_TIMESTAMP + INTERVAL '9 minutes') 
+         VALUES ($1, 'lock-stock-pay', 'started', CURRENT_TIMESTAMP + INTERVAL '10 minutes') 
          RETURNING sign`
 
 	var signValue string

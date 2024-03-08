@@ -53,17 +53,24 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/checkout-cancel", makeHTTPHandleFunc(s.handleCancelCheckout))
 
 	http.HandleFunc("/customer-placed-order", makeHTTPHandleFunc(s.handleCustomerPlacedOrder))
+	http.HandleFunc("/customer-pickup-order", makeHTTPHandleFunc(s.handleCustomerPickupOrder))
+
+	http.HandleFunc("/packer-get-order", makeHTTPHandleFunc(s.handlePackerGetOrder))
+	http.HandleFunc("/packer-complete-order", makeHTTPHandleFunc(s.handlePackerCompleteOrder))
 
 	http.HandleFunc("/packer-find-item", makeHTTPHandleFunc(s.handlePackerFindItem))
 	http.HandleFunc("/packer-load-item", makeHTTPHandleFunc(s.handlePackerLoadItem))
+	http.HandleFunc("/packer-dispatch-order-history", makeHTTPHandleFunc(s.handlePackerDispatchOrderHistory))
 	http.HandleFunc("/packer-pack-order", makeHTTPHandleFunc(s.handlePackerPackOrder))
 	http.HandleFunc("/packer-fetch-item", makeHTTPHandleFunc(s.handlePackerFetchItem))
 	http.HandleFunc("/packer-get-items", makeHTTPHandleFunc(s.handlePackerGetAllItems))
 	http.HandleFunc("/packer-pack-item", makeHTTPHandleFunc(s.handlePackerPackItem))
 	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
 	http.HandleFunc("/packer-check-order-to-pack", makeHTTPHandleFunc(s.handlePackerCheckOrderToPack))
-
 	http.HandleFunc("/packer-space-order", makeHTTPHandleFunc(s.handlePackerAllocateSpace))
+
+	http.HandleFunc("/packer-get-order-items", makeHTTPHandleFunc(s.handlePackerGetOrderItems))
+	http.HandleFunc("/delivery-partner-get-order-items", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderItems))
 
 	http.HandleFunc("/delivery-partner", makeHTTPHandleFunc(s.handleDeliveryPartner))
 	http.HandleFunc("/delivery-partner-login", makeHTTPHandleFunc(s.handleDeliveryPartnerLogin))
@@ -81,6 +88,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/brand", makeHTTPHandleFunc(s.handleBrand))
 
 	http.HandleFunc("/store-sales-order", makeHTTPHandleFunc(s.handleStoreSalesOrder))
+	http.HandleFunc("/store-address", makeHTTPHandleFunc(s.handleStoreAddress))
 	http.HandleFunc("/sales-order-details", makeHTTPHandleFunc(s.handleSalesOrderDetails))
 	http.HandleFunc("/sales-order", makeHTTPHandleFunc(s.handleSalesOrder))
 

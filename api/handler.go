@@ -586,6 +586,14 @@ func (s *Server) handlePackerFindItem(res http.ResponseWriter, req *http.Request
 	return nil
 }
 
+func (s *Server) handlePackerCompleteOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-complete-order")
+		return s.goRoutineWrapper(PackerCompleteOrder, s.handlePackerCompleteOrderBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleManagerFindItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "manager-find-item")
@@ -658,6 +666,22 @@ func (s *Server) handlePackerAllocateSpace(res http.ResponseWriter, req *http.Re
 	return nil
 }
 
+func (s *Server) handlePackerGetOrderItems(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-get-order-items")
+		return s.goRoutineWrapper(PackerGetOrderItems, s.PackerGetOrderItems, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleDeliveryPartnerGetOrderItems(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "delivery_partner_get_order_items")
+		return s.goRoutineWrapper(DeliveryPartnerGetOrderItems, s.DeliveryPartnerGetOrderItems, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleCheckoutLockItems(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "checkout-lock-items")
@@ -686,6 +710,14 @@ func (s *Server) handleCustomerPlacedOrder(res http.ResponseWriter, req *http.Re
 	if req.Method == "POST" {
 		print_path("POST", "customer-placed-order")
 		return s.goRoutineWrapper(CustomerPlacedOrder, s.handleGetCustomerPlacedOrder, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleCustomerPickupOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "customer-pickup-order")
+		return s.goRoutineWrapper(CustomerPickupOrder, s.handleCustomerPickup, res, req)
 	}
 	return nil
 }
@@ -764,6 +796,21 @@ func (s *Server) handleDeliveryPartnerDispatchOrder(res http.ResponseWriter, req
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_dispatch_order")
 		return s.goRoutineWrapper(DeliveryPartnerDispatchOrder, s.DeliveryPartnerDispatchOrder, res, req)
+	}
+	return nil
+}
+func (s *Server) handleCustomerDispatchOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "customer_dispatch_order")
+		return s.goRoutineWrapper(CustomerDispatchOrder, s.DeliveryPartnerDispatchOrder, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handlePackerDispatchOrderHistory(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer_dispatch_order_history")
+		return s.goRoutineWrapper(PackerDispatchOrderHistory, s.PackerDispatchOrderHistory, res, req)
 	}
 	return nil
 }
@@ -848,6 +895,14 @@ func (s *Server) handleCheckForPlacedOrder(res http.ResponseWriter, req *http.Re
 	if req.Method == "POST" {
 		print_path("POST", "check-for-placed-order")
 		return s.goRoutineWrapper(CheckForPlacedOrder, s.CheckForPlacedOrder, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleStoreAddress(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "store_address")
+		return s.goRoutineWrapper(StoreAddressGet, s.HandleGetStoreAddress, res, req)
 	}
 	return nil
 }

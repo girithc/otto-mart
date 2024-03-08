@@ -50,6 +50,7 @@ var authRequirements = map[string]Permission{
 	SearchItems:                           {Role: "Customer", AuthRequired: true},
 	ItemAddQuick:                          {Role: "Customer", AuthRequired: true},
 	PackerFindItem:                        {Role: "Customer", AuthRequired: true},
+	PackerCompleteOrder:                   {Role: "Customer", AuthRequired: true},
 	PackerLoadItem:                        {Role: "Customer", AuthRequired: true},
 	PackerPackOrder:                       {Role: "Customer", AuthRequired: true},
 	PackerFetchItem:                       {Role: "Customer", AuthRequired: true},
@@ -62,6 +63,7 @@ var authRequirements = map[string]Permission{
 	CheckoutPayment:                       {Role: "Customer", AuthRequired: true},
 	CheckoutCancel:                        {Role: "Customer", AuthRequired: true},
 	CustomerPlacedOrder:                   {Role: "Customer", AuthRequired: true},
+	CustomerPickupOrder:                   {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerLogin:                  {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerGet:                    {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerUpdate:                 {Role: "Customer", AuthRequired: true},
@@ -69,6 +71,8 @@ var authRequirements = map[string]Permission{
 	DeliveryPartnerAcceptOrder:            {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerPickupOrder:            {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerDispatchOrder:          {Role: "Customer", AuthRequired: true},
+	CustomerDispatchOrder:                 {Role: "Customer", AuthRequired: true},
+	PackerDispatchOrderHistory:            {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerArrive:                 {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerCompleteOrder:          {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerGetOrderDetails:        {Role: "Customer", AuthRequired: true},
@@ -122,6 +126,7 @@ var authRequirements = map[string]Permission{
 	ManagerInitShelf:                      {Role: "Manager", AuthRequired: true},
 	ManagerFindItem:                       {Role: "Manager", AuthRequired: true},
 	ManagerAssignItemShelf:                {Role: "Manager", AuthRequired: true},
+	StoreAddressGet:                       {Role: "Customer", AuthRequired: true},
 }
 
 const (
@@ -167,6 +172,7 @@ const (
 	PackerGetAll                          = "packer-get-all"
 	PackerPackOrder                       = "packer-pack-order"
 	PackerFindItem                        = "packer-find-item"
+	PackerCompleteOrder                   = "packer-complete-order"
 	PackerLoadItem                        = "packer-load-item"
 	PackerFetchItem                       = "packer-fetch-item"
 	PackerGetPackedItems                  = "packer-get-packed-items"
@@ -174,10 +180,13 @@ const (
 	PackerCancelOrder                     = "packer-cancel-order"
 	PackerCheckOrderToPack                = "packer-check-order-to-pack"
 	PackerAllocateSpace                   = "packer-allocate-space"
+	PackerGetOrderItems                   = "packer-get-order-items"
+	DeliveryPartnerGetOrderItems          = "delivery-partner-get-order-items"
 	CheckoutLockItems                     = "checkout-lock-items"
 	CheckoutPayment                       = "checkout-payment"
 	CheckoutCancel                        = "checkout-cancel"
 	CustomerPlacedOrder                   = "customer-placed-order"
+	CustomerPickupOrder                   = "customer-pickup-order"
 	DeliveryPartnerLogin                  = "delivery-partner-login"
 	DeliveryPartnerGet                    = "delivery-partner-get"
 	DeliveryPartnerUpdate                 = "delivery-partner-update"
@@ -185,9 +194,12 @@ const (
 	DeliveryPartnerAcceptOrder            = "delivery-partner-accept-order"
 	DeliveryPartnerPickupOrder            = "delivery-partner-pickup-order"
 	DeliveryPartnerDispatchOrder          = "packer-dispatch-order"
+	CustomerDispatchOrder                 = "customer-dispatch-order"
+	PackerDispatchOrderHistory            = "packer-dispatch-order-history"
 	DeliveryPartnerArrive                 = "delivery-partner-arrive"
 	DeliveryPartnerCompleteOrder          = "delivery-partner-complete-order"
 	DeliveryPartnerGetOrderDetails        = "delivery-partner-get-order-details"
+	StoreAddressGet                       = "store-address-get"
 	CheckForPlacedOrder                   = "check-for-placed-order"
 	SalesOrderGetAll                      = "sales-order-get-all"
 	SalesOrderGetByDeliveryPartner        = "sales-order-get-by-delivery-partner"

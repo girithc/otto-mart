@@ -47,6 +47,18 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 		return err
 	}
 
+	// Define the ENUM type for order_type
+	orderTypeQuery := `DO $$ BEGIN
+        CREATE TYPE order_type AS ENUM ('delivery', 'pickup');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`
+
+	_, err = tx.Exec(orderTypeQuery)
+	if err != nil {
+		return err
+	}
+
 	// Create the sales_order table with order_status field
 	query := `create table if not exists sales_order (
         id SERIAL PRIMARY KEY,
@@ -61,10 +73,24 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         payment_type payment_method DEFAULT 'cash',
         order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         order_status order_status DEFAULT 'received',
-		order_dp_status dp_status DEFAULT 'pending'
+		order_dp_status dp_status DEFAULT 'pending',
+		order_type order_type DEFAULT 'pickup'
     )`
 
 	_, err = tx.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	// Alter the sales_order table to add the order_type column with a default value of 'pickup'
+	alterTableQuery := `ALTER TABLE sales_order
+        ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'pickup';`
+
+	_, err = tx.Exec(alterTableQuery)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -206,72 +232,76 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 }
 
 type CustomerOrderDetails struct {
-	OrderStatus         string      `json:"order_status"`
-	OrderDeliveryStatus string      `json:"order_dp_status"`
-	PaymentType         string      `json:"payment_type"`
-	PaidStatus          bool        `json:"paid_status"`
-	OrderDate           string      `json:"order_date"` // Assuming the date is in string format
-	TotalAmountPaid     int         `json:"total_amount_paid"`
-	Items               []OrderItem `json:"items"`
-	Address             string      `json:"address"` // Added to include the street address
+	OrderStatus          string      `json:"order_status"`
+	OrderDeliveryStatus  string      `json:"order_dp_status"`
+	PaymentType          string      `json:"payment_type"`
+	PaidStatus           bool        `json:"paid_status"`
+	OrderDate            string      `json:"order_date"` // Assuming the date is in string format
+	TotalAmountPaid      int         `json:"total_amount_paid"`
+	Items                []OrderItem `json:"items"`
+	Address              string      `json:"address"` // Added to include the street address
+	ItemCost             int         `json:"item_cost"`
+	DeliveryFee          int         `json:"delivery_fee"`
+	PlatformFee          int         `json:"platform_fee"`
+	SmallOrderFee        int         `json:"small_order_fee"`
+	RainFee              int         `json:"rain_fee"`
+	HighTrafficSurcharge int         `json:"high_traffic_surcharge"`
+	PackagingFee         int         `json:"packaging_fee"`
+	PeakTimeSurcharge    int         `json:"peak_time_surcharge"`
+	Subtotal             int         `json:"subtotal"`
 }
 
-// OrderItem holds information about an item in an order
 type OrderItem struct {
 	Name           string `json:"name"`
 	Image          string `json:"image"` // Assuming there's a way to determine the primary image
 	Quantity       int    `json:"quantity"`
 	UnitOfQuantity string `json:"unit_of_quantity"`
 	Size           int    `json:"size"`
+	SoldPrice      int    `json:"sold_price"` // Added to include the sold price for each item
 }
 
 func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*CustomerOrderDetails, error) {
 	orderDetails := &CustomerOrderDetails{}
 	var transactionId int
 
-	// Start by getting the basic order details and the transaction ID for further queries
+	// Query to get basic order details and transaction ID
 	orderQuery := `
-		SELECT so.order_status, so.order_dp_status, so.payment_type, so.paid, so.order_date, so.transaction_id
-		FROM sales_order so
-		WHERE so.customer_id = $1 AND so.cart_id = $2
-	`
+        SELECT so.order_status, so.order_dp_status, so.payment_type, so.paid, so.order_date, so.transaction_id
+        FROM sales_order so
+        WHERE so.customer_id = $1 AND so.cart_id = $2
+    `
 	err := s.db.QueryRow(orderQuery, customerId, cartId).Scan(&orderDetails.OrderStatus, &orderDetails.OrderDeliveryStatus, &orderDetails.PaymentType, &orderDetails.PaidStatus, &orderDetails.OrderDate, &transactionId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting order details: %w", err)
 	}
 
-	// Next, get the total amount paid from the transaction table using the transaction ID
+	// Query to get the total amount paid from the transaction table
 	amountQuery := `
-		SELECT t.amount
-		FROM transaction t
-		WHERE t.id = $1
-	`
+        SELECT t.amount
+        FROM transaction t
+        WHERE t.id = $1
+    `
 	err = s.db.QueryRow(amountQuery, transactionId).Scan(&orderDetails.TotalAmountPaid)
 	if err != nil {
 		return nil, fmt.Errorf("error getting transaction amount: %w", err)
 	}
 
-	// Finally, get the item details from the cart_item and item tables
+	// Query to get item details, including sold price from the cart_item table
 	itemsQuery := `
-		SELECT i.name, i.quantity, i.unit_of_quantity, COALESCE((SELECT image_url FROM item_image WHERE item_id = i.id AND order_position = 1 LIMIT 1), '') AS image, ci.quantity
-		FROM cart_item ci
-		JOIN item i ON ci.item_id = i.id
-		WHERE ci.cart_id = $1
-	`
+        SELECT i.name, ci.quantity, i.quantity, i.unit_of_quantity, COALESCE((SELECT image_url FROM item_image WHERE item_id = i.id AND order_position = 1 LIMIT 1), '') AS image, ci.sold_price
+        FROM cart_item ci
+        JOIN item i ON ci.item_id = i.id
+        WHERE ci.cart_id = $1
+    `
 	rows, err := s.db.Query(itemsQuery, cartId)
 	if err != nil {
 		return nil, fmt.Errorf("error querying for item details: %w", err)
 	}
-
-	if err != nil {
-		return nil, fmt.Errorf("error querying for item details: %w", err)
-	}
-
 	defer rows.Close()
 
 	for rows.Next() {
 		var item OrderItem
-		if err := rows.Scan(&item.Name, &item.Size, &item.UnitOfQuantity, &item.Image, &item.Quantity); err != nil {
+		if err := rows.Scan(&item.Name, &item.Quantity, &item.Size, &item.UnitOfQuantity, &item.Image, &item.SoldPrice); err != nil {
 			return nil, fmt.Errorf("error scanning item details: %w", err)
 		}
 		orderDetails.Items = append(orderDetails.Items, item)
@@ -280,21 +310,58 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 		return nil, fmt.Errorf("error iterating item details: %w", err)
 	}
 
-	// Address query to fetch the customer's street address
+	// Query to get fees and subtotal from the shopping_cart table
+	feesQuery := `
+        SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal
+        FROM shopping_cart
+        WHERE id = $1
+    `
+	err = s.db.QueryRow(feesQuery, cartId).Scan(&orderDetails.ItemCost, &orderDetails.DeliveryFee, &orderDetails.PlatformFee, &orderDetails.SmallOrderFee, &orderDetails.RainFee, &orderDetails.HighTrafficSurcharge, &orderDetails.PackagingFee, &orderDetails.PeakTimeSurcharge, &orderDetails.Subtotal)
+	if err != nil {
+		return nil, fmt.Errorf("error getting fees and subtotal: %w", err)
+	}
+
+	// Query to fetch the customer's address
 	addressQuery := `
         SELECT a.street_address
         FROM address a
         JOIN shopping_cart sc ON a.id = sc.address_id
         WHERE sc.id = $1
     `
-
-	// Execute the address query and scan the result into the orderDetails.Address field
 	err = s.db.QueryRow(addressQuery, cartId).Scan(&orderDetails.Address)
 	if err != nil {
 		return nil, fmt.Errorf("error querying for address details: %w", err)
 	}
 
 	return orderDetails, nil
+}
+
+func (s *PostgresStore) CustomerPickupOrder(customerId, cartId int) (*PickupOrder, error) {
+	query := `
+    SELECT order_status
+    FROM sales_order
+    WHERE cart_id = $1 AND customer_id = $2
+    `
+
+	var orderStatus string
+	err := s.db.QueryRow(query, cartId, customerId).Scan(&orderStatus)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return &PickupOrder{Message: "No order found for this cart and customer.", Success: false}, nil
+		}
+		return nil, err
+	}
+
+	if orderStatus == "packed" {
+		return &PickupOrder{Message: "Order is ready for pickup.", Success: true}, nil
+	} else {
+		return &PickupOrder{Message: "Order is not ready for pickup.", Success: false}, nil
+	}
+}
+
+type PickupOrder struct {
+	Message string `json:"message"`
+	Success bool   `json:"success"`
 }
 
 type SalesOrderItem struct {
@@ -957,4 +1024,116 @@ func (s *PostgresStore) CheckForPlacedOrder(phone string) (CheckForPlacedOrder, 
 		return order, err
 	}
 	return order, nil
+}
+
+func (s *PostgresStore) GetOrderDetails(orderID int) ([]OrderDetail, error) {
+	query := `
+    SELECT i.name, ci.quantity, i.quantity, i.unit_of_quantity, so.order_date
+    FROM sales_order so
+    JOIN cart_item ci ON so.cart_id = ci.cart_id
+    JOIN item i ON ci.item_id = i.id
+    WHERE so.id = $1
+    `
+
+	rows, err := s.db.Query(query, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("error querying order details: %w", err)
+	}
+	defer rows.Close()
+
+	var details []OrderDetail
+	for rows.Next() {
+		var detail OrderDetail
+		err := rows.Scan(&detail.ItemName, &detail.ItemQuantity, &detail.ItemSize, &detail.UnitOfQuantity, &detail.OrderPlacedTime)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning order detail: %w", err)
+		}
+		details = append(details, detail)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating through order details results: %w", err)
+	}
+
+	return details, nil
+}
+
+func (s *PostgresStore) GetOrderDetailsCustomer(orderId int, customerId int) (*OrderDetailCustomer, error) {
+	itemQuery := `
+	SELECT i.name, ci.quantity, i.quantity, i.unit_of_quantity
+	FROM sales_order so
+	JOIN cart_item ci ON so.cart_id = ci.cart_id
+	JOIN item i ON ci.item_id = i.id
+	WHERE so.id = $1 AND so.customer_id = $2
+	`
+
+	feesQuery := `
+	SELECT sc.item_cost, sc.delivery_fee, sc.platform_fee, sc.small_order_fee, sc.rain_fee, sc.high_traffic_surcharge, sc.packaging_fee, sc.peak_time_surcharge, sc.subtotal, sc.discounts, so.order_date
+	FROM sales_order so
+	JOIN shopping_cart sc ON so.cart_id = sc.id
+	WHERE so.id = $1 AND so.customer_id = $2
+	LIMIT 1
+	`
+
+	// Initialize orderDetails
+	orderDetails := &OrderDetailCustomer{
+		Items: make([]ItemDetail, 0), // Ensure Items slice is initialized
+	}
+
+	// Execute item details query
+	itemRows, err := s.db.Query(itemQuery, orderId, customerId)
+	if err != nil {
+		return nil, err // Error handling
+	}
+	defer itemRows.Close()
+
+	for itemRows.Next() {
+		var item ItemDetail
+		if err := itemRows.Scan(&item.ItemName, &item.ItemQuantity, &item.ItemSize, &item.UnitOfQuantity); err != nil {
+			return nil, err // Error handling
+		}
+		orderDetails.Items = append(orderDetails.Items, item)
+	}
+
+	// Execute fees query
+	feesRow := s.db.QueryRow(feesQuery, orderId, customerId)
+	if err := feesRow.Scan(&orderDetails.Fees.ItemCost, &orderDetails.Fees.DeliveryFee, &orderDetails.Fees.PlatformFee, &orderDetails.Fees.SmallOrderFee, &orderDetails.Fees.RainFee, &orderDetails.Fees.HighTrafficSurcharge, &orderDetails.Fees.PackagingFee, &orderDetails.Fees.PeakTimeSurcharge, &orderDetails.Fees.Subtotal, &orderDetails.Fees.Discounts, &orderDetails.OrderPlacedTime); err != nil {
+		return nil, err // Error handling
+	}
+
+	return orderDetails, nil
+}
+
+type ItemDetail struct {
+	ItemName       string `json:"itemName"`
+	ItemQuantity   int    `json:"itemQuantity"` // This is the quantity from the cart_item table
+	ItemSize       int    `json:"itemSize"`     // This represents the size from the item table
+	UnitOfQuantity string `json:"unitOfQuantity"`
+}
+
+type ShoppingCartFees struct {
+	ItemCost             int `json:"itemCost"`
+	DeliveryFee          int `json:"deliveryFee"`
+	PlatformFee          int `json:"platformFee"`
+	SmallOrderFee        int `json:"smallOrderFee"`
+	RainFee              int `json:"rainFee"`
+	HighTrafficSurcharge int `json:"highTrafficSurcharge"`
+	PackagingFee         int `json:"packagingFee"`
+	PeakTimeSurcharge    int `json:"peakTimeSurcharge"`
+	Subtotal             int `json:"subtotal"`
+	Discounts            int `json:"discounts"`
+}
+
+type OrderDetailCustomer struct {
+	OrderPlacedTime time.Time        `json:"orderPlacedTime"`
+	Items           []ItemDetail     `json:"items"`
+	Fees            ShoppingCartFees `json:"fees"`
+}
+
+type OrderDetail struct {
+	ItemName        string
+	ItemQuantity    int // This is the quantity from the cart_item table
+	ItemSize        int // This represents the size from the item table
+	UnitOfQuantity  string
+	OrderPlacedTime time.Time
 }

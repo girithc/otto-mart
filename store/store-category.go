@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -110,10 +111,10 @@ func (s *PostgresStore) Create_Category(hlc *types.Category) (*types.Category, e
 
 func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error) {
 	query := `
-    SELECT c.id, c.name, c.promotion, COALESCE(ci.image, '') AS image, COALESCE(ci.position, 0) AS position, c.created_at, COALESCE(c.created_by, 0) AS created_by
-    FROM category c
-    LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
-    WHERE c.promotion = $1
+        SELECT c.id, c.name, c.promotion, ci.image, COALESCE(ci.position, 0) AS position, c.created_at, COALESCE(c.created_by, 0) AS created_by
+        FROM category c
+        LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
+        WHERE c.promotion = $1
     `
 
 	rows, err := s.db.Query(query, promotion)
@@ -122,22 +123,46 @@ func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error
 	}
 	defer rows.Close()
 
-	categories := []*types.Category{}
+	var categories []*types.Category
 	for rows.Next() {
-		category := &types.Category{}
+		var (
+			id        int
+			name      string
+			promotion bool
+			image     *string // Change this to a pointer to a string
+			position  int
+			createdAt time.Time
+			createdBy int
+		)
+
 		err := rows.Scan(
-			&category.ID,
-			&category.Name,
-			&category.Promotion,
-			&category.Image,    // Directly scanning into the struct, expecting no NULLs due to COALESCE
-			&category.Position, // Directly scanning into the struct
-			&category.Created_At,
-			&category.Created_By,
+			&id,
+			&name,
+			&promotion,
+			&image, // Keep this as a pointer
+			&position,
+			&createdAt,
+			&createdBy,
 		)
 		if err != nil {
 			return nil, err
 		}
-		categories = append(categories, category)
+
+		// Check if image pointer is nil; if so, use an empty string
+		imageValue := ""
+		if image != nil {
+			imageValue = *image
+		}
+
+		categories = append(categories, &types.Category{
+			ID:         id,
+			Name:       name,
+			Promotion:  promotion,
+			Image:      imageValue, // Use the dereferenced value or an empty string
+			Position:   position,
+			Created_At: createdAt,
+			Created_By: createdBy,
+		})
 	}
 
 	return categories, nil
@@ -165,26 +190,34 @@ func (s *PostgresStore) Get_Category_By_Parent_ID(id int) ([]*types.Update_Categ
 	}
 
 	categoryQuery := `
-	SELECT c.name, c.id, ci.image 
-	FROM category c 
-	LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1 
-	WHERE c.id = ANY($1::integer[])`
+    SELECT c.name, c.id, ci.image 
+    FROM category c 
+    LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1 
+    WHERE c.id = ANY($1::integer[])`
 
 	rows, err = s.db.Query(categoryQuery, pq.Array(childIDs))
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	defer rows.Close()
 
 	categories := []*types.Update_Category{}
 
 	for rows.Next() {
+		var image sql.NullString // Use sql.NullString to handle possible NULL values
 		category := &types.Update_Category{}
-		err := rows.Scan(&category.Name, &category.ID, &category.Image)
+
+		err := rows.Scan(&category.Name, &category.ID, &image) // Scan the image into sql.NullString
 		if err != nil {
 			return nil, err
 		}
+
+		if image.Valid {
+			category.Image = image.String // If image is not NULL, assign its value
+		} else {
+			category.Image = "" // If image is NULL, assign an empty string
+		}
+
 		categories = append(categories, category)
 	}
 

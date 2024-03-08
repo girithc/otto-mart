@@ -36,7 +36,8 @@ func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinanc
 
 	query := `
     SELECT i.id, i.name, i.unit_of_quantity, i.quantity,
-           if.buy_price, if.mrp_price, t.gst as gst_rate, t.cess as cess_rate,
+           (if.buy_price - if.gst_on_buy - if.cess_on_buy) AS adjusted_buy_price, 
+           if.mrp_price, t.gst as gst_rate, t.cess as cess_rate,
            if.gst_on_buy, if.cess_on_buy, if.gst_on_mrp, if.cess_on_mrp,
            if.margin, if.tax_id, if.current_scheme_id
     FROM item i
@@ -47,7 +48,8 @@ func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinanc
 
 	err := s.db.QueryRow(query, itemID).Scan(
 		&details.ItemID, &details.ItemName, &details.UnitOfQuantity, &details.Quantity,
-		&details.BuyPrice, &details.MRPPrice, &details.GSTRate, &details.Cess,
+		&details.BuyPrice, // This will now hold the adjusted buy price
+		&details.MRPPrice, &details.GSTRate, &details.Cess,
 		&details.GSTOnBuy, &details.CessOnBuy, &details.GSTOnMRP, &details.CessOnMRP,
 		&details.Margin, &details.TaxID, &details.CurrentSchemeID,
 	)
@@ -57,6 +59,9 @@ func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinanc
 		}
 		return nil, fmt.Errorf("error retrieving item financial details: %w", err)
 	}
+
+	// Note: The BuyPrice field of details now contains the adjusted buy price,
+	//       after subtracting GST and CESS on the buy price.
 
 	return &details, nil
 }
@@ -81,16 +86,22 @@ func (s *PostgresStore) ManagerEditItemFinancialByItemId(itemFinance types.ItemF
 		cessRate = 0
 	}
 
+	buyPriceIncTax := itemFinance.BuyPrice * (1 + (gstRate + cessRate))
+	//mrpPriceIncTax := itemFinance.MRPPrice
+
+	buyPriceExclTax := itemFinance.BuyPrice
+	mrpPriceExclTax := itemFinance.MRPPrice / (1 + (gstRate + cessRate))
+
 	// Calculate exclusive Buy Price and MRP
-	buyPriceExclTax := itemFinance.BuyPrice / (1 + gstRate + cessRate)
-	mrpExclTax := itemFinance.MRPPrice / (1 + gstRate + cessRate)
+	//buyPriceExclTax := itemFinance.BuyPrice / (1 + gstRate + cessRate)
+	//mrpExclTax := itemFinance.MRPPrice / (1 + gstRate + cessRate)
 
 	// Calculate GST and Cess on exclusive prices
 	gstOnBuyPrice := buyPriceExclTax * gstRate
 	cessOnBuyPrice := buyPriceExclTax * cessRate
 
-	gstOnMRP := mrpExclTax * gstRate
-	cessOnMRP := mrpExclTax * cessRate
+	gstOnMRP := mrpPriceExclTax * gstRate
+	cessOnMRP := mrpPriceExclTax * cessRate
 
 	gstRate = gstRate * 100   // Convert to percentage
 	cessRate = cessRate * 100 // Convert to percentage
@@ -110,7 +121,7 @@ func (s *PostgresStore) ManagerEditItemFinancialByItemId(itemFinance types.ItemF
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING item_id
         `
-		err = s.db.QueryRow(insertQuery, itemFinance.ItemID, itemFinance.BuyPrice, itemFinance.MRPPrice, gstOnBuyPrice, cessOnBuyPrice, gstOnMRP, cessOnMRP, itemFinance.Margin, taxID).Scan(&existingID)
+		err = s.db.QueryRow(insertQuery, itemFinance.ItemID, buyPriceIncTax, itemFinance.MRPPrice, gstOnBuyPrice, cessOnBuyPrice, gstOnMRP, cessOnMRP, itemFinance.Margin, taxID).Scan(&existingID)
 		if err != nil {
 			return nil, fmt.Errorf("error updating existing item financial record with GST: %.2f%%, Cess: %.2f%%: %w", gstRate*100, cessRate*100, err)
 		}
@@ -122,7 +133,7 @@ func (s *PostgresStore) ManagerEditItemFinancialByItemId(itemFinance types.ItemF
             SET buy_price = $2, mrp_price = $3, gst_on_buy = $4, cess_on_buy = $5, gst_on_mrp = $6, cess_on_mrp = $7, margin = $8, tax_id = $9
             WHERE item_id = $1
         `
-		_, err = s.db.Exec(updateQuery, itemFinance.ItemID, itemFinance.BuyPrice, itemFinance.MRPPrice, gstOnBuyPrice, cessOnBuyPrice, gstOnMRP, cessOnMRP, itemFinance.Margin, taxID)
+		_, err = s.db.Exec(updateQuery, itemFinance.ItemID, buyPriceIncTax, itemFinance.MRPPrice, gstOnBuyPrice, cessOnBuyPrice, gstOnMRP, cessOnMRP, itemFinance.Margin, taxID)
 		if err != nil {
 			return nil, fmt.Errorf("error updating existing item financial record:  %w", err)
 		}

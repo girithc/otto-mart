@@ -138,6 +138,21 @@ func (s *Server) DeliveryPartnerDispatchOrder(res http.ResponseWriter, req *http
 	return WriteJSON(res, http.StatusOK, order)
 }
 
+func (s *Server) PackerDispatchOrderHistory(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerDispatchOrderHistory)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerDispatchOrder()")
+		return err
+	}
+
+	order, err := s.store.PackerDispatchOrderHistory(new_req.StoreId)
+	if err != nil {
+		return WriteJSON(res, http.StatusBadRequest, order)
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
 func (s *Server) DeliveryPartnerArrive(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.DeliveryPartnerArriveOrder)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

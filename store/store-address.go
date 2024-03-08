@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"math"
 
 	"github.com/girithc/pronto-go/types"
@@ -462,4 +463,27 @@ func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.
 	}
 
 	return address, nil
+}
+
+func (s *PostgresStore) GetStoreAddress(storeId int) (*StoreAddress, error) {
+	query := `SELECT address, latitude, longitude FROM store WHERE id = $1`
+
+	var address StoreAddress
+	row := s.db.QueryRow(query, storeId)
+
+	err := row.Scan(&address.Address, &address.Latitude, &address.Longitude)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no store found with id %d", storeId)
+		}
+		return nil, err
+	}
+
+	return &address, nil
+}
+
+type StoreAddress struct {
+	Address   string  `json:"address"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
 }

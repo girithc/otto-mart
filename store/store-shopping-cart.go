@@ -10,7 +10,18 @@ import (
 )
 
 func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
-	// Create the shopping_cart table
+
+	orderTypeQuery := `DO $$ BEGIN
+        CREATE TYPE order_type AS ENUM ('delivery', 'pickup');
+    EXCEPTION
+        WHEN duplicate_object THEN null;
+    END $$;`
+
+	_, err := tx.Exec(orderTypeQuery)
+	if err != nil {
+		return err
+	}
+
 	createTableQuery := `
         CREATE TABLE IF NOT EXISTS shopping_cart (
             id SERIAL PRIMARY KEY,
@@ -36,7 +47,15 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )`
 
-	_, err := tx.Exec(createTableQuery)
+	_, err = tx.Exec(createTableQuery)
+	if err != nil {
+		return err
+	}
+
+	alterTableQuery := `ALTER TABLE shopping_cart
+        ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'pickup';`
+
+	_, err = tx.Exec(alterTableQuery)
 	if err != nil {
 		return err
 	}
@@ -95,6 +114,15 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	print("Calculating cart total for cart_id: ", cart_id)
 	var itemCost, discounts, numberOfItems, deliveryFee, smallOrderFee, platformFee, packagingFee float64 // Changed to float64 to handle decimal values
 
+	var orderType string
+
+	// Fetch the order type for the cart
+	orderTypeQuery := `SELECT order_type FROM shopping_cart WHERE id = $1`
+	err := s.db.QueryRow(orderTypeQuery, cart_id).Scan(&orderType)
+	if err != nil {
+		return err
+	}
+
 	// Calculate total item cost and discounts from cart_item and item_store
 	query := `
     SELECT 
@@ -105,52 +133,59 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
     JOIN item_financial ifin ON ci.item_id = ifin.item_id
     WHERE ci.cart_id = $1`
 
-	err := s.db.QueryRow(query, cart_id).Scan(&itemCost, &numberOfItems, &discounts)
+	err = s.db.QueryRow(query, cart_id).Scan(&itemCost, &numberOfItems, &discounts)
 	if err != nil {
 		return err
 	}
-	// Calculate delivery fee based on item cost
-	switch {
-	case itemCost <= 99:
-		deliveryFee = 0
-	case itemCost <= 149:
-		deliveryFee = 0
-	default:
-		deliveryFee = 0
-	}
 
-	// Calculate small order fee based on item cost
-	switch {
-	case itemCost <= 50:
-		smallOrderFee = 0
-	case itemCost <= 99:
-		smallOrderFee = 0
-	case itemCost <= 149:
-		smallOrderFee = 0
-	default:
-		smallOrderFee = 0
-	}
+	if orderType == "delivery" {
+		switch {
+		case itemCost > 499:
+			deliveryFee = 0
+		case itemCost > 299:
+			deliveryFee = 15
+		case itemCost > 199:
+			deliveryFee = 25
+		case itemCost > 99:
+			deliveryFee = 35
+		default:
+			deliveryFee = 35
+		}
 
-	switch {
-	case itemCost > 999:
+		switch {
+		case itemCost > 199:
+			smallOrderFee = 0
+		case itemCost > 99:
+			smallOrderFee = 10
+		default:
+			smallOrderFee = 25
+		}
+
+		switch {
+		case itemCost > 999:
+			platformFee = 0
+		case itemCost > 399:
+			platformFee = 2
+		default:
+			platformFee = 2
+		}
+
+		switch {
+		case itemCost > 999:
+			packagingFee = 5
+		case itemCost > 399:
+			packagingFee = 2
+		default:
+			packagingFee = 2
+		}
+	} else {
+
+		smallOrderFee = 0
+		//platformFee = 2
 		platformFee = 0
-	case itemCost > 399:
-		platformFee = 0
-	default:
-		platformFee = 0
-	}
-
-	// Calculate packaging fee based on item cost
-	switch {
-	case itemCost > 999:
-		packagingFee = 0
-	case itemCost > 399:
-		packagingFee = 0
-	default:
 		packagingFee = 0
 	}
 
-	// Update shopping_cart record
 	updateQuery := `
     UPDATE shopping_cart
     SET item_cost = $2, delivery_fee = $3, platform_fee = $4, small_order_fee = $5, 

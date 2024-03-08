@@ -104,7 +104,32 @@ func (s *Server) handlePackerFindItemBasic(res http.ResponseWriter, req *http.Re
 		return err
 	}
 
-	result, err := s.store.PackerFindItem(*new_req)
+	return WriteJSON(res, http.StatusOK, nil)
+}
+
+func (s *Server) handlePackerGetOrder(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.CompleteOrderBasic)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handlePackerCompleteOrderBasic")
+		return err
+	}
+
+	result, err := s.store.PackerGetOrder(new_req.CartId, new_req.CustomerPhone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
+func (s *Server) handlePackerCompleteOrderBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.CompleteOrderBasic)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handlePackerCompleteOrderBasic")
+		return err
+	}
+
+	result, err := s.store.PackerCompleteOrder(new_req.CartId, new_req.CustomerPhone)
 	if err != nil {
 		return err
 	}

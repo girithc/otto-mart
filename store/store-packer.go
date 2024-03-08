@@ -384,7 +384,7 @@ func (s *PostgresStore) GetPackerByPhone(phone string, fcm string) (*types.Packe
 	return &packer, nil
 }
 
-func (s *PostgresStore) PackerFindItem(req types.FindItemBasic) (FindItemResponse, error) {
+func (s *PostgresStore) PackerFindOrder(req types.FindItemBasic) (FindItemResponse, error) {
 	var response FindItemResponse
 	var horizontal sql.NullInt64 // Use sql.NullInt64 for nullable integers
 	var vertical sql.NullString  // Use sql.NullString for nullable strings
@@ -414,6 +414,101 @@ func (s *PostgresStore) PackerFindItem(req types.FindItemBasic) (FindItemRespons
 	}
 
 	return response, nil
+}
+
+func (s *PostgresStore) PackerGetOrder(orderId int, phone string) (*GetOrder, error) {
+	query := `
+    SELECT ds.location, ps.active
+    FROM sales_order so
+    INNER JOIN Packer_Shelf ps ON so.id = ps.sales_order_id
+    INNER JOIN delivery_shelf ds ON ps.delivery_shelf_id = ds.id
+    INNER JOIN Packer p ON ps.packer_id = p.id
+    WHERE so.id = $1 AND p.phone = $2 AND so.order_status = 'packed'
+    `
+
+	var getOrder GetOrder
+	err := s.db.QueryRow(query, orderId, phone).Scan(&getOrder.Location, &getOrder.Active)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no active packed order found for orderId: %d and phone: %s", orderId, phone)
+		}
+		return nil, err
+	}
+
+	return &getOrder, nil
+}
+
+type GetOrder struct {
+	Location int  `json:"location"`
+	Active   bool `json:"active"`
+}
+
+func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (bool, error) {
+	// Begin a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, err
+	}
+
+	// Step 1: Verify the order is in the "packed" stage and associated with the right customer
+	verifyQuery := `
+    SELECT so.id
+    FROM sales_order so
+    JOIN customer c ON so.customer_id = c.id
+    WHERE so.cart_id = $1 AND c.phone = $2 AND so.order_status = 'packed'
+    FOR UPDATE
+    `
+	var orderId int
+	err = tx.QueryRow(verifyQuery, cartId, phone).Scan(&orderId)
+	if err != nil {
+		tx.Rollback() // Rollback in case of any error
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("no packed order found for cartId: %d and phone: %s", cartId, phone)
+		}
+		return false, err
+	}
+
+	// Step 2: Update Packer_Shelf to set active to false
+	updateShelfQuery := `
+    UPDATE Packer_Shelf
+    SET active = false
+    WHERE sales_order_id = $1 AND active = true
+    `
+	res, err := tx.Exec(updateShelfQuery, orderId)
+	if err != nil {
+		tx.Rollback() // Rollback in case of any error
+		return false, err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		tx.Rollback() // Rollback in case of any error
+		return false, err
+	}
+	if rowsAffected == 0 {
+		tx.Rollback() // Rollback if no rows were updated
+		return false, fmt.Errorf("Packer_Shelf was already inactive or not found for orderId: %d", orderId)
+	}
+
+	// Step 3: Update the order status to "completed"
+	updateOrderQuery := `
+    UPDATE sales_order
+    SET order_status = 'completed'
+    WHERE id = $1
+    `
+	_, err = tx.Exec(updateOrderQuery, orderId)
+	if err != nil {
+		tx.Rollback() // Rollback in case of any error
+		return false, err
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil // Return true if the operation was successful
 }
 
 type FindItemResponse struct {

@@ -13,6 +13,10 @@ type PhonePeCartIdStatus struct {
 	StatusResult bool `json:"status_result"`
 }
 
+type CartId struct {
+	CartId int `json:"cart_id"`
+}
+
 type PhonePeInit struct {
 	MerchantId            string            `json:"merchantId"`
 	MerchantTransactionId string            `json:"merchantTransactionId"`

@@ -51,17 +51,54 @@ func (s *Server) handlePhonePePaymentCallback(res http.ResponseWriter, req *http
 }
 
 func (s *Server) handlePhonePePaymentInit(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.PhonePeCartId)
+
+	new_req := new(types.CartId)
+	//new_req := new(types.PhonePeCartId)
 
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in handlePhonePePaymentInit()")
 		return err
 	}
 
-	records, err := s.store.PhonePePaymentInit(new_req.CartId, new_req.Sign, new_req.MerchantTransactionID)
+	_, err := s.store.GenMerchantUserId(new_req.CartId)
+	if err != nil {
+		return err
+	}
+
+	success, err := s.store.LockStock(new_req.CartId)
+	if err != nil {
+		return err
+	}
+
+	records, err := s.store.PhonePePaymentInit(new_req.CartId, success.Sign, success.MerchantTransactionId)
 	if err != nil {
 		return err
 	}
 
 	return WriteJSON(res, http.StatusOK, records)
 }
+
+/*
+func (s *Server) handlePostCheckoutLockItems(res http.ResponseWriter, req *http.Request) error {
+	fmt.Println("Entered handlePostCheckoutLockItems")
+
+	new_req := new(types.Checkout_Init)
+
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handlePostCheckoutLockItems()")
+		return err
+	}
+
+	_, err := s.store.GenMerchantUserId(new_req.Cart_Id)
+	if err != nil {
+		return err
+	}
+
+	areItemsLocked, err := s.store.LockStock(new_req.Cart_Id)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, areItemsLocked)
+}
+*/

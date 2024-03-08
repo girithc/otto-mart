@@ -77,3 +77,18 @@ func (s *Server) Handle_Delete_Store(res http.ResponseWriter, req *http.Request)
 
 	return WriteJSON(res, http.StatusOK, map[string]int{"deleted": new_req.ID})
 }
+
+func (s *Server) HandleGetStoreAddress(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.StoreId)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in HandleGetStoreAddress()")
+		return err
+	}
+
+	address, err := s.store.GetStoreAddress(new_req.StoreId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, address)
+}
