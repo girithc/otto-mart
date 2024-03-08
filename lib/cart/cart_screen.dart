@@ -11,6 +11,7 @@ import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
+import 'package:pronto/payments/phonepe.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 
@@ -82,6 +83,65 @@ class _MyCartState extends State<MyCart> {
         streetAddress = data['address'];
       });
     } else {}
+  }
+
+  Future<PaymentResult> initiatePhonePePayment() async {
+    cartId = await storage.read(key: 'cartId');
+    final Map<String, dynamic> body = {
+      "cart_id": int.parse(cartId!),
+    };
+
+    try {
+      final networkService = NetworkService();
+      final response = await networkService
+          .postWithAuth('/phonepe-payment-init', additionalData: body);
+      //http.StreamedResponse response = await request.send();
+
+      if (response.statusCode == 200) {
+        //var responseBody = await response.stream.bytesToString();
+        var decodedResponse = json.decode(response.body);
+
+        print(decodedResponse);
+        String url = decodedResponse['data']['instrumentResponse']
+            ['redirectInfo']['url'];
+        String message = decodedResponse['message'];
+        bool isSuccess = decodedResponse['success'];
+        String sign = decodedResponse['sign'];
+        String merchantTransactionId = decodedResponse['merchantTransactionId'];
+
+        if (isSuccess) {
+          return PaymentResult(
+              url: url,
+              isSuccess: isSuccess,
+              sign: sign,
+              merchantTransactionId: merchantTransactionId);
+        } else {
+          return PaymentResult(
+              url: message,
+              isSuccess: isSuccess,
+              sign: sign,
+              merchantTransactionId: '');
+        }
+      } else {
+        //var errorResponse = await response.stream.bytesToString();
+        print(
+            'Request failed with status: ${response.statusCode}. ${response.body}');
+        //throw Exception('Failed to cancel checkout items');
+        //print('Error response: $errorResponse');
+        return PaymentResult(
+            url: 'Payment Error',
+            isSuccess: false,
+            sign: '',
+            merchantTransactionId: '');
+      }
+    } catch (e) {
+      print('Exception occurred: $e');
+      return PaymentResult(
+          url: 'Exception: $e',
+          isSuccess: false,
+          sign: '',
+          merchantTransactionId: '');
+    }
   }
 
   @override
@@ -255,11 +315,51 @@ class _MyCartState extends State<MyCart> {
                                         ),
                                       );
                                     } else {
+                                      initiatePhonePePayment().then((response) {
+                                        if (response.isSuccess) {
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PhonePeWebView(
+                                                url: response.url,
+                                                sign: response.sign,
+                                                merchantTransactionId: response
+                                                    .merchantTransactionId,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                response.url,
+                                                style: const TextStyle(
+                                                    color: Colors.black),
+                                              ),
+                                              backgroundColor:
+                                                  Colors.amberAccent,
+                                            ),
+                                          );
+
+                                          Navigator.pushReplacement(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const MyCart(),
+                                            ),
+                                          );
+                                        }
+                                      });
+                                      /*
                                       String? cartId =
                                           await storage.read(key: 'cartId');
                                       if (cartId != null) {
                                         int cartIdInt = int.parse(cartId);
                                         print("CartID INT: $cartIdInt");
+
+                                       
                                         checkoutLockItems(cartIdInt)
                                             .then((success) {
                                           if (success.lock) {
@@ -290,6 +390,7 @@ class _MyCartState extends State<MyCart> {
                                           }
                                         }).catchError((error) {
                                           // Handle any errors here
+                                         
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             SnackBar(
@@ -308,6 +409,7 @@ class _MyCartState extends State<MyCart> {
                                           ),
                                         );
                                       }
+                                      */
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(

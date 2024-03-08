@@ -30,6 +30,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
   Timer? _timer; // Declare a Timer variable
   OrderInfo? _orderInfo;
+  String? OTP;
 
   String orderStatus = 'Preparing Order';
   String orderLottie =
@@ -212,7 +213,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   void _setupPeriodicFetch() {
     _timer =
-        Timer.periodic(Duration(minutes: 1), (Timer t) => fetchOrderInfo());
+        Timer.periodic(Duration(seconds: 45), (Timer t) => fetchOrderInfo());
     // This sets up a timer that calls fetchOrderInfo every 2 minutes
   }
 
@@ -270,6 +271,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
           _customerAddress = responseData['address']['street_address'];
           _paymentType = responseData['payment_type'];
           _orderDate = responseData['order_date'];
+          OTP = responseData['otp'];
         });
       } else {
         setState(() {
@@ -462,6 +464,18 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           margin: const EdgeInsets.only(
                               left: 10, right: 10, top: 5, bottom: 5),
                           padding: const EdgeInsets.all(10),
+                          child: Center(
+                              child: Text(
+                            OTP!,
+                            style: TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
+                          )),
+                        ),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.only(
+                              left: 10, right: 10, top: 5, bottom: 5),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius:
@@ -522,23 +536,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        Container(
-                          padding: EdgeInsets.all(10),
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              padding: EdgeInsets.all(10),
-                              primary: Colors.deepPurpleAccent,
-                              onPrimary: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            onPressed: () {
-                              _showQRCodeDialog(context);
-                            },
-                            child: const Text('Show QR Code'),
-                          ),
-                        )
+
                         //const ItemList(),
                         //const ItemTotal(),
                       ],
