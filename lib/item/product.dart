@@ -145,7 +145,8 @@ class _ProductState extends State<Product> {
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 child: Text(
-                                  '0',
+                                  cart.items[itemIndexInCart].quantity
+                                      .toString(),
                                   style: const TextStyle(
                                       color: Colors.black, fontSize: 26),
                                 ),

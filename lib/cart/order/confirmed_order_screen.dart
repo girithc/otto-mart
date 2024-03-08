@@ -10,6 +10,7 @@ import 'dart:convert';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 class OrderConfirmed extends StatefulWidget {
   const OrderConfirmed({super.key, required this.newOrder, this.orderId});
@@ -78,6 +79,121 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       orderLottie = orderStatusToInfo[url]!.lottieUrl;
       orderLottieTransform = orderStatusToInfo[url]!.transform;
     });
+  }
+
+  void _showQRCodeDialog(BuildContext context) async {
+    final String? phone = await _storage.read(key: 'phone');
+
+    final String phoneValue = phone ?? 'Unknown';
+
+    String? cartId;
+
+    if (widget.newOrder) {
+      cartId = await _storage.read(key: 'cartId');
+      print("Cart ID: $cartId");
+    } else {
+      cartId = widget.orderId.toString();
+    }
+
+    final String data = "$phoneValue-${int.parse(cartId!)}";
+
+    // ignore: use_build_context_synchronously
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 4.0,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(8)),
+          ),
+          title: const Text("Order QR Code"),
+          content: SizedBox(
+            height: 300,
+            width: 300,
+            child: QrImageView(
+              data: data,
+              version: QrVersions.auto,
+              size: 300.0,
+              gapless: false,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                backgroundColor:
+                    const Color.fromRGBO(98, 0, 238, 1), // Button text color
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Close',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> pickupOrder() async {
+    String? phone = await _storage.read(key: 'phone');
+    String? cartId;
+
+    if (widget.newOrder) {
+      cartId = await _storage.read(key: 'cartId');
+      print("Cart ID: $cartId");
+    } else {
+      cartId = widget.orderId.toString();
+    }
+
+    Map<String, dynamic> data = {
+      'phone': phone,
+      'sales_order_id': int.parse(cartId!),
+    };
+
+    try {
+      final networkService = NetworkService();
+      final response = await networkService.postWithAuth(
+        '/customer-pickup-order',
+        additionalData: data,
+      );
+
+      print("Response body: ${response.body}");
+      print("Response status code: ${response.statusCode}");
+
+      if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        bool success = responseBody['success'];
+        String message = responseBody['message'];
+
+        if (success) {
+          // Handle success case
+          print(message);
+          // You can use Flutter's 'SnackBar', 'AlertDialog', or navigate to a success page
+        } else {
+          // Handle failure case
+          print(message);
+          // Show an error message to the user
+        }
+      } else {
+        // Handle other non-200 responses
+        print("Error: ${response.body}");
+        throw Exception(
+            'Failed to accept order. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle network errors, parsing errors, etc
+      print("Exception caught: $e");
+      throw Exception('Error accepting order: $e');
+    }
   }
 
   @override
@@ -405,7 +521,24 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             ],
                           ),
                         ),
-
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: EdgeInsets.all(10),
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              padding: EdgeInsets.all(10),
+                              primary: Colors.deepPurpleAccent,
+                              onPrimary: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            onPressed: () {
+                              _showQRCodeDialog(context);
+                            },
+                            child: const Text('Show QR Code'),
+                          ),
+                        )
                         //const ItemList(),
                         //const ItemTotal(),
                       ],

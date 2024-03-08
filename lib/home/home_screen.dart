@@ -73,6 +73,7 @@ class _MyHomePageState extends State<MyHomePage>
     checkForPlacedOrder();
     retrieveCustomerInfo();
     cartInit();
+    getStoreAddress();
   }
 
   Future<void> retrieveCustomerInfo() async {
@@ -117,7 +118,32 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> cartInit() async {
     final cart = context.read<CartModel>();
-    cart.addItemToCart()
+    cart.addItemToCart(CartItem(
+        productId: '1',
+        productName: '1',
+        price: 0,
+        soldPrice: 0,
+        quantity: 0,
+        stockQuantity: 0,
+        image: ''));
+  }
+
+  Future<void> getStoreAddress() async {
+    final storeId = await storage.read(key: 'storeId');
+    final networkService = NetworkService();
+    Map<String, dynamic> body = {
+      "store_id": int.parse(storeId!),
+    };
+    final response = await networkService.postWithAuth('/store-address',
+        additionalData: body);
+
+    print("Response Store Address ${response.body}");
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        streetAddress = data['address'];
+      });
+    } else {}
   }
 
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
@@ -196,6 +222,7 @@ class _MyHomePageState extends State<MyHomePage>
       key: _scaffoldKey,
       appBar: HomeScreenAppBar(
         randomNumber: randomNumber,
+        streetAddress: streetAddress,
       ),
       body: isLoading
           ? const CircularProgressIndicator()
@@ -290,7 +317,7 @@ class _MyHomePageState extends State<MyHomePage>
           color: Colors.white,
         ),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (orderStatus !=
                 null) // Use Dart's collection-if to include a widget conditionally
@@ -633,9 +660,11 @@ class Highlights extends StatelessWidget {
 
 class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int randomNumber; // Make the title parameter optional
+  final String streetAddress;
   //final _MyHomePageState homePageState; // Add this line
 
-  const HomeScreenAppBar({required this.randomNumber, super.key});
+  const HomeScreenAppBar(
+      {required this.randomNumber, required this.streetAddress, super.key});
 
   Future<void> signOutUser(BuildContext context) async {
     // Clear the data in "customerId" key
@@ -761,27 +790,27 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                     MediaQuery.of(context).size.height * 0.01),
                             RichText(
                               textAlign: TextAlign.center, // Center the text
-                              text: TextSpan(
-                                style: const TextStyle(
+                              text: const TextSpan(
+                                style: TextStyle(
                                   fontSize:
-                                      20, // Base font size for the whole text
+                                      21, // Base font size for the whole text
                                   fontWeight: FontWeight.bold,
                                   color: Colors
                                       .black, // Base color for the whole text
                                 ),
                                 children: <TextSpan>[
-                                  const TextSpan(
-                                    text:
-                                        'Delivery in ', // First part of the text
-                                  ),
                                   TextSpan(
                                     text:
-                                        '$randomNumber Mins', // Part of the text you want to style differently
-                                    style: const TextStyle(
-                                      color: Colors
-                                          .deepPurpleAccent, // Different color for this part
-                                      // You can add more styles here if needed
-                                    ),
+                                        '2 Minute', // Part of the text you want to style differently
+                                    style: TextStyle(
+                                        color: Colors.deepPurpleAccent,
+                                        fontSize: 22
+                                        // Different color for this part
+                                        // You can add more styles here if needed
+                                        ),
+                                  ),
+                                  TextSpan(
+                                    text: ' Pickup', // First part of the text
                                   ),
                                 ],
                               ),
@@ -800,19 +829,19 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      "${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}", // Placeholder for the second line of text
+                                      streetAddress, // Placeholder for the second line of text
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         fontSize:
-                                            16, // Adjust the font size as needed
+                                            15, // Adjust the font size as needed
                                         color: Colors.black,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
                                   const Icon(
-                                    Icons
-                                        .keyboard_arrow_down, // Downward caret icon
+                                    Icons.keyboard_arrow_down,
+                                    size: 12, // Downward caret icon
                                     color: Colors.black, // Icon color
                                   ),
                                 ],
@@ -825,12 +854,15 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ),
                   Container(
                     alignment: Alignment.topRight,
-                    height: 20.0, // Set height of the container
-                    width: 40.0, // Set width of the container
+                    height: 15.0, // Set height of the container
+                    width: 30.0, // Set width of the container
                     decoration: const BoxDecoration(
                         shape: BoxShape.circle, color: Colors.transparent),
                     child: IconButton(
-                        icon: const Icon(Icons.person),
+                        icon: const Icon(
+                          Icons.person,
+                          size: 14,
+                        ),
                         color: Colors.transparent, // Icon color
                         onPressed: () {}),
                   ),

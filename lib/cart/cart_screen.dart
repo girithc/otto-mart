@@ -11,7 +11,6 @@ import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
-import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +23,7 @@ class MyCart extends StatefulWidget {
 }
 
 class _MyCartState extends State<MyCart> {
+  String? streetAddress;
   String? cartId;
   final storage = const FlutterSecureStorage();
 
@@ -31,6 +31,7 @@ class _MyCartState extends State<MyCart> {
   void initState() {
     fetchCartId();
     super.initState();
+    getStoreAddress();
   }
 
   Future<void> fetchCartId() async {
@@ -63,6 +64,24 @@ class _MyCartState extends State<MyCart> {
       print('Caught exception: $e');
       throw Exception(e); // Re-throw the caught exception
     }
+  }
+
+  Future<void> getStoreAddress() async {
+    final storeId = await storage.read(key: 'storeId');
+    final networkService = NetworkService();
+    Map<String, dynamic> body = {
+      "store_id": int.parse(storeId!),
+    };
+    final response = await networkService.postWithAuth('/store-address',
+        additionalData: body);
+
+    print("Response Store Address ${response.body}");
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      setState(() {
+        streetAddress = data['address'];
+      });
+    } else {}
   }
 
   @override
@@ -132,7 +151,7 @@ class _MyCartState extends State<MyCart> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(0),
-                      child: _CartList(),
+                      child: CartList(streetAddress: streetAddress!),
                     ),
                   ),
                   //const Divider(height: 4, color: Colors.black),
@@ -383,7 +402,16 @@ class _MyCartState extends State<MyCart> {
   }
 }
 
-class _CartList extends StatelessWidget {
+class CartList extends StatefulWidget {
+  CartList({super.key, required this.streetAddress});
+
+  final String streetAddress;
+
+  @override
+  State<CartList> createState() => CartListState();
+}
+
+class CartListState extends State<CartList> {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -583,6 +611,96 @@ class _CartList extends StatelessWidget {
               const SizedBox(height: 10),
               const TotalAmountSaved(),
               const SizedBox(height: 10),
+              Container(
+                height: 110,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1), // Changes position of shadow
+                    ),
+                  ],
+                  border: Border.all(color: Colors.white, width: 2.0),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 13,
+                        ),
+                        RichText(
+                          textAlign: TextAlign.center, // Center the text
+                          text: const TextSpan(
+                            style: TextStyle(
+                              fontSize: 22, // Base font size for the whole text
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  Colors.black, // Base color for the whole text
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(
+                                text:
+                                    '2 Minute', // Part of the text you want to style differently
+                                style: TextStyle(
+                                    color: Colors.deepPurpleAccent, fontSize: 24
+                                    // Different color for this part
+                                    // You can add more styles here if needed
+                                    ),
+                              ),
+                              TextSpan(
+                                text: ' Pickup', // First part of the text
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 33,
+                        ),
+                        Text(
+                          '\u{20B9} ${(cart.discount)}',
+                          style: GoogleFonts.phudu(
+                              textStyle: const TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white)),
+                        )
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 13,
+                        ),
+                        Expanded(
+                          // Wrap Text widget with Expanded
+                          child: Text(
+                            "Store ${widget.streetAddress}",
+                            maxLines: 2,
+                            overflow: TextOverflow
+                                .ellipsis, // Use ellipsis to handle text overflow
+                            style: TextStyle(
+                                // Add your TextStyle here if needed
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 10),
               /*
               const _DeliveryPartnerTip(),
               */
@@ -713,10 +831,8 @@ class TotalAmountSaved extends StatelessWidget {
           const SizedBox(
             width: 13,
           ),
-          Text(
-            'Total Saved',
-            style: GoogleFonts.phudu(textStyle: const TextStyle(fontSize: 24)),
-          ),
+          Text('Total Saved',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w400)),
           const SizedBox(
             width: 33,
           ),

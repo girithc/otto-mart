@@ -347,8 +347,10 @@ class CartModel extends ChangeNotifier {
 
     if (item.quantity > 0) {
       item.quantity = 1;
-    } else {
+    } else if (item.quantity < 0) {
       item.quantity = -1;
+    } else {
+      item.quantity = 0;
     }
     final Map<String, dynamic> body = {
       'cart_id': int.parse(cartID!),
@@ -362,8 +364,8 @@ class CartModel extends ChangeNotifier {
     networkService
         .postWithAuth('/cart-item', additionalData: body)
         .then((response) {
-      print("Response Status Code ${response.statusCode}");
-      print("Response Body ${response.body}");
+      //print("Response Status Code ${response.statusCode}");
+      //print("Response Body ${response.body}");
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
