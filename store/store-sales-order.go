@@ -94,6 +94,28 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 	return err
 }
 
+func (s *PostgresStore) CreateSalesOrderOtpTable(tx *sql.Tx) error {
+	query := `
+    CREATE TABLE IF NOT EXISTS sales_order_otp (
+        id SERIAL PRIMARY KEY,
+        store_id INT REFERENCES Store(id) ON DELETE CASCADE NOT NULL,
+        customer_id INT REFERENCES Customer(id) ON DELETE CASCADE NOT NULL,
+        cart_id INT REFERENCES Shopping_Cart(id) ON DELETE CASCADE NOT NULL,
+        otp_code VARCHAR(6) NOT NULL,  -- Changed to VARCHAR(6)
+        active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(cart_id)
+    );
+    `
+
+	_, err := tx.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *PostgresStore) CreateOrderTimelineTable(tx *sql.Tx) error {
 	// Create the combined ENUM type
 	combinedStatusQuery := `DO $$ BEGIN
@@ -170,20 +192,35 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 		return nil, err
 	}
 
+	otpQuery := `SELECT otp_code FROM sales_order_otp WHERE cart_id = $1 AND customer_id = $2 AND active = true LIMIT 1`
+	err = tx.QueryRow(otpQuery, cartID, customerID).Scan(&so.OTP)
+	if err != nil {
+		newOtp, err := generateOtp()
+		if err != nil {
+			return nil, fmt.Errorf("error generating new OTP: %s", err)
+		}
+
+		insertOtpQuery := `INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active) VALUES ($1, $2, $3, $4, $5)`
+		_, err = tx.Exec(insertOtpQuery, storeID, customerID, cartID, newOtp, true)
+		if err != nil {
+			return nil, fmt.Errorf("error inserting new OTP for cart %d: %s", cartID, err)
+		}
+		so.OTP = newOtp
+	}
+
 	shoppingCartQuery := `SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true`
 	err = tx.QueryRow(shoppingCartQuery, customerID).Scan(&so.NewCartID)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
-	// Update the address_id in the shopping cart
 	updateCartQuery := `UPDATE shopping_cart
                         SET address_id = $1
                         WHERE customer_id = $2 AND active = true
                         RETURNING id`
 	err = tx.QueryRow(updateCartQuery, so.AddressID, customerID).Scan(&so.NewCartID)
 	if err != nil {
-		return nil, err // The transaction will be rolled back by the deferred function
+		return nil, err
 	}
 
 	productListQuery := `SELECT ci.id, ci.item_id, ci.quantity, i.name, i.brand_id, i.quantity AS item_quantity, i.unit_of_quantity, i.description

@@ -891,6 +891,13 @@ func (s *Server) handleSalesOrder(res http.ResponseWriter, req *http.Request) er
 	return nil
 }
 
+func (s *Server) handlePackerGetOrderByOTP(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "sales_order_items")
+		return s.goRoutineWrapper(PackerGetOrderByOTP, s.handlePackerGetOrder, res, req)
+	}
+	return nil
+}
 func (s *Server) handleCheckForPlacedOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "check-for-placed-order")

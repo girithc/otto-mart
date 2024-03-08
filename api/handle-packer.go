@@ -108,13 +108,13 @@ func (s *Server) handlePackerFindItemBasic(res http.ResponseWriter, req *http.Re
 }
 
 func (s *Server) handlePackerGetOrder(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.CompleteOrderBasic)
+	new_req := new(types.GetOrderBasic)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in handlePackerCompleteOrderBasic")
 		return err
 	}
 
-	result, err := s.store.PackerGetOrder(new_req.CartId, new_req.CustomerPhone)
+	result, err := s.store.PackerGetOrder(new_req.StoreId, new_req.OTP)
 	if err != nil {
 		return err
 	}

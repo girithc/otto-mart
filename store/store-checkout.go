@@ -1,8 +1,10 @@
 package store
 
 import (
+	"crypto/rand"
 	"database/sql"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/girithc/pronto-go/types"
@@ -199,12 +201,29 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		return true, fmt.Errorf("failed to get transaction_id for cart_id %d: %s", cart_id, err)
 	}
 
-	_, err = tx.Exec(`
+	var orderId int
+
+	err = tx.QueryRow(`
 		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type, transaction_id)
-		VALUES ($1, $2, $3, $4, $5, $6)
-	`, cart_id, 1, customerID, defaultAddressID, paymentType, transactionID)
+		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
+	`, cart_id, 1, customerID, defaultAddressID, paymentType, transactionID).Scan(&orderId)
 	if err != nil {
 		return true, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
+	}
+
+	// Generate a random six-digit OTP code
+	otpCode, err := generateOtp()
+	if err != nil {
+		return false, fmt.Errorf("error generating OTP for order %d: %s", orderId, err)
+	}
+
+	// Insert into sales_order_otp
+	_, err = tx.Exec(`
+		 INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
+		 VALUES ($1, $2, $3, $4, $5)
+	 `, 1, customerID.Int64, cart_id, otpCode, true)
+	if err != nil {
+		return false, fmt.Errorf("error inserting OTP for sales_order %d: %s", orderId, err)
 	}
 
 	for _, checkout_cart_item := range cartItems {
@@ -250,6 +269,18 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 	println("Completed Insert Into Shopping Cart")
 
 	return true, nil
+}
+
+func generateOtp() (string, error) {
+	// Generate a random number between 0 and 999999
+	otpBig, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		return "", err
+	}
+
+	// Format it as a 6-digit string, including leading zeros
+	otpCode := fmt.Sprintf("%06d", otpBig.Int64())
+	return otpCode, nil
 }
 
 // /helper functions end

@@ -416,21 +416,31 @@ func (s *PostgresStore) PackerFindOrder(req types.FindItemBasic) (FindItemRespon
 	return response, nil
 }
 
-func (s *PostgresStore) PackerGetOrder(orderId int, phone string) (*GetOrder, error) {
+func (s *PostgresStore) PackerGetOrder(storeId int, otp string) (*GetOrder, error) {
+	// Step 1: Get the cart_id from sales_order_otp using otp and store_id
+	var cartId int
+	otpQuery := `SELECT cart_id FROM sales_order_otp WHERE otp_code = $1 AND store_id = $2 AND active = true LIMIT 1`
+	err := s.db.QueryRow(otpQuery, otp, storeId).Scan(&cartId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no active OTP found for OTP: %s and storeId: %d", otp, storeId)
+		}
+		return nil, err
+	}
+
+	// Step 2: Use the cart_id to fetch order details from sales_order, Packer_Shelf, and delivery_shelf
 	query := `
     SELECT ds.location, ps.active
     FROM sales_order so
     INNER JOIN Packer_Shelf ps ON so.id = ps.sales_order_id
     INNER JOIN delivery_shelf ds ON ps.delivery_shelf_id = ds.id
-    INNER JOIN Packer p ON ps.packer_id = p.id
-    WHERE so.id = $1 AND p.phone = $2 AND so.order_status = 'packed'
+    WHERE so.cart_id = $1 AND so.store_id = $2 AND so.order_status = 'packed'
     `
-
 	var getOrder GetOrder
-	err := s.db.QueryRow(query, orderId, phone).Scan(&getOrder.Location, &getOrder.Active)
+	err = s.db.QueryRow(query, cartId, storeId).Scan(&getOrder.Location, &getOrder.Active)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no active packed order found for orderId: %d and phone: %s", orderId, phone)
+			return nil, fmt.Errorf("no active packed order found for cartId: %d and storeId: %d", cartId, storeId)
 		}
 		return nil, err
 	}
@@ -450,7 +460,6 @@ func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (bool, err
 		return false, err
 	}
 
-	// Step 1: Verify the order is in the "packed" stage and associated with the right customer
 	verifyQuery := `
     SELECT so.id
     FROM sales_order so

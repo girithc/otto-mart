@@ -59,6 +59,7 @@ var authRequirements = map[string]Permission{
 	PackerCancelOrder:                     {Role: "Customer", AuthRequired: true},
 	PackerCheckOrderToPack:                {Role: "Customer", AuthRequired: true},
 	PackerAllocateSpace:                   {Role: "Customer", AuthRequired: true},
+	PackerGetOrderByOTP:                   {Role: "Customer", AuthRequired: true},
 	CheckoutLockItems:                     {Role: "Customer", AuthRequired: true},
 	CheckoutPayment:                       {Role: "Customer", AuthRequired: true},
 	CheckoutCancel:                        {Role: "Customer", AuthRequired: true},
@@ -181,6 +182,7 @@ const (
 	PackerCheckOrderToPack                = "packer-check-order-to-pack"
 	PackerAllocateSpace                   = "packer-allocate-space"
 	PackerGetOrderItems                   = "packer-get-order-items"
+	PackerGetOrderByOTP                   = "packer-get-order-by-otp"
 	DeliveryPartnerGetOrderItems          = "delivery-partner-get-order-items"
 	CheckoutLockItems                     = "checkout-lock-items"
 	CheckoutPayment                       = "checkout-payment"

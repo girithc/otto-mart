@@ -65,6 +65,7 @@ type Sales_Order_Cart struct {
 	Products    []SOProduct `json:"products"`
 	Store       SOStore     `json:"store"`
 	Address     SOAddress   `json:"address"`
+	OTP         string      `json:"otp"`
 }
 
 type SalesOrderIDCustomerID struct {

@@ -255,6 +255,11 @@ func (s *PostgresStore) Init() error {
 		return err
 	}
 
+	fmt.Println("Success - Created Sales Order OTP  Table")
+	if err := s.CreateSalesOrderOtpTable(tx); err != nil {
+		return err
+	}
+
 	fmt.Println("Success - Created Item Financial Table")
 
 	constraintQuery := `
