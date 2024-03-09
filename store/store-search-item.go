@@ -35,8 +35,8 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
     LEFT JOIN store ON item_store.store_id = store.id
     LEFT JOIN brand ON item.brand_id = brand.id
     WHERE item.name ILIKE '%' || $1 || '%'
-    ORDER BY item.id
-    `, query)
+	ORDER BY item_store.stock_quantity DESC
+	`, query)
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +77,8 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 			item.MRP_Price = 0.0 // Fallback, should not be needed
 		}
 
+		item.Store_Price = item.MRP_Price - item.Discount
+
 		if imageURL.Valid {
 			item.Image = imageURL.String
 		} else {
@@ -106,7 +108,6 @@ func (s *PostgresStore) ManagerSearchItem(name string) ([]ManagerSearchItem, err
 	LEFT JOIN item_image ii ON i.id = ii.item_id
 	WHERE LOWER(i.name) LIKE LOWER($1)
 	GROUP BY i.id, b.name, if.mrp_price
-
 	`
 
 	rows, err := s.db.Query(query, "%"+name+"%")

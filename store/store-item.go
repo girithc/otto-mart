@@ -401,7 +401,8 @@ func (s *PostgresStore) Get_Items_By_CategoryID_And_StoreID(category_id int, sto
     LEFT JOIN item_image ii ON i.id = ii.item_id
     WHERE ic.category_id = $1 AND istore.store_id = $2
     GROUP BY i.id, b.name, s.name, c.name, ifin.mrp_price, istore.discount, istore.stock_quantity, istore.locked_quantity
-    `
+    ORDER BY istore.stock_quantity DESC
+	`
 
 	rows, err := tx.Query(query, category_id, store_id)
 	if err != nil {

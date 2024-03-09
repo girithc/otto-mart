@@ -11,15 +11,15 @@ func (s *PostgresStore) CreateItemFinancialTable(tx *sql.Tx) error {
 	createItemFinancialTableQuery := `
     CREATE TABLE IF NOT EXISTS item_financial (
         item_id INT PRIMARY KEY REFERENCES item(id) ON DELETE CASCADE,
-        buy_price DECIMAL(5, 2),  
-        mrp_price DECIMAL(5, 2),
-        gst_on_buy DECIMAL(5, 2),
-        gst_on_mrp DECIMAL(5, 2),
-		cess_on_buy DECIMAL(5, 2),
-		cess_on_mrp DECIMAL(5, 2),
-        margin_net DECIMAL(5, 2) GENERATED ALWAYS AS (CASE WHEN (mrp_price - gst_on_mrp - cess_on_mrp) = 0 THEN NULL ELSE (1 - (buy_price - gst_on_buy - cess_on_buy) / (mrp_price - gst_on_mrp - cess_on_mrp)) * 100 END) STORED,
-        margin DECIMAL(5, 2),
-		tax_id INT REFERENCES tax(id) ON DELETE SET NULL,  
+        buy_price DECIMAL(10, 2),  
+        mrp_price DECIMAL(10, 2),
+        gst_on_buy DECIMAL(10, 2),
+        gst_on_mrp DECIMAL(10, 2),
+        cess_on_buy DECIMAL(10, 2),
+        cess_on_mrp DECIMAL(10, 2),
+        margin_net DECIMAL(10, 2) GENERATED ALWAYS AS (CASE WHEN (mrp_price - gst_on_mrp - cess_on_mrp) = 0 THEN NULL ELSE (1 - (buy_price - gst_on_buy - cess_on_buy) / (mrp_price - gst_on_mrp - cess_on_mrp)) * 100 END) STORED,
+        margin DECIMAL(10, 2),
+        tax_id INT REFERENCES tax(id) ON DELETE SET NULL,  
         current_scheme_id INT REFERENCES item_scheme(id) ON DELETE SET NULL
     );`
 

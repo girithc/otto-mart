@@ -594,6 +594,14 @@ func (s *Server) handlePackerCompleteOrder(res http.ResponseWriter, req *http.Re
 	return nil
 }
 
+func (s *Server) handlePackerGetCustomerOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-get-order")
+		return s.goRoutineWrapper(PackerGetOrder, s.handlePackerGetOrder, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleManagerFindItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "manager-find-item")

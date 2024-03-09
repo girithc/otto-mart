@@ -417,107 +417,128 @@ func (s *PostgresStore) PackerFindOrder(req types.FindItemBasic) (FindItemRespon
 }
 
 func (s *PostgresStore) PackerGetOrder(storeId int, otp string) (*GetOrder, error) {
-	// Step 1: Get the cart_id from sales_order_otp using otp and store_id
-	var cartId int
-	otpQuery := `SELECT cart_id FROM sales_order_otp WHERE otp_code = $1 AND store_id = $2 AND active = true LIMIT 1`
-	err := s.db.QueryRow(otpQuery, otp, storeId).Scan(&cartId)
+	tx, err := s.db.Begin()
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no active OTP found for OTP: %s and storeId: %d", otp, storeId)
-		}
-		return nil, err
+		return nil, fmt.Errorf("PackerGetOrder - Begin Transaction: %v", err)
 	}
 
-	// Step 2: Use the cart_id to fetch order details from sales_order, Packer_Shelf, and delivery_shelf
+	var cartId int
+	var orderStatus string
+	otpQuery := `
+    SELECT so.cart_id, so.order_status
+    FROM sales_order_otp otp
+    JOIN sales_order so ON otp.cart_id = so.cart_id
+    WHERE otp.otp_code = $1 AND otp.store_id = $2 AND otp.active = true
+    LIMIT 1
+    `
+	err = tx.QueryRow(otpQuery, otp, storeId).Scan(&cartId, &orderStatus)
+	if err != nil {
+		tx.Rollback()
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("PackerGetOrder - OTP Query: no active OTP found for OTP: %s and storeId: %d", otp, storeId)
+		}
+		return nil, fmt.Errorf("PackerGetOrder - OTP Query: %v", err)
+	}
+
 	query := `
-    SELECT ds.location, ps.active
+    SELECT COALESCE(ds.location, 0) AS location, COALESCE(ps.active, false) AS active, c.phone, so.order_date
     FROM sales_order so
-    INNER JOIN Packer_Shelf ps ON so.id = ps.sales_order_id
-    INNER JOIN delivery_shelf ds ON ps.delivery_shelf_id = ds.id
-    WHERE so.cart_id = $1 AND so.store_id = $2 AND so.order_status = 'packed'
+    LEFT JOIN Packer_Shelf ps ON so.id = ps.sales_order_id
+    LEFT JOIN delivery_shelf ds ON ps.delivery_shelf_id = ds.id
+    INNER JOIN Customer c ON so.customer_id = c.id
+    WHERE so.cart_id = $1 AND so.store_id = $2
     `
 	var getOrder GetOrder
-	err = s.db.QueryRow(query, cartId, storeId).Scan(&getOrder.Location, &getOrder.Active)
+	err = tx.QueryRow(query, cartId, storeId).Scan(&getOrder.Location, &getOrder.Active, &getOrder.Phone, &getOrder.OrderTime)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("no active packed order found for cartId: %d and storeId: %d", cartId, storeId)
-		}
-		return nil, err
+		tx.Rollback()
+		return nil, fmt.Errorf("PackerGetOrder - Fetch Order Details: %v", err)
+	}
+
+	getOrder.CartId = cartId // Set the CartId in the GetOrder struct
+	getOrder.OrderStatus = orderStatus
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, fmt.Errorf("PackerGetOrder - Commit Transaction: %v", err)
 	}
 
 	return &getOrder, nil
 }
 
 type GetOrder struct {
-	Location int  `json:"location"`
-	Active   bool `json:"active"`
+	Location    int       `json:"location"`
+	Active      bool      `json:"active"`
+	CartId      int       `json:"cart_id"`
+	OrderTime   time.Time `json:"order_time"`
+	Phone       string    `json:"phone"`
+	OrderStatus string    `json:"order_status"`
 }
 
-func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (bool, error) {
-	// Begin a transaction
+func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (CompleteOrder, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
-		return false, err
+		return CompleteOrder{Success: false}, err
 	}
 
-	verifyQuery := `
-    SELECT so.id
+	// Check order status and shelf active state without FOR UPDATE
+	checkQuery := `
+    SELECT so.order_status, COALESCE(ps.active, false)
     FROM sales_order so
+    LEFT JOIN Packer_Shelf ps ON so.id = ps.sales_order_id
     JOIN customer c ON so.customer_id = c.id
-    WHERE so.cart_id = $1 AND c.phone = $2 AND so.order_status = 'packed'
-    FOR UPDATE
+    WHERE so.cart_id = $1 AND c.phone = $2
     `
-	var orderId int
-	err = tx.QueryRow(verifyQuery, cartId, phone).Scan(&orderId)
+	var orderStatus string
+	var shelfActive bool
+	err = tx.QueryRow(checkQuery, cartId, phone).Scan(&orderStatus, &shelfActive)
 	if err != nil {
-		tx.Rollback() // Rollback in case of any error
-		if err == sql.ErrNoRows {
-			return false, fmt.Errorf("no packed order found for cartId: %d and phone: %s", cartId, phone)
+		tx.Rollback()
+		return CompleteOrder{Success: false}, fmt.Errorf("error checking order status and shelf state: %v", err)
+	}
+
+	// Proceed only if the order is not already completed and the shelf is active
+	if orderStatus != "completed" || shelfActive {
+		// Update Packer_Shelf to inactive if active
+		if shelfActive {
+			updateShelfQuery := `
+            UPDATE Packer_Shelf
+            SET active = false
+            WHERE sales_order_id IN (SELECT id FROM sales_order WHERE cart_id = $1) AND active = true
+            `
+			_, err = tx.Exec(updateShelfQuery, cartId)
+			if err != nil {
+				tx.Rollback()
+				return CompleteOrder{Success: false}, fmt.Errorf("error updating Packer_Shelf: %v", err)
+			}
 		}
-		return false, err
+
+		// Update order status to 'completed' if not already
+		if orderStatus != "completed" {
+			updateOrderQuery := `
+            UPDATE sales_order
+            SET order_status = 'completed'
+            WHERE cart_id = $1 AND order_status != 'completed'
+            `
+			_, err = tx.Exec(updateOrderQuery, cartId)
+			if err != nil {
+				tx.Rollback()
+				return CompleteOrder{Success: false}, fmt.Errorf("error updating order status: %v", err)
+			}
+		}
 	}
 
-	// Step 2: Update Packer_Shelf to set active to false
-	updateShelfQuery := `
-    UPDATE Packer_Shelf
-    SET active = false
-    WHERE sales_order_id = $1 AND active = true
-    `
-	res, err := tx.Exec(updateShelfQuery, orderId)
-	if err != nil {
-		tx.Rollback() // Rollback in case of any error
-		return false, err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		tx.Rollback() // Rollback in case of any error
-		return false, err
-	}
-	if rowsAffected == 0 {
-		tx.Rollback() // Rollback if no rows were updated
-		return false, fmt.Errorf("Packer_Shelf was already inactive or not found for orderId: %d", orderId)
-	}
-
-	// Step 3: Update the order status to "completed"
-	updateOrderQuery := `
-    UPDATE sales_order
-    SET order_status = 'completed'
-    WHERE id = $1
-    `
-	_, err = tx.Exec(updateOrderQuery, orderId)
-	if err != nil {
-		tx.Rollback() // Rollback in case of any error
-		return false, err
-	}
-
-	// Commit the transaction
+	// Commit the transaction if all operations were successful
 	err = tx.Commit()
 	if err != nil {
-		return false, err
+		return CompleteOrder{Success: false}, fmt.Errorf("error committing transaction: %v", err)
 	}
 
-	return true, nil // Return true if the operation was successful
+	return CompleteOrder{Success: true}, nil
+}
+
+type CompleteOrder struct {
+	Success bool `json:"success"`
 }
 
 type FindItemResponse struct {

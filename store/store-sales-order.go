@@ -775,7 +775,7 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
 
 	var existingOrderId int
 	// Modified to check for 'received' or 'accepted' orders
-	checkOrderQuery := `SELECT id FROM sales_order WHERE packer_id = $1 AND (order_status = 'received' OR order_status = 'accepted')`
+	checkOrderQuery := `SELECT id FROM sales_order WHERE packer_id = $1 AND (order_status = 'accepted')`
 	err = s.db.QueryRow(checkOrderQuery, packerId).Scan(&existingOrderId)
 	if err == nil {
 		items, err := s.fetchPackedItems(existingOrderId)
@@ -797,7 +797,7 @@ func (s *PostgresStore) PackOrder(storeId int, phoneNumber string) ([]PackedItem
     SET order_status = 'accepted', packer_id = $1
     WHERE id = (
         SELECT id FROM sales_order
-        WHERE store_id = $2 AND (order_status = 'received' OR order_status = 'accepted')
+        WHERE store_id = $2 AND (order_status = 'received')
         ORDER BY order_date ASC
         LIMIT 1
     )
@@ -969,13 +969,11 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 		return info, fmt.Errorf("error inserting into Packer_Shelf: %w", err)
 	}
 
-	// 3. Update sales_order
-	orderStatusQuery := `UPDATE sales_order SET order_status = 'packed' WHERE id = $1 AND order_status = 'accepted'`
+	orderStatusQuery := `UPDATE sales_order SET order_status = 'packed' WHERE id = $1 AND (order_status = 'accepted' OR order_status = 'received')`
 	_, err = tx.Exec(orderStatusQuery, req.SalesOrderID)
 	if err != nil {
 		return info, fmt.Errorf("error updating sales_order status: %w", err)
 	}
-
 	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {

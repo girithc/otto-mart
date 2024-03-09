@@ -128,6 +128,7 @@ var authRequirements = map[string]Permission{
 	ManagerFindItem:                       {Role: "Manager", AuthRequired: true},
 	ManagerAssignItemShelf:                {Role: "Manager", AuthRequired: true},
 	StoreAddressGet:                       {Role: "Customer", AuthRequired: true},
+	PackerGetOrder:                        {Role: "Customer", AuthRequired: true},
 }
 
 const (
@@ -174,6 +175,7 @@ const (
 	PackerPackOrder                       = "packer-pack-order"
 	PackerFindItem                        = "packer-find-item"
 	PackerCompleteOrder                   = "packer-complete-order"
+	PackerGetOrder                        = "packer-get-order"
 	PackerLoadItem                        = "packer-load-item"
 	PackerFetchItem                       = "packer-fetch-item"
 	PackerGetPackedItems                  = "packer-get-packed-items"
