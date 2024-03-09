@@ -137,7 +137,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                           .map<DropdownMenuItem<int>>((int value) {
                         return DropdownMenuItem<int>(
                           value: value,
-                          child: Text(value.toString()),
+                          child: Text(
+                            value.toString(),
+                          ),
                         );
                       }).toList(),
                       onChanged: (newValue) {

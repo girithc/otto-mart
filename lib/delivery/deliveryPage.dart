@@ -34,6 +34,9 @@ class _DeliveryPageState extends State<DeliveryPage> {
       '/packer-complete-order', // Replace with your actual endpoint
       additionalData: body,
     );
+
+    print("Response: ${response.body}");
+
     if (response.statusCode == 200) {
       // Parse the JSON response and create a GetOrderResponse instance
       final jsonResponse = jsonDecode(response.body);
@@ -131,7 +134,6 @@ class _DeliveryPageState extends State<DeliveryPage> {
       'store_id': 1,
     };
 
-    // Send the HTTP request to your endpoint
     final response = await networkService.postWithAuth(
       '/packer-get-order', // Replace with your actual endpoint
       additionalData: body,
@@ -139,7 +141,6 @@ class _DeliveryPageState extends State<DeliveryPage> {
 
     print("Respone ${response.body}");
     if (response.statusCode == 200) {
-      // Parse the JSON response and create a GetOrderResponse instance
       final jsonResponse = jsonDecode(response.body);
       setState(() {
         orderInfo = GetOrderResponse.fromJson(jsonResponse);
@@ -147,8 +148,27 @@ class _DeliveryPageState extends State<DeliveryPage> {
             true; // Set isOTPEntered to true after successfully fetching the order info
       });
     } else {
-      // Handle the error case
+      // Handle the error case by showing a dialog or updating the UI
       print('Failed to fetch order info. Status code: ${response.statusCode}');
+      setState(() {
+        isOTPEntered = false; // Reset the flag as no order info was fetched
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('No Order Found'),
+            content:
+                Text('Unable to fetch order information. Please try again.'),
+            actions: <Widget>[
+              ElevatedButton(
+                child: Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                },
+              ),
+            ],
+          ),
+        );
+      });
     }
   }
 
