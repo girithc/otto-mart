@@ -384,9 +384,9 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                 BorderRadius.circular(10), // Rounded corners
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
+                                color: Colors.grey.withOpacity(0.1),
                                 spreadRadius: 1,
-                                blurRadius: 2,
+                                blurRadius: 0,
                                 offset: const Offset(
                                     0, 1), // Changes position of shadow
                               ),
@@ -479,37 +479,73 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             right: MediaQuery.of(context).size.height * 0.03,
                             top: MediaQuery.of(context).size.height * 0.02,
                           ),
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.black,
-                              backgroundColor: Colors.white,
-                              surfaceTintColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              shape: RoundedRectangleBorder(
-                                side: const BorderSide(
-                                    color: Colors.deepPurpleAccent, width: 2),
-                                borderRadius: BorderRadius.circular(35),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment
+                                .spaceBetween, // Aligns the buttons to the left and right sides of the Container
+                            children: [
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.black,
+                                  backgroundColor: Colors.white,
+                                  surfaceTintColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  shape: RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                        color: Colors.white, width: 2),
+                                    borderRadius: BorderRadius.circular(35),
+                                  ),
+                                ),
+                                onPressed: () {
+                                  // Do nothing on press
+                                },
+                                child: Icon(
+                                  Icons.info_outlined, // The info icon
+                                ),
                               ),
-                            ),
-                            onPressed: () async {
-                              double latitude = 19.12465300; // Example latitude
-                              double longitude =
-                                  72.83164800; // Example longitude
-                              Uri googleMapsUri = Uri.parse(
-                                  "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude");
-
-                              if (await canLaunchUrl(googleMapsUri)) {
-                                await launchUrl(googleMapsUri);
-                              } else {
-                                throw 'Could not open the map.';
-                              }
-                            },
-                            child: const Text('Walk To Store'),
+                              ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  foregroundColor: Colors.black,
+                                  backgroundColor: Colors.white,
+                                  surfaceTintColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20),
+                                  shape: RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                        color: Colors.deepPurpleAccent,
+                                        width: 2),
+                                    borderRadius: BorderRadius.circular(35),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  double latitude =
+                                      19.12465300; // Example latitude of the destination
+                                  double longitude =
+                                      72.83164800; // Example longitude of the destination
+                                  Uri googleMapsUri = Uri.parse(
+                                      "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude");
+                                  if (await canLaunchUrl(googleMapsUri)) {
+                                    await launchUrl(googleMapsUri);
+                                  } else {
+                                    throw 'Could not open the map with directions.';
+                                  }
+                                },
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.directions_walk,
+                                      color: Colors.deepPurpleAccent,
+                                    ),
+                                    SizedBox(width: 5),
+                                    Text('Walk To Store'),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        /*
+/*
                         Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.only(
