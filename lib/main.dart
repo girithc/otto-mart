@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_barcode_scanner/flutter_barcode_scanner.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:packer/delivery/deliveryPage.dart';
 import 'package:packer/firebase_options.dart';
 import 'package:packer/pack/scanner.dart';
 import 'package:packer/load/listen-barcode.dart';
@@ -415,6 +416,11 @@ class _InventoryManagementState extends State<InventoryManagement> {
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                   GestureDetector(
                     onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const DeliveryPage()),
+                      ); /*
                       scanBarcodeDispatch().then((value) {
                         if (value != null) {
                           showDialog(
@@ -493,6 +499,7 @@ class _InventoryManagementState extends State<InventoryManagement> {
                           },
                         );
                       });
+                      */
                     },
                     child: Container(
                       height: MediaQuery.of(context).size.height * 0.15,
