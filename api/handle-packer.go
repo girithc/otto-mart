@@ -104,9 +104,13 @@ func (s *Server) handlePackerFindItemBasic(res http.ResponseWriter, req *http.Re
 		return err
 	}
 
-	return WriteJSON(res, http.StatusOK, nil)
-}
+	result, err := s.store.PackerFindItem(*new_req)
+	if err != nil {
+		return err
+	}
 
+	return WriteJSON(res, http.StatusOK, result)
+}
 func (s *Server) handlePackerGetOrder(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.GetOrderBasic)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

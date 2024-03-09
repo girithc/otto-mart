@@ -466,6 +466,33 @@ func (s *PostgresStore) PackerGetOrder(storeId int, otp string) (*GetOrder, erro
 	return &getOrder, nil
 }
 
+func (s *PostgresStore) PackerFindItem(new_req types.FindItemBasic) (*FindItemResponse, error) {
+	// SQL query to find the item and its shelf position based on the barcode and store ID
+	query := `
+        SELECT i.name, i.id, s.horizontal, s.vertical
+        FROM item i
+        JOIN shelf s ON i.id = s.item_id
+        WHERE i.barcode = $1 AND s.store_id = $2
+    `
+
+	// Execute the query
+	var response FindItemResponse
+	err := s.db.QueryRow(query, new_req.Barcode, new_req.StoreID).Scan(
+		&response.ItemName,
+		&response.ItemId,
+		&response.ShelfHorizontal,
+		&response.ShelfVertical,
+	)
+
+	// If an error occurred, return nil and the error
+	if err != nil {
+		return nil, err
+	}
+
+	// No error, return the response and nil error
+	return &response, nil
+}
+
 type GetOrder struct {
 	Location    int       `json:"location"`
 	Active      bool      `json:"active"`
