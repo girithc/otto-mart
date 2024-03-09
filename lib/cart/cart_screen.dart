@@ -27,6 +27,7 @@ class _MyCartState extends State<MyCart> {
   String? streetAddress;
   String? cartId;
   final storage = const FlutterSecureStorage();
+  bool isLoading = true;
 
   @override
   void initState() {
@@ -80,6 +81,8 @@ class _MyCartState extends State<MyCart> {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
+        isLoading = false;
+
         streetAddress = data['address'];
       });
     } else {}
@@ -211,9 +214,14 @@ class _MyCartState extends State<MyCart> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(0),
-                      child: CartList(streetAddress: streetAddress!),
+                      child: CartList(
+                        streetAddress: streetAddress ??
+                            "", // Fallback to an empty string if streetAddress is null
+                        isLoading: isLoading,
+                      ),
                     ),
-                  ),
+                  )
+
                   //const Divider(height: 4, color: Colors.black),
                 ],
               ),
@@ -505,9 +513,10 @@ class _MyCartState extends State<MyCart> {
 }
 
 class CartList extends StatefulWidget {
-  CartList({super.key, required this.streetAddress});
+  CartList({super.key, required this.streetAddress, required this.isLoading});
 
   final String streetAddress;
+  final bool isLoading;
 
   @override
   State<CartList> createState() => CartListState();
@@ -713,94 +722,100 @@ class CartListState extends State<CartList> {
               const SizedBox(height: 10),
               const TotalAmountSaved(),
               const SizedBox(height: 10),
-              Container(
-                height: 110,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 1,
-                      offset: const Offset(0, 1), // Changes position of shadow
-                    ),
-                  ],
-                  border: Border.all(color: Colors.white, width: 2.0),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 13,
-                        ),
-                        RichText(
-                          textAlign: TextAlign.center, // Center the text
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 22, // Base font size for the whole text
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  Colors.black, // Base color for the whole text
-                            ),
-                            children: <TextSpan>[
-                              TextSpan(
-                                text:
-                                    '2 Minute', // Part of the text you want to style differently
-                                style: TextStyle(
-                                    color: Colors.deepPurpleAccent, fontSize: 24
-                                    // Different color for this part
-                                    // You can add more styles here if needed
-                                    ),
+              widget.isLoading
+                  ? const CircularProgressIndicator()
+                  : Container(
+                      height: 110,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius:
+                            BorderRadius.circular(10), // Rounded corners
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.2),
+                            spreadRadius: 1,
+                            blurRadius: 1,
+                            offset: const Offset(
+                                0, 1), // Changes position of shadow
+                          ),
+                        ],
+                        border: Border.all(color: Colors.white, width: 2.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 13,
                               ),
-                              TextSpan(
-                                text: ' Pickup', // First part of the text
+                              RichText(
+                                textAlign: TextAlign.center, // Center the text
+                                text: const TextSpan(
+                                  style: TextStyle(
+                                    fontSize:
+                                        22, // Base font size for the whole text
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors
+                                        .black, // Base color for the whole text
+                                  ),
+                                  children: <TextSpan>[
+                                    TextSpan(
+                                      text:
+                                          '2 Minute', // Part of the text you want to style differently
+                                      style: TextStyle(
+                                          color: Colors.deepPurpleAccent,
+                                          fontSize: 24
+                                          // Different color for this part
+                                          // You can add more styles here if needed
+                                          ),
+                                    ),
+                                    TextSpan(
+                                      text: ' Pickup', // First part of the text
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 33,
+                              ),
+                              Text(
+                                '\u{20B9} ${(cart.discount)}',
+                                style: GoogleFonts.phudu(
+                                    textStyle: const TextStyle(
+                                        fontSize: 30,
+                                        fontWeight: FontWeight.w400,
+                                        color: Colors.white)),
+                              )
+                            ],
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 13,
+                              ),
+                              Expanded(
+                                // Wrap Text widget with Expanded
+                                child: Text(
+                                  "Store ${widget.streetAddress}",
+                                  maxLines: 2,
+                                  overflow: TextOverflow
+                                      .ellipsis, // Use ellipsis to handle text overflow
+                                  style: TextStyle(
+                                      // Add your TextStyle here if needed
+                                      ),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(
-                          width: 33,
-                        ),
-                        Text(
-                          '\u{20B9} ${(cart.discount)}',
-                          style: GoogleFonts.phudu(
-                              textStyle: const TextStyle(
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white)),
-                        )
-                      ],
+                        ],
+                      ),
                     ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 13,
-                        ),
-                        Expanded(
-                          // Wrap Text widget with Expanded
-                          child: Text(
-                            "Store ${widget.streetAddress}",
-                            maxLines: 2,
-                            overflow: TextOverflow
-                                .ellipsis, // Use ellipsis to handle text overflow
-                            style: TextStyle(
-                                // Add your TextStyle here if needed
-                                ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
 
               const SizedBox(height: 10),
               /*

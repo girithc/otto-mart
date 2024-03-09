@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:pronto/utils/network/service.dart';
 
 class OrderDetailPage extends StatefulWidget {
@@ -50,6 +52,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            context.go('/home');
+          },
+        ),
         title: const Text('Order Details'),
       ),
       body: FutureBuilder<OrderDetailCustomer>(
@@ -70,11 +78,24 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   Widget buildOrderDetails(OrderDetailCustomer orderDetail) {
+    // Parse the ISO 8601 string to DateTime
+    DateTime parsedTime = DateTime.parse(orderDetail.orderPlacedTime);
+
+    // Add 5 hours and 30 minutes to the parsedTime
+    DateTime adjustedTime = parsedTime.add(Duration(hours: 5, minutes: 30));
+
+    // Create a new DateFormat
+    DateFormat formatter = DateFormat(
+        'MMMM dd, yyyy hh:mm a'); // Example format: "July 20, 2021 - 03:30 PM"
+
+    // Format the adjusted DateTime object
+    String formattedTime = formatter.format(adjustedTime);
+
     return ListView(
       children: [
         ListTile(
           title: const Text('Order Placed Time'),
-          subtitle: Text(orderDetail.orderPlacedTime),
+          subtitle: Text(formattedTime),
         ),
         for (var item in orderDetail.items)
           ListTile(
@@ -82,14 +103,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             subtitle: Text(
                 'Quantity: ${item.itemQuantity}, Size: ${item.itemSize} ${item.unitOfQuantity}'),
           ),
-        ListTile(
-          title: const Text('Total Fees'),
-          subtitle: Text(
-              'Item Cost: ${orderDetail.fees.itemCost}, Delivery Fee: ${orderDetail.fees.deliveryFee}, '
-              'Platform Fee: ${orderDetail.fees.platformFee}, Small Order Fee: ${orderDetail.fees.smallOrderFee}, '
-              'Rain Fee: ${orderDetail.fees.rainFee}, High Traffic Surcharge: ${orderDetail.fees.highTrafficSurcharge}, '
-              'Packaging Fee: ${orderDetail.fees.packagingFee}, Peak Time Surcharge: ${orderDetail.fees.peakTimeSurcharge}, '
-              'Subtotal: ${orderDetail.fees.subtotal}, Discounts: ${orderDetail.fees.discounts}'),
+        Container(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Text(
+            'Subtotal: ${orderDetail.fees.subtotal}',
+            style: TextStyle(fontWeight: FontWeight.w300),
+          ),
         ),
       ],
     );

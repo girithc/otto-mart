@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
@@ -98,7 +99,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context);
+            context.go('/home');
           },
         ),
       ),

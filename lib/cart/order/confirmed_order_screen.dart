@@ -2,7 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:lottie/lottie.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:lottie/lottie.dart' as lt;
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'dart:convert';
@@ -11,6 +12,7 @@ import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class OrderConfirmed extends StatefulWidget {
   const OrderConfirmed({super.key, required this.newOrder, this.orderId});
@@ -31,6 +33,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   Timer? _timer; // Declare a Timer variable
   OrderInfo? _orderInfo;
   String? OTP;
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
+  late CameraPosition _kGooglePlex;
+  final Set<Marker> _markers = {};
 
   String orderStatus = 'Preparing Order';
   String orderLottie =
@@ -65,8 +71,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   String formatOrderDate(String orderDate) {
     DateTime parsedDate = DateTime.parse(orderDate);
-    // Customize the format as needed
-    return DateFormat('MMMM d, y \'at\' h:mma').format(parsedDate);
+    DateTime updatedDate = parsedDate.add(Duration(hours: 5, minutes: 30));
+    return DateFormat('MMMM d, y \'at\' h:mma').format(updatedDate);
   }
 
   int _numberOfItems = 0;
@@ -144,65 +150,23 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     );
   }
 
-  Future<void> pickupOrder() async {
-    String? phone = await _storage.read(key: 'phone');
-    String? cartId;
-
-    if (widget.newOrder) {
-      cartId = await _storage.read(key: 'cartId');
-      print("Cart ID: $cartId");
-    } else {
-      cartId = widget.orderId.toString();
-    }
-
-    Map<String, dynamic> data = {
-      'phone': phone,
-      'sales_order_id': int.parse(cartId!),
-    };
-
-    try {
-      final networkService = NetworkService();
-      final response = await networkService.postWithAuth(
-        '/customer-pickup-order',
-        additionalData: data,
-      );
-
-      print("Response body: ${response.body}");
-      print("Response status code: ${response.statusCode}");
-
-      if (response.statusCode == 200) {
-        final responseBody = jsonDecode(response.body);
-        bool success = responseBody['success'];
-        String message = responseBody['message'];
-
-        if (success) {
-          // Handle success case
-          print(message);
-          // You can use Flutter's 'SnackBar', 'AlertDialog', or navigate to a success page
-        } else {
-          // Handle failure case
-          print(message);
-          // Show an error message to the user
-        }
-      } else {
-        // Handle other non-200 responses
-        print("Error: ${response.body}");
-        throw Exception(
-            'Failed to accept order. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      // Handle network errors, parsing errors, etc
-      print("Exception caught: $e");
-      throw Exception('Error accepting order: $e');
-    }
-  }
-
   @override
   void initState() {
     super.initState();
     fetchOrderDetails();
     !widget.newOrder ? fetchOrderInfo() : null;
-    _setupPeriodicFetch(); // Set up periodic fetch of order info
+    _setupPeriodicFetch();
+    _kGooglePlex = CameraPosition(
+      target: LatLng(19.12465300, 72.83164800),
+      zoom: 16,
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId("selected-location"),
+        position: LatLng(19.12465300, 72.83164800),
+      ),
+    );
+    // Set up periodic fetch of order info
   }
 
   @override
@@ -225,6 +189,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     final networkService = NetworkService();
     if (widget.newOrder) {
       cartId = await _storage.read(key: 'cartId');
+      fetchOrderInfo(optionalParameter: int.parse(cartId!));
       print("Cart ID: $cartId");
     } else {
       cartId = widget.orderId.toString();
@@ -289,12 +254,24 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     }
   }
 
-  Future<void> fetchOrderInfo() async {
+  Future<void> fetchOrderInfo({int? optionalParameter}) async {
     final customerId = await _storage.read(key: 'customerId');
-    String? cartId = await _storage.read(key: 'placedCartId');
-    if (cartId == null) {
+
+    String? cartId;
+    if (widget.newOrder) {
+      cartId = optionalParameter.toString();
+    } else {
       cartId = widget.orderId.toString();
     }
+    //cartId = await _storage.read(key: 'placedCartId');
+
+    if (widget.newOrder) {
+      cartId = await _storage.read(key: 'cartId');
+      print("Cart ID: $cartId");
+    } else {
+      cartId = widget.orderId.toString();
+    }
+
     print("PlacedCart ID: $cartId");
     final Map<String, dynamic> body = {
       'customer_id': int.parse(customerId!),
@@ -305,7 +282,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     final response = await networkService.postWithAuth('/customer-placed-order',
         additionalData: body);
 
-    print("Response: ${response.statusCode} ${response.body}  ");
+    print(
+        "Response Fetch Order Info \n\n: ${response.statusCode} ${response.body}  ");
     // Deserialize the JSON response
     final jsonResponse = json.decode(response.body);
     _orderInfo = OrderInfo.fromJson(jsonResponse);
@@ -378,8 +356,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           height: MediaQuery.of(context).size.height * 0.24,
                           width: MediaQuery.of(context).size.width * 0.95,
                           margin: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 10),
-                          padding: const EdgeInsets.only(bottom: 10.0),
+                              horizontal: 10, vertical: 0),
+                          padding: const EdgeInsets.only(bottom: 5.0),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -389,7 +367,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             child: Transform.scale(
                               scale:
                                   orderLottieTransform, // Increase the size by 30%
-                              child: Lottie.network(
+                              child: lt.Lottie.network(
                                 orderLottie,
                                 fit: BoxFit.contain,
                               ),
@@ -417,7 +395,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           ),
                           child: Center(
                             child: Text(
-                              orderStatus,
+                              "Order ${orderStatus}",
                               style: const TextStyle(
                                   fontSize: 18, // Increased font size
                                   fontWeight: FontWeight.bold,
@@ -428,6 +406,110 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             ),
                           ),
                         ),
+                        const SizedBox(height: 15),
+                        Container(
+                          width: MediaQuery.of(context).size.width,
+                          margin: const EdgeInsets.only(
+                              left: 10, right: 10, top: 5, bottom: 5),
+                          padding: const EdgeInsets.all(10),
+                          child: Column(
+                            children: [
+                              Text(
+                                "Order OTP",
+                                style: TextStyle(fontSize: 16),
+                              ),
+                              Center(
+                                  child: Text(
+                                OTP ?? "",
+                                style: TextStyle(
+                                    fontSize: 24, fontWeight: FontWeight.bold),
+                              )),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+
+                        Container(
+                          height: MediaQuery.of(context).size.height * 0.25,
+                          margin: EdgeInsets.symmetric(
+                            horizontal:
+                                MediaQuery.of(context).size.height * 0.03,
+                          ),
+                          padding: const EdgeInsets.all(1),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(25)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.5),
+                                blurRadius: 2.0,
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            // Use ClipRRect to clip the child widget with rounded corners
+                            borderRadius: const BorderRadius.all(Radius.circular(
+                                15)), // Match the parent Container's borderRadius
+                            child: GoogleMap(
+                              mapType: MapType.normal,
+                              initialCameraPosition: _kGooglePlex,
+                              markers: _markers, // Use the _markers set here
+                              onMapCreated: (GoogleMapController controller) {
+                                _controller.complete(controller);
+                              },
+                              // ignore: prefer_collection_literals
+                              gestureRecognizers:
+                                  Set(), // Disable gesture recognizers
+                              zoomGesturesEnabled:
+                                  false, // Disable zoom gestures
+                              scrollGesturesEnabled:
+                                  false, // Disable scroll gestures
+                              rotateGesturesEnabled:
+                                  false, // Disable rotate gestures
+                              tiltGesturesEnabled: false,
+                              myLocationButtonEnabled: false,
+                            ),
+                          ),
+                        ),
+
+                        Container(
+                          margin: EdgeInsets.only(
+                            left: MediaQuery.of(context).size.height * 0.03,
+                            right: MediaQuery.of(context).size.height * 0.03,
+                            top: MediaQuery.of(context).size.height * 0.02,
+                          ),
+                          alignment: Alignment.centerRight,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              foregroundColor: Colors.black,
+                              backgroundColor: Colors.white,
+                              surfaceTintColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 20),
+                              shape: RoundedRectangleBorder(
+                                side: const BorderSide(
+                                    color: Colors.deepPurpleAccent, width: 2),
+                                borderRadius: BorderRadius.circular(35),
+                              ),
+                            ),
+                            onPressed: () async {
+                              double latitude = 19.12465300; // Example latitude
+                              double longitude =
+                                  72.83164800; // Example longitude
+                              Uri googleMapsUri = Uri.parse(
+                                  "https://www.google.com/maps/search/?api=1&query=$latitude,$longitude");
+
+                              if (await canLaunchUrl(googleMapsUri)) {
+                                await launchUrl(googleMapsUri);
+                              } else {
+                                throw 'Could not open the map.';
+                              }
+                            },
+                            child: const Text('Walk To Store'),
+                          ),
+                        ),
+                        /*
                         Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.only(
@@ -452,25 +534,14 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text('Number of Items: $_numberOfItems'),
-                              Text('Address: $_customerAddress'),
                               Text('Payment Type: $_paymentType'),
                               Text(
                                   'Order Date: ${formatOrderDate(_orderDate)}'),
                             ],
                           ),
                         ),
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          margin: const EdgeInsets.only(
-                              left: 10, right: 10, top: 5, bottom: 5),
-                          padding: const EdgeInsets.all(10),
-                          child: Center(
-                              child: Text(
-                            OTP!,
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
-                          )),
-                        ),
+                        */
+                        SizedBox(height: 20),
                         Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.only(
