@@ -71,8 +71,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   String formatOrderDate(String orderDate) {
     DateTime parsedDate = DateTime.parse(orderDate);
-    DateTime updatedDate = parsedDate.add(Duration(hours: 5, minutes: 30));
-    return DateFormat('MMMM d, y \'at\' h:mma').format(updatedDate);
+    DateTime updatedDate = parsedDate.add(Duration(hours: 5, minutes: 32));
+    return DateFormat('h:mm a').format(updatedDate);
   }
 
   int _numberOfItems = 0;
@@ -259,7 +259,11 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
     String? cartId;
     if (widget.newOrder) {
-      cartId = optionalParameter.toString();
+      if (optionalParameter == null) {
+        cartId = await _storage.read(key: 'placedCartId');
+      } else {
+        cartId = optionalParameter.toString();
+      }
     } else {
       cartId = widget.orderId.toString();
     }
@@ -392,19 +396,37 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             ],
                             border: Border.all(color: Colors.white, width: 1.0),
                           ),
-                          child: Center(
-                            child: Text(
-                              "Order ${orderStatus}",
-                              style: const TextStyle(
-                                  fontSize: 18, // Increased font size
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors
-                                      .deepPurpleAccent // Bold font weight
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment
+                                .spaceBetween, // Aligns children across the main axis
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  "Please pickup\n your order\n at ${formatOrderDate(_orderDate)}", // Left side text
+
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
                                   ),
-                              // Ensure text is centered horizontally
-                            ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  "Order ${orderStatus}", // Right side text, assuming orderStatus is a variable holding the status
+                                  textAlign: TextAlign
+                                      .right, // Aligns text to the right
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.deepPurpleAccent,
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+
                         const SizedBox(height: 15),
                         Container(
                           width: MediaQuery.of(context).size.width,
@@ -496,7 +518,35 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                   ),
                                 ),
                                 onPressed: () {
-                                  // Do nothing on press
+                                  showDialog(
+                                    context:
+                                        context, // You need to pass the BuildContext here
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: Text(
+                                            'Store'), // The title of the dialog
+                                        content: SingleChildScrollView(
+                                          child: ListBody(
+                                            children: <Widget>[
+                                              Text('Store Address'),
+                                              Text(
+                                                  'Shop G-208, Shree Ashtivinayak CHS Limited, Old DN Nagar Road, Mumbai - 400053') // Replace this with your actual store address
+                                              // You can add more text or widgets here as needed
+                                            ],
+                                          ),
+                                        ),
+                                        actions: <Widget>[
+                                          TextButton(
+                                            child: Text('Close'),
+                                            onPressed: () {
+                                              Navigator.of(context)
+                                                  .pop(); // This will close the dialog
+                                            },
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
                                 },
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,

@@ -1,10 +1,12 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
 import 'package:pronto/catalog/item/api_client_item.dart';
+import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/search/search_screen.dart';
 import 'package:provider/provider.dart';
 
@@ -176,13 +178,14 @@ class _CategoryItemsBodyState extends State<CategoryItemsBody> {
       padding: EdgeInsets.zero,
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 0.0,
-            crossAxisSpacing: 0.0,
-            childAspectRatio: 0.78),
+          crossAxisCount: 2,
+          mainAxisSpacing: 6.0,
+          crossAxisSpacing: 6.0,
+          childAspectRatio: 0.82,
+        ),
         itemCount: items.length,
         itemBuilder: (context, index) {
-          return ListItem2(
+          return ListItem(
               name: items[index].name,
               id: items[index].id,
               mrpPrice: items[index].mrpPrice,
@@ -217,110 +220,70 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
       surfaceTintColor: Colors.white,
       child: Container(
         margin: EdgeInsets.zero,
-        child: Row(
-          // Expand the Row to fill the available space
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            Flexible(
-              flex: 5,
-              child: CarouselSlider(
-                options: CarouselOptions(
-                    autoPlay: true,
-                    enlargeCenterPage: true,
-                    aspectRatio: 3.5,
-                    autoPlayInterval: const Duration(seconds: 3),
-                    viewportFraction: 0.95),
-                items: [
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.pinkAccent),
-                      borderRadius: BorderRadius.circular(4.0),
-                    ),
-                    child: const Center(
-                      child: Text("Offer 1"),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.pinkAccent),
-                      borderRadius: BorderRadius.circular(4.0),
-                    ),
-                    child: const Center(
-                      child: Text("Offer 2"),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      border: Border.all(color: Colors.pinkAccent),
-                      borderRadius: BorderRadius.circular(4.0),
-                    ),
-                    child: const Center(
-                      child: Text("Offer 3"),
-                    ),
-                  ),
-                  // Add more items as needed
-                ],
-              ),
+        child: ElevatedButton(
+          onPressed: () async {
+            const storage = FlutterSecureStorage();
+
+            // Read the cartId from storage
+            String? cartId = await storage.read(key: 'cartId');
+
+            // Check if cartId is null
+            if (cartId == null) {
+              // If cartId is null, navigate to MyPhone()
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyPhone()),
+              );
+            } else {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const MyCart()));
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.pinkAccent,
+            foregroundColor: Colors.white,
+            textStyle: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
-            Flexible(
-              flex: 4,
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => const MyCart()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pinkAccent,
-                  foregroundColor: Colors.white,
-                  textStyle: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(4.0),
-                  ),
+            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20.0),
+            ),
+          ),
+          child: cart.itemList.isNotEmpty
+              ? (cart.itemList.length > 1
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text('${cart.numberOfItems.toString()} Items'),
+                      ],
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.shopping_cart_outlined),
+                        const SizedBox(
+                          width: 10,
+                        ),
+                        Text('${cart.numberOfItems.toString()} Item'),
+                      ],
+                    ))
+              : const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.shopping_cart_outlined),
+                    SizedBox(
+                      width: 10,
+                    ), // Add your desired icon here
+                    // Add some spacing between the icon and text
+                    Text('Cart'),
+                  ],
                 ),
-                child: cart.numberOfItems > 0
-                    ? (cart.numberOfItems > 1
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.shopping_cart_outlined),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Text('${cart.numberOfItems.toString()} Items'),
-                            ],
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(Icons.shopping_cart_outlined),
-                              const SizedBox(
-                                width: 10,
-                              ),
-                              Text('${cart.numberOfItems.toString()} Item'),
-                            ],
-                          ))
-                    : const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.shopping_cart_outlined),
-                          SizedBox(
-                            width: 10,
-                          ), // Add your desired icon here
-                          // Add some spacing between the icon and text
-                          Text('Cart'),
-                        ],
-                      ),
-              ),
-            ),
-          ],
         ),
       ),
     );

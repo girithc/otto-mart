@@ -260,9 +260,7 @@ class _SkipHomePageState extends State<SkipHomePage>
                 // Navigate to Home
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          const SkipHomePage(title: 'Otto Mart')),
+                  MaterialPageRoute(builder: (context) => const MyPhone()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -632,7 +630,11 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   IconButton(
                     icon: const Icon(Icons.search),
                     onPressed: () {
-                      // Your search logic here
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyPhone()),
+                      );
                     },
                   ),
                   Expanded(

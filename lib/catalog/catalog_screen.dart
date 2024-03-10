@@ -583,23 +583,39 @@ class _ListItem2State extends State<ListItem2> {
         child: Stack(
           children: [
             GestureDetector(
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Product(
-                    brand: widget.brand,
-                    productName: widget.name,
-                    productId: widget.id,
-                    mrpPrice: widget.mrpPrice,
-                    storePrice: widget.storePrice,
-                    discount: widget.discount,
-                    stockQuantity: widget.stockQuantity,
-                    image: widget.image,
-                    quantity: widget.quantity,
-                    unitOfQuantity: widget.unitOfQuantity,
-                  ),
-                ),
-              ),
+              onTap: () async {
+                final storage = FlutterSecureStorage();
+
+                // Read the cartId from storage
+                String? cartId = await storage.read(key: 'cartId');
+
+                // Check if cartId is null
+                if (cartId == null) {
+                  // If cartId is null, navigate to MyPhone()
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyPhone()),
+                  );
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Product(
+                        brand: widget.brand,
+                        productName: widget.name,
+                        productId: widget.id,
+                        mrpPrice: widget.mrpPrice,
+                        storePrice: widget.storePrice,
+                        discount: widget.discount,
+                        stockQuantity: widget.stockQuantity,
+                        image: widget.image,
+                        quantity: widget.quantity,
+                        unitOfQuantity: widget.unitOfQuantity,
+                      ),
+                    ),
+                  );
+                }
+              },
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,

@@ -14,7 +14,7 @@ class HomeApiClient {
     http.Response response = await http.get(url);
 
     // Print the status code and body of the response
-    print("Response: ${response.statusCode} ${response.body}");
+    //print("Response: ${response.statusCode} ${response.body}");
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);
@@ -33,7 +33,7 @@ class HomeApiClient {
     url = url.replace(queryParameters: queryParams);
 
     http.Response response = await http.get(url);
-    //print("Response200 ${response.body}");
+    print("Response200 ${response.body}");
 
     if (response.statusCode == 200) {
       //print("Response200 ${response.body}");

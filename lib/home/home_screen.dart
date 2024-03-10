@@ -198,7 +198,7 @@ class _MyHomePageState extends State<MyHomePage>
     final response = await network.postWithAuth('/check-for-placed-order',
         additionalData: body);
 
-    print("Response ${response.body}");
+    //("Response ${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
@@ -604,6 +604,9 @@ class Highlights extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
+        SizedBox(
+          height: 5,
+        ),
         CarouselSlider(
           items: promos.map((promo) {
             // Use promos list here
@@ -622,18 +625,18 @@ class Highlights extends StatelessWidget {
               child: Card(
                 elevation: 1,
                 shadowColor: Colors.grey,
-                color: const Color.fromARGB(255, 230, 88, 255),
+                color: Colors.grey.shade100,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
+                  borderRadius: BorderRadius.circular(10.0),
                 ),
                 child: SizedBox(
-                  width: 300,
-                  height: 500,
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  height: MediaQuery.of(context).size.height * 0.3,
                   child: Container(
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(0),
                     child: Image.network(promo.image,
-                        fit: BoxFit.cover), // Use promo.image here
+                        fit: BoxFit.fill), // Use promo.image here
                   ),
                 ),
               ),
@@ -652,6 +655,9 @@ class Highlights extends StatelessWidget {
             autoPlayAnimationDuration: const Duration(milliseconds: 800),
             viewportFraction: 0.95,
           ),
+        ),
+        SizedBox(
+          height: 5,
         ),
       ],
     );
@@ -704,12 +710,12 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
         // Handle non-200 responses
         var errorResponse = await response.stream.bytesToString();
         // Log the error response or handle it as per your application's requirement
-        print('Error response: $errorResponse');
+        //print('Error response: $errorResponse');
         return 'Error: Received status code ${response.statusCode}';
       }
     } catch (e) {
       // Handle exceptions
-      print('Exception occurred: $e');
+      //print('Exception occurred: $e');
       return 'Exception: $e';
     }
   }

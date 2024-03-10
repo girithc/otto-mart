@@ -8,6 +8,7 @@ import 'package:pinput/pinput.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/item/product.dart';
+import 'package:pronto/login/phone_screen.dart';
 import 'package:pronto/search/constants.dart';
 import 'package:pronto/search/search_data.dart';
 import 'package:pronto/search/search_item.dart';
@@ -68,9 +69,23 @@ class _SearchPageState extends State<SearchPage> {
             const EdgeInsets.only(bottom: 25, left: 10, right: 10, top: 10),
         margin: EdgeInsets.zero,
         child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => const MyCart()));
+          onPressed: () async {
+            const storage = FlutterSecureStorage();
+
+            // Read the cartId from storage
+            String? cartId = await storage.read(key: 'cartId');
+
+            // Check if cartId is null
+            if (cartId == null) {
+              // If cartId is null, navigate to MyPhone()
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyPhone()),
+              );
+            } else {
+              Navigator.push(context,
+                  MaterialPageRoute(builder: (context) => const MyCart()));
+            }
           },
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.pinkAccent,
@@ -132,13 +147,14 @@ class TypingAnimation extends StatefulWidget {
 
 class _TypingAnimationState extends State<TypingAnimation> {
   List<String> words = [
-    "Tata Sampann",
-    "Coffee",
-    "Atta",
+    "Real Juice",
+    "Neutrogena",
+    "Mamaearth",
     "Mango",
-    "Masala",
-    "Baby Powder",
-    "Banana"
+    "Maggi",
+    "Toothbrush",
+    "Slurrp Farm",
+    "Sriracha"
   ];
   int index = 0;
 
@@ -581,23 +597,33 @@ class ListItem extends StatelessWidget {
         String? cartId = await storage.read(key: 'cartId');
 
         // Check if cartId is null
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => Product(
-              brand: brand,
-              productName: name,
-              productId: id,
-              mrpPrice: mrpPrice,
-              storePrice: storePrice,
-              discount: discount,
-              stockQuantity: stockQuantity,
-              image: image,
-              quantity: quantity,
-              unitOfQuantity: unitOfQuantity,
+        if (cartId == null) {
+          // If cartId is null, navigate to MyPhone()
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const MyPhone()),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Product(
+                brand: brand,
+                productName: name,
+                productId: id,
+                mrpPrice: mrpPrice,
+                storePrice: storePrice,
+                discount: discount,
+                stockQuantity: stockQuantity,
+                image: image,
+                quantity: quantity,
+                unitOfQuantity: unitOfQuantity,
+              ),
             ),
-          ),
-        );
+          );
+        }
+
+        // Check if cartId is null
       },
       child: Stack(
         children: [
