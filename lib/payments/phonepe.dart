@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -35,6 +36,8 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
   late final WebViewController _controller;
   final storage = const FlutterSecureStorage();
   double _currentZoomLevel = 1.0; // Default zoom level
+  late Timer _timer;
+  Duration _remainingTime = Duration(minutes: 10);
 
   @override
   void initState() {
@@ -121,6 +124,20 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
               .showSnackBar(SnackBar(content: Text(message.message)));
         },
       );
+    _startCountdownTimer();
+  }
+
+  void _startCountdownTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        if (_remainingTime.inSeconds > 0) {
+          _remainingTime = _remainingTime - Duration(seconds: 1);
+        } else {
+          _timer.cancel();
+          // Time's up, you can add actions here if needed
+        }
+      });
+    });
   }
 
   Future<bool> checkoutCancelItems(int cartId) async {
@@ -246,13 +263,13 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
         title: InkWell(
           child: ShaderMask(
             shaderCallback: (bounds) => const RadialGradient(
-              center: Alignment.topLeft,
+              center: Alignment.centerRight,
               radius: 1.0,
               colors: [Colors.white, Colors.white70],
               tileMode: TileMode.mirror,
             ).createShader(bounds),
             child: const Text(
-              'Otto Mart Pay',
+              'Pay',
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.bold,
@@ -261,6 +278,19 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
             ),
           ),
         ),
+        actions: [
+          // Countdown Timer in AppBar's trailing part
+          Center(
+            child: Text(
+              '${_remainingTime.inMinutes}:${(_remainingTime.inSeconds % 60).toString().padLeft(2, '0')}',
+              style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white),
+            ),
+          ),
+          SizedBox(width: 16), // Spacing after the timer
+        ],
       ),
       body: WebViewWidget(controller: _controller),
     );

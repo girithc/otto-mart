@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:pronto/cart/cart_screen.dart';
@@ -27,6 +28,8 @@ class _PaymentsPageState extends State<PaymentsPage> {
   var loadingPercentage = 0;
   //final String _selectedPayment = 'PhonePe';
   final storage = const FlutterSecureStorage();
+  late Timer _timer;
+  Duration _remainingTime = Duration(minutes: 10);
 
   @override
   void initState() {

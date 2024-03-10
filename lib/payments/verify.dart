@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/home/home_screen.dart';
+import 'package:pronto/payments/Refund.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 
@@ -61,8 +62,9 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
       );
       */
 
-      print(response.statusCode);
+      print("Response For Verify: \n\n ${response.statusCode}");
       print(response.body);
+      print("\n\n");
 
       if (response.statusCode == 200) {
         // Decode the JSON response
@@ -79,9 +81,11 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
           });
 
           Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => OrderConfirmed(newOrder: true)));
+            context,
+            MaterialPageRoute(
+              builder: (context) => OrderConfirmed(newOrder: true),
+            ),
+          );
         } else {
           // Update UI for unsuccessful payment
           setState(() {
@@ -90,13 +94,22 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
             displayIcon =
                 const Icon(Icons.error_outline, color: Colors.red, size: 75);
           });
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) =>
+                    RefundsPage()), // Make sure CartScreen is defined and imported
+          );
         }
       } else {
-        // Handle error or unsuccessful verification
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (context) =>
+                  RefundsPage()), // Make sure CartScreen is defined and imported
+        );
       }
-    } catch (e) {
-      // Handle exception
-    }
+    } catch (e) {}
   }
 
   @override

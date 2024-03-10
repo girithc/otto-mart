@@ -100,6 +100,8 @@ class _MyCartState extends State<MyCart> {
           .postWithAuth('/phonepe-payment-init', additionalData: body);
       //http.StreamedResponse response = await request.send();
 
+      print("Response: ${response.body} ${response.statusCode}");
+
       if (response.statusCode == 200) {
         //var responseBody = await response.stream.bytesToString();
         var decodedResponse = json.decode(response.body);

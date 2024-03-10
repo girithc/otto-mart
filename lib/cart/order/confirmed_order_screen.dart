@@ -287,8 +287,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     // Deserialize the JSON response
     final jsonResponse = json.decode(response.body);
     _orderInfo = OrderInfo.fromJson(jsonResponse);
-    // Use the parsed orderInfo object to update your UI
-    // For example, you might want to set some state variables and call setState to refresh the UI
+
     setState(() {
       orderStatus = _orderInfo!.orderStatus;
       orderLottie = orderStatusToInfo[orderStatus]!.lottieUrl;
@@ -499,8 +498,19 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                 onPressed: () {
                                   // Do nothing on press
                                 },
-                                child: Icon(
-                                  Icons.info_outlined, // The info icon
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.location_city_outlined,
+                                      color: Colors
+                                          .deepPurpleAccent, // The info icon
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    Text('Store'),
+                                  ],
                                 ),
                               ),
                               ElevatedButton(
