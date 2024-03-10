@@ -437,8 +437,8 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
   @override
   void initState() {
     super.initState();
-    _begin = -0.5;
-    _end = 1;
+    _begin = 0.1;
+    _end = 0.2;
   }
 
   Future<bool> checkLoginStatus() async {
@@ -487,7 +487,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
           children: [
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: _begin, end: _end),
-              duration: const Duration(seconds: 4, microseconds: 20),
+              duration: const Duration(microseconds: 1),
               builder: (BuildContext context, double position, Widget? child) {
                 return Transform.translate(
                   offset: Offset(
@@ -508,7 +508,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                         {context.go('/phone')}
                     });
               },
-              child: Image.asset('assets/images/scooter.jpg'),
+              child: SizedBox.shrink(),
             ),
             const SizedBox(
                 height:
@@ -516,7 +516,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
             Animate(
               effects: const [FadeEffect(), ScaleEffect()],
               child: const Text(
-                "Grocery Delivery In Minutes.",
+                "",
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,

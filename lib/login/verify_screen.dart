@@ -238,16 +238,17 @@ class _MyVerifyState extends State<MyVerify> {
               ),
               const Text(
                 "OTP Verification",
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white),
               ),
               SizedBox(
                 height: MediaQuery.of(context).size.height * 0.01,
               ),
               const Text(
                 "Enter OTP sent to your phone number",
-                style: TextStyle(
-                  fontSize: 18,
-                ),
+                style: TextStyle(fontSize: 18, color: Colors.white),
                 textAlign: TextAlign.center,
               ),
               SizedBox(
@@ -493,6 +494,7 @@ class _MyVerifyState extends State<MyVerify> {
                           fontSize: 16),
                     )),
               ),
+              /*
               Container(
                 margin: EdgeInsets.only(
                     top: MediaQuery.of(context).size.width * 0.05,
@@ -515,6 +517,7 @@ class _MyVerifyState extends State<MyVerify> {
                         ),
                       ),
               ),
+              */
               Container(
                   alignment: Alignment.centerLeft,
                   margin: EdgeInsets.only(
