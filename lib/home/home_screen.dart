@@ -262,6 +262,9 @@ class _MyHomePageState extends State<MyHomePage>
                                       color: Colors.black),
                                 ),
                               ),
+                              SizedBox(
+                                height: 10,
+                              )
                             ],
                           );
                         },
@@ -605,7 +608,7 @@ class Highlights extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       children: [
         SizedBox(
-          height: 5,
+          height: 15,
         ),
         CarouselSlider(
           items: promos.map((promo) {
@@ -624,20 +627,19 @@ class Highlights extends StatelessWidget {
               },
               child: Card(
                 elevation: 1,
-                shadowColor: Colors.grey,
-                color: Colors.grey.shade100,
+                shadowColor: Colors.deepPurpleAccent.withOpacity(0.8),
+                color: Colors.white,
+                surfaceTintColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10.0),
                 ),
-                child: SizedBox(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                child: Container(
+                  width: MediaQuery.of(context).size.width * 0.75,
                   height: MediaQuery.of(context).size.height * 0.3,
-                  child: Container(
-                    alignment: Alignment.center,
-                    padding: const EdgeInsets.all(0),
-                    child: Image.network(promo.image,
-                        fit: BoxFit.fill), // Use promo.image here
-                  ),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.all(0),
+                  child: Image.network(promo.image,
+                      fit: BoxFit.fill), // Use promo.image here
                 ),
               ),
             );
@@ -657,7 +659,7 @@ class Highlights extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 5,
+          height: 10,
         ),
       ],
     );

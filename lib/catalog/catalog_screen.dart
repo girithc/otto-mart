@@ -765,15 +765,33 @@ class _ListItem2State extends State<ListItem2> {
                                       ),
                                       InkWell(
                                         onTap: () {
-                                          cart.addItemToCart(CartItem(
-                                              productId: widget.id.toString(),
-                                              productName: widget.name,
-                                              price: widget.mrpPrice,
-                                              soldPrice: widget.storePrice,
-                                              quantity: 1,
-                                              stockQuantity:
-                                                  widget.stockQuantity,
-                                              image: widget.image));
+                                          cart
+                                              .addItemToCart(CartItem(
+                                                  productId:
+                                                      widget.id.toString(),
+                                                  productName: widget.name,
+                                                  price: widget.mrpPrice,
+                                                  soldPrice: widget.storePrice,
+                                                  quantity: 1,
+                                                  stockQuantity:
+                                                      widget.stockQuantity,
+                                                  image: widget.image))
+                                              .then((value) => {
+                                                    if (value!.outOfStock ==
+                                                        true)
+                                                      {
+                                                        ScaffoldMessenger.of(
+                                                                context)
+                                                            .showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                                'Only limited quantity available: ${value.stockQuantity}'),
+                                                            duration: Duration(
+                                                                seconds: 2),
+                                                          ),
+                                                        )
+                                                      }
+                                                  });
                                         },
                                         child: const Icon(
                                           Icons.add,

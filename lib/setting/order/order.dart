@@ -114,6 +114,8 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
               itemBuilder: (context, index) {
                 // Parse the order date string into a DateTime object
                 DateTime orderDateTime = DateTime.parse(orders[index].date!);
+                orderDateTime =
+                    orderDateTime.add(Duration(hours: 5, minutes: 30));
                 // Format the date and time in a more readable form
                 String formattedDateTime =
                     DateFormat('MMMM d, y \'at\' h:mma').format(orderDateTime);

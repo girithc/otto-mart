@@ -530,7 +530,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                             children: <Widget>[
                                               Text('Store Address'),
                                               Text(
-                                                  'Shop G-208, Shree Ashtivinayak CHS Limited, Old DN Nagar Road, Mumbai - 400053') // Replace this with your actual store address
+                                                  'G208, Ground Floor, Moongipa Arcade, Old DN Nagar Road, Mumbai-400053') // Replace this with your actual store address
                                               // You can add more text or widgets here as needed
                                             ],
                                           ),
