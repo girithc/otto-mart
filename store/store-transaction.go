@@ -79,13 +79,11 @@ func (s *PostgresStore) CreateTransactionTable(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) (string, error) {
-	// Generate a unique merchant transaction ID
 	fmt.Println("Entered Create Transaction")
 	merchantTransactionID := uuid.NewString()
 	if len(merchantTransactionID) > 35 {
 		merchantTransactionID = merchantTransactionID[:35]
 	}
-	// This generates a UUID as a string
 
 	// Fetch necessary data from the sales_order and customer tables
 	var merchantUserID string
@@ -97,14 +95,14 @@ func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) (string, erro
               WHERE sc.id = $1`
 	err := tx.QueryRow(query, cart_id).Scan(&cartID, &merchantUserID, &amount)
 	if err != nil {
-		return "", fmt.Errorf("error %d", err)
+		return "", fmt.Errorf("error fetching cart data: %w", err)
 	}
 
 	// Define the transaction status (e.g., 'pending', 'completed', etc.)
 	status := "pending" // or any appropriate status
 
 	insertQuery := `INSERT INTO transaction (merchant_user_id, cart_id, merchant_transaction_id, amount, status)
-                VALUES ($1, $2, $3, $4, $5)`
+    VALUES ($1, $2, $3, $4, $5)`
 	_, err = tx.Exec(insertQuery, merchantUserID, cartID, merchantTransactionID, amount, status)
 
 	if err != nil {
@@ -117,7 +115,7 @@ func (s *PostgresStore) CreateTransaction(tx *sql.Tx, cart_id int) (string, erro
 			}
 		}
 		// Handle other errors
-		return "", fmt.Errorf("error %d", err)
+		return "", fmt.Errorf("error executing insert: %w", err)
 	}
 
 	return merchantTransactionID, nil
@@ -136,8 +134,9 @@ type TransactionDetails struct {
 }
 
 // CompleteTransaction updates a transaction and returns the updated details.
-func (s *PostgresStore) CompleteTransaction(tx *sql.Tx, paymentDetails TransactionDetails) (bool, error) {
-	// Prepare and execute the SQL update query
+func (s *PostgresStore) CompleteTransaction(tx *sql.Tx, paymentDetails TransactionDetails, refundOpts ...bool) (bool, error) {
+
+	// Prepare and execute the SQL update query with refund status included
 	updateQuery := `
     UPDATE transaction
     SET status = $1, 
@@ -146,7 +145,7 @@ func (s *PostgresStore) CompleteTransaction(tx *sql.Tx, paymentDetails Transacti
         payment_method = $4,
         merchant_id = $5,
         payment_gateway_name = $6,
-		transaction_id = $7
+        transaction_id = $7
     WHERE merchant_transaction_id = $8`
 
 	if _, err := tx.Exec(updateQuery, paymentDetails.Status, paymentDetails.ResponseCode,

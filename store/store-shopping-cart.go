@@ -53,7 +53,7 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
 	}
 
 	alterTableQuery := `ALTER TABLE shopping_cart
-        ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'pickup';`
+        ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'delivery';`
 
 	_, err = tx.Exec(alterTableQuery)
 	if err != nil {

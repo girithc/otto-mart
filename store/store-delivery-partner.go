@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) CreateDeliveryPartnerTable(tx *sql.Tx) error {
@@ -111,15 +110,21 @@ func (s *PostgresStore) Create_Delivery_Partner(dp *types.Create_Delivery_Partne
 	return partners[0], nil
 }
 
+type OrderAssigned struct {
+	ID                int       `json:"id"`
+	DeliveryPartnerID int       `json:"delivery_partner_id,omitempty"` // omit if zero
+	StoreID           int       `json:"store_id"`
+	OrderDate         time.Time `json:"order_date"`
+	OrderStatus       string    `json:"order_status"`
+}
+
 func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, error) {
-	// Define the query
+	// Define the query to get the oldest order without a delivery partner assigned
 	query := `
-        SELECT so.id, so.delivery_partner_id, so.store_id,
-               so.order_date, so.order_status, so.order_dp_status
-        FROM sales_order so
-        JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
-        WHERE dp.phone = $1 AND so.order_status != 'completed'
-        ORDER BY so.order_date ASC
+        SELECT id, store_id, order_date, order_status
+        FROM sales_order
+        WHERE delivery_partner_id IS NULL AND order_status NOT IN ('completed', 'cancelled')
+        ORDER BY order_date ASC
         LIMIT 1
     `
 
@@ -127,56 +132,26 @@ func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, err
 	order := &OrderAssigned{}
 
 	// Execute the query
-	err := s.db.QueryRow(query, phone).Scan(&order.ID, &order.DeliveryPartnerID, &order.StoreID, &order.OrderDate, &order.OrderStatus, &order.DeliveryPartnerStatus)
+	err := s.db.QueryRow(query).Scan(&order.ID, &order.StoreID, &order.OrderDate, &order.OrderStatus)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// No order assigned, attempt to assign an order
-			cartID, err := s.GetOldestUnassignedOrder()
-			if err != nil {
-				return nil, err
-			}
-			if cartID > 0 {
-				assigned, assignErr := s.AssignDeliveryPartnerToSalesOrder(cartID, phone)
-				if assigned && assignErr == nil {
-					// Fetch the newly assigned order
-					query := `
-				SELECT so.id, so.delivery_partner_id, so.store_id,
-					so.order_date, so.order_status, so.order_dp_status
-				FROM sales_order so
-				JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
-				WHERE dp.phone = $1
-				ORDER BY so.order_date ASC
-				LIMIT 1
-    `
-
-					// Variable to hold the order details
-					order := &OrderAssigned{}
-					err := s.db.QueryRow(query, phone).Scan(&order.ID, &order.DeliveryPartnerID, &order.StoreID, &order.OrderDate, &order.OrderStatus, &order.DeliveryPartnerStatus)
-					if err != nil {
-						return nil, err
-					}
-					return order, nil
-				}
-
-				return nil, assignErr
-			}
-			return nil, nil
-
+			// No unassigned order found, return an OrderAssigned object with default values
+			return &OrderAssigned{
+				ID:          0,
+				StoreID:     0,
+				OrderDate:   time.Time{},
+				OrderStatus: "no order",
+			}, nil
 		}
-		return nil, err
+		return nil, fmt.Errorf("error querying for unassigned order: %s", err)
 	}
+
+	// Optionally, you could assign the current delivery partner to this order here,
+	// by updating the delivery_partner_id field for the fetched order in the database.
 
 	return order, nil
 }
 
-type OrderAssigned struct {
-	ID                    int       `json:"id"`
-	DeliveryPartnerID     int       `json:"delivery_partner_id"`
-	StoreID               int       `json:"store_id"`
-	OrderDate             time.Time `json:"order_date"`
-	OrderStatus           string    `json:"order_status"`
-	DeliveryPartnerStatus string    `json:"order_dp_status"`
-}
 type OrderAccepted_DP struct {
 	ID                    int       `json:"id"`
 	DeliveryPartnerID     int       `json:"delivery_partner_id"`
@@ -189,142 +164,52 @@ type OrderAccepted_DP struct {
 	CustomerPhone         string    `json:"customer_phone"`
 }
 
-func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) (*OrderAccepted_DP, error) {
-	// Start a transaction
+func (s *PostgresStore) DeliveryPartnerAcceptOrder(phone string, order_id int) ([]OrderAssignResponse, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	// Get delivery partner ID from phone number
 	var deliveryPartnerID int
 	err = tx.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Verify that the delivery partner assigned is the one making the request
-	var existingDeliveryPartnerID sql.NullInt64 // Using sql.NullInt64 to handle null values
+	var existingDeliveryPartnerID sql.NullInt64
 	err = tx.QueryRow(`SELECT delivery_partner_id FROM sales_order WHERE id = $1;`, order_id).Scan(&existingDeliveryPartnerID)
 	if err != nil {
 		return nil, err
 	}
-	if !existingDeliveryPartnerID.Valid || existingDeliveryPartnerID.Int64 != int64(deliveryPartnerID) {
-		return nil, fmt.Errorf("order is not assigned to this delivery partner")
+	if existingDeliveryPartnerID.Valid && existingDeliveryPartnerID.Int64 != int64(deliveryPartnerID) {
+		return nil, fmt.Errorf("order is already assigned to another delivery partner")
 	}
 
-	// Update the sales_order status to 'accepted'
-	var storeID int
-	var orderDate time.Time
-	var orderStatus, orderDPStatus string
-	err = tx.QueryRow(`
-    UPDATE sales_order
-    SET order_dp_status = 'accepted'
-    WHERE id = $1 AND (order_dp_status = 'pending' OR delivery_partner_id = $2)
-    RETURNING store_id, order_date, order_status, order_dp_status;`, order_id, deliveryPartnerID).Scan(&storeID, &orderDate, &orderStatus, &orderDPStatus)
+	_, err = tx.Exec(`UPDATE sales_order SET delivery_partner_id = $1, order_dp_status = 'accepted' WHERE id = $2;`, deliveryPartnerID, order_id)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check for an existing delivery_order record
-	var existingDeliveryOrderID int
-	err = tx.QueryRow(`SELECT id FROM delivery_order WHERE sales_order_id = $1 AND delivery_partner_id = $2;`, order_id, deliveryPartnerID).Scan(&existingDeliveryOrderID)
-
-	// Update or insert delivery_order record
-	if err == sql.ErrNoRows {
-		// Insert a new delivery_order record with order_accepted_date as current timestamp
-		_, err = tx.Exec(`
-            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_accepted_date)
-            VALUES ($1, $2, CURRENT_TIMESTAMP);`, order_id, deliveryPartnerID)
-		if err != nil {
-			return nil, err
-		}
-	} else if err == nil {
-		// Update the existing record's order_accepted_date
-		_, err = tx.Exec(`
-            UPDATE delivery_order
-            SET order_accepted_date = CURRENT_TIMESTAMP
-            WHERE id = $1;`, existingDeliveryOrderID)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, err
-	}
-
-	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
 
-	// Fetch store details
-	var storeName, storeAddress string
-	err = s.db.QueryRow(`SELECT name, address FROM store WHERE id = $1;`, storeID).Scan(&storeName, &storeAddress)
-	if err != nil {
-		return nil, err
-	}
-
-	if orderStatus == "arrived" {
-		var customerPhone string
-
-		// Get customer_id from sales_order table
-		var customerID int
-		err = s.db.QueryRow(`SELECT customer_id FROM sales_order WHERE id = $1;`, order_id).Scan(&customerID)
-		if err != nil {
-			return nil, err
-		}
-
-		// Get phone from customer table using customer_id
-		err = s.db.QueryRow(`SELECT phone FROM customer WHERE id = $1;`, customerID).Scan(&customerPhone)
-		if err != nil {
-			return nil, err
-		}
-
-		// Create and return the accepted order details
-		acceptedOrder := &OrderAccepted_DP{
-			ID:                    order_id,
-			DeliveryPartnerID:     deliveryPartnerID,
-			StoreID:               storeID,
-			StoreName:             storeName,
-			StoreAddress:          storeAddress,
-			OrderDate:             orderDate,
-			OrderStatus:           orderStatus,
-			DeliveryPartnerStatus: orderDPStatus,
-			CustomerPhone:         customerPhone,
-		}
-
-		return acceptedOrder, nil
-
-	} else {
-		// Create and return the accepted order details
-		acceptedOrder := &OrderAccepted_DP{
-			ID:                    order_id,
-			DeliveryPartnerID:     deliveryPartnerID,
-			StoreID:               storeID,
-			StoreName:             storeName,
-			StoreAddress:          storeAddress,
-			OrderDate:             orderDate,
-			OrderStatus:           orderStatus,
-			DeliveryPartnerStatus: orderDPStatus,
-			CustomerPhone:         "",
-		}
-		return acceptedOrder, nil
-
-	}
+	return s.GetAssignedOrder(deliveryPartnerID, phone)
 }
 
 type PickupOrderInfo struct {
-	CustomerName    string    `json:"customer_name"`
-	CustomerPhone   string    `json:"customer_phone"`
-	Latitude        float64   `json:"latitude"`
-	Longitude       float64   `json:"longitude"`
-	LineOneAddress  string    `json:"line_one_address"`
-	LineTwoAddress  string    `json:"line_two_address"`
-	StreetAddress   string    `json:"street_address"`
-	OrderDate       time.Time `json:"order_date"`
-	OrderStatus     string    `json:"order_status"`
-	AmountToCollect int       `json:"amount_to_collect"`
+	CustomerName   string    `json:"customer_name"`
+	CustomerPhone  string    `json:"customer_phone"`
+	Latitude       float64   `json:"latitude"`
+	Longitude      float64   `json:"longitude"`
+	LineOneAddress string    `json:"line_one_address"`
+	LineTwoAddress string    `json:"line_two_address"`
+	StreetAddress  string    `json:"street_address"`
+	OrderDate      time.Time `json:"order_date"`
+	OrderStatus    string    `json:"order_status"`
+	OrderOTP       string    `json:"order_otp"`
+	NumberOfItems  int       `json:"number_of_items"`
 }
 
 func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (*PickupOrderInfo, error) {
@@ -337,44 +222,235 @@ func (s *PostgresStore) DeliveryPartnerPickupOrder(phone string, order_id int) (
 		return nil, err
 	}
 
+	var cartID int
 	orderQuery := `
-    SELECT c.name, c.phone, so.order_date, so.order_status,
-           COALESCE(sc.address_id, so.address_id) AS address_id, t.amount
+    SELECT c.name, c.phone, so.order_date, so.order_status, COALESCE(sc.address_id, so.address_id) AS address_id, so.cart_id
     FROM sales_order so
     LEFT JOIN shopping_cart sc ON so.cart_id = sc.id
     INNER JOIN customer c ON so.customer_id = c.id
-    LEFT JOIN transaction t ON so.transaction_id = t.id
     WHERE so.id = $1 AND so.delivery_partner_id = $2 AND so.order_dp_status = 'accepted' AND so.order_status != 'completed';`
 
-	var addressID int
-	err = s.db.QueryRow(orderQuery, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.OrderDate, &info.OrderStatus, &addressID, &info.AmountToCollect)
+	err = s.db.QueryRow(orderQuery, order_id, deliveryPartnerID).Scan(&info.CustomerName, &info.CustomerPhone, &info.OrderDate, &info.OrderStatus, &cartID, &info.NumberOfItems)
 	if err != nil {
 		return nil, err
 	}
 
 	// Query to get address information using the obtained addressID
 	addressQuery := `SELECT latitude, longitude, line_one_address, line_two_address, street_address FROM address WHERE id = $1;`
-	err = s.db.QueryRow(addressQuery, addressID).Scan(&info.Latitude, &info.Longitude, &info.LineOneAddress, &info.LineTwoAddress, &info.StreetAddress)
+	err = s.db.QueryRow(addressQuery, cartID).Scan(&info.Latitude, &info.Longitude, &info.LineOneAddress, &info.LineTwoAddress, &info.StreetAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	// Evaluate order status
-	switch info.OrderStatus {
-	case "dispatched":
-		// Return the information for dispatched orders
-		println("Order Dispatched")
-		return &info, nil
-	case "packed":
-		// Return nil for packed orders as they are not yet ready for pickup
-		println("Order Not Dispatched")
-		return nil, nil
-	default:
-		// For any other status, return an error indicating the order is not ready for pickup
-		return nil, &OrderStatusError{Status: info.OrderStatus}
+	// Query to get OTP
+	otpQuery := `SELECT otp_code FROM sales_order_otp WHERE cart_id = $1 AND active = true LIMIT 1;`
+	err = s.db.QueryRow(otpQuery, cartID).Scan(&info.OrderOTP)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to fetch OTP for order %d: %s", order_id, err)
 	}
+
+	// Query to calculate total number of items
+	itemsQuery := `SELECT SUM(quantity) FROM cart_item WHERE cart_id = $1;`
+	err = s.db.QueryRow(itemsQuery, cartID).Scan(&info.NumberOfItems)
+	if err != nil {
+		return nil, fmt.Errorf("failed to calculate total number of items for cart %d: %s", cartID, err)
+	}
+
+	return &info, nil
 }
 
+type DeliveryOrderDetails struct {
+	CustomerName   string        `json:"customer_name"`
+	CustomerPhone  string        `json:"customer_phone"`
+	Latitude       float64       `json:"latitude"`
+	Longitude      float64       `json:"longitude"`
+	LineOneAddress string        `json:"line_one_address"`
+	LineTwoAddress string        `json:"line_two_address"`
+	StreetAddress  string        `json:"street_address"`
+	OrderDate      time.Time     `json:"order_date"`
+	OrderStatus    string        `json:"order_status"`
+	OrderOTP       string        `json:"order_otp"`
+	Items          []OrderDetail `json:"items"`
+}
+
+func (s *PostgresStore) DeliveryPartnerGoDeliverOrder(phone string, orderId int) (*DeliveryOrderDetails, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Fetch delivery partner ID
+	var deliveryPartnerID int
+	err = tx.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the order status to 'dispatched' if it's 'accepted' or 'packed'
+	_, err = tx.Exec(`
+        UPDATE sales_order
+        SET order_status = 'dispatched'
+        WHERE id = $1 AND delivery_partner_id = $2 AND order_status IN ('accepted', 'packed');
+    `, orderId, deliveryPartnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	var details DeliveryOrderDetails
+
+	// Fetch order and customer details
+	err = tx.QueryRow(`
+        SELECT c.name, c.phone, a.latitude, a.longitude, a.line_one_address, a.line_two_address, a.street_address,
+               so.order_date, so.order_status, so_otp.otp_code
+        FROM sales_order so
+        JOIN customer c ON so.customer_id = c.id
+        JOIN address a ON so.address_id = a.id
+        LEFT JOIN sales_order_otp so_otp ON so.id = so_otp.cart_id AND so_otp.active = true
+        WHERE so.id = $1;
+    `, orderId).Scan(
+		&details.CustomerName, &details.CustomerPhone, &details.Latitude, &details.Longitude,
+		&details.LineOneAddress, &details.LineTwoAddress, &details.StreetAddress, &details.OrderDate,
+		&details.OrderStatus, &details.OrderOTP,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch items details for the order
+	items, err := s.GetOrderDetails(orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	details.Items = items
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	// Return the complete order details including items
+	return &details, nil
+}
+
+type ArriveOrderDetails struct {
+	CustomerName   string        `json:"customer_name"`
+	CustomerPhone  string        `json:"customer_phone"`
+	Latitude       float64       `json:"latitude"`
+	Longitude      float64       `json:"longitude"`
+	LineOneAddress string        `json:"line_one_address"`
+	LineTwoAddress string        `json:"line_two_address"`
+	StreetAddress  string        `json:"street_address"`
+	OrderDate      time.Time     `json:"order_date"`
+	OrderStatus    string        `json:"order_status"`
+	OrderOTP       string        `json:"order_otp"`
+	Items          []OrderDetail `json:"items"`
+	Subtotal       int           `json:"subtotal"`
+	Paid           bool          `json:"paid"`
+	PaymentType    string        `json:"payment_type"`
+}
+
+func (s *PostgresStore) DeliveryPartnerArriveDestination(phone string, orderId int) (*ArriveOrderDetails, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	// Fetch delivery partner ID
+	var deliveryPartnerID int
+	err = tx.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the order status to 'arrived'
+	_, err = tx.Exec(`UPDATE sales_order SET order_status = 'arrived' WHERE id = $1;`, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	var details ArriveOrderDetails
+
+	// Fetch order, customer, address details, and shopping cart subtotal
+	err = tx.QueryRow(`
+        SELECT c.name, c.phone, a.latitude, a.longitude, a.line_one_address, a.line_two_address, a.street_address,
+               so.order_date, so.order_status, so_otp.otp_code, sc.subtotal, so.paid, so.payment_type
+        FROM sales_order so
+        JOIN customer c ON so.customer_id = c.id
+        JOIN address a ON so.address_id = a.id
+        JOIN shopping_cart sc ON so.cart_id = sc.id
+        LEFT JOIN sales_order_otp so_otp ON so.id = so_otp.cart_id AND so_otp.active = true
+        WHERE so.id = $1;
+    `, orderId).Scan(
+		&details.CustomerName, &details.CustomerPhone, &details.Latitude, &details.Longitude,
+		&details.LineOneAddress, &details.LineTwoAddress, &details.StreetAddress, &details.OrderDate,
+		&details.OrderStatus, &details.OrderOTP, &details.Subtotal, &details.Paid, &details.PaymentType,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch items details for the order
+	details.Items, err = s.GetOrderDetails(orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &details, nil
+}
+
+type OrderAssignResponse struct {
+	OrderId     int       `json:"order_id"`
+	OrderStatus string    `json:"order_status"`
+	OrderDate   time.Time `json:"order_date"`
+	OrderOTP    string    `json:"order_otp"`
+}
+
+func (s *PostgresStore) GetAssignedOrder(storeId int, phone string) ([]OrderAssignResponse, error) {
+	var responses []OrderAssignResponse
+
+	query := `
+	SELECT so.id, so.order_status, so.order_date, so_otp.otp_code
+	FROM sales_order so
+	JOIN sales_order_otp so_otp ON so.id = so_otp.cart_id
+	JOIN Customer c ON so.customer_id = c.id
+	WHERE so.store_id = $1 AND c.phone = $2 AND so_otp.active = true
+	ORDER BY so.order_date DESC;`
+
+	rows, err := s.db.Query(query, storeId, phone)
+	if err != nil {
+		return nil, fmt.Errorf("error querying assigned orders: %s", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var response OrderAssignResponse
+		err := rows.Scan(&response.OrderId, &response.OrderStatus, &response.OrderDate, &response.OrderOTP)
+		if err != nil {
+			return nil, fmt.Errorf("error scanning assigned orders: %s", err)
+		}
+		responses = append(responses, response)
+	}
+
+	// Check for errors encountered during iteration
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over assigned orders: %s", err)
+	}
+
+	if len(responses) == 0 {
+		// No orders found, return an error or an empty slice depending on your requirement
+		return nil, fmt.Errorf("no assigned orders found for store ID %d and phone %s", storeId, phone)
+	}
+
+	return responses, nil
+}
 func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int) (*DeliveryPartnerDispatchResult, error) {
 	var location int
 
@@ -543,8 +619,11 @@ func (s *PostgresStore) DeliveryPartnerArrive(phone string, order_id int, status
 	return result, nil
 }
 
-func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order_id int, image string) (*DeliveryCompletionResult, error) {
-	// Start a transaction
+type DeliveryCompletionResult struct {
+	Success bool `json:"success"`
+}
+
+func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order_id int, amountCollected int) (*DeliveryCompletionResult, error) {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return nil, err
@@ -559,28 +638,22 @@ func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order
 	}
 
 	// Update the order_status to 'completed' in sales_order
-	_, err = tx.Exec("UPDATE sales_order SET order_status = 'completed' WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed'", order_id, deliveryPartnerIDFromDB)
+	_, err = tx.Exec(`
+        UPDATE sales_order
+        SET order_status = 'completed'
+        WHERE id = $1 AND delivery_partner_id = $2 AND order_status != 'completed';
+    `, order_id, deliveryPartnerIDFromDB)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check for an existing delivery_order record
-	var existingDeliveryOrderID int
-	err = tx.QueryRow("SELECT id FROM delivery_order WHERE sales_order_id = $1 AND delivery_partner_id = $2", order_id, deliveryPartnerIDFromDB).Scan(&existingDeliveryOrderID)
-
-	// Update or insert delivery_order record
-	if err == sql.ErrNoRows {
-		// Insert a new delivery_order record with order_delivered_date and image_url
-		_, err = tx.Exec(`
-            INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_delivered_date, image_url)
-            VALUES ($1, $2, CURRENT_TIMESTAMP, $3);`, order_id, deliveryPartnerIDFromDB, image)
-	} else if err == nil {
-		// Update the existing record's order_delivered_date and image_url
-		_, err = tx.Exec(`
-            UPDATE delivery_order 
-            SET order_delivered_date = CURRENT_TIMESTAMP, image_url = $2
-            WHERE id = $1;`, existingDeliveryOrderID, image)
-	}
+	// Update or insert delivery_order record with amount_collected
+	_, err = tx.Exec(`
+        INSERT INTO delivery_order (sales_order_id, delivery_partner_id, order_delivered_date, amount_collected)
+        VALUES ($1, $2, CURRENT_TIMESTAMP, $3)
+        ON CONFLICT (sales_order_id, delivery_partner_id) DO UPDATE
+        SET order_delivered_date = CURRENT_TIMESTAMP, amount_collected = EXCLUDED.amount_collected;
+    `, order_id, deliveryPartnerIDFromDB, amountCollected)
 	if err != nil {
 		return nil, err
 	}
@@ -590,14 +663,8 @@ func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order
 		return nil, err
 	}
 
-	// Return the delivery completion result
-	result := &DeliveryCompletionResult{
-		SalesOrderID: order_id,
-		OrderStatus:  "completed",
-		Image:        image,
-	}
-
-	return result, nil
+	// Return the delivery completion result indicating success
+	return &DeliveryCompletionResult{Success: true}, nil
 }
 
 func (s *PostgresStore) DeliveryPartnerGetOrderDetails(new_req types.DeliveryPartnerOrderDetails) (*types.DPOrderDetails, error) {
@@ -636,12 +703,6 @@ func (s *PostgresStore) DeliveryPartnerGetOrderDetails(new_req types.DeliveryPar
 	}
 
 	return order, nil
-}
-
-type DeliveryCompletionResult struct {
-	SalesOrderID int    `json:"sales_order_id"`
-	OrderStatus  string `json:"order_status"`
-	Image        string `json:"image"`
 }
 
 type DeliveryPartnerDispatchResult struct {

@@ -47,6 +47,9 @@ func (s *PostgresStore) CreateUpdateAppTable(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, error) {
+	fmt.Println("Inside NeedToUpdate")
+	fmt.Println("New Request: ", newReq.BuildNo, newReq.Version, newReq.Platform)
+
 	var versionNumber, buildNumber string
 	var maintenance bool
 	var maintenanceEndTime sql.NullTime // Use sql.NullTime to handle NULL values
@@ -57,11 +60,17 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, 
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No records found, possibly a new app, needs to update
-			return &UpdateResponse{UpdateRequired: false}, nil
+			return &UpdateResponse{UpdateRequired: false, MaintenanceRequired: true, MaintenanceEndTime: time.Now().Add(6 * time.Hour)}, nil
 		}
 		// Handle other potential errors
 		return nil, fmt.Errorf("error querying updateapp table: %w", err)
 	}
+
+	fmt.Println("New Request: ", newReq.BuildNo, newReq.Version, newReq.Platform)
+
+	fmt.Println("Build Number: ", buildNumber)
+	fmt.Println("Version Number: ", versionNumber)
+	fmt.Println("Maintenance: ", maintenance)
 
 	// Initialize the default response to no update required and check for maintenance
 	updateResponse := &UpdateResponse{

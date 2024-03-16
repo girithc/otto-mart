@@ -98,6 +98,21 @@ func (s *Server) DeliveryPartnerAcceptOrder(res http.ResponseWriter, req *http.R
 	return WriteJSON(res, http.StatusOK, order)
 }
 
+func (s *Server) DeliveryPartnerGetAssignedOrder(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerStore)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerGetAssignedOrder()")
+		return err
+	}
+
+	order, err := s.store.GetAssignedOrder(new_req.StoreId, new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
 func (s *Server) DeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.DeliveryPartnerAcceptOrder)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
@@ -118,6 +133,36 @@ func (s *Server) DeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.R
 	// Check if order is nil and err is nil, indicating no order changed
 	if order == nil && err == nil {
 		return WriteJSON(res, http.StatusNotModified, map[string]string{"message": "No order changed"})
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
+func (s *Server) DeliveryPartnerArriveDestination(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerAcceptOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerArriveDestination()")
+		return err
+	}
+
+	order, err := s.store.DeliveryPartnerArriveDestination(new_req.Phone, new_req.SalesOrderId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, order)
+}
+
+func (s *Server) DeliveryPartnerGoDeliverOrder(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.DeliveryPartnerAcceptOrder)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in DeliveryPartnerGoDeliverOrder()")
+		return err
+	}
+
+	order, err := s.store.DeliveryPartnerGoDeliverOrder(new_req.Phone, new_req.SalesOrderId)
+	if err != nil {
+		return WriteJSON(res, http.StatusBadRequest, order)
 	}
 
 	return WriteJSON(res, http.StatusOK, order)
@@ -169,13 +214,13 @@ func (s *Server) DeliveryPartnerArrive(res http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) DeliveryPartnerCompleteOrder(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.DeliveryPartnerCompleteOrder)
+	new_req := new(types.DPCompleteOrder)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in DeliveryPartnerCompleteOrder()")
 		return err
 	}
 
-	order, err := s.store.DeliveryPartnerCompleteOrderDelivery(new_req.Phone, new_req.SalesOrderId, new_req.Image)
+	order, err := s.store.DeliveryPartnerCompleteOrderDelivery(new_req.Phone, new_req.SalesOrderId, new_req.AmountCollected)
 	if err != nil {
 		return WriteJSON(res, http.StatusBadRequest, err)
 	}

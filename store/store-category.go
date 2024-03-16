@@ -114,7 +114,7 @@ func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error
         SELECT c.id, c.name, c.promotion, ci.image, COALESCE(ci.position, 0) AS position, c.created_at, COALESCE(c.created_by, 0) AS created_by
         FROM category c
         LEFT JOIN category_image ci ON c.id = ci.category_id AND ci.position = 1
-        WHERE c.promotion = $1
+		WHERE c.promotion = $1
     `
 
 	rows, err := s.db.Query(query, promotion)

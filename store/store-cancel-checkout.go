@@ -106,16 +106,41 @@ func (s *PostgresStore) ResetLockedQuantities(tx *sql.Tx, cart_id int) error {
 	return nil
 }
 
+// alreadycancelled, doCartUnlock
 func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int, sign string, lockType string) (string, bool, error) {
-	// Update the cart_lock record
-	query := `UPDATE cart_lock SET completed = 'ended', 
-	last_updated = CURRENT_TIMESTAMP 
-	WHERE cart_id = $1 AND completed = 'started' AND sign = $2 AND  lock_type = $3
-	`
-	res, err := tx.Exec(query, cartId, sign, lockType)
+	// First, check if there's an existing sales_order record for the given cartId
+	var salesOrderExists bool
+	checkQuery := `SELECT EXISTS(SELECT 1 FROM sales_order WHERE cart_id = $1)`
+	err := tx.QueryRow(checkQuery, cartId).Scan(&salesOrderExists)
 	if err != nil {
 		tx.Rollback() // Rollback in case of any error
-		print(err)
+		return "", false, fmt.Errorf("error checking for existing sales_order record: %w", err)
+	}
+
+	// If a sales_order record exists, perform the update on cart_lock and return false
+	if salesOrderExists {
+		updateQuery := `UPDATE cart_lock SET completed = 'ended', 
+        last_updated = CURRENT_TIMESTAMP 
+        WHERE cart_id = $1 AND completed = 'started' AND sign = $2 AND lock_type = $3`
+
+		_, err := tx.Exec(updateQuery, cartId, sign, lockType)
+		if err != nil {
+			tx.Rollback() // Rollback in case of any error
+			return "", false, fmt.Errorf("error updating cart_lock table: %w", err)
+		}
+
+		// Return 'done' and false, indicating that a sales_order record was found and cart_lock was updated
+		return "done", false, nil
+	}
+
+	// If no sales_order record exists, proceed with the original logic
+	updateQuery := `UPDATE cart_lock SET completed = 'ended', 
+    last_updated = CURRENT_TIMESTAMP 
+    WHERE cart_id = $1 AND completed = 'started' AND sign = $2 AND lock_type = $3`
+
+	res, err := tx.Exec(updateQuery, cartId, sign, lockType)
+	if err != nil {
+		tx.Rollback() // Rollback in case of any error
 		return "", false, fmt.Errorf("error updating cart_lock table: %w", err)
 	}
 
@@ -123,7 +148,6 @@ func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int, sign string, lockTyp
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
 		tx.Rollback()
-		print(err)
 		return "", false, fmt.Errorf("error getting rows affected: %w", err)
 	}
 
@@ -131,6 +155,7 @@ func (s *PostgresStore) EndCartLock(tx *sql.Tx, cartId int, sign string, lockTyp
 		return "done", false, nil
 	}
 
+	// Return an empty string and true, indicating that no sales_order record was found and cart_lock was updated
 	return "", true, nil
 }
 

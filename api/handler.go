@@ -792,10 +792,34 @@ func (s *Server) handleDeliveryPartnerAcceptOrder(res http.ResponseWriter, req *
 	return nil
 }
 
+func (s *Server) handleDeliveryPartnerGetAssignedOrders(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "delivery_get_assigned_orders")
+		return s.goRoutineWrapper(DeliveryPartnerGetAssignedOrder, s.DeliveryPartnerGetAssignedOrder, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleDeliveryPartnerPickupOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_pickup_order")
 		return s.goRoutineWrapper(DeliveryPartnerPickupOrder, s.DeliveryPartnerPickupOrder, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleDeliveryPartnerGoDeliverOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "delivery_partner_go_delivery_order")
+		return s.goRoutineWrapper(DeliveryPartnerGoDeliverOrder, s.DeliveryPartnerPickupOrder, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleArriveDestination(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "delivery_partner_go_delivery_order")
+		return s.goRoutineWrapper(DeliveryPartnerArriveDestination, s.DeliveryPartnerArriveDestination, res, req)
 	}
 	return nil
 }

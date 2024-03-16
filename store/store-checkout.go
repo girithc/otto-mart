@@ -147,128 +147,84 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 }
 
 func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string, merchantTransactionID string) (bool, error) {
-	var storeID sql.NullInt64
+	var storeID, customerID sql.NullInt64
+	var orderType string // Variable to store order_type from the shopping cart
 
-	// get cart items
+	// Get cart items
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
 	rows, err := s.db.Query(query, cart_id)
 	if err != nil {
-		return true, err
+		return false, err
 	}
 	defer rows.Close()
 
 	var cartItems []*types.Checkout_Cart_Item
 	for rows.Next() {
-		checkout_cart_item := &types.Checkout_Cart_Item{}
-		if err := rows.Scan(&checkout_cart_item.Item_Id, &checkout_cart_item.Quantity); err != nil {
-			return true, err
+		var checkoutCartItem types.Checkout_Cart_Item
+		if err := rows.Scan(&checkoutCartItem.Item_Id, &checkoutCartItem.Quantity); err != nil {
+			return false, err
 		}
-		println("cart Item ID", checkout_cart_item.Item_Id)
-		println("cartID ", cart_id)
-		cartItems = append(cartItems, checkout_cart_item)
+		cartItems = append(cartItems, &checkoutCartItem)
 	}
 	if err = rows.Err(); err != nil {
-		return true, err
+		return false, err
 	}
 
-	// Existing query to fetch customer_id, store_id, and address from shopping_cart
-	var customerID sql.NullInt64
-	err = s.db.QueryRow(`SELECT customer_id, store_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID)
+	// Fetch customer_id, store_id, and order_type from shopping_cart
+	err = s.db.QueryRow(`SELECT customer_id, store_id, order_type FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID, &orderType)
 	if err != nil {
-		return true, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
+		return false, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
 	}
 
-	// Check if customerID is valid
 	if !customerID.Valid {
-		// Handle the case where customerID is NULL or invalid
-		return true, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
+		return false, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
 	}
 
-	// New query to get the default address ID for the customer
+	// Get the default address ID for the customer
 	var defaultAddressID int
 	err = s.db.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
 	if err != nil {
-		// Handle the error, for example, no default address found or query failed
-		return true, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
+		return false, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
 	}
 
-	// Continue with your logic, now having defaultAddressID
+	// Check for an existing active shopping cart before creating a new one
+	var existingCartID int
+	err = s.db.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true LIMIT 1`, customerID.Int64).Scan(&existingCartID)
+	if err != nil && err != sql.ErrNoRows {
+		return false, fmt.Errorf("failed to check for existing active shopping cart for customer %d: %s", customerID.Int64, err)
+	}
 
-	var transactionID int
-	err = s.db.QueryRow(`SELECT id FROM transaction WHERE cart_id = $1 AND merchant_transaction_id = $2`, cart_id, merchantTransactionID).Scan(&transactionID)
-	if err != nil {
-		// Handle the error, for example, no default address found or query failed
-		return true, fmt.Errorf("failed to get transaction_id for cart_id %d: %s", cart_id, err)
+	// Create a new shopping cart if no active cart exists
+	if existingCartID == 0 {
+		_, err = tx.Exec(`INSERT INTO shopping_cart (customer_id, active) VALUES ($1, true)`, customerID.Int64)
+		if err != nil {
+			return false, fmt.Errorf("failed to create a new shopping cart for customer %d: %s", customerID.Int64, err)
+		}
 	}
 
 	var orderId int
-
-	err = tx.QueryRow(`
-		INSERT INTO sales_order ( cart_id, store_id, customer_id, address_id, payment_type, transaction_id)
-		VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
-	`, cart_id, 1, customerID, defaultAddressID, paymentType, transactionID).Scan(&orderId)
+	// Insert into sales_order with the order_type set to 'delivery' if applicable
+	salesOrderQuery := `INSERT INTO sales_order (cart_id, store_id, customer_id, address_id, payment_type, order_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
+	err = tx.QueryRow(salesOrderQuery, cart_id, storeID.Int64, customerID.Int64, defaultAddressID, paymentType, orderType).Scan(&orderId)
 	if err != nil {
-		return true, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
+		return false, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
 	}
 
-	// Generate a random six-digit OTP code
-	otpCode, err := generateOtp()
-	if err != nil {
-		return false, fmt.Errorf("error generating OTP for order %d: %s", orderId, err)
-	}
-
-	// Insert into sales_order_otp
-	_, err = tx.Exec(`
-		 INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
-		 VALUES ($1, $2, $3, $4, $5)
-	 `, 1, customerID.Int64, cart_id, otpCode, true)
-	if err != nil {
-		return false, fmt.Errorf("error inserting OTP for sales_order %d: %s", orderId, err)
-	}
-
-	for _, checkout_cart_item := range cartItems {
-		fmt.Printf("Item ID: %d Quantity: %d \n", checkout_cart_item.Item_Id, checkout_cart_item.Quantity)
-
-		res, err := tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE item_id = $2 AND locked_quantity >= $1`, checkout_cart_item.Quantity, checkout_cart_item.Item_Id)
+	// Process each cart item, reducing the locked_quantity for each item
+	for _, item := range cartItems {
+		_, err = tx.Exec(`UPDATE item_store SET locked_quantity = locked_quantity - $1 WHERE item_id = $2 AND locked_quantity >= $1`, item.Quantity, item.Item_Id)
 		if err != nil {
-			return true, err
-		}
-
-		affectedRows, err := res.RowsAffected()
-		if err != nil {
-			return true, err
-		}
-
-		if affectedRows == 0 {
-			return true, fmt.Errorf("not enough stock for item %d", checkout_cart_item.Item_Id)
+			return false, fmt.Errorf("error updating stock for item %d: %s", item.Item_Id, err)
 		}
 	}
 
-	println("Start Updating Shopping Cart")
-
+	// Set the shopping cart to inactive after order creation
 	_, err = tx.Exec(`UPDATE shopping_cart SET active = false WHERE id = $1`, cart_id)
 	if err != nil {
-		return true, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
+		return false, fmt.Errorf("error setting cart to inactive for cart %d: %s", cart_id, err)
 	}
 
-	println("Insert Into Shopping Cart")
-	query = `insert into shopping_cart
-			(customer_id, active) 
-			values ($1, $2) returning id, customer_id, active, created_at
-			`
-	_, err = tx.Query(
-		query,
-		customerID,
-		true,
-	)
-	if err != nil {
-		println("Err Updating Shopping Cart ", err)
-		return true, err
-	}
-
-	println("Completed Insert Into Shopping Cart")
-
-	return true, nil
+	return true, nil // Successfully created the order and updated necessary records.
 }
 
 func generateOtp() (string, error) {

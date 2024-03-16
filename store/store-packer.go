@@ -467,12 +467,13 @@ func (s *PostgresStore) PackerGetOrder(storeId int, otp string) (*GetOrder, erro
 }
 
 func (s *PostgresStore) PackerFindItem(new_req types.FindItemBasic) (*FindItemResponse, error) {
-	// SQL query to find the item and its shelf position based on the barcode and store ID
+	// Adjusted SQL query to find the item and its shelf position if available
+	// Uses LEFT JOIN to include items that don't have an associated shelf
 	query := `
         SELECT i.name, i.id, s.horizontal, s.vertical
         FROM item i
-        JOIN shelf s ON i.id = s.item_id
-        WHERE i.barcode = $1 AND s.store_id = $2
+        LEFT JOIN shelf s ON i.id = s.item_id AND s.store_id = $2
+        WHERE i.barcode = $1
     `
 
 	// Execute the query
@@ -480,12 +481,13 @@ func (s *PostgresStore) PackerFindItem(new_req types.FindItemBasic) (*FindItemRe
 	err := s.db.QueryRow(query, new_req.Barcode, new_req.StoreID).Scan(
 		&response.ItemName,
 		&response.ItemId,
-		&response.ShelfHorizontal,
-		&response.ShelfVertical,
+		&response.ShelfHorizontal, // This will be NULL if there's no shelf
+		&response.ShelfVertical,   // This will be NULL if there's no shelf
 	)
 
-	// If an error occurred, return nil and the error
+	// If an error occurred (other than not finding a shelf), return nil and the error
 	if err != nil {
+		// You might want to handle the case where the item is not found at all (e.g., using sql.ErrNoRows)
 		return nil, err
 	}
 

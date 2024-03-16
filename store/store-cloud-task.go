@@ -84,7 +84,7 @@ func (s *PostgresStore) CreateCloudTask(cartID int, lockType string, sign string
 			fmt.Println("Task with token created successfully", task.GetName())
 		}
 	} else if lockType == "lock-stock-pay" {
-		delayTime = 10
+		delayTime = 13
 
 		// Prepare the payload
 		payload := map[string]interface{}{

@@ -3,7 +3,7 @@ package store
 import "database/sql"
 
 func (s *PostgresStore) CreateDeliveryOrderTable(tx *sql.Tx) error {
-	// Create the table if it doesn't exist
+	// Create the table if it doesn't exist with the new 'amount_collected' field
 	createTableQuery := `
     CREATE TABLE IF NOT EXISTS delivery_order(
         id SERIAL PRIMARY KEY,
@@ -13,23 +13,24 @@ func (s *PostgresStore) CreateDeliveryOrderTable(tx *sql.Tx) error {
         order_delivered_date TIMESTAMP DEFAULT NULL,
         order_assigned_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         order_accepted_date TIMESTAMP DEFAULT NULL,
-		order_arrive_date TIMESTAMP DEFAULT NULL, 
-        image_url TEXT DEFAULT ''
+        order_arrive_date TIMESTAMP DEFAULT NULL,
+        image_url TEXT DEFAULT '',
+        amount_collected INT DEFAULT 0  -- New field with default value of 0
     )`
 	if _, err := tx.Exec(createTableQuery); err != nil {
 		return err
 	}
 
-	// Check if the order_arrive_date column exists and add it if it doesn't
-	addColumnQuery := `
+	// Optionally, add new columns if they don't exist, including 'amount_collected'
+	addAmountCollectedQuery := `
     DO $$
     BEGIN
-        IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'delivery_order' AND column_name = 'order_arrive_date') THEN
-            ALTER TABLE delivery_order ADD COLUMN order_arrive_date TIMESTAMP DEFAULT NULL;
+        IF NOT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'delivery_order' AND column_name = 'amount_collected') THEN
+            ALTER TABLE delivery_order ADD COLUMN amount_collected INT DEFAULT 0;
         END IF;
     END
     $$;`
-	if _, err := tx.Exec(addColumnQuery); err != nil {
+	if _, err := tx.Exec(addAmountCollectedQuery); err != nil {
 		return err
 	}
 

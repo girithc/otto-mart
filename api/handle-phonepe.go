@@ -70,8 +70,17 @@ func (s *Server) handlePhonePePaymentInit(res http.ResponseWriter, req *http.Req
 		return err
 	}
 
+	_, err = s.store.RefreshMerchantTransactionID(new_req.CartId)
+	if err != nil {
+		return err
+	}
+
 	records, err := s.store.PhonePePaymentInit(new_req.CartId, success.Sign, success.MerchantTransactionId)
 	if err != nil {
+		err := s.store.Cancel_Checkout(new_req.CartId, success.Sign, success.MerchantTransactionId, "lock-stock")
+		if err != nil {
+			return err
+		}
 		return err
 	}
 

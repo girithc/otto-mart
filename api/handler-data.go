@@ -70,7 +70,10 @@ var authRequirements = map[string]Permission{
 	DeliveryPartnerUpdate:                 {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerCheckAssignedOrder:     {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerAcceptOrder:            {Role: "Customer", AuthRequired: true},
+	DeliveryPartnerGetAssignedOrder:       {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerPickupOrder:            {Role: "Customer", AuthRequired: true},
+	DeliveryPartnerGoDeliverOrder:         {Role: "Customer", AuthRequired: true},
+	DeliveryPartnerArriveDestination:      {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerDispatchOrder:          {Role: "Customer", AuthRequired: true},
 	CustomerDispatchOrder:                 {Role: "Customer", AuthRequired: true},
 	PackerDispatchOrderHistory:            {Role: "Customer", AuthRequired: true},
@@ -196,7 +199,10 @@ const (
 	DeliveryPartnerUpdate                 = "delivery-partner-update"
 	DeliveryPartnerCheckAssignedOrder     = "delivery-partner-check-assigned-order"
 	DeliveryPartnerAcceptOrder            = "delivery-partner-accept-order"
+	DeliveryPartnerGetAssignedOrder       = "delivery-partner-get-assigned-order"
 	DeliveryPartnerPickupOrder            = "delivery-partner-pickup-order"
+	DeliveryPartnerGoDeliverOrder         = "delivery-partner-go-deliver-order"
+	DeliveryPartnerArriveDestination      = "delivery-partner-arrive-destination"
 	DeliveryPartnerDispatchOrder          = "packer-dispatch-order"
 	CustomerDispatchOrder                 = "customer-dispatch-order"
 	PackerDispatchOrderHistory            = "packer-dispatch-order-history"

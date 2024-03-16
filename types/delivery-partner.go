@@ -33,6 +33,11 @@ type DeliveryPartnerPhone struct {
 	Phone string `json:"phone"`
 }
 
+type DeliveryPartnerStore struct {
+	StoreId int    `json:"store_id"`
+	Phone   string `json:"phone"`
+}
+
 type DeliveryPartnerOrderDetails struct {
 	DeliveryPartnerPhone string `json:"delivery_partner_phone"`
 	CustomerPhone        string `json:"customer_phone"`
@@ -68,6 +73,12 @@ type DeliveryPartnerCompleteOrder struct {
 	Phone        string `json:"phone"`
 	SalesOrderId int    `json:"sales_order_id"`
 	Image        string `json:"image"`
+}
+
+type DPCompleteOrder struct {
+	Phone           string `json:"phone"`
+	SalesOrderId    int    `json:"sales_order_id"`
+	AmountCollected int    `json:"amount_collected"`
 }
 
 type Update_Delivery_Partner struct {

@@ -181,31 +181,36 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 	}
 
 	var so types.Sales_Order_Cart
-	query := `SELECT id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date
+
+	query := `SELECT id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date, order_type
               FROM sales_order
               WHERE customer_id = $1 AND store_id = $2 AND cart_id = $3
               ORDER BY order_date DESC
               LIMIT 1`
-	err = tx.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate)
+	err = tx.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate, &so.OrderType)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
-	otpQuery := `SELECT otp_code FROM sales_order_otp WHERE cart_id = $1 AND customer_id = $2 AND active = true LIMIT 1`
-	err = tx.QueryRow(otpQuery, cartID, customerID).Scan(&so.OTP)
-	if err != nil {
-		newOtp, err := generateOtp()
+	if so.OrderType == "pickup" {
+		otpQuery := `SELECT otp_code FROM sales_order_otp WHERE cart_id = $1 AND customer_id = $2 AND active = true LIMIT 1`
+		err = tx.QueryRow(otpQuery, cartID, customerID).Scan(&so.OTP)
 		if err != nil {
-			return nil, fmt.Errorf("error generating new OTP: %s", err)
-		}
+			newOtp, err := generateOtp()
+			if err != nil {
+				return nil, fmt.Errorf("error generating new OTP: %s", err)
+			}
 
-		insertOtpQuery := `INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active) VALUES ($1, $2, $3, $4, $5)`
-		_, err = tx.Exec(insertOtpQuery, storeID, customerID, cartID, newOtp, true)
-		if err != nil {
-			return nil, fmt.Errorf("error inserting new OTP for cart %d: %s", cartID, err)
+			insertOtpQuery := `INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active) VALUES ($1, $2, $3, $4, $5)`
+			_, err = tx.Exec(insertOtpQuery, storeID, customerID, cartID, newOtp, true)
+			if err != nil {
+				return nil, fmt.Errorf("error inserting new OTP for cart %d: %s", cartID, err)
+			}
+			so.OTP = newOtp
 		}
-		so.OTP = newOtp
+	} else {
+		so.OTP = ""
 	}
 
 	shoppingCartQuery := `SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true`
@@ -214,19 +219,14 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 		tx.Rollback()
 		return nil, err
 	}
-	updateCartQuery := `UPDATE shopping_cart
-                        SET address_id = $1
-                        WHERE customer_id = $2 AND active = true
-                        RETURNING id`
+
+	updateCartQuery := `UPDATE shopping_cart SET address_id = $1 WHERE customer_id = $2 AND active = true RETURNING id`
 	err = tx.QueryRow(updateCartQuery, so.AddressID, customerID).Scan(&so.NewCartID)
 	if err != nil {
 		return nil, err
 	}
 
-	productListQuery := `SELECT ci.id, ci.item_id, ci.quantity, i.name, i.brand_id, i.quantity AS item_quantity, i.unit_of_quantity, i.description
-                         FROM cart_item ci
-                         JOIN item i ON ci.item_id = i.id
-                         WHERE ci.cart_id = $1`
+	productListQuery := `SELECT ci.id, ci.item_id, ci.quantity, i.name, i.brand_id, i.quantity AS item_quantity, i.unit_of_quantity, i.description FROM cart_item ci JOIN item i ON ci.item_id = i.id WHERE ci.cart_id = $1`
 	rows, err := tx.Query(productListQuery, so.CartID)
 	if err != nil {
 		tx.Rollback()
@@ -252,9 +252,7 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 		return nil, err
 	}
 
-	addressQuery := `SELECT id, latitude, longitude, street_address, line_one_address, line_two_address, city, state, zipcode, is_default
-                     FROM address
-                     WHERE id = $1`
+	addressQuery := `SELECT id, latitude, longitude, street_address, line_one_address, line_two_address, city, state, zipcode, is_default FROM address WHERE id = $1`
 	err = tx.QueryRow(addressQuery, so.AddressID).Scan(&so.Address.ID, &so.Address.Latitude, &so.Address.Longitude, &so.Address.StreetAddress, &so.Address.LineOneAddress, &so.Address.LineTwoAddress, &so.Address.City, &so.Address.State, &so.Address.Zipcode, &so.Address.IsDefault)
 	if err != nil {
 		tx.Rollback()

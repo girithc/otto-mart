@@ -7,7 +7,6 @@ import (
 	"github.com/girithc/pronto-go/types"
 
 	"github.com/lib/pq"
-	_ "github.com/lib/pq"
 )
 
 func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_CategoryID_And_StoreID_noCategory, error) {
