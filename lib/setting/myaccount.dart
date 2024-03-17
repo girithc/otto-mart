@@ -160,6 +160,64 @@ class _MyAccountPageState extends State<MyAccountPage> {
           children: [
             Container(
               decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                      color: Colors.grey.withOpacity(0.4), width: 1.0),
+                ),
+                borderRadius: BorderRadius.circular(2),
+                color: Colors.white,
+              ),
+              child: ListTile(
+                onTap: () {
+                  // Use showDialog directly within onTap
+                  showDialog<void>(
+                    context: context,
+                    barrierDismissible:
+                        true, // User must tap button to dismiss dialog
+                    builder: (BuildContext dialogContext) {
+                      return AlertDialog(
+                        backgroundColor: Colors.white,
+                        surfaceTintColor: Colors.white,
+                        title: const Text('Customer Support'),
+                        content: SingleChildScrollView(
+                          child: ListBody(
+                            children: const <Widget>[
+                              Text(
+                                  'For any customer inquiries, please contact our customer support at info@durdurdarshi.com.'),
+                            ],
+                          ),
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('Close'),
+                            onPressed: () {
+                              Navigator.of(dialogContext).pop();
+                              context.go('/home');
+                              // Close the dialog
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ).then((_) {
+                    context.go('/home');
+                  });
+                },
+                title: const Center(
+                  child: Text(
+                    'Customer Support',
+                    style: TextStyle(fontSize: 16, color: Colors.black),
+                  ),
+                ),
+                tileColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                trailing: const Icon(Icons.arrow_forward_ios_outlined),
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
                 // Apply a border only at the top of the Container
                 border: Border(
                   top: BorderSide(

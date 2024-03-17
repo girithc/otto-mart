@@ -205,7 +205,7 @@ class _MyPhoneState extends State<MyPhone> {
                                       MediaQuery.of(context).size.width * 0.04),
                               width: MediaQuery.of(context).size.width * 0.75,
                               child: Text(
-                                "2 Minute \nGrocery \nPickup",
+                                "5 Minute \nGrocery \nDelivery",
                                 style: GoogleFonts.ubuntu(
                                   // Tinos is a serif font similar to Times New Roman
                                   textStyle: const TextStyle(

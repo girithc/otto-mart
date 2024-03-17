@@ -220,70 +220,155 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
       surfaceTintColor: Colors.white,
       child: Container(
         margin: EdgeInsets.zero,
-        child: ElevatedButton(
-          onPressed: () async {
-            const storage = FlutterSecureStorage();
-
-            // Read the cartId from storage
-            String? cartId = await storage.read(key: 'cartId');
-
-            // Check if cartId is null
-            if (cartId == null) {
-              // If cartId is null, navigate to MyPhone()
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MyPhone()),
-              );
-            } else {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const MyCart()));
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.pinkAccent,
-            foregroundColor: Colors.white,
-            textStyle: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20.0),
-            ),
-          ),
-          child: cart.itemList.isNotEmpty
-              ? (cart.itemList.length > 1
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shopping_cart_outlined),
-                        const SizedBox(
-                          width: 10,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 8,
+              child: CarouselSlider(
+                items: [
+                  // First tab
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Colors.tealAccent,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Free Delivery Above 49',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.bold,
                         ),
-                        Text('${cart.numberOfItems.toString()} Items'),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shopping_cart_outlined),
-                        const SizedBox(
-                          width: 10,
+                      ),
+                    ),
+                  ),
+                  // Second tab
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Colors.tealAccent,
+                    ),
+                    child: Center(
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            // Default text style
+                            color: Colors.black,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: 'FLAT 5', // The part you want to emphasize
+                              style: TextStyle(
+                                  fontSize:
+                                      19.0), // Increase the font size for emphasis
+                            ),
+                            TextSpan(
+                                text: ' to '), // Unchanged part of the text
+                            TextSpan(
+                              text:
+                                  '50% Discount', // The second part you want to emphasize
+                              style: TextStyle(
+                                  fontSize:
+                                      19.0), // Increase the font size for emphasis
+                            ),
+                            TextSpan(
+                                text:
+                                    ' on All Items'), // Unchanged part of the text
+                          ],
                         ),
-                        Text('${cart.numberOfItems.toString()} Item'),
-                      ],
-                    ))
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.shopping_cart_outlined),
-                    SizedBox(
-                      width: 10,
-                    ), // Add your desired icon here
-                    // Add some spacing between the icon and text
-                    Text('Cart'),
-                  ],
+                      ),
+                    ),
+                  ),
+                ],
+                options: CarouselOptions(
+                  height: MediaQuery.of(context).size.height * 0.06,
+                  enlargeCenterPage: true,
+                  autoPlay: true,
+                  //aspectRatio: 16 / 9,
+                  autoPlayCurve: Curves.fastOutSlowIn,
+                  enableInfiniteScroll: true,
+                  autoPlayAnimationDuration: Duration(
+                    seconds: 3,
+                  ),
+                  viewportFraction: 0.95,
                 ),
+              ),
+            ),
+            Expanded(
+              flex: 6,
+              child: ElevatedButton(
+                onPressed: () async {
+                  const storage = FlutterSecureStorage();
+
+                  // Read the cartId from storage
+                  String? cartId = await storage.read(key: 'cartId');
+
+                  // Check if cartId is null
+                  if (cartId == null) {
+                    // If cartId is null, navigate to MyPhone()
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyPhone()),
+                    );
+                  } else {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyCart()));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pinkAccent,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                  ),
+                ),
+                child: cart.itemList.isNotEmpty
+                    ? (cart.itemList.length > 1
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text('${cart.numberOfItems.toString()} Items'),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text('${cart.numberOfItems.toString()} Item'),
+                            ],
+                          ))
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.shopping_cart_outlined),
+                          SizedBox(
+                            width: 10,
+                          ), // Add your desired icon here
+                          // Add some spacing between the icon and text
+                          Text('Cart'),
+                        ],
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );

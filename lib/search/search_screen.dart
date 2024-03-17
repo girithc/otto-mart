@@ -68,70 +68,155 @@ class _SearchPageState extends State<SearchPage> {
         padding:
             const EdgeInsets.only(bottom: 25, left: 10, right: 10, top: 10),
         margin: EdgeInsets.zero,
-        child: ElevatedButton(
-          onPressed: () async {
-            const storage = FlutterSecureStorage();
-
-            // Read the cartId from storage
-            String? cartId = await storage.read(key: 'cartId');
-
-            // Check if cartId is null
-            if (cartId == null) {
-              // If cartId is null, navigate to MyPhone()
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const MyPhone()),
-              );
-            } else {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => const MyCart()));
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.pinkAccent,
-            foregroundColor: Colors.white,
-            textStyle: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-          ),
-          child: cart.numberOfItems > 0
-              ? (cart.numberOfItems > 1
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shopping_cart_outlined),
-                        const SizedBox(
-                          width: 10,
+        child: Row(
+          children: [
+            Expanded(
+              flex: 8,
+              child: CarouselSlider(
+                items: [
+                  // First tab
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Colors.tealAccent,
+                    ),
+                    child: Center(
+                      child: Text(
+                        'Free Delivery Above 49',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 14.0,
+                          fontWeight: FontWeight.bold,
                         ),
-                        Text('${cart.numberOfItems.toString()} Items'),
-                      ],
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.shopping_cart_outlined),
-                        const SizedBox(
-                          width: 10,
+                      ),
+                    ),
+                  ),
+                  // Second tab
+                  Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Colors.tealAccent,
+                    ),
+                    child: Center(
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            // Default text style
+                            color: Colors.black,
+                            fontSize: 14.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(
+                              text: 'FLAT 5', // The part you want to emphasize
+                              style: TextStyle(
+                                  fontSize:
+                                      19.0), // Increase the font size for emphasis
+                            ),
+                            TextSpan(
+                                text: ' to '), // Unchanged part of the text
+                            TextSpan(
+                              text:
+                                  '50% Discount', // The second part you want to emphasize
+                              style: TextStyle(
+                                  fontSize:
+                                      19.0), // Increase the font size for emphasis
+                            ),
+                            TextSpan(
+                                text:
+                                    ' on All Items'), // Unchanged part of the text
+                          ],
                         ),
-                        Text('${cart.numberOfItems.toString()} Item'),
-                      ],
-                    ))
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.shopping_cart_outlined),
-                    SizedBox(
-                      width: 10,
-                    ), // Add your desired icon here
-                    // Add some spacing between the icon and text
-                    Text('Cart'),
-                  ],
+                      ),
+                    ),
+                  ),
+                ],
+                options: CarouselOptions(
+                  height: MediaQuery.of(context).size.height * 0.06,
+                  enlargeCenterPage: true,
+                  autoPlay: true,
+                  //aspectRatio: 16 / 9,
+                  autoPlayCurve: Curves.fastOutSlowIn,
+                  enableInfiniteScroll: true,
+                  autoPlayAnimationDuration: Duration(
+                    seconds: 3,
+                  ),
+                  viewportFraction: 0.95,
                 ),
+              ),
+            ),
+            Expanded(
+              flex: 6,
+              child: ElevatedButton(
+                onPressed: () async {
+                  const storage = FlutterSecureStorage();
+
+                  // Read the cartId from storage
+                  String? cartId = await storage.read(key: 'cartId');
+
+                  // Check if cartId is null
+                  if (cartId == null) {
+                    // If cartId is null, navigate to MyPhone()
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const MyPhone()),
+                    );
+                  } else {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const MyCart()));
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.pinkAccent,
+                  foregroundColor: Colors.white,
+                  textStyle: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                child: cart.numberOfItems > 0
+                    ? (cart.numberOfItems > 1
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text('${cart.numberOfItems.toString()} Items'),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.shopping_cart_outlined),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text('${cart.numberOfItems.toString()} Item'),
+                            ],
+                          ))
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.shopping_cart_outlined),
+                          SizedBox(
+                            width: 10,
+                          ), // Add your desired icon here
+                          // Add some spacing between the icon and text
+                          Text('Cart'),
+                        ],
+                      ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -175,23 +260,43 @@ class _TypingAnimationState extends State<TypingAnimation> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return Align(
+      alignment: Alignment.topCenter,
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        //mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          SizedBox(
+            height: 20,
+          ),
           const Text(
             "Search for",
             style:
-                TextStyle(fontSize: 72), // Adjusted font size for better layout
+                TextStyle(fontSize: 36), // Adjusted font size for better layout
           ),
           const SizedBox(height: 10),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child: Text(
-              words[index],
-              key: ValueKey<String>(words[index]),
-              style:
-                  const TextStyle(fontSize: 72, color: Colors.deepPurpleAccent),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 1,
+                    blurRadius: 1,
+                    offset: const Offset(0, 1), // changes position of shadow
+                  ),
+                ],
+                borderRadius: BorderRadius.circular(10)),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              child: Text(
+                words[index],
+                key: ValueKey<String>(words[index]),
+                style: const TextStyle(
+                    fontSize: 36, color: Colors.deepPurpleAccent),
+              ),
             ),
           ),
         ],

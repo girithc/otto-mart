@@ -33,7 +33,7 @@ class HomeApiClient {
     url = url.replace(queryParameters: queryParams);
 
     http.Response response = await http.get(url);
-    print("Response200 ${response.body}");
+    //print("Response200 ${response.body}");
 
     if (response.statusCode == 200) {
       //print("Response200 ${response.body}");

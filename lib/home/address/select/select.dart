@@ -83,8 +83,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     final networkService = NetworkService();
     final response =
         await networkService.postWithAuth('/address', additionalData: body);
+    //("\n\n\\n\n\n");
 
     //print("Address All: ${response.body}");
+
+    //print("\n\n\\n\n\n");
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
         final List<dynamic> jsonData = json.decode(response.body);
@@ -94,6 +97,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           addresses = items;
           isLoadingGetAddress = false;
         });
+        print("Widget Flag: ${widget.flag}");
+        print("Init Login: ${widget.initLogin}");
 
         if (widget.flag && !widget.initLogin) {
           deliverToAddress(items[0].id).then(
@@ -228,8 +233,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     }
     return null;
   }
-
-  // Add other methods as needed, like fetchAddresses, setDefaultAddress, etc.
 
   @override
   Widget build(BuildContext context) {

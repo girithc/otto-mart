@@ -313,113 +313,59 @@ class _MyCartState extends State<MyCart> {
                                     (0.18 - 0.065),
                                 child: ElevatedButton(
                                   onPressed: () async {
-                                    // Make sure to get the actual cart ID from your cart variable or state
-                                    if (cart.isEmpty()) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const MyHomePage(
-                                            title: 'Otto Mart',
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      initiatePhonePePayment().then((response) {
-                                        if (response.isSuccess) {
+                                    String? cartId =
+                                        await storage.read(key: 'cartId');
+                                    if (cartId != null) {
+                                      int cartIdInt = int.parse(cartId);
+                                      print("CartID INT: $cartIdInt");
+
+                                      checkoutLockItems(cartIdInt)
+                                          .then((success) {
+                                        if (success.lock) {
+                                          // If the checkout lock is successful, navigate to the PaymentsPage
                                           Navigator.pushReplacement(
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  PhonePeWebView(
-                                                url: response.url,
-                                                sign: response.sign,
-                                                merchantTransactionId: response
-                                                    .merchantTransactionId,
+                                                  PaymentsPage(
+                                                sign: success.sign,
+                                                merchantTransactionID: success
+                                                    .merchantTransactionID,
+                                                amount: cart.totalPrice,
                                               ),
                                             ),
                                           );
                                         } else {
+                                          // If the checkout lock is unsuccessful, you might want to show an error message
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
-                                            SnackBar(
+                                            const SnackBar(
                                               content: Text(
-                                                response.url,
-                                                style: const TextStyle(
-                                                    color: Colors.black),
-                                              ),
-                                              backgroundColor:
-                                                  Colors.amberAccent,
-                                            ),
-                                          );
-
-                                          Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const MyCart(),
-                                            ),
-                                          );
-                                        }
-                                      });
-                                      /*
-                                      String? cartId =
-                                          await storage.read(key: 'cartId');
-                                      if (cartId != null) {
-                                        int cartIdInt = int.parse(cartId);
-                                        print("CartID INT: $cartIdInt");
-
-                                       
-                                        checkoutLockItems(cartIdInt)
-                                            .then((success) {
-                                          if (success.lock) {
-                                            // If the checkout lock is successful, navigate to the PaymentsPage
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    PaymentsPage(
-                                                  sign: success.sign,
-                                                  merchantTransactionID: success
-                                                      .merchantTransactionID,
-                                                  amount: cart.totalPrice,
-                                                ),
-                                              ),
-                                            );
-                                          } else {
-                                            // If the checkout lock is unsuccessful, you might want to show an error message
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                    'Failed to lock items for checkout.'),
-                                                backgroundColor:
-                                                    Colors.redAccent,
-                                              ),
-                                            );
-                                          }
-                                        }).catchError((error) {
-                                          // Handle any errors here
-                                         
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                              content: Text('Error: $error'),
+                                                  'Failed to lock items for checkout.'),
                                               backgroundColor: Colors.redAccent,
                                             ),
                                           );
-                                        });
-                                      } else {
+                                        }
+                                      }).catchError((error) {
+                                        // Handle any errors here
+
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                                'Error: Cart Id Not Found'),
+                                          SnackBar(
+                                            content: Text('Error: $error'),
                                             backgroundColor: Colors.redAccent,
                                           ),
                                         );
-                                      }
-                                      */
+                                      });
+                                    } else {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content:
+                                              Text('Error: Cart Id Not Found'),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
                                     }
                                   },
                                   style: ElevatedButton.styleFrom(
@@ -510,6 +456,26 @@ class _MyCartState extends State<MyCart> {
           ));
         }
       },
+    );
+  }
+
+  Widget _paymentMethodRow(IconData icon, String text) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, color: Colors.white, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -727,7 +693,6 @@ class CartListState extends State<CartList> {
               widget.isLoading
                   ? const CircularProgressIndicator()
                   : Container(
-                      height: 110,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius:
@@ -743,7 +708,8 @@ class CartListState extends State<CartList> {
                         ],
                         border: Border.all(color: Colors.white, width: 2.0),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 5, vertical: 10),
                       margin: const EdgeInsets.symmetric(horizontal: 10),
                       child: Column(
                         children: [
@@ -759,7 +725,7 @@ class CartListState extends State<CartList> {
                                 text: const TextSpan(
                                   style: TextStyle(
                                     fontSize:
-                                        22, // Base font size for the whole text
+                                        26, // Base font size for the whole text
                                     fontWeight: FontWeight.bold,
                                     color: Colors
                                         .black, // Base color for the whole text
@@ -767,22 +733,20 @@ class CartListState extends State<CartList> {
                                   children: <TextSpan>[
                                     TextSpan(
                                       text:
-                                          '2 Minute', // Part of the text you want to style differently
+                                          '5 Minute', // Part of the text you want to style differently
                                       style: TextStyle(
                                           color: Colors.deepPurpleAccent,
-                                          fontSize: 24
+                                          fontSize: 28
                                           // Different color for this part
                                           // You can add more styles here if needed
                                           ),
                                     ),
                                     TextSpan(
-                                      text: ' Pickup', // First part of the text
+                                      text:
+                                          ' Delivery', // First part of the text
                                     ),
                                   ],
                                 ),
-                              ),
-                              const SizedBox(
-                                width: 33,
                               ),
                               Text(
                                 '\u{20B9} ${(cart.discount)}',
@@ -794,32 +758,74 @@ class CartListState extends State<CartList> {
                               )
                             ],
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 13,
-                              ),
-                              Expanded(
-                                // Wrap Text widget with Expanded
-                                child: Text(
-                                  "Store ${widget.streetAddress}",
-                                  maxLines: 2,
-                                  overflow: TextOverflow
-                                      .ellipsis, // Use ellipsis to handle text overflow
-                                  style: TextStyle(
-                                      // Add your TextStyle here if needed
-                                      ),
-                                ),
-                              ),
-                            ],
-                          ),
                         ],
                       ),
                     ),
 
+              const SizedBox(height: 5),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1), // Changes position of shadow
+                    ),
+                  ],
+                  border: Border.all(color: Colors.white, width: 2.0),
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 13,
+                        ),
+                        RichText(
+                          textAlign: TextAlign.center, // Center the text
+                          text: const TextSpan(
+                            style: TextStyle(
+                              fontSize: 26, // Base font size for the whole text
+                              fontWeight: FontWeight.bold,
+                              color:
+                                  Colors.black, // Base color for the whole text
+                            ),
+                            children: <TextSpan>[
+                              TextSpan(
+                                text:
+                                    'Free Delivery above \u{20B9}49', // Part of the text you want to style differently
+                                style: TextStyle(
+                                    color: Colors.deepPurpleAccent, fontSize: 22
+                                    // Different color for this part
+                                    // You can add more styles here if needed
+                                    ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          '\u{20B9} ${(cart.discount)}',
+                          style: GoogleFonts.phudu(
+                              textStyle: const TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.w400,
+                                  color: Colors.white)),
+                        )
+                      ],
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 10),
+
               /*
               const _DeliveryPartnerTip(),
               */
@@ -878,11 +884,40 @@ class _TaxAndDelivery extends StatelessWidget {
                   )
                 : Container(),
             cart.platformFee > 0
-                ? _CustomListItem(
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'Platform Fee',
-                    amount: '${cart.platformFee}',
-                    font: const TextStyle(fontSize: 16),
+                ? Padding(
+                    padding:
+                        const EdgeInsets.only(top: 5, left: 10.0, right: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.shopping_bag_outlined, size: 20),
+                            const SizedBox(width: 10),
+                            Text(
+                              "Platform Fee ",
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            Text(
+                              "10", // Added a space for visual separation
+                              style: const TextStyle(
+                                fontSize: 16,
+                                decoration: TextDecoration
+                                    .lineThrough, // This adds the line through effect
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(
+                              right: 40, top: 0, bottom: 0),
+                          child: Text(
+                            cart.platformFee.toString(),
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 : Container(),
             cart.packagingFee > 0

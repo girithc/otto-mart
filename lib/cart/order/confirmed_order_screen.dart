@@ -33,10 +33,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   Timer? _timer; // Declare a Timer variable
   OrderInfo? _orderInfo;
   String? OTP;
+  String orderType = 'delivery';
   final Completer<GoogleMapController> _controller =
       Completer<GoogleMapController>();
   late CameraPosition _kGooglePlex;
   final Set<Marker> _markers = {};
+  String? orderCartId;
 
   String orderStatus = 'Preparing Order';
   String orderLottie =
@@ -189,7 +191,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     final networkService = NetworkService();
     if (widget.newOrder) {
       cartId = await _storage.read(key: 'cartId');
-      fetchOrderInfo(optionalParameter: int.parse(cartId!));
+      orderCartId = cartId;
+      fetchOrderInfo();
       print("Cart ID: $cartId");
     } else {
       cartId = widget.orderId.toString();
@@ -204,12 +207,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       'cart_id': int.parse(cartId),
     };
 
-    print("Body: $body ");
+    //print("Body: $body ");
 
     final response =
         await networkService.postWithAuth('/sales-order', additionalData: body);
 
-    print("Confirmed Order Response: ${response.body}");
+    //print("Confirmed Order Response: ${response.body}");
 
     if (response.statusCode == 200) {
       Map<String, dynamic> responseData = json.decode(response.body);
@@ -236,7 +239,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
           _customerAddress = responseData['address']['street_address'];
           _paymentType = responseData['payment_type'];
           _orderDate = responseData['order_date'];
-          OTP = responseData['otp'];
         });
       } else {
         setState(() {
@@ -259,22 +261,11 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
     String? cartId;
     if (widget.newOrder) {
-      if (optionalParameter == null) {
-        cartId = await _storage.read(key: 'placedCartId');
-      } else {
-        cartId = optionalParameter.toString();
-      }
+      cartId = orderCartId;
     } else {
       cartId = widget.orderId.toString();
     }
     //cartId = await _storage.read(key: 'placedCartId');
-
-    if (widget.newOrder) {
-      cartId = await _storage.read(key: 'cartId');
-      print("Cart ID: $cartId");
-    } else {
-      cartId = widget.orderId.toString();
-    }
 
     print("PlacedCart ID: $cartId");
     final Map<String, dynamic> body = {
@@ -297,6 +288,18 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       orderLottie = orderStatusToInfo[orderStatus]!.lottieUrl;
       orderLottieTransform = orderStatusToInfo[orderStatus]!.transform;
     });
+  }
+
+  String formatDate(String orderDateString) {
+    // Parse the date string into a DateTime object
+    DateTime orderDate = DateTime.parse(orderDateString);
+
+    // Add 5 hours and 30 minutes to the order date
+    DateTime updatedOrderDate = orderDate.add(Duration(hours: 5, minutes: 30));
+
+    // Format the date with AM/PM, e.g., "dd MMM, yyyy hh:mm a"
+    // Here, "hh" is used for hour format (01-12), "mm" for minute, and "a" for AM/PM
+    return DateFormat('dd MMM, yyyy hh:mm a').format(updatedOrderDate);
   }
 
   @override
@@ -396,216 +399,23 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             ],
                             border: Border.all(color: Colors.white, width: 1.0),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment
-                                .spaceBetween, // Aligns children across the main axis
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  "Please pickup\n your order\n at ${formatOrderDate(_orderDate)}", // Left side text
-
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  "Order ${orderStatus}", // Right side text, assuming orderStatus is a variable holding the status
-                                  textAlign: TextAlign
-                                      .right, // Aligns text to the right
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.deepPurpleAccent,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 15),
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          margin: const EdgeInsets.only(
-                              left: 10, right: 10, top: 5, bottom: 5),
-                          padding: const EdgeInsets.all(10),
-                          child: Column(
-                            children: [
-                              Text(
-                                "Order OTP",
-                                style: TextStyle(fontSize: 16),
-                              ),
-                              Center(
-                                  child: Text(
-                                OTP ?? "",
-                                style: TextStyle(
-                                    fontSize: 24, fontWeight: FontWeight.bold),
-                              )),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 15),
-
-                        Container(
-                          height: MediaQuery.of(context).size.height * 0.25,
-                          margin: EdgeInsets.symmetric(
-                            horizontal:
-                                MediaQuery.of(context).size.height * 0.03,
-                          ),
-                          padding: const EdgeInsets.all(1),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(25)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.5),
-                                blurRadius: 2.0,
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            // Use ClipRRect to clip the child widget with rounded corners
-                            borderRadius: const BorderRadius.all(Radius.circular(
-                                15)), // Match the parent Container's borderRadius
-                            child: GoogleMap(
-                              mapType: MapType.normal,
-                              initialCameraPosition: _kGooglePlex,
-                              markers: _markers, // Use the _markers set here
-                              onMapCreated: (GoogleMapController controller) {
-                                _controller.complete(controller);
-                              },
-                              // ignore: prefer_collection_literals
-                              gestureRecognizers:
-                                  Set(), // Disable gesture recognizers
-                              zoomGesturesEnabled:
-                                  false, // Disable zoom gestures
-                              scrollGesturesEnabled:
-                                  false, // Disable scroll gestures
-                              rotateGesturesEnabled:
-                                  false, // Disable rotate gestures
-                              tiltGesturesEnabled: false,
-                              myLocationButtonEnabled: false,
+                          child: Text(
+                            "Order ${orderStatus}", // Right side text, assuming orderStatus is a variable holding the status
+                            textAlign:
+                                TextAlign.right, // Aligns text to the right
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurpleAccent,
                             ),
                           ),
                         ),
 
-                        Container(
-                          margin: EdgeInsets.only(
-                            left: MediaQuery.of(context).size.height * 0.03,
-                            right: MediaQuery.of(context).size.height * 0.03,
-                            top: MediaQuery.of(context).size.height * 0.02,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment
-                                .spaceBetween, // Aligns the buttons to the left and right sides of the Container
-                            children: [
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.black,
-                                  backgroundColor: Colors.white,
-                                  surfaceTintColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20),
-                                  shape: RoundedRectangleBorder(
-                                    side: const BorderSide(
-                                        color: Colors.white, width: 2),
-                                    borderRadius: BorderRadius.circular(35),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  showDialog(
-                                    context:
-                                        context, // You need to pass the BuildContext here
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: Text(
-                                            'Store'), // The title of the dialog
-                                        content: SingleChildScrollView(
-                                          child: ListBody(
-                                            children: <Widget>[
-                                              Text('Store Address'),
-                                              Text(
-                                                  'G208, Ground Floor, Moongipa Arcade, Old DN Nagar Road, Mumbai-400053') // Replace this with your actual store address
-                                              // You can add more text or widgets here as needed
-                                            ],
-                                          ),
-                                        ),
-                                        actions: <Widget>[
-                                          TextButton(
-                                            child: Text('Close'),
-                                            onPressed: () {
-                                              Navigator.of(context)
-                                                  .pop(); // This will close the dialog
-                                            },
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.location_city_outlined,
-                                      color: Colors
-                                          .deepPurpleAccent, // The info icon
-                                    ),
-                                    SizedBox(
-                                      width: 5,
-                                    ),
-                                    Text('Store'),
-                                  ],
-                                ),
-                              ),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  foregroundColor: Colors.black,
-                                  backgroundColor: Colors.white,
-                                  surfaceTintColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 20),
-                                  shape: RoundedRectangleBorder(
-                                    side: const BorderSide(
-                                        color: Colors.deepPurpleAccent,
-                                        width: 2),
-                                    borderRadius: BorderRadius.circular(35),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  double latitude =
-                                      19.12465300; // Example latitude of the destination
-                                  double longitude =
-                                      72.83164800; // Example longitude of the destination
-                                  Uri googleMapsUri = Uri.parse(
-                                      "https://www.google.com/maps/dir/?api=1&destination=$latitude,$longitude");
-                                  if (await canLaunchUrl(googleMapsUri)) {
-                                    await launchUrl(googleMapsUri);
-                                  } else {
-                                    throw 'Could not open the map with directions.';
-                                  }
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: <Widget>[
-                                    Icon(
-                                      Icons.directions_walk,
-                                      color: Colors.deepPurpleAccent,
-                                    ),
-                                    SizedBox(width: 5),
-                                    Text('Walk To Store'),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-/*
+                        const SizedBox(height: 15),
+
+                        //otp
+
+                        /*
                         Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.only(
@@ -637,7 +447,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           ),
                         ),
                         */
-                        SizedBox(height: 20),
                         Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.only(
@@ -661,15 +470,87 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                "Order Info",
-                                style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.normal),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.25,
+                                    child: Text("Order Date"),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Text(
+                                    // Assuming _orderInfo!.orderDate is a string representing a date,
+                                    // you'll first need to parse it into a DateTime object.
+                                    // Then, add 5 hours and 30 minutes to it.
+                                    // Finally, format it using the DateFormat class.
+                                    formatDate(_orderInfo!.orderDate),
+                                  )
+                                ],
                               ),
-                              const SizedBox(
-                                  height:
-                                      10), // Provide some spacing after the title
+                              const SizedBox(height: 10),
+
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                      width: MediaQuery.of(context).size.width *
+                                          0.25,
+                                      child: Text("Payment Type")),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10.0, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurpleAccent,
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: Text(_orderInfo!.paymentType,
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold)),
+                                  )
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisSize: MainAxisSize
+                                    .min, // To make the Row take minimum space
+                                children: [
+                                  Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.25,
+                                    child: Text(
+                                      "subtotal",
+                                      maxLines: 3,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.normal),
+                                      overflow: TextOverflow
+                                          .ellipsis, // To handle long item names
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10.0, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurpleAccent,
+                                      borderRadius: BorderRadius.circular(8.0),
+                                    ),
+                                    child: Text(
+                                        '\u{20B9} ${_orderInfo!.subtotal}',
+                                        style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold)),
+                                  )
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              // Provide some spacing after the title
                               Wrap(
                                 spacing: 10, // Horizontal space between widgets
                                 runSpacing:
@@ -679,29 +560,117 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                     mainAxisSize: MainAxisSize
                                         .min, // To make the Row take minimum space
                                     children: [
-                                      Text('${item.quantity.toString()} x ',
-                                          style: const TextStyle(fontSize: 14)),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        item.name,
-                                        style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.normal),
-                                        overflow: TextOverflow
-                                            .ellipsis, // To handle long item names
+                                      Container(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.55,
+                                        child: Text(
+                                          "${item.quantity.toString()} x  ${item.name} ${item.size}${item.unitOfQuantity}",
+                                          maxLines: 3,
+                                          style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.normal),
+                                          overflow: TextOverflow
+                                              .ellipsis, // To handle long item names
+                                        ),
                                       ),
                                       const SizedBox(width: 10),
                                       Text(
-                                        '${item.size}${item.unitOfQuantity}',
-                                        style: const TextStyle(fontSize: 14),
+                                        '\u{20B9} ${item.soldPrice}',
+                                        style: const TextStyle(fontSize: 13),
                                       ),
                                     ],
                                   );
                                 }).toList(),
                               ),
+                              _orderInfo!.platformFee > 0
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize
+                                          .min, // To make the Row take minimum space
+                                      children: [
+                                        Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.55,
+                                          child: Text(
+                                            "platform fee",
+                                            maxLines: 3,
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.normal),
+                                            overflow: TextOverflow
+                                                .ellipsis, // To handle long item names
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          '\u{20B9} ${_orderInfo!.platformFee}',
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ],
+                                    )
+                                  : SizedBox.shrink(),
+                              _orderInfo!.deliveryFee > 0
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize
+                                          .min, // To make the Row take minimum space
+                                      children: [
+                                        Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.55,
+                                          child: Text(
+                                            "delivery fee",
+                                            maxLines: 3,
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.normal),
+                                            overflow: TextOverflow
+                                                .ellipsis, // To handle long item names
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          '\u{20B9} ${_orderInfo!.deliveryFee}',
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ],
+                                    )
+                                  : SizedBox.shrink(),
+                              _orderInfo!.smallOrderFee > 0
+                                  ? Row(
+                                      mainAxisSize: MainAxisSize
+                                          .min, // To make the Row take minimum space
+                                      children: [
+                                        Container(
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width *
+                                              0.55,
+                                          child: Text(
+                                            "small order fee",
+                                            maxLines: 3,
+                                            style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.normal),
+                                            overflow: TextOverflow
+                                                .ellipsis, // To handle long item names
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Text(
+                                          '\u{20B9} ${_orderInfo!.smallOrderFee}',
+                                          style: const TextStyle(fontSize: 13),
+                                        ),
+                                      ],
+                                    )
+                                  : SizedBox.shrink(),
                             ],
                           ),
                         ),
+
                         const SizedBox(height: 10),
 
                         //const ItemList(),

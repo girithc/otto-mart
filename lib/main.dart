@@ -83,7 +83,9 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/select-address',
       builder: (BuildContext context, GoRouterState state) {
-        return const AddressSelectionWidget();
+        return const AddressSelectionWidget(
+          flag: false,
+        );
       },
     ),
     GoRoute(
@@ -161,22 +163,27 @@ class _MyAppState extends State<MyApp> {
 
     print(
         "App Info: $appName, $packageName, $version, $buildNumber, $platform");
+    Map<String, dynamic> data = {
+      "packageName": packageName,
+      "version": version,
+      "buildNumber": buildNumber,
+      "platform": platform
+    };
+
     var response = await http.post(
       Uri.parse('$baseUrl/need-to-update'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
-      body: jsonEncode(<String, String>{
-        'packageName': packageName,
-        'version': version,
-        'buildNumber': buildNumber,
-        'platform': platform,
-      }),
+      body: jsonEncode(data),
     );
+
+    print("Body $data");
 
     print("Resopnse: ${response.body} ${response.statusCode}  ");
     if (response.statusCode == 200) {
       bool updateRequired = json.decode(response.body)['update_required'];
+      bool updateAvailable = json.decode(response.body)['update_available'];
       bool maintenanceRequired =
           json.decode(response.body)['maintenance_required'];
       String endTimeString = json.decode(response.body)['end_time'];
@@ -199,6 +206,96 @@ class _MyAppState extends State<MyApp> {
 
           context: context,
           barrierDismissible: false,
+          builder: (BuildContext context) {
+            return GestureDetector(
+              onTap: () async {
+                String appStoreLink = Platform.isAndroid
+                    ? 'https://play.google.com/store/apps/details?id=com.otto.pronto'
+                    : 'https://apps.apple.com/in/app/otto-mart/id6468983550'; // Use your actual App Store link
+
+                if (await canLaunch(appStoreLink)) {
+                  await launch(appStoreLink);
+                } else {
+                  print('Could not launch $appStoreLink');
+                }
+              },
+              child: Dialog(
+                backgroundColor: Colors.white,
+                surfaceTintColor: Colors.white,
+
+                shape: RoundedRectangleBorder(
+                    borderRadius:
+                        BorderRadius.circular(20.0)), // Rounded corners
+                child: Column(
+                  mainAxisSize:
+                      MainAxisSize.min, // To make the dialog wrap its content
+                  children: <Widget>[
+                    Container(
+                      padding: const EdgeInsets.all(16.0),
+                      alignment: Alignment.topCenter,
+                      child: Image.asset(
+                        'assets/icon/icon.jpeg',
+                        height: MediaQuery.of(context).size.height * 0.2,
+                      ),
+                    ), // Replace with your image asset
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Text(
+                        'Update Available',
+                        style: TextStyle(
+                            fontSize: 24.0, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Container(
+                      alignment: Alignment.topCenter,
+                      padding: const EdgeInsets.all(16.0),
+                      child: const Text(
+                        'Download the new version and get the latest item discounts.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 20),
+                      ),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.all(10),
+                      alignment: Alignment.bottomRight,
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          backgroundColor: Colors.pinkAccent, // Text color
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Update',
+                          style: TextStyle(fontSize: 20),
+                        ),
+                        onPressed: () async {
+                          String appStoreLink = Platform.isAndroid
+                              ? 'https://play.google.com/store/apps/details?id=com.otto.pronto'
+                              : 'https://apps.apple.com/in/app/otto-mart/id6468983550';
+
+                          if (await canLaunch(appStoreLink)) {
+                            await launch(appStoreLink);
+                          } else {
+                            print('Could not launch $appStoreLink');
+                          }
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      } else if (updateAvailable) {
+        showDialog(
+          barrierColor: Colors.deepPurpleAccent
+              .withOpacity(0.7), // Whitened-out background
+
+          context: context,
           builder: (BuildContext context) {
             return GestureDetector(
               onTap: () async {
@@ -331,25 +428,6 @@ class _MyAppState extends State<MyApp> {
                         'The app is under maintenance until $formattedMaintenanceEndTime.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(fontSize: 20),
-                      ),
-                    ),
-                    Container(
-                      margin: const EdgeInsets.all(10),
-                      alignment: Alignment.bottomRight,
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.pinkAccent, // Text color
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                          ),
-                        ),
-                        child: const Text(
-                          'OK',
-                          style: TextStyle(fontSize: 20),
-                        ),
-                        onPressed: () =>
-                            Navigator.of(context).pop(), // Close the dialog
                       ),
                     ),
                   ],
@@ -503,7 +581,10 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
               onEnd: () {
                 checkLoginStatus().then((loggedIn) => {
                       if (loggedIn)
-                        {context.go('/select-address-login')}
+                        {
+                          print("Logged IN"),
+                          context.go('/select-address-login')
+                        }
                       else
                         {context.go('/phone')}
                     });

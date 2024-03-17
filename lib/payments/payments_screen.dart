@@ -165,7 +165,7 @@ class _PaymentsPageState extends State<PaymentsPage> {
         //throw Exception('Failed to cancel checkout items');
         //print('Error response: $errorResponse');
         return PaymentResult(
-            url: 'Payment Error',
+            url: 'Payment Error ${response.body}',
             isSuccess: false,
             sign: '',
             merchantTransactionId: '');

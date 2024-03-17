@@ -295,9 +295,9 @@ class _MyHomePageState extends State<MyHomePage>
               ),
             ),
       bottomNavigationBar: Container(
-        height: orderStatus != null
-            ? MediaQuery.of(context).size.height * 0.14
-            : MediaQuery.of(context).size.height * 0.095,
+        height: //orderStatus != null
+            MediaQuery.of(context).size.height * 0.14,
+        //: MediaQuery.of(context).size.height * 0.095,
         padding: EdgeInsets.only(
             bottom: orderStatus != null
                 ? MediaQuery.of(context).size.height * 0.012
@@ -322,33 +322,106 @@ class _MyHomePageState extends State<MyHomePage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            if (orderStatus !=
-                null) // Use Dart's collection-if to include a widget conditionally
-              GestureDetector(
-                onTap: () {
-                  // Navigate to Cart
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) =>
-                            OrderConfirmed(newOrder: false, orderId: orderId)),
-                  );
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  width: MediaQuery.of(context).size.width,
-                  decoration: BoxDecoration(
-                    color: Colors.greenAccent.withOpacity(0.8),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white),
+            orderStatus != null
+                ? // Use Dart's collection-if to include a widget conditionally
+                GestureDetector(
+                    onTap: () {
+                      // Navigate to Cart
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => OrderConfirmed(
+                                newOrder: false, orderId: orderId)),
+                      );
+                    },
+                    child: Container(
+                      padding: EdgeInsets.symmetric(vertical: 10),
+                      width: MediaQuery.of(context).size.width,
+                      decoration: BoxDecoration(
+                        color: Colors.greenAccent.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white),
+                      ),
+                      child: Center(
+                          child: Text(
+                        'Order $orderStatus',
+                        style: TextStyle(color: Colors.black),
+                      )),
+                    ),
+                  )
+                : CarouselSlider(
+                    items: [
+                      // First tab
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                          color: Colors.tealAccent,
+                        ),
+                        child: Center(
+                          child: Text(
+                            'Free Delivery Above 49',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 14.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Second tab
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8.0),
+                          color: Colors.tealAccent,
+                        ),
+                        child: Center(
+                          child: RichText(
+                            text: TextSpan(
+                              style: TextStyle(
+                                // Default text style
+                                color: Colors.black,
+                                fontSize: 14.0,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              children: <TextSpan>[
+                                TextSpan(
+                                  text:
+                                      'FLAT 5', // The part you want to emphasize
+                                  style: TextStyle(
+                                      fontSize:
+                                          19.0), // Increase the font size for emphasis
+                                ),
+                                TextSpan(
+                                    text: ' to '), // Unchanged part of the text
+                                TextSpan(
+                                  text:
+                                      '50% Discount', // The second part you want to emphasize
+                                  style: TextStyle(
+                                      fontSize:
+                                          19.0), // Increase the font size for emphasis
+                                ),
+                                TextSpan(
+                                    text:
+                                        ' on All Items'), // Unchanged part of the text
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    options: CarouselOptions(
+                      height: MediaQuery.of(context).size.height * 0.05,
+                      enlargeCenterPage: true,
+                      autoPlay: true,
+                      //aspectRatio: 16 / 9,
+                      autoPlayCurve: Curves.fastOutSlowIn,
+                      enableInfiniteScroll: true,
+                      autoPlayAnimationDuration: Duration(
+                        seconds: 3,
+                      ),
+                      viewportFraction: 0.95,
+                    ),
                   ),
-                  child: Center(
-                      child: Text(
-                    'Order $orderStatus',
-                    style: TextStyle(color: Colors.black),
-                  )),
-                ),
-              ),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               mainAxisSize: MainAxisSize.max,
@@ -809,7 +882,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 children: <TextSpan>[
                                   TextSpan(
                                     text:
-                                        '2 Minute', // Part of the text you want to style differently
+                                        '5 Minute', // Part of the text you want to style differently
                                     style: TextStyle(
                                         color: Colors.deepPurpleAccent,
                                         fontSize: 22
@@ -818,7 +891,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                         ),
                                   ),
                                   TextSpan(
-                                    text: ' Pickup', // First part of the text
+                                    text: ' Delivery', // First part of the text
                                   ),
                                 ],
                               ),
@@ -837,7 +910,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 children: [
                                   Expanded(
                                     child: Text(
-                                      streetAddress, // Placeholder for the second line of text
+                                      "${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}, ${cart.deliveryAddress.lineTwo}", //streetAddress, // Placeholder for the second line of text
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         fontSize:
