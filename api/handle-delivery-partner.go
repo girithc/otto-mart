@@ -229,13 +229,13 @@ func (s *Server) DeliveryPartnerCompleteOrder(res http.ResponseWriter, req *http
 }
 
 func (s *Server) DeliveryPartnerGetOrderDetails(res http.ResponseWriter, req *http.Request) error {
-	new_req := new(types.DeliveryPartnerOrderDetails)
+	new_req := new(types.DeliveryPartnerAcceptOrder)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
 		fmt.Println("Error in Decoding req.body in DeliveryPartnerGetOrderDetails()")
 		return err
 	}
 
-	order, err := s.store.DeliveryPartnerGetOrderDetails(*new_req)
+	order, err := s.store.DeliveryPartnerGetOrderDetails(new_req.Phone, new_req.SalesOrderId)
 	if err != nil {
 		return err
 	}

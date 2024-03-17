@@ -140,43 +140,27 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 
 	if orderType == "delivery" {
 		switch {
-		case itemCost > 499:
+		case itemCost >= 40:
 			deliveryFee = 0
-		case itemCost > 299:
-			deliveryFee = 15
-		case itemCost > 199:
-			deliveryFee = 25
-		case itemCost > 99:
-			deliveryFee = 35
 		default:
-			deliveryFee = 35
+			deliveryFee = 0
 		}
 
 		switch {
-		case itemCost > 199:
+		case itemCost > 49:
 			smallOrderFee = 0
-		case itemCost > 99:
-			smallOrderFee = 10
 		default:
-			smallOrderFee = 25
+			smallOrderFee = 0
 		}
 
 		switch {
-		case itemCost > 999:
-			platformFee = 0
-		case itemCost > 399:
-			platformFee = 2
 		default:
 			platformFee = 2
 		}
 
 		switch {
-		case itemCost > 999:
-			packagingFee = 5
-		case itemCost > 399:
-			packagingFee = 2
 		default:
-			packagingFee = 2
+			packagingFee = 0
 		}
 	} else {
 

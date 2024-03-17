@@ -173,7 +173,7 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 		hDistance := haversineDistance(addr.Latitude, addr.Longitude, storeLat, storeLon)
 
 		// Check if this store is within the 1 km delivery radius
-		const deliveryRadius = 1.0 // Delivery radius in km
+		const deliveryRadius = 0.5 // Delivery radius in km
 		if hDistance <= deliveryRadius && hDistance < minHDistance {
 			minHDistance = hDistance
 			nearestStoreID = storeID
@@ -334,36 +334,38 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 
 	// Use Haversine distance to determine if the address is deliverable
 	const deliveryRadius = 0.5 // Delivery radius in km
-	if minHDistance > deliveryRadius {
+	if minHDistance <= deliveryRadius {
+		deliverable.Deliverable = true
+		deliverable.StoreId = nearestStoreID
+	} else {
 		deliverable.Deliverable = false
 		tx.Commit()
 		return &deliverable, nil
 	}
 
-	deliverable.Deliverable = true
-	deliverable.StoreId = nearestStoreID
-
 	// Calculate PostGIS distance for the nearest store
 	var pgDistance float64
 	err = tx.QueryRow(`
         SELECT ST_Distance(
-            ST_GeographyFromText('SRID=4326;POINT(' || longitude || ' ' || latitude || ')'), 
-            ST_GeographyFromText('SRID=4326;POINT($1 $2)')
-        ) FROM store WHERE id = $3
-    `, custLon, custLat, nearestStoreID).Scan(&pgDistance)
+            ST_MakePoint(latitude, longitude)::geography, 
+            ST_MakePoint($1, $2)::geography
+        )
+        FROM store
+        WHERE id = $3
+    `, custLat, custLon, nearestStoreID).Scan(&pgDistance)
 
 	if err != nil {
 		tx.Rollback()
 		return nil, err
 	}
 
+	// Check for an active shopping cart
 	var cartId int
 	err = tx.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND store_id = $2 AND active = true LIMIT 1`, customerId, nearestStoreID).Scan(&cartId)
 
 	// If an active shopping cart is not found, create one
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// Insert a new shopping cart and set order_type to 'delivery'
 			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active, address_id, order_type) VALUES ($1, $2, true, $3, 'delivery') RETURNING id`
 			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID, addressId).Scan(&cartId)
 			if err != nil {
@@ -375,7 +377,7 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 			return nil, err
 		}
 	} else {
-		// Update the address_id and order_type of the shopping cart
+		// Update the address_id of the shopping cart
 		updateCartQuery := `UPDATE shopping_cart SET address_id = $1, order_type = 'delivery' WHERE id = $2`
 		_, err = tx.Exec(updateCartQuery, addressId, cartId)
 		if err != nil {
@@ -391,7 +393,7 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 
 	deliverable.CartId = cartId
 	deliverable.HDistance = minHDistance
-	deliverable.PGDistance = pgDistance / 1000 // Convert meters to kilometers
+	deliverable.PGDistance = pgDistance / 1000 // Convert to kilometers if needed
 
 	return &deliverable, nil
 }

@@ -46,7 +46,7 @@ func (s *PostgresStore) CreateUpdateAppTable(tx *sql.Tx) error {
 	return nil
 }
 
-func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, error) {
+func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateAppInput) (*UpdateResponse, error) {
 	fmt.Println("Inside NeedToUpdate")
 	fmt.Println("New Request: ", newReq.BuildNo, newReq.Version, newReq.Platform)
 
@@ -55,12 +55,12 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, 
 	var maintenanceEndTime sql.NullTime // Use sql.NullTime to handle NULL values
 
 	// Updated query to select maintenance and maintenance_end_time
-	query := `SELECT version_number, build_number, maintenance, maintenance_end_time FROM updateapp WHERE package_name = $1 AND platform = $2 ORDER BY updated_at DESC LIMIT 1`
-	err := s.db.QueryRow(query, newReq.PackageName, newReq.Platform).Scan(&versionNumber, &buildNumber, &maintenance, &maintenanceEndTime)
+	query := `SELECT version_number, build_number, maintenance FROM updateapp WHERE package_name = $1 AND platform = $2 ORDER BY updated_at DESC LIMIT 1`
+	err := s.db.QueryRow(query, newReq.PackageName, newReq.Platform).Scan(&versionNumber, &buildNumber, &maintenance)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No records found, possibly a new app, needs to update
-			return &UpdateResponse{UpdateRequired: false, MaintenanceRequired: true, MaintenanceEndTime: time.Now().Add(6 * time.Hour)}, nil
+			return &UpdateResponse{UpdateRequired: false, MaintenanceRequired: false, MaintenanceEndTime: time.Now().Add(6 * time.Hour)}, nil
 		}
 		// Handle other potential errors
 		return nil, fmt.Errorf("error querying updateapp table: %w", err)
@@ -76,6 +76,7 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, 
 	updateResponse := &UpdateResponse{
 		UpdateRequired:      false,
 		MaintenanceRequired: maintenance,
+		UpdateAvailable:     false,
 	}
 
 	// Handle maintenance end time (only if not NULL)
@@ -83,30 +84,37 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateApp) (*UpdateResponse, 
 		updateResponse.MaintenanceEndTime = maintenanceEndTime.Time
 	}
 
-	// Compare version numbers
-	if newReq.Version > versionNumber {
-		// New request has a higher version, no need to update
-		return updateResponse, nil
-	} else if newReq.Version == versionNumber {
-		if newReq.Platform == "ios" {
-			// For iOS, equal version number means no update needed
+	if newReq.Platform == "ios" {
+		if newReq.Version >= versionNumber {
+			// New request has a higher version, no need to update
 			return updateResponse, nil
 		} else {
-			// For Android and Web, need to check build numbers
-			if newReq.BuildNo > buildNumber {
-				// Build number is higher, no need to update
+			updateResponse.UpdateRequired = true
+			return updateResponse, nil
+		}
+	} else if newReq.Platform == "android" {
+		if newReq.Version >= versionNumber {
+			if newReq.BuildNo >= buildNumber {
+				return updateResponse, nil
+			} else {
+				updateResponse.UpdateRequired = true
 				return updateResponse, nil
 			}
+		} else {
+			updateResponse.UpdateRequired = true
+			return updateResponse, nil
 		}
 	}
 
-	// If none of the above conditions are met, an update is needed
-	updateResponse.UpdateRequired = true
 	return updateResponse, nil
+
+	// If none of the above conditions are met, an update is needed
+
 }
 
 type UpdateResponse struct {
 	UpdateRequired      bool      `json:"update_required"`
 	MaintenanceRequired bool      `json:"maintenance_required"`
 	MaintenanceEndTime  time.Time `json:"end_time"`
+	UpdateAvailable     bool      `json:"update_available"`
 }

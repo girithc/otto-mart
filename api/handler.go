@@ -811,7 +811,7 @@ func (s *Server) handleDeliveryPartnerPickupOrder(res http.ResponseWriter, req *
 func (s *Server) handleDeliveryPartnerGoDeliverOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "delivery_partner_go_delivery_order")
-		return s.goRoutineWrapper(DeliveryPartnerGoDeliverOrder, s.DeliveryPartnerPickupOrder, res, req)
+		return s.goRoutineWrapper(DeliveryPartnerGoDeliverOrder, s.DeliveryPartnerGoDeliverOrder, res, req)
 	}
 	return nil
 }

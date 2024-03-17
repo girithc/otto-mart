@@ -77,13 +77,14 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/delivery-partner-check-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCheckOrder))
 	http.HandleFunc("/delivery-partner-dispatch-order", makeHTTPHandleFunc(s.handleDeliveryPartnerDispatchOrder))
 	http.HandleFunc("/delivery-partner-arrive", makeHTTPHandleFunc(s.handleDeliveryPartnerArrive))
-	http.HandleFunc("/delivery-partner-get-order-details", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderDetails))
+	//http.HandleFunc("/delivery-partner-get-order-details", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderDetails))
 
 	http.HandleFunc("/delivery-partner-get-assigned-orders", makeHTTPHandleFunc(s.handleDeliveryPartnerGetAssignedOrders))
 	http.HandleFunc("/delivery-partner-accept-order", makeHTTPHandleFunc(s.handleDeliveryPartnerAcceptOrder))
 	http.HandleFunc("/delivery-partner-pickup-order", makeHTTPHandleFunc(s.handleDeliveryPartnerPickupOrder))
 	http.HandleFunc("/delivery-partner-deliver-order", makeHTTPHandleFunc(s.handleDeliveryPartnerGoDeliverOrder))
-	http.HandleFunc("/delivery-partner-arrive-destination,", makeHTTPHandleFunc(s.handleArriveDestination))
+	http.HandleFunc("/delivery-partner-arrive-destination", makeHTTPHandleFunc(s.handleArriveDestination))
+	http.HandleFunc("/delivery-partner-get-order-details", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderDetails))
 	http.HandleFunc("/delivery-partner-complete-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCompleteOrder))
 
 	http.HandleFunc("/address", makeHTTPHandleFunc(s.handleAddress))

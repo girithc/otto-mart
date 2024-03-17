@@ -527,7 +527,7 @@ func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (CompleteO
 	}
 
 	// Proceed only if the order is not already completed and the shelf is active
-	if orderStatus != "completed" || shelfActive {
+	if (orderStatus != "dispatched" && orderStatus != "arrived" && orderStatus != "completed") || shelfActive {
 		// Update Packer_Shelf to inactive if active
 		if shelfActive {
 			updateShelfQuery := `
@@ -543,10 +543,10 @@ func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (CompleteO
 		}
 
 		// Update order status to 'completed' if not already
-		if orderStatus != "completed" {
+		if orderStatus != "dispatched" {
 			updateOrderQuery := `
             UPDATE sales_order
-            SET order_status = 'completed'
+            SET order_status = 'dispatched'
             WHERE cart_id = $1 AND order_status != 'completed'
             `
 			_, err = tx.Exec(updateOrderQuery, cartId)

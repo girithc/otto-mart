@@ -182,47 +182,21 @@ func (s *PostgresStore) GetRecentSalesOrderByCustomerId(customerID, storeID, car
 
 	var so types.Sales_Order_Cart
 
-	query := `SELECT id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date, order_type
+	query := `SELECT id, cart_id, store_id, customer_id, address_id, paid, payment_type, order_date
               FROM sales_order
               WHERE customer_id = $1 AND store_id = $2 AND cart_id = $3
               ORDER BY order_date DESC
               LIMIT 1`
-	err = tx.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate, &so.OrderType)
+	err = tx.QueryRow(query, customerID, storeID, cartID).Scan(&so.ID, &so.CartID, &so.StoreID, &so.CustomerID, &so.AddressID, &so.Paid, &so.PaymentType, &so.OrderDate)
 	if err != nil {
 		tx.Rollback()
 		return nil, err
-	}
-
-	if so.OrderType == "pickup" {
-		otpQuery := `SELECT otp_code FROM sales_order_otp WHERE cart_id = $1 AND customer_id = $2 AND active = true LIMIT 1`
-		err = tx.QueryRow(otpQuery, cartID, customerID).Scan(&so.OTP)
-		if err != nil {
-			newOtp, err := generateOtp()
-			if err != nil {
-				return nil, fmt.Errorf("error generating new OTP: %s", err)
-			}
-
-			insertOtpQuery := `INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active) VALUES ($1, $2, $3, $4, $5)`
-			_, err = tx.Exec(insertOtpQuery, storeID, customerID, cartID, newOtp, true)
-			if err != nil {
-				return nil, fmt.Errorf("error inserting new OTP for cart %d: %s", cartID, err)
-			}
-			so.OTP = newOtp
-		}
-	} else {
-		so.OTP = ""
 	}
 
 	shoppingCartQuery := `SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true`
 	err = tx.QueryRow(shoppingCartQuery, customerID).Scan(&so.NewCartID)
 	if err != nil {
 		tx.Rollback()
-		return nil, err
-	}
-
-	updateCartQuery := `UPDATE shopping_cart SET address_id = $1 WHERE customer_id = $2 AND active = true RETURNING id`
-	err = tx.QueryRow(updateCartQuery, so.AddressID, customerID).Scan(&so.NewCartID)
-	if err != nil {
 		return nil, err
 	}
 
@@ -297,15 +271,22 @@ type OrderItem struct {
 
 func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*CustomerOrderDetails, error) {
 	orderDetails := &CustomerOrderDetails{}
-	var transactionId int
 
-	// Query to get basic order details and transaction ID
+	// Updated query to include a LEFT JOIN with the transaction table
+	// This allows fetching the transaction_id either directly from the sales_order
+	// or through a matching transaction record by cart_id if sales_order.transaction_id is NULL
 	orderQuery := `
-        SELECT so.order_status, so.order_dp_status, so.payment_type, so.paid, so.order_date, so.transaction_id
-        FROM sales_order so
-        WHERE so.customer_id = $1 AND so.cart_id = $2
-    `
-	err := s.db.QueryRow(orderQuery, customerId, cartId).Scan(&orderDetails.OrderStatus, &orderDetails.OrderDeliveryStatus, &orderDetails.PaymentType, &orderDetails.PaidStatus, &orderDetails.OrderDate, &transactionId)
+		SELECT so.order_status, so.order_dp_status, so.payment_type, so.paid, so.order_date,
+		COALESCE(so.transaction_id, t.id) AS transaction_id
+		FROM sales_order so
+		LEFT JOIN transaction t ON t.cart_id = so.cart_id AND so.transaction_id IS NULL
+		WHERE so.customer_id = $1 AND so.cart_id = $2
+	`
+	var transactionId int
+	err := s.db.QueryRow(orderQuery, customerId, cartId).Scan(
+		&orderDetails.OrderStatus, &orderDetails.OrderDeliveryStatus, &orderDetails.PaymentType,
+		&orderDetails.PaidStatus, &orderDetails.OrderDate, &transactionId,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error getting order details: %w", err)
 	}

@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"math/big"
+
+	//"math/rand" // Ensure this import is included
 	"time"
 
 	"github.com/girithc/pronto-go/types"
@@ -149,6 +151,7 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string, merchantTransactionID string) (bool, error) {
 	var storeID, customerID sql.NullInt64
 	var orderType string // Variable to store order_type from the shopping cart
+	//rand.Seed(time.Now().UnixNano()) // Seed the random number generator
 
 	// Get cart items
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
@@ -201,6 +204,15 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 			return false, fmt.Errorf("failed to create a new shopping cart for customer %d: %s", customerID.Int64, err)
 		}
 	}
+
+	otp, _ := generateOtp()
+	insertQuery := `
+        INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (cart_id) DO NOTHING;`
+
+	// Execute the query with the provided parameters
+	_, _ = tx.Exec(insertQuery, storeID, customerID, cart_id, otp, true)
 
 	var orderId int
 	// Insert into sales_order with the order_type set to 'delivery' if applicable
