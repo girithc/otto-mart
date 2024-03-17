@@ -65,6 +65,18 @@ class Item {
 
   factory Item.fromJson(Map<String, dynamic> json) {
     // Convert the image field to a List<String>, handling null and single string cases
+    print('id: ${json['id']}, Type: ${json['id'].runtimeType}');
+    print(
+        'mrp_price: ${json['mrp_price']}, Type: ${json['mrp_price'].runtimeType}');
+    print(
+        'discount: ${json['discount']}, Type: ${json['discount'].runtimeType}');
+    print(
+        'store_price: ${json['store_price']}, Type: ${json['store_price'].runtimeType}');
+    print(
+        'stock_quantity: ${json['stock_quantity']}, Type: ${json['stock_quantity'].runtimeType}');
+    print(
+        'quantity: ${json['quantity']}, Type: ${json['quantity'].runtimeType}');
+
     List<String> images = [''];
     var imageField = json['image'];
     if (imageField != null) {
