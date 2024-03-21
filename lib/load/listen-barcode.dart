@@ -49,16 +49,9 @@ class _ListenBarcodePageState extends State<ListenBarcodePage> {
     int? selectedRow;
 
     if (barcode != '-1') {
-      var url = Uri.parse('$baseUrl/packer-find-item');
-
       if (barcode.isEmpty) {
         throw Exception('(ItemDetailApiClient) Parameters are not valid');
       }
-
-      var bodyParams = {'barcode': barcode, 'store_id': 1};
-      var headers = {'Content-Type': 'application/json'};
-
-      print("Body Params $bodyParams");
 
       try {
         final networkService = NetworkService();
