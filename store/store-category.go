@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"math/rand"
 	"time"
 
 	"github.com/girithc/pronto-go/types"
@@ -169,14 +170,15 @@ func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error
 }
 
 func (s *PostgresStore) Get_Category_By_Parent_ID(id int) ([]*types.Update_Category, error) {
-	rows, err := s.db.Query("select category_id from category_higher_level_mapping where higher_level_category_id = $1", id)
+	rand.Seed(time.Now().UnixNano()) // Seed the random number generator
+
+	rows, err := s.db.Query("SELECT category_id FROM category_higher_level_mapping WHERE higher_level_category_id = $1", id)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
 	var childIDs []int
-
 	for rows.Next() {
 		var childID int
 		if err := rows.Scan(&childID); err != nil {
@@ -187,6 +189,12 @@ func (s *PostgresStore) Get_Category_By_Parent_ID(id int) ([]*types.Update_Categ
 
 	if err := rows.Err(); err != nil {
 		log.Fatal(err)
+	}
+
+	// Simple in-place shuffle using Fisher-Yates algorithm
+	for i := range childIDs {
+		j := rand.Intn(i + 1)
+		childIDs[i], childIDs[j] = childIDs[j], childIDs[i]
 	}
 
 	categoryQuery := `
@@ -202,20 +210,19 @@ func (s *PostgresStore) Get_Category_By_Parent_ID(id int) ([]*types.Update_Categ
 	defer rows.Close()
 
 	categories := []*types.Update_Category{}
-
 	for rows.Next() {
-		var image sql.NullString // Use sql.NullString to handle possible NULL values
+		var image sql.NullString
 		category := &types.Update_Category{}
 
-		err := rows.Scan(&category.Name, &category.ID, &image) // Scan the image into sql.NullString
+		err := rows.Scan(&category.Name, &category.ID, &image)
 		if err != nil {
 			return nil, err
 		}
 
 		if image.Valid {
-			category.Image = image.String // If image is not NULL, assign its value
+			category.Image = image.String
 		} else {
-			category.Image = "" // If image is NULL, assign an empty string
+			category.Image = ""
 		}
 
 		categories = append(categories, category)

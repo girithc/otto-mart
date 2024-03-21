@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 )
@@ -36,6 +37,18 @@ func (s *PostgresStore) CreateAddressTable(tx *sql.Tx) error {
     `
 
 	_, err = tx.Exec(tableQuery)
+	if err != nil {
+		return err
+	}
+
+	// Alter the table to add 'store_id' for lookup and 'distance_to_store'
+	alterTableQuery := `
+    ALTER TABLE address
+    ADD COLUMN IF NOT EXISTS store_id INTEGER,
+    ADD COLUMN IF NOT EXISTS distance_to_store DECIMAL(10, 2)
+    `
+
+	_, err = tx.Exec(alterTableQuery)
 	if err != nil {
 		return err
 	}
@@ -139,9 +152,13 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	}
 
 	var addr types.Default_Address
-	err = tx.QueryRow(`SELECT * FROM address WHERE customer_id = $1 AND is_default = true`, customer_id).Scan(
+	err = tx.QueryRow(`
+        SELECT id, customer_id, latitude, longitude, street_address, line_one_address, 
+               line_two_address, city, state, zipcode, is_default, created_at 
+        FROM address WHERE customer_id = $1 AND id = $2`, customer_id, address_id).Scan(
 		&addr.Id, &addr.Customer_Id, &addr.Latitude, &addr.Longitude, &addr.Street_Address,
-		&addr.Line_One_Address, &addr.Line_Two_Address, &addr.City, &addr.State, &addr.Zipcode, &addr.Is_Default, &addr.Created_At,
+		&addr.Line_One_Address, &addr.Line_Two_Address, &addr.City, &addr.State, &addr.Zipcode,
+		&addr.Is_Default, &addr.Created_At,
 	)
 	if err != nil {
 		return nil, err
@@ -173,11 +190,21 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 		hDistance := haversineDistance(addr.Latitude, addr.Longitude, storeLat, storeLon)
 
 		// Check if this store is within the 1 km delivery radius
-		const deliveryRadius = 0.5 // Delivery radius in km
+		const deliveryRadius = 3 // Delivery radius in km
 		if hDistance <= deliveryRadius && hDistance < minHDistance {
 			minHDistance = hDistance
 			nearestStoreID = storeID
 		}
+	}
+
+	if nearestStoreID == 0 {
+		minHDistance = 0
+	}
+	updateAddressQuery := `UPDATE address SET store_id = $1, distance_to_store = $2 WHERE id = $3`
+	_, err = tx.Exec(updateAddressQuery, nearestStoreID, minHDistance, address_id)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
 	}
 
 	// Check for errors from iterating over rows
@@ -332,8 +359,18 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 		return nil, err
 	}
 
+	if nearestStoreID == 0 {
+		minHDistance = 0
+	}
+	updateAddressQuery := `UPDATE address SET store_id = $1, distance_to_store = $2 WHERE id = $3`
+	_, err = tx.Exec(updateAddressQuery, nearestStoreID, minHDistance, addressId)
+	if err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
 	// Use Haversine distance to determine if the address is deliverable
-	const deliveryRadius = 0.5 // Delivery radius in km
+	const deliveryRadius = 3 // Delivery radius in km
 	if minHDistance <= deliveryRadius {
 		deliverable.Deliverable = true
 		deliverable.StoreId = nearestStoreID
@@ -467,13 +504,41 @@ func (s *PostgresStore) Delete_Address(customer_id int, address_id int) (*types.
 	return address, nil
 }
 
-func (s *PostgresStore) GetStoreAddress(storeId int) (*StoreAddress, error) {
-	query := `SELECT address, latitude, longitude FROM store WHERE id = $1`
+type StoreAddress struct {
+	Address         string    `json:"address"`
+	Latitude        float64   `json:"latitude"`
+	Longitude       float64   `json:"longitude"`
+	StoreId         int       `json:"store_id"`
+	DistanceToStore float64   `json:"distance_to_store"` // Distance to the store
+	StoreOpen       bool      `json:"store_open"`        // Indicates if the store is currently open
+	OpeningTime     time.Time `json:"opening_time"`      // The next opening time of the store
+}
+
+func (s *PostgresStore) GetStoreAddress(storeId int, addressId int) (*StoreAddress, error) {
+
+	query := `
+		SELECT a.store_id, a.distance_to_store, s.address, s.latitude, s.longitude 
+		FROM address a
+		JOIN store s ON a.store_id = s.id 
+		WHERE a.id = $1 AND a.store_id = $2
+	`
 
 	var address StoreAddress
-	row := s.db.QueryRow(query, storeId)
+	row := s.db.QueryRow(query, addressId, storeId)
 
-	err := row.Scan(&address.Address, &address.Latitude, &address.Longitude)
+	err := row.Scan(&address.StoreId, &address.DistanceToStore, &address.Address, &address.Latitude, &address.Longitude)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("no address found with id %d linked to store id %d", addressId, storeId)
+		}
+		return nil, err
+	}
+
+	var address2 StoreAddress
+	query = `SELECT address, latitude, longitude FROM store WHERE id = $1`
+	row = s.db.QueryRow(query, storeId)
+
+	err = row.Scan(&address2.Address, &address2.Latitude, &address2.Longitude)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("no store found with id %d", storeId)
@@ -481,11 +546,23 @@ func (s *PostgresStore) GetStoreAddress(storeId int) (*StoreAddress, error) {
 		return nil, err
 	}
 
-	return &address, nil
-}
+	// Manually create IST time by adding 5 hours and 30 minutes to UTC
+	istOffset := time.FixedZone("IST", 5*3600+30*60)
+	now := time.Now().In(istOffset)
 
-type StoreAddress struct {
-	Address   string  `json:"address"`
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
+	// Set opening and closing times
+	openingTime := time.Date(now.Year(), now.Month(), now.Day(), 9, 0, 0, 0, istOffset)   // 9:00 AM IST
+	closingTime := time.Date(now.Year(), now.Month(), now.Day(), 18, 30, 0, 0, istOffset) // 8:45 PM IST
+
+	// Determine if the store is currently open
+	address.StoreOpen = now.Before(closingTime) && now.After(openingTime)
+
+	// If the store is closed and current time is past today's closing time, set opening time to the next day
+	if !address.StoreOpen && now.After(closingTime) {
+		address.OpeningTime = openingTime.AddDate(0, 0, 1) // Next day's opening time
+	} else {
+		address.OpeningTime = openingTime // Today's opening time
+	}
+
+	return &address, nil
 }

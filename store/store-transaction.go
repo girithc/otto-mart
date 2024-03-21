@@ -168,3 +168,55 @@ func (s *PostgresStore) DeleteTransaction(tx *sql.Tx, cartID int, merchantTransa
 
 	return nil
 }
+
+func (s *PostgresStore) FetchCompletedTransactionDetailsAndCreateOrder(cartID int) (bool, error) {
+	// Start a new transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return false, fmt.Errorf("error starting transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	var paymentType, merchantTransactionID string
+
+	// Check if an order with the given cart_id already exists
+	var existingOrderID int
+	checkOrderQuery := `SELECT id FROM sales_order WHERE cart_id = $1 LIMIT 1`
+	err = tx.QueryRow(checkOrderQuery, cartID).Scan(&existingOrderID)
+	if err != nil && err != sql.ErrNoRows {
+		return false, fmt.Errorf("error checking for existing order with cart_id %d: %w", cartID, err)
+	}
+
+	// If an order already exists, return false with no error
+	if existingOrderID != 0 {
+		return false, nil
+	}
+
+	// Fetch transaction details for the given cartID
+	transactionQuery := `
+        SELECT payment_method, merchant_transaction_id
+        FROM transaction
+        WHERE cart_id = $1 AND status = 'COMPLETED'
+        ORDER BY transaction_date DESC
+        LIMIT 1
+    `
+
+	// Execute the query within the transaction
+	err = tx.QueryRow(transactionQuery, cartID).Scan(&paymentType, &merchantTransactionID)
+	if err != nil {
+		return false, fmt.Errorf("error fetching completed transaction details for cart_id %d: %w", cartID, err)
+	}
+
+	// Create an order with the fetched details
+	result, err := s.CreateOrder(tx, cartID, paymentType, merchantTransactionID)
+	if err != nil {
+		return false, err // Error will cause a rollback due to deferred tx.Rollback()
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return false, fmt.Errorf("error committing transaction: %w", err)
+	}
+
+	return result, nil // Return the result of CreateOrder
+}

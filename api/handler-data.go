@@ -129,6 +129,7 @@ var authRequirements = map[string]Permission{
 	ManagerUpdateItemBarcode:              {Role: "Manager", AuthRequired: true},
 	ManagerInitShelf:                      {Role: "Manager", AuthRequired: true},
 	ManagerFindItem:                       {Role: "Manager", AuthRequired: true},
+	ManagerCreateOrder:                    {Role: "Manager", AuthRequired: true},
 	ManagerAssignItemShelf:                {Role: "Manager", AuthRequired: true},
 	StoreAddressGet:                       {Role: "Customer", AuthRequired: true},
 	PackerGetOrder:                        {Role: "Customer", AuthRequired: true},
@@ -262,4 +263,5 @@ const (
 	ManagerInitShelf                      = "manager-init-shelf"
 	ManagerAssignItemShelf                = "manager-assign-item-shelf"
 	ManagerFindItem                       = "manager-find-item"
+	ManagerCreateOrder                    = "manager-create-order"
 )

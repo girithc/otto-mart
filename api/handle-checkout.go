@@ -23,12 +23,10 @@ func (s *Server) handlePostCheckoutLockItems(res http.ResponseWriter, req *http.
 		return err
 	}
 
-	/*
-		_, err = s.store.RefreshMerchantTransactionID(new_req.Cart_Id)
-		if err != nil {
-			return err
-		}
-	*/
+	_, err = s.store.RefreshMerchantTransactionID(new_req.Cart_Id)
+	if err != nil {
+		return err
+	}
 
 	areItemsLocked, err := s.store.LockStock(new_req.Cart_Id)
 	if err != nil {

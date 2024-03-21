@@ -610,6 +610,14 @@ func (s *Server) handleManagerFindItem(res http.ResponseWriter, req *http.Reques
 	return nil
 }
 
+func (s *Server) handleManagerCreateOrder(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-create-order")
+		return s.goRoutineWrapper(ManagerCreateOrder, s.handleManagerCreateOrderBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerLoadItem(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-load-item")

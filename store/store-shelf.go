@@ -95,7 +95,7 @@ func (s *PostgresStore) GetShelf(storeID int) ([]Shelf, error) {
 }
 
 func (s *PostgresStore) ManagerInitShelf(storeID int) (bool, error) {
-	verticals := []string{"A", "B", "C", "D", "E", "F", "G", "H"}
+	verticals := []string{"A", "B", "C", "D", "E", "F", "G", "H", "R", "Z"}
 	success := true
 
 	for _, vertical := range verticals {

@@ -49,7 +49,7 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 
 	// Define the ENUM type for order_type
 	orderTypeQuery := `DO $$ BEGIN
-        CREATE TYPE order_type AS ENUM ('delivery', 'pickup');
+        CREATE TYPE order_type AS ENUM ('delivery');
     EXCEPTION
         WHEN duplicate_object THEN null;
     END $$;`
@@ -74,7 +74,7 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
         order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         order_status order_status DEFAULT 'received',
 		order_dp_status dp_status DEFAULT 'pending',
-		order_type order_type DEFAULT 'pickup'
+		order_type order_type DEFAULT 'delivery'
     )`
 
 	_, err = tx.Exec(query)
@@ -84,7 +84,7 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 
 	// Alter the sales_order table to add the order_type column with a default value of 'pickup'
 	alterTableQuery := `ALTER TABLE sales_order
-        ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'pickup';`
+        ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'delivery';`
 
 	_, err = tx.Exec(alterTableQuery)
 	if err != nil {

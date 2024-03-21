@@ -12,6 +12,9 @@ import (
 func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_CategoryID_And_StoreID_noCategory, error) {
 	fmt.Println("Entered Search_Items")
 
+	// Prepare the query string for partial and fuzzy matching
+	fuzzyMatchQuery := "%" + query + "%"
+
 	rows, err := s.db.Query(`
     SELECT 
         item.id, 
@@ -23,7 +26,7 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
         item_store.stock_quantity, 
         item_store.locked_quantity, 
         (SELECT image_url FROM item_image WHERE item_image.item_id = item.id ORDER BY order_position LIMIT 1) AS image_url, 
-		brand.name,
+        brand.name AS brand_name,
         item.quantity,
         item.unit_of_quantity,
         item.created_at, 
@@ -33,9 +36,11 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
     INNER JOIN item_financial ON item.id = item_financial.item_id 
     LEFT JOIN store ON item_store.store_id = store.id
     LEFT JOIN brand ON item.brand_id = brand.id
-    WHERE item.name ILIKE '%' || $1 || '%'
-	ORDER BY item_store.stock_quantity DESC
-	`, query)
+    WHERE item.name ILIKE $1 OR SIMILARITY(item.name, $1) > 0.3
+       OR brand.name ILIKE $1 OR SIMILARITY(brand.name, $1) > 0.3
+       OR item.description ILIKE $1 OR SIMILARITY(item.description, $1) > 0.3
+    ORDER BY item_store.stock_quantity DESC
+    `, fuzzyMatchQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -47,19 +52,19 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 		item := &types.Get_Items_By_CategoryID_And_StoreID_noCategory{}
 		var imageURL sql.NullString
 		var createdBy sql.NullInt64
-		var mrpPrice sql.NullFloat64 // No need for NullFloat64 anymore as INNER JOIN guarantees a value, but kept for compatibility
+		var mrpPrice sql.NullFloat64
 
 		err := rows.Scan(
 			&item.ID,
 			&item.Name,
-			&mrpPrice, // Scan into sql.NullFloat64
+			&mrpPrice,
 			&item.Discount,
 			&item.Store_Price,
 			&item.Store,
 			&item.Stock_Quantity,
 			&item.Locked_Quantity,
 			&imageURL,
-			&item.Brand,
+			&item.Brand, // Make sure to add this field to your struct if it's not already there
 			&item.Quantity,
 			&item.Unit_Of_Quantity,
 			&item.Created_At,
@@ -69,11 +74,10 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 			return nil, err
 		}
 
-		// mrpPrice is always valid now due to INNER JOIN, but keeping the check for safety
 		if mrpPrice.Valid {
 			item.MRP_Price = mrpPrice.Float64
 		} else {
-			item.MRP_Price = 0.0 // Fallback, should not be needed
+			item.MRP_Price = 0.0
 		}
 
 		item.Store_Price = item.MRP_Price - item.Discount
@@ -81,13 +85,13 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 		if imageURL.Valid {
 			item.Image = imageURL.String
 		} else {
-			item.Image = "" // Fallback for image URL
+			item.Image = ""
 		}
 
 		if createdBy.Valid {
 			item.Created_By = int(createdBy.Int64)
 		} else {
-			item.Created_By = 0 // Fallback for created_by
+			item.Created_By = 0
 		}
 
 		items = append(items, item)

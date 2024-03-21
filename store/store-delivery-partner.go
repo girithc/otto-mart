@@ -489,69 +489,76 @@ type OrderAssignResponse struct {
 func (s *PostgresStore) GetAssignedOrder(storeId int, phone string) ([]OrderAssignResponse, error) {
 	var responses []OrderAssignResponse
 
-	// Query for completed orders
-	completedOrdersQuery := `
-    SELECT so.id, so.order_status, so.order_date, so_otp.otp_code
-    FROM sales_order so
-    JOIN sales_order_otp so_otp ON so.cart_id = so_otp.cart_id
-    JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
-    WHERE so.store_id = $1 AND so.order_status != 'completed' AND dp.phone = $2 AND so_otp.active = true
-    ORDER BY so.order_date DESC;`
+	// Query to fetch orders assigned to the given store and delivery partner.
+	ordersQuery := `
+	SELECT so.id, so.cart_id, so.order_status, so.order_date
+	FROM sales_order so
+	JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
+	WHERE so.store_id = $1 AND dp.phone = $2
+	ORDER BY so.order_date DESC;`
 
-	// Execute the query for completed orders
-	completedRows, err := s.db.Query(completedOrdersQuery, storeId, phone)
+	// Execute the query.
+	rows, err := s.db.Query(ordersQuery, storeId, phone)
 	if err != nil {
-		return nil, fmt.Errorf("error querying completed orders: %s", err)
+		return nil, fmt.Errorf("error querying orders: %s", err)
 	}
-	defer completedRows.Close()
+	defer rows.Close()
 
-	// Iterate through the result set for completed orders
-	for completedRows.Next() {
-		var completedResponse OrderAssignResponse
-		if err := completedRows.Scan(&completedResponse.OrderId, &completedResponse.OrderStatus, &completedResponse.OrderDate, &completedResponse.OrderOTP); err != nil {
-			return nil, fmt.Errorf("error scanning completed orders: %s", err)
+	// Iterate through the result set.
+	for rows.Next() {
+		var response OrderAssignResponse
+		var cartId int
+		if err := rows.Scan(&response.OrderId, &cartId, &response.OrderStatus, &response.OrderDate); err != nil {
+			return nil, fmt.Errorf("error scanning orders: %s", err)
 		}
-		// Append completed orders to the responses list
-		responses = append(responses, completedResponse)
-	}
 
-	// Check for errors encountered during iteration over completed orders
-	if err = completedRows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over completed orders: %s", err)
-	}
-
-	// Query for completed orders
-	completedOrdersQuery = `
-    SELECT so.id, so.order_status, so.order_date, so_otp.otp_code
-    FROM sales_order so
-    JOIN sales_order_otp so_otp ON so.cart_id = so_otp.cart_id
-    JOIN delivery_partner dp ON so.delivery_partner_id = dp.id
-    WHERE so.store_id = $1 AND so.order_status = 'completed' AND dp.phone = $2 AND so_otp.active = true
-    ORDER BY so.order_date DESC;`
-
-	// Execute the query for completed orders
-	completedRows, err = s.db.Query(completedOrdersQuery, storeId, phone)
-	if err != nil {
-		return nil, fmt.Errorf("error querying completed orders: %s", err)
-	}
-	defer completedRows.Close()
-
-	// Iterate through the result set for completed orders
-	for completedRows.Next() {
-		var completedResponse OrderAssignResponse
-		if err := completedRows.Scan(&completedResponse.OrderId, &completedResponse.OrderStatus, &completedResponse.OrderDate, &completedResponse.OrderOTP); err != nil {
-			return nil, fmt.Errorf("error scanning completed orders: %s", err)
+		// Fetch or generate OTP for each order.
+		otp, err := s.fetchOrGenerateOtp(cartId, storeId)
+		if err != nil {
+			return nil, fmt.Errorf("error handling OTP for cart_id %d: %s", cartId, err)
 		}
-		// Append completed orders to the responses list
-		responses = append(responses, completedResponse)
+		response.OrderOTP = otp
+
+		// Append the response.
+		responses = append(responses, response)
 	}
 
-	// Check for errors encountered during iteration over completed orders
-	if err = completedRows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over completed orders: %s", err)
+	// Check for any error encountered during iteration.
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating over orders: %s", err)
 	}
 
 	return responses, nil
+}
+
+// fetchOrGenerateOtp checks if an OTP exists for a given cartId, generates a new one if not.
+func (s *PostgresStore) fetchOrGenerateOtp(cartId, storeId int) (string, error) {
+	var otp string
+
+	// Check if an OTP already exists.
+	checkOtpQuery := `SELECT otp_code FROM sales_order_otp WHERE cart_id = $1`
+	err := s.db.QueryRow(checkOtpQuery, cartId).Scan(&otp)
+	if err == sql.ErrNoRows { // No OTP found, generate a new one.
+		otp, err = generateOtp()
+		if err != nil {
+			return "", fmt.Errorf("error generating OTP: %s", err)
+		}
+
+		// Insert the new OTP.
+		insertOtpQuery := `
+		INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
+		VALUES ($1, (SELECT customer_id FROM sales_order WHERE cart_id = $2), $2, $3, true)
+		ON CONFLICT (cart_id) DO NOTHING;`
+		_, err = s.db.Exec(insertOtpQuery, storeId, cartId, otp)
+		if err != nil {
+			return "", fmt.Errorf("error inserting new OTP: %s", err)
+		}
+	} else if err != nil { // Handle other errors.
+		return "", fmt.Errorf("error checking for existing OTP: %s", err)
+	}
+
+	// Return the existing or new OTP.
+	return otp, nil
 }
 
 func (s *PostgresStore) DeliveryPartnerDispatchOrder(phone string, order_id int) (*DeliveryPartnerDispatchResult, error) {

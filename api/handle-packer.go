@@ -111,6 +111,24 @@ func (s *Server) handlePackerFindItemBasic(res http.ResponseWriter, req *http.Re
 
 	return WriteJSON(res, http.StatusOK, result)
 }
+
+func (s *Server) handleManagerCreateOrderBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.CreateOrderBasic)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerCreateOrderBasic")
+		return err
+	}
+
+	// Fetch transaction details
+	result, err := s.store.FetchCompletedTransactionDetailsAndCreateOrder(new_req.CartId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+
+}
+
 func (s *Server) handlePackerGetOrder(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.GetOrderBasic)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

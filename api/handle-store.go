@@ -85,7 +85,7 @@ func (s *Server) HandleGetStoreAddress(res http.ResponseWriter, req *http.Reques
 		return err
 	}
 
-	address, err := s.store.GetStoreAddress(new_req.StoreId)
+	address, err := s.store.GetStoreAddress(new_req.StoreId, new_req.AddressId)
 	if err != nil {
 		return err
 	}

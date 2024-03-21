@@ -12,7 +12,7 @@ import (
 func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
 
 	orderTypeQuery := `DO $$ BEGIN
-        CREATE TYPE order_type AS ENUM ('delivery', 'pickup');
+        CREATE TYPE order_type AS ENUM ('delivery');
     EXCEPTION
         WHEN duplicate_object THEN null;
     END $$;`
@@ -48,6 +48,15 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
         )`
 
 	_, err = tx.Exec(createTableQuery)
+	if err != nil {
+		return err
+	}
+
+	// Alter table to set default store_id to 1
+	alterTableQueryForStoreId := `ALTER TABLE shopping_cart
+        ALTER COLUMN store_id SET DEFAULT 1;`
+
+	_, err = tx.Exec(alterTableQueryForStoreId)
 	if err != nil {
 		return err
 	}
@@ -140,22 +149,26 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 
 	if orderType == "delivery" {
 		switch {
-		case itemCost >= 40:
+		case itemCost >= 199:
 			deliveryFee = 0
+		case itemCost >= 99:
+			deliveryFee = 9
 		default:
-			deliveryFee = 0
+			deliveryFee = 19
 		}
 
 		switch {
-		case itemCost > 49:
+		case itemCost > 199:
 			smallOrderFee = 0
+		case itemCost > 99:
+			smallOrderFee = 5
 		default:
-			smallOrderFee = 0
+			smallOrderFee = 9
 		}
 
 		switch {
 		default:
-			platformFee = 2
+			platformFee = 1
 		}
 
 		switch {
@@ -165,7 +178,6 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 	} else {
 
 		smallOrderFee = 0
-		//platformFee = 2
 		platformFee = 0
 		packagingFee = 0
 	}

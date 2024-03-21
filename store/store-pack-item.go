@@ -83,11 +83,37 @@ func (s *PostgresStore) PackerPackItem(barcode string, packerPhone string, order
 		packedQuantity++
 	}
 
-	if (requiredQuantity == packedQuantity) {
+	if requiredQuantity == packedQuantity {
 		allItemsPacked = true
 	} else {
 		allItemsPacked = false
 	}
+
+	var cartId int
+	cartIdQuery := `SELECT cart_id FROM sales_order WHERE id = $1`
+	err = s.db.QueryRow(cartIdQuery, orderId).Scan(&cartId)
+	if err != nil {
+		return response, fmt.Errorf("error querying cart_id: %w", err)
+	}
+
+	// Retrieve total required quantity from the cart_item table using cart_id
+	var totalRequiredQuantity int
+	totalCartItemQuery := `SELECT SUM(quantity) FROM cart_item WHERE cart_id = $1`
+	err = s.db.QueryRow(totalCartItemQuery, cartId).Scan(&totalRequiredQuantity)
+	if err != nil {
+		return response, fmt.Errorf("error querying total required quantity from cart_item: %w", err)
+	}
+
+	// Retrieve total packed quantity from the packer_item table using sales_order_id
+	var totalPackedQuantity int
+	totalPackedQuery := `SELECT SUM(quantity) FROM packer_item WHERE sales_order_id = $1`
+	err = s.db.QueryRow(totalPackedQuery, orderId).Scan(&totalPackedQuantity)
+	if err != nil && err != sql.ErrNoRows { // It's fine if there are no rows, means nothing is packed yet
+		return response, fmt.Errorf("error querying total packed quantity from packer_item: %w", err)
+	}
+
+	// Check if total quantities match
+	allItemsPacked = (totalRequiredQuantity == totalPackedQuantity)
 
 	// Fetch all packer_item records for the sales_order_id and group by item_id to sum the quantity
 	groupedItemsQuery := `

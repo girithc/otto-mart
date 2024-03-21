@@ -233,6 +233,9 @@ type FindItemBasic struct {
 	StoreID int    `json:"store_id"`
 }
 
+type CreateOrderBasic struct {
+	CartId int `json:"cart_id"`
+}
 type GetOrderBasic struct {
 	StoreId int    `json:"store_id"`
 	OTP     string `json:"otp"`

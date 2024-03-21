@@ -205,14 +205,16 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		}
 	}
 
-	otp, _ := generateOtp()
-	insertQuery := `
-        INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (cart_id) DO NOTHING;`
+	/*
+			otp, _ := generateOtp()
+			insertQuery := `
+		        INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
+		        VALUES ($1, $2, $3, $4, $5)
+		        ON CONFLICT (cart_id) DO NOTHING;`
 
-	// Execute the query with the provided parameters
-	_, _ = tx.Exec(insertQuery, storeID, customerID, cart_id, otp, true)
+			// Execute the query with the provided parameters
+			_, _ = tx.Exec(insertQuery, storeID, customerID, cart_id, otp, true)
+	*/
 
 	var orderId int
 	// Insert into sales_order with the order_type set to 'delivery' if applicable
@@ -260,7 +262,11 @@ type IsLockStock struct {
 }
 
 func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
+
 	var resp IsLockStock
+
+	return IsLockStock{}, fmt.Errorf("error in LockStock")
+
 	cartItems, err := s.getCartItems(cart_id)
 	if err != nil {
 		resp.Lock = false

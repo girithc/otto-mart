@@ -68,6 +68,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
 	http.HandleFunc("/packer-check-order-to-pack", makeHTTPHandleFunc(s.handlePackerCheckOrderToPack))
 	http.HandleFunc("/packer-space-order", makeHTTPHandleFunc(s.handlePackerAllocateSpace))
+	//http.HandleFunc("/store-open")
 
 	http.HandleFunc("/packer-get-order-items", makeHTTPHandleFunc(s.handlePackerGetOrderItems))
 	http.HandleFunc("/delivery-partner-get-order-items", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderItems))
@@ -138,6 +139,8 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/vendor-list", makeHTTPHandleFunc(s.handleVendorList))
 	http.HandleFunc("/vendor-add", makeHTTPHandleFunc(s.handleAddVendor))
 	http.HandleFunc("/vendor-edit", makeHTTPHandleFunc(s.handleEditVendor))
+
+	http.HandleFunc("/manager-create-order", makeHTTPHandleFunc(s.handleManagerCreateOrder))
 
 	http.HandleFunc("/need-to-update", makeHTTPHandleFunc(s.handleNeedToUpdate))
 	fmt.Println("Listening PORT", s.listen_address)

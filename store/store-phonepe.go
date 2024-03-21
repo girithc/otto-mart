@@ -283,18 +283,24 @@ func (s *PostgresStore) RefreshMerchantTransactionID(cartID int) (string, error)
 	query := `
         UPDATE transaction
         SET merchant_transaction_id = $1
-        WHERE cart_id = $2 
+        WHERE cart_id = $2
         RETURNING merchant_transaction_id;`
 
 	var updatedMerchantTransactionID string
 	err := s.db.QueryRow(query, newTransactionID, cartID).Scan(&updatedMerchantTransactionID)
-	if err != nil {
+
+	// Check if no rows were found to update, which is not considered an error in this context
+	if err == sql.ErrNoRows {
+		// No rows to update, return empty string and nil error to indicate successful handling
+		return "", nil
+	} else if err != nil {
+		// Any other error is still considered an error
 		return "", fmt.Errorf("error updating merchant_transaction_id: %w", err)
 	}
 
+	// Return the updated ID on success
 	return updatedMerchantTransactionID, nil
 }
-
 func (s *PostgresStore) PhonePePaymentInit(cart_id int, sign string, merchantTransactionID string) (*types.PhonePeResponsePlus, error) {
 	phonepe := &types.PhonePeInit{
 		MerchantId:        "M1LQ34O3ZJ6O",
