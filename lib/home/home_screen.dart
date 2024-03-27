@@ -360,7 +360,7 @@ class _MyHomePageState extends State<MyHomePage>
                       padding: EdgeInsets.symmetric(vertical: 10),
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
-                        color: Colors.lightGreenAccent,
+                        color: Colors.deepPurpleAccent,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white),
                       ),
@@ -368,7 +368,7 @@ class _MyHomePageState extends State<MyHomePage>
                           child: Text(
                         'Order $orderStatus',
                         style: TextStyle(
-                            color: Colors.black,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 19),
                       )),
@@ -384,7 +384,7 @@ class _MyHomePageState extends State<MyHomePage>
                         ),
                         child: Center(
                           child: Text(
-                            'Free Delivery Above 49',
+                            'Free Delivery Above 499',
                             style: TextStyle(
                               color: Colors.black,
                               fontSize: 18.0,
@@ -587,7 +587,7 @@ class _MyHomePageState extends State<MyHomePage>
                 : const EdgeInsets.only(left: 2.5, right: 2.5, bottom: 1),
         padding: const EdgeInsets.only(left: 0, right: 0, bottom: 1),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(25.0),
+          borderRadius: BorderRadius.circular(15.0),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -903,8 +903,8 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                           begin: Alignment.bottomCenter,
                           end: Alignment.topCenter,
                           colors: [
-                            Colors.black.withOpacity(0.2),
-                            Colors.black.withOpacity(0.35)
+                            Colors.black.withOpacity(0.25),
+                            Colors.black.withOpacity(0.65)
                           ], // Gradient colors
                         ), // Circular shape
                       ),
@@ -947,7 +947,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                       children: <TextSpan>[
                                         TextSpan(
                                           text:
-                                              '5 Minute', // Part of the text you want to style differently
+                                              'Next Day', // Part of the text you want to style differently
                                           style: TextStyle(
                                               color: Colors.black87,
                                               fontSize: 24

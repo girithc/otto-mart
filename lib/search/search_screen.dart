@@ -82,7 +82,7 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                     child: Center(
                       child: Text(
-                        'Free Delivery Above 49',
+                        'Free Delivery Above 499',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 16.0,

@@ -234,7 +234,7 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                     ),
                     child: Center(
                       child: Text(
-                        'Free Delivery Above 49',
+                        'Free Delivery Above 499',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 14.0,

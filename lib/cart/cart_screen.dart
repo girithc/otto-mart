@@ -641,7 +641,6 @@ class CartListState extends State<CartList> {
                       offset: const Offset(0, 1), // Changes position of shadow
                     ),
                   ],
-                  border: Border.all(color: Colors.white, width: 2.0),
                 ),
                 child: Column(
                   children: [
@@ -775,136 +774,200 @@ class CartListState extends State<CartList> {
                 ),
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               const TotalAmountSaved(),
-              const SizedBox(height: 10),
-              widget.isLoading
-                  ? Container()
-                  : Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius:
-                            BorderRadius.circular(10), // Rounded corners
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 1,
-                            blurRadius: 1,
-                            offset: const Offset(
-                                0, 1), // Changes position of shadow
-                          ),
-                        ],
-                        border: Border.all(color: Colors.white, width: 2.0),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 10),
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                width: 13,
-                              ),
-                              RichText(
-                                textAlign: TextAlign.center, // Center the text
-                                text: const TextSpan(
-                                  style: TextStyle(
-                                    fontSize:
-                                        26, // Base font size for the whole text
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors
-                                        .black, // Base color for the whole text
-                                  ),
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                      text:
-                                          '5 Minute', // Part of the text you want to style differently
-                                      style: TextStyle(
-                                          color: Colors.deepPurpleAccent,
-                                          fontSize: 28
-                                          // Different color for this part
-                                          // You can add more styles here if needed
-                                          ),
-                                    ),
-                                    TextSpan(
-                                      text:
-                                          ' Delivery', // First part of the text
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Text(
-                                '\u{20B9} ${(cart.discount)}',
-                                style: GoogleFonts.phudu(
-                                    textStyle: const TextStyle(
-                                        fontSize: 30,
-                                        fontWeight: FontWeight.w400,
-                                        color: Colors.white)),
-                              )
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
 
-              const SizedBox(height: 5),
-              Container(
-                height: 55,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    stops: [0.3, 0.5],
-                    colors: [Colors.white, Colors.lightGreenAccent],
-                  ),
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 1,
-                      offset: const Offset(0, 1), // Changes position of shadow
-                    ),
-                  ],
-                  border: Border.all(color: Colors.white, width: 2.0),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 15),
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(
-                      width: 15,
-                    ),
-                    RichText(
-                      textAlign: TextAlign.center, // Center the text
-                      text: const TextSpan(
-                        style: TextStyle(
-                          fontSize: 24, // Base font size for the whole text
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black, // Base color for the whole text
-                        ),
-                        children: <TextSpan>[
-                          TextSpan(
-                              text:
-                                  'Free Delivery above   \u{20B9}49 ', // Part of the text you want to style differently
-                              style: TextStyle(
-                                  fontSize: 22, fontWeight: FontWeight.w400)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               const SizedBox(height: 10),
-
               /*
               const _DeliveryPartnerTip(),
               */
+              GestureDetector(
+                onTap: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return Dialog(
+                        surfaceTintColor: Colors.white,
+                        backgroundColor: Colors
+                            .white, // Set the background color of the dialog
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(
+                                12.0)), // Rounded corners for the dialog
+                        child: Container(
+                          padding: EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize
+                                .min, // To make the dialog wrap its content
+                            children: <Widget>[
+                              Text(
+                                'Select Time Slot',
+                                style: TextStyle(
+                                    fontSize: 24.0,
+                                    fontWeight: FontWeight.normal),
+                              ),
+                              SizedBox(
+                                height: 10,
+                              ),
+                              Container(
+                                alignment: Alignment.centerLeft,
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 5, vertical: 5),
+                                padding: EdgeInsets.symmetric(horizontal: 15),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.05,
+                                width: MediaQuery.of(context).size.width * 0.8,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      10), // Rounded corners
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      spreadRadius: 1,
+                                      blurRadius: 1,
+                                      offset:
+                                          const Offset(0, 0), // Shadow position
+                                    ),
+                                  ],
+                                  border: Border.all(color: Colors.greenAccent),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("6:00 - 8:00"),
+                                    Text("available")
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Container(
+                                alignment: Alignment.centerLeft,
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 5, vertical: 5),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 5),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.05,
+                                width: MediaQuery.of(context).size.width * 0.8,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      10), // Rounded corners
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      spreadRadius: 1,
+                                      blurRadius: 1,
+                                      offset:
+                                          const Offset(0, 0), // Shadow position
+                                    ),
+                                  ],
+                                  border: Border.all(color: Colors.greenAccent),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("8:00 - 10:00"),
+                                    Text("available")
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 5,
+                              ),
+                              Container(
+                                alignment: Alignment.centerLeft,
+                                margin: EdgeInsets.symmetric(
+                                    horizontal: 5, vertical: 5),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 15, vertical: 5),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.05,
+                                width: MediaQuery.of(context).size.width * 0.8,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(
+                                      10), // Rounded corners
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.2),
+                                      spreadRadius: 1,
+                                      blurRadius: 1,
+                                      offset:
+                                          const Offset(0, 0), // Shadow position
+                                    ),
+                                  ],
+                                  border: Border.all(color: Colors.redAccent),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("10:00 - 12:00"),
+                                    Text("limited slots")
+                                  ],
+                                ),
+                              ),
+
+                              // Add your time slot selection widget here
+
+                              // For example, you could use a list of options or a time picker widget
+                              SizedBox(height: 20.0),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+                child: Container(
+                  height: 55,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [Colors.lightGreenAccent, Colors.greenAccent],
+                    ),
+                    borderRadius: BorderRadius.circular(10), // Rounded corners
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.2),
+                        spreadRadius: 1,
+                        blurRadius: 1,
+                        offset: const Offset(0, 1), // Shadow position
+                      ),
+                    ],
+                    border:
+                        Border.all(color: Colors.lightGreenAccent, width: 2.0),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 15),
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      const SizedBox(
+                        width: 13,
+                      ),
+                      Text(
+                        'Choose Delivery Slot  ',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                      Icon(Icons.electric_moped_outlined)
+                    ],
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 15),
+
               _TaxAndDelivery(), // Add a separator
             ],
           ),
@@ -986,7 +1049,7 @@ class _TaxAndDelivery extends StatelessWidget {
                                     Border.all(color: Colors.white, width: 2.0),
                               ),
                               child: Text(
-                                "0 above 49", // Added a space for visual separation
+                                "0 above 499", // Added a space for visual separation
                                 style: const TextStyle(
                                   fontSize:
                                       14, // This adds the line through effect
@@ -1160,7 +1223,6 @@ class TotalAmountSaved extends StatelessWidget {
             offset: const Offset(0, 1), // Changes position of shadow
           ),
         ],
-        border: Border.all(color: Colors.white, width: 2.0),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -1172,7 +1234,7 @@ class TotalAmountSaved extends StatelessWidget {
             width: 13,
           ),
           Text('Total Saved',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w400)),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
           const SizedBox(
             width: 33,
           ),
@@ -1180,7 +1242,7 @@ class TotalAmountSaved extends StatelessWidget {
             '\u{20B9} ${(cart.discount)}',
             style: GoogleFonts.phudu(
                 textStyle: const TextStyle(
-                    fontSize: 30,
+                    fontSize: 26,
                     fontWeight: FontWeight.w400,
                     color: Colors.black)),
           )
