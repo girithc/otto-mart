@@ -157,11 +157,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       final response =
           await networkService.postWithAuth('/address', additionalData: body);
 
+      print(">>>>>>>>>>>>>>");
+      print(response.body.toString());
+      print(">>>>>>>>>>>>>>");
       if (response.statusCode == 200) {
-        //print(">>>>>>>>>>>>>>");
-        //print(response.body.toString());
-        //print(">>>>>>>>>>>>>>");
-
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
@@ -173,6 +172,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             Address? deliveryAddress = cartModel.deliveryAddress;
             await storage.write(key: 'cartId', value: resp.cartId.toString());
             await storage.write(key: 'storeId', value: resp.storeId.toString());
+            await storage.write(key: 'addressId', value: addressId.toString());
+
             return resp;
           } else if (decodedResponse is List) {
             // Handle the case where the response is a List
@@ -222,6 +223,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           Address? deliveryAddress = cartModel.deliveryAddress;
           await storage.write(key: 'cartId', value: resp.cartId.toString());
           await storage.write(key: 'storeId', value: resp.storeId.toString());
+          await storage.write(key: 'addressId', value: addressId.toString());
           return resp;
         }
       } else {

@@ -48,20 +48,6 @@ class _PaymentVerificationScreenState extends State<PaymentVerificationScreen> {
       final response = await networkService.postWithAuth('/payment-verify',
           additionalData: body);
 
-      /*
-      final response = await http.post(
-        Uri.parse('$baseUrl/payment-verify'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, dynamic>{
-          "merchant_transaction_id": widget.merchantTransactionId,
-          "cart_id": int.parse(cartId!),
-          "phone": customerId
-        }),
-      );
-      */
-
       print("Response For Verify: \n\n ${response.statusCode}");
       print(response.body);
       print("\n\n");

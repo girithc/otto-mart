@@ -144,7 +144,7 @@ class _MyAppState extends State<MyApp> {
 
   init() async {
     String deviceToken = await getDeviceToken();
-
+    print("Device Token : $deviceToken");
     await storage.write(key: 'fcm', value: deviceToken);
   }
 

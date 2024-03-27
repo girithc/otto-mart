@@ -106,14 +106,14 @@ class _CatalogPageState extends State<CatalogPage> {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8.0),
-                        color: Colors.tealAccent,
+                        color: Colors.lightGreenAccent,
                       ),
                       child: Center(
                         child: Text(
                           'Free Delivery Above 49',
                           style: TextStyle(
                             color: Colors.black,
-                            fontSize: 14.0,
+                            fontSize: 16.0,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -123,7 +123,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(8.0),
-                        color: Colors.tealAccent,
+                        color: Colors.lightGreenAccent,
                       ),
                       child: Center(
                         child: RichText(

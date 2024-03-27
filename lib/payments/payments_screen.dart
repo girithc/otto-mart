@@ -28,8 +28,6 @@ class _PaymentsPageState extends State<PaymentsPage> {
   var loadingPercentage = 0;
   //final String _selectedPayment = 'PhonePe';
   final storage = const FlutterSecureStorage();
-  late Timer _timer;
-  Duration _remainingTime = Duration(minutes: 10);
 
   @override
   void initState() {
@@ -381,8 +379,9 @@ class _PaymentsPageState extends State<PaymentsPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const OrderConfirmed(newOrder: true),
+                      builder: (context) => const OrderConfirmed(
+                        newOrder: true,
+                      ),
                     ),
                   );
                 } else {

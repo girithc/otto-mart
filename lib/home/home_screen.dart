@@ -8,6 +8,7 @@ import 'package:flutter_avif/flutter_avif.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/cart/cart.dart';
@@ -58,6 +59,8 @@ class _MyHomePageState extends State<MyHomePage>
   String streetAddress = "";
   int addressId = 0;
   int? selectedAddressIndex;
+  bool storeOpen = true;
+  String storeOpenTime = '';
   int currentIndex = 0;
   final Logger _logger = Logger();
   final storage = const FlutterSecureStorage();
@@ -129,10 +132,13 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> getStoreAddress() async {
+    print("Entered Get Store Address");
     final storeId = await storage.read(key: 'storeId');
+    final addressId = await storage.read(key: 'addressId');
     final networkService = NetworkService();
     Map<String, dynamic> body = {
       "store_id": int.parse(storeId!),
+      "address_id": int.parse(addressId!)
     };
     final response = await networkService.postWithAuth('/store-address',
         additionalData: body);
@@ -140,8 +146,20 @@ class _MyHomePageState extends State<MyHomePage>
     print("Response Store Address ${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+
       setState(() {
         streetAddress = data['address'];
+        storeOpen = data['store_open'];
+        if (!storeOpen) {
+          DateTime parsedStoreOpenTime = DateTime.parse(data['opening_time']);
+
+          // Add 5 hours and 30 minutes to the parsed time
+          DateTime adjustedStoreOpenTime =
+              parsedStoreOpenTime.add(Duration(hours: 5, minutes: 30));
+
+          // Format the adjusted time part into a verbal format like "9:00 AM"
+          storeOpenTime = DateFormat('h:mm a').format(adjustedStoreOpenTime);
+        }
       });
     } else {}
   }
@@ -189,16 +207,18 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> checkForPlacedOrder() async {
+    print("\n\n\n\n Enter Check For Placed Order \n\n\n\n");
     final phone = await storage.read(key: 'phone');
 
     Map<String, dynamic> body = {
       "phone": phone,
     };
+    ("Placed Order Response ${body}");
 
     final response = await network.postWithAuth('/check-for-placed-order',
         additionalData: body);
 
-    //("Response ${response.body}");
+    ("Placed Order Response ${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
@@ -223,6 +243,8 @@ class _MyHomePageState extends State<MyHomePage>
       appBar: HomeScreenAppBar(
         randomNumber: randomNumber,
         streetAddress: streetAddress,
+        storeOpen: storeOpen,
+        storeOpenTime: storeOpenTime,
       ),
       body: isLoading
           ? const CircularProgressIndicator()
@@ -296,7 +318,7 @@ class _MyHomePageState extends State<MyHomePage>
             ),
       bottomNavigationBar: Container(
         height: //orderStatus != null
-            MediaQuery.of(context).size.height * 0.14,
+            MediaQuery.of(context).size.height * 0.15,
         //: MediaQuery.of(context).size.height * 0.095,
         padding: EdgeInsets.only(
             bottom: orderStatus != null
@@ -338,14 +360,17 @@ class _MyHomePageState extends State<MyHomePage>
                       padding: EdgeInsets.symmetric(vertical: 10),
                       width: MediaQuery.of(context).size.width,
                       decoration: BoxDecoration(
-                        color: Colors.greenAccent.withOpacity(0.8),
+                        color: Colors.lightGreenAccent,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white),
                       ),
                       child: Center(
                           child: Text(
                         'Order $orderStatus',
-                        style: TextStyle(color: Colors.black),
+                        style: TextStyle(
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 19),
                       )),
                     ),
                   )
@@ -355,14 +380,14 @@ class _MyHomePageState extends State<MyHomePage>
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.0),
-                          color: Colors.tealAccent,
+                          color: Colors.lightGreenAccent,
                         ),
                         child: Center(
                           child: Text(
                             'Free Delivery Above 49',
                             style: TextStyle(
                               color: Colors.black,
-                              fontSize: 14.0,
+                              fontSize: 18.0,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -372,7 +397,7 @@ class _MyHomePageState extends State<MyHomePage>
                       Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8.0),
-                          color: Colors.tealAccent,
+                          color: Colors.lightGreenAccent,
                         ),
                         child: Center(
                           child: RichText(
@@ -538,6 +563,12 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget _buildCategoryContainer(BuildContext context, int index,
       int categoryID, String categoryName, String image) {
+    // Determine the screen width
+    double screenWidth = MediaQuery.of(context).size.width;
+
+    // Set a threshold for what you consider a 'small' screen, like the iPhone SE
+    double smallScreenWidth = 320.0;
+
     return GestureDetector(
       onTap: () => {
         Navigator.push(
@@ -556,15 +587,15 @@ class _MyHomePageState extends State<MyHomePage>
                 : const EdgeInsets.only(left: 2.5, right: 2.5, bottom: 1),
         padding: const EdgeInsets.only(left: 0, right: 0, bottom: 1),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10.0),
+          borderRadius: BorderRadius.circular(25.0),
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              // Top color of the gradient
-              Colors.deepPurpleAccent.shade200.withOpacity(0.25),
-              Colors.deepPurpleAccent.shade100
-                  .withOpacity(0.1), // Bottom color of the gradient
+              Colors.white, //lightGreenAccent,
+              Color.fromARGB(255, 248, 242, 255), // Top color of the gradient
+              Color.fromARGB(
+                  255, 249, 229, 255), // Bottom color of the gradient
             ],
           ),
         ),
@@ -577,68 +608,72 @@ class _MyHomePageState extends State<MyHomePage>
               margin: const EdgeInsets.only(left: 3, right: 3, top: 3),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10.0),
+                borderRadius: BorderRadius.circular(20.0),
                 border: Border.all(color: Colors.white),
                 boxShadow: const [],
               ),
-              child: image.contains('.avif')
-                  ? AvifImage.network(
-                      image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (BuildContext context, Object exception,
-                          StackTrace? stackTrace) {
-                        return Container(
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10.0),
-                            border: Border.all(color: Colors.white),
-                            boxShadow: const [],
-                          ),
-                          alignment: Alignment.center,
-                          child: const Center(
-                            child: Text(
-                              'image',
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(
+                    20.0), // Match the container's border radius
+                child: image.contains('.avif')
+                    ? AvifImage.network(
+                        image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context, Object exception,
+                            StackTrace? stackTrace) {
+                          return Container(
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10.0),
+                              border: Border.all(color: Colors.white),
+                              boxShadow: const [],
                             ),
-                          ),
-                        );
-                      },
-                    )
-                  : Image.network(
-                      image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (BuildContext context, Object exception,
-                          StackTrace? stackTrace) {
-                        return Container(
-                          height: 120,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10.0),
-                            border: Border.all(color: Colors.white),
-                            boxShadow: const [],
-                          ),
-                          alignment: Alignment.center,
-                          child: const Center(
-                            child: Text(
-                              'coming\nsoon',
-                              textAlign: TextAlign.center,
-                              style:
-                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            alignment: Alignment.center,
+                            child: const Center(
+                              child: Text(
+                                'image',
+                                style:
+                                    TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      )
+                    : Image.network(
+                        image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (BuildContext context, Object exception,
+                            StackTrace? stackTrace) {
+                          return Container(
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10.0),
+                              border: Border.all(color: Colors.white),
+                              boxShadow: const [],
+                            ),
+                            alignment: Alignment.center,
+                            child: const Center(
+                              child: Text(
+                                'coming\nsoon',
+                                textAlign: TextAlign.center,
+                                style:
+                                    TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
             ),
             SizedBox(
               height: MediaQuery.of(context).size.height * 0.005,
             ),
             SizedBox(
-              height: MediaQuery.of(context).size.height * 0.04,
+              height: MediaQuery.of(context).size.height * 0.05,
               child: Align(
-                alignment: Alignment.topCenter,
+                alignment: Alignment.center,
                 child: Text(
                   categoryName,
                   textAlign: TextAlign.center,
@@ -742,10 +777,16 @@ class Highlights extends StatelessWidget {
 class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
   final int randomNumber; // Make the title parameter optional
   final String streetAddress;
+  final bool storeOpen;
+  final String storeOpenTime;
   //final _MyHomePageState homePageState; // Add this line
 
   const HomeScreenAppBar(
-      {required this.randomNumber, required this.streetAddress, super.key});
+      {required this.randomNumber,
+      required this.streetAddress,
+      required this.storeOpen,
+      required this.storeOpenTime,
+      super.key});
 
   Future<void> signOutUser(BuildContext context) async {
     // Clear the data in "customerId" key
@@ -801,6 +842,8 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Assuming storeOpenTime is in a full date-time format like "2023-03-20 09:00:00"
+
     //var cart = context.watch<CartModel>();
     return GestureDetector(
       // GestureDetector captures taps on the screen
@@ -810,16 +853,30 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
       },
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.deepPurpleAccent.shade100
-                  .withOpacity(0.1), // Top color of the gradient
-              Colors.deepPurpleAccent.shade200
-                  .withOpacity(0.25), // Bottom color of the gradient
-            ],
-          ),
+          gradient: storeOpen
+              ? LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.deepPurpleAccent
+                        .withOpacity(0.8), // Top color of the gradient
+                    Colors.deepPurpleAccent
+                        .withOpacity(0.4), // Top color of the gradient
+                    Colors.grey.shade100.withOpacity(0.1),
+                    Colors.white, // Bottom color of the gradient
+                  ],
+                )
+              : LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.redAccent.withOpacity(0.5),
+                    Colors.redAccent.withOpacity(0.2),
+                    Colors.grey.shade100
+                        .withOpacity(0.1), // Top color of the gradient
+                    Colors.white, // Bottom color of the gradient
+                  ],
+                ),
         ),
         child: AppBar(
           surfaceTintColor: Colors.transparent,
@@ -869,33 +926,48 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                             SizedBox(
                                 height:
                                     MediaQuery.of(context).size.height * 0.01),
-                            RichText(
-                              textAlign: TextAlign.center, // Center the text
-                              text: const TextSpan(
-                                style: TextStyle(
-                                  fontSize:
-                                      21, // Base font size for the whole text
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors
-                                      .black, // Base color for the whole text
-                                ),
-                                children: <TextSpan>[
-                                  TextSpan(
-                                    text:
-                                        '5 Minute', // Part of the text you want to style differently
+                            !storeOpen
+                                ? Text(
+                                    "Closed. Will Open @ $storeOpenTime",
                                     style: TextStyle(
-                                        color: Colors.deepPurpleAccent,
-                                        fontSize: 22
-                                        // Different color for this part
-                                        // You can add more styles here if needed
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold),
+                                  )
+                                : RichText(
+                                    textAlign:
+                                        TextAlign.center, // Center the text
+                                    text: const TextSpan(
+                                      style: TextStyle(
+                                        fontSize:
+                                            21, // Base font size for the whole text
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors
+                                            .black, // Base color for the whole text
+                                      ),
+                                      children: <TextSpan>[
+                                        TextSpan(
+                                          text:
+                                              '5 Minute', // Part of the text you want to style differently
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontSize: 24
+                                              // Different color for this part
+                                              // You can add more styles here if needed
+                                              ),
                                         ),
+                                        TextSpan(
+                                          text: ' Delivery',
+                                          style: TextStyle(
+                                              color: Colors.black87,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 22
+                                              // Different color for this part
+                                              // You can add more styles here if needed
+                                              ), // First part of the text
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  TextSpan(
-                                    text: ' Delivery', // First part of the text
-                                  ),
-                                ],
-                              ),
-                            ),
                             SizedBox(
                                 height:
                                     MediaQuery.of(context).size.height * 0.006),
@@ -956,7 +1028,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15.0),
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: Colors.grey.shade500),
                 ),
                 margin: const EdgeInsets.symmetric(horizontal: 0.0),
                 padding: const EdgeInsets.symmetric(horizontal: 0.0),
@@ -991,7 +1063,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                               hintText: 'Search For Groceries',
                               hintStyle: TextStyle(
                                 fontSize: 16,
-                                color: Colors.grey,
+                                color: Colors.black54,
                               ),
                               border: InputBorder.none,
                             ),

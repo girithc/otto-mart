@@ -266,11 +266,6 @@ class CartModel extends ChangeNotifier {
       return false;
     }
 
-    final url = Uri.parse('$baseUrl/address');
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-
     print("Post Delivery $phone");
 
     final data = <String, dynamic>{

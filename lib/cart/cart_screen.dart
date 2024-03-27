@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
@@ -28,6 +29,8 @@ class _MyCartState extends State<MyCart> {
   String? cartId;
   final storage = const FlutterSecureStorage();
   bool isLoading = true;
+  bool storeOpen = true;
+  String storeOpenTime = '';
 
   @override
   void initState() {
@@ -69,6 +72,7 @@ class _MyCartState extends State<MyCart> {
   }
 
   Future<void> getStoreAddress() async {
+    print("Entered Get Store Address");
     final storeId = await storage.read(key: 'storeId');
     final networkService = NetworkService();
     Map<String, dynamic> body = {
@@ -80,10 +84,20 @@ class _MyCartState extends State<MyCart> {
     print("Response Store Address ${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      setState(() {
-        isLoading = false;
 
+      setState(() {
         streetAddress = data['address'];
+        storeOpen = data['store_open'];
+        if (!storeOpen) {
+          DateTime parsedStoreOpenTime = DateTime.parse(data['opening_time']);
+
+          // Add 5 hours and 30 minutes to the parsed time
+          DateTime adjustedStoreOpenTime =
+              parsedStoreOpenTime.add(Duration(hours: 5, minutes: 30));
+
+          // Format the adjusted time part into a verbal format like "9:00 AM"
+          storeOpenTime = DateFormat('h:mm a').format(adjustedStoreOpenTime);
+        }
       });
     } else {}
   }
@@ -162,32 +176,41 @@ class _MyCartState extends State<MyCart> {
           // Future is complete, you can use the fetched cartId here
           return Scaffold(
             appBar: AppBar(
-              title: ShaderMask(
-                shaderCallback: (bounds) => const RadialGradient(
-                        center: Alignment.topLeft,
-                        radius: 1.0,
-                        colors: [Colors.deepPurple, Colors.deepPurpleAccent],
-                        tileMode: TileMode.mirror)
-                    .createShader(bounds),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const MyHomePage(
-                          title: 'Otto Mart',
-                        ),
+              title: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MyHomePage(
+                        title: 'Otto Mart',
                       ),
-                    );
-                  },
-                  child: const Text(
-                    'Otto Cart',
-                    style: TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white),
-                  ),
-                ),
+                    ),
+                  );
+                },
+                child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.pinkAccent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15.0),
+                      ),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const MyHomePage(
+                            title: 'Otto Mart',
+                          ),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Add More Items +',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16),
+                    )),
               ),
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new),
@@ -307,145 +330,210 @@ class _MyCartState extends State<MyCart> {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.only(
-                                    left: 20, right: 20, bottom: 10, top: 2),
-                                height: MediaQuery.of(context).size.height *
-                                    (0.18 - 0.065),
-                                child: ElevatedButton(
-                                  onPressed: () async {
-                                    String? cartId =
-                                        await storage.read(key: 'cartId');
-                                    if (cartId != null) {
-                                      int cartIdInt = int.parse(cartId);
-                                      print("CartID INT: $cartIdInt");
+                                  padding: const EdgeInsets.only(
+                                      left: 20, right: 20, bottom: 10, top: 2),
+                                  height: MediaQuery.of(context).size.height *
+                                      (0.18 - 0.065),
+                                  child: ElevatedButton(
+                                    onPressed: () async {
+                                      String? cartId =
+                                          await storage.read(key: 'cartId');
+                                      if (storeOpen) {
+                                        if (cartId != null) {
+                                          int cartIdInt = int.parse(cartId);
+                                          print("CartID INT: $cartIdInt");
 
-                                      checkoutLockItems(cartIdInt)
-                                          .then((success) {
-                                        if (success.lock) {
-                                          // If the checkout lock is successful, navigate to the PaymentsPage
-                                          Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  PaymentsPage(
-                                                sign: success.sign,
-                                                merchantTransactionID: success
-                                                    .merchantTransactionID,
-                                                amount: cart.totalPrice,
+                                          checkoutLockItems(cartIdInt)
+                                              .then((success) {
+                                            if (success.lock) {
+                                              // If the checkout lock is successful, navigate to the PaymentsPage
+                                              Navigator.pushReplacement(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PaymentsPage(
+                                                    sign: success.sign,
+                                                    merchantTransactionID: success
+                                                        .merchantTransactionID,
+                                                    amount: cart.totalPrice,
+                                                  ),
+                                                ),
+                                              );
+                                            } else {
+                                              // If the checkout lock is unsuccessful, you might want to show an error message
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                      'Test User. Cannot Checkout Items.'),
+                                                  backgroundColor:
+                                                      Colors.redAccent,
+                                                ),
+                                              );
+                                            }
+                                          }).catchError((error) {
+                                            // Handle any errors here
+
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                    'Test User. Cannot Checkout Items.'),
+                                                backgroundColor:
+                                                    Colors.redAccent,
                                               ),
-                                            ),
-                                          );
+                                            );
+                                          });
                                         } else {
-                                          // If the checkout lock is unsuccessful, you might want to show an error message
                                           ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             const SnackBar(
                                               content: Text(
-                                                  'Failed to lock items for checkout.'),
+                                                  'Error: Cart Id Not Found'),
                                               backgroundColor: Colors.redAccent,
                                             ),
                                           );
                                         }
-                                      }).catchError((error) {
-                                        // Handle any errors here
-
+                                      } else {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           SnackBar(
-                                            content: Text('Error: $error'),
-                                            backgroundColor: Colors.redAccent,
+                                            content: Center(
+                                              // Wrap the Text widget with Center
+                                              child: Text(
+                                                'Store Will Open at $storeOpenTime.',
+                                                style: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                                textAlign: TextAlign
+                                                    .center, // Center-align the text
+                                              ),
+                                            ),
+                                            backgroundColor:
+                                                Colors.deepPurpleAccent,
                                           ),
                                         );
-                                      });
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content:
-                                              Text('Error: Cart Id Not Found'),
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.white,
-                                    surfaceTintColor: Colors.white,
-                                    foregroundColor: Colors.black,
-                                    shadowColor: Colors.white.withOpacity(0.8),
+                                      }
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.white,
+                                      surfaceTintColor: Colors.white,
+                                      foregroundColor: Colors.black,
+                                      shadowColor:
+                                          Colors.white.withOpacity(0.8),
 
-                                    textStyle: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge!
-                                        .copyWith(
-                                          fontWeight: FontWeight
-                                              .bold, // Making the font bold
-                                        ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 2),
+                                      textStyle: Theme.of(context)
+                                          .textTheme
+                                          .titleLarge!
+                                          .copyWith(
+                                            fontWeight: FontWeight
+                                                .bold, // Making the font bold
+                                          ),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 2),
 
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(
-                                          20.0), // Slightly more rounded
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                            20.0), // Slightly more rounded
+                                      ),
+                                      elevation:
+                                          5, // Adding some shadow for depth
+                                      side: const BorderSide(
+                                          color: Colors.white,
+                                          width:
+                                              1), // Border for a more defined look
                                     ),
-                                    elevation:
-                                        5, // Adding some shadow for depth
-                                    side: const BorderSide(
-                                        color: Colors.white,
-                                        width:
-                                            1), // Border for a more defined look
-                                  ),
-                                  child: Center(
-                                      child: !(cart.isEmpty())
-                                          ? Row(
-                                              children: [
-                                                Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(
-                                                      horizontal: 30,
-                                                      vertical: 15),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.pinkAccent,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                    boxShadow: const [],
-                                                    border: Border.all(
-                                                        color:
-                                                            Colors.transparent,
-                                                        width: 1.0),
-                                                  ),
-                                                  child: const Text(
-                                                    'Complete Payment',
-                                                    style: TextStyle(
-                                                        fontSize: 22,
-                                                        color: Colors
-                                                            .white), // Consistent text size
-                                                  ),
-                                                ),
-                                                const SizedBox(
-                                                  width: 10,
-                                                ),
-                                                Center(
-                                                  child: Text(
-                                                    '\u{20B9}${cart.totalPrice}',
-                                                    style: const TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.normal,
-                                                        color: Colors.black),
-                                                  ),
-                                                )
-                                              ],
-                                            )
-                                          : Container(
-                                              color: Colors.white,
-                                            )),
-                                ),
-                              ),
+                                    child: Center(
+                                        child: !(cart.isEmpty())
+                                            ? (storeOpen
+                                                ? Row(
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 30,
+                                                                vertical: 15),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color:
+                                                              Colors.pinkAccent,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          boxShadow: const [],
+                                                          border: Border.all(
+                                                              color: Colors
+                                                                  .transparent,
+                                                              width: 1.0),
+                                                        ),
+                                                        child: Text(
+                                                          'Complete Payment',
+                                                          style: TextStyle(
+                                                              fontSize: 22,
+                                                              color:
+                                                                  Colors.white),
+                                                        ), // Consistent text size
+                                                      ),
+                                                      const SizedBox(
+                                                        width: 10,
+                                                      ),
+                                                      Center(
+                                                        child: Text(
+                                                          '\u{20B9}${cart.totalPrice}',
+                                                          style: const TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .normal,
+                                                              color:
+                                                                  Colors.black),
+                                                        ),
+                                                      )
+                                                    ],
+                                                  )
+                                                : Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    children: [
+                                                      Container(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 30,
+                                                                vertical: 15),
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color:
+                                                              Colors.pinkAccent,
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          boxShadow: const [],
+                                                          border: Border.all(
+                                                              color: Colors
+                                                                  .transparent,
+                                                              width: 1.0),
+                                                        ),
+                                                        child: Text(
+                                                          'Closed. Will Open @ $storeOpenTime',
+                                                          style: TextStyle(
+                                                              fontSize: 18,
+                                                              color:
+                                                                  Colors.white),
+                                                        ), // Consistent text size
+                                                      ),
+                                                    ],
+                                                  ))
+                                            : Container(
+                                                color: Colors.white,
+                                              )),
+                                  )),
                             ],
                           )
                         : Container()),
+
             // Return an empty SizedBox when no delivery address
           );
         } else {
@@ -691,7 +779,7 @@ class CartListState extends State<CartList> {
               const TotalAmountSaved(),
               const SizedBox(height: 10),
               widget.isLoading
-                  ? const CircularProgressIndicator()
+                  ? Container()
                   : Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -764,8 +852,14 @@ class CartListState extends State<CartList> {
 
               const SizedBox(height: 5),
               Container(
+                height: 55,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    stops: [0.3, 0.5],
+                    colors: [Colors.white, Colors.lightGreenAccent],
+                  ),
                   borderRadius: BorderRadius.circular(10), // Rounded corners
                   boxShadow: [
                     BoxShadow(
@@ -777,49 +871,31 @@ class CartListState extends State<CartList> {
                   ],
                   border: Border.all(color: Colors.white, width: 2.0),
                 ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 15),
                 margin: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 13,
+                    const SizedBox(
+                      width: 15,
+                    ),
+                    RichText(
+                      textAlign: TextAlign.center, // Center the text
+                      text: const TextSpan(
+                        style: TextStyle(
+                          fontSize: 24, // Base font size for the whole text
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black, // Base color for the whole text
                         ),
-                        RichText(
-                          textAlign: TextAlign.center, // Center the text
-                          text: const TextSpan(
-                            style: TextStyle(
-                              fontSize: 26, // Base font size for the whole text
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  Colors.black, // Base color for the whole text
-                            ),
-                            children: <TextSpan>[
-                              TextSpan(
-                                text:
-                                    'Free Delivery above \u{20B9}49', // Part of the text you want to style differently
-                                style: TextStyle(
-                                    color: Colors.deepPurpleAccent, fontSize: 22
-                                    // Different color for this part
-                                    // You can add more styles here if needed
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          '\u{20B9} ${(cart.discount)}',
-                          style: GoogleFonts.phudu(
-                              textStyle: const TextStyle(
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.w400,
-                                  color: Colors.white)),
-                        )
-                      ],
+                        children: <TextSpan>[
+                          TextSpan(
+                              text:
+                                  'Free Delivery above   \u{20B9}49 ', // Part of the text you want to style differently
+                              style: TextStyle(
+                                  fontSize: 22, fontWeight: FontWeight.w400)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -868,21 +944,131 @@ class _TaxAndDelivery extends StatelessWidget {
               font: const TextStyle(fontSize: 16),
             ),
             cart.smallOrderFee > 0
-                ? _CustomListItem(
-                    icon: Icons.donut_small_rounded,
-                    label: 'Small Order Fee',
-                    amount: '${cart.smallOrderFee}',
-                    font: const TextStyle(fontSize: 16),
+                ? Padding(
+                    padding:
+                        const EdgeInsets.only(top: 5, left: 10.0, right: 5),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.electric_bike_outlined, size: 20),
+                            const SizedBox(width: 10),
+                            Text(
+                              "Small Order Fee ",
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            Text(
+                              "25", // Added a space for visual separation
+                              style: const TextStyle(
+                                fontSize: 14,
+                                decoration: TextDecoration
+                                    .lineThrough, // This adds the line through effect
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.lightGreenAccent,
+                                borderRadius: BorderRadius.circular(
+                                    15), // Rounded corners
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 1,
+                                    blurRadius: 1,
+                                    offset: const Offset(
+                                        0, 1), // Changes position of shadow
+                                  ),
+                                ],
+                                border:
+                                    Border.all(color: Colors.white, width: 2.0),
+                              ),
+                              child: Text(
+                                "0 above 49", // Added a space for visual separation
+                                style: const TextStyle(
+                                  fontSize:
+                                      14, // This adds the line through effect
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(
+                              right: 40, top: 0, bottom: 0),
+                          child: Text(
+                            cart.smallOrderFee.toString(),
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 : Container(),
-            cart.deliveryFee > 0
-                ? _CustomListItem(
-                    icon: Icons.electric_bike_outlined,
-                    label: 'Delivery Fee',
-                    amount: '${cart.deliveryFee}',
-                    font: const TextStyle(fontSize: 16),
-                  )
-                : Container(),
+            Padding(
+              padding: const EdgeInsets.only(top: 5, left: 10.0, right: 5),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.electric_bike_outlined, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        "Delivery Fee ",
+                        style: const TextStyle(fontSize: 14),
+                      ),
+                      Text(
+                        "35", // Added a space for visual separation
+                        style: const TextStyle(
+                          fontSize: 14,
+                          decoration: TextDecoration
+                              .lineThrough, // This adds the line through effect
+                        ),
+                      ),
+                      cart.deliveryFee > 0
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.lightGreenAccent,
+                                borderRadius: BorderRadius.circular(
+                                    15), // Rounded corners
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 1,
+                                    blurRadius: 1,
+                                    offset: const Offset(
+                                        0, 1), // Changes position of shadow
+                                  ),
+                                ],
+                                border:
+                                    Border.all(color: Colors.white, width: 2.0),
+                              ),
+                              child: Text(
+                                "0 above 49", // Added a space for visual separation
+                                style: const TextStyle(
+                                  fontSize:
+                                      14, // This adds the line through effect
+                                ),
+                              ),
+                            )
+                          : SizedBox.shrink(),
+                    ],
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(right: 40, top: 0, bottom: 0),
+                    child: Text(
+                      cart.deliveryFee.toString(),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                ],
+              ),
+            ),
             cart.platformFee > 0
                 ? Padding(
                     padding:
@@ -896,12 +1082,12 @@ class _TaxAndDelivery extends StatelessWidget {
                             const SizedBox(width: 10),
                             Text(
                               "Platform Fee ",
-                              style: const TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 14),
                             ),
                             Text(
                               "10", // Added a space for visual separation
                               style: const TextStyle(
-                                fontSize: 16,
+                                fontSize: 14,
                                 decoration: TextDecoration
                                     .lineThrough, // This adds the line through effect
                               ),
@@ -913,7 +1099,7 @@ class _TaxAndDelivery extends StatelessWidget {
                               right: 40, top: 0, bottom: 0),
                           child: Text(
                             cart.platformFee.toString(),
-                            style: const TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 14),
                           ),
                         ),
                       ],
@@ -925,7 +1111,7 @@ class _TaxAndDelivery extends StatelessWidget {
                     icon: Icons.shopping_bag_outlined,
                     label: 'Packaging Fee',
                     amount: '${cart.packagingFee}',
-                    font: const TextStyle(fontSize: 16),
+                    font: const TextStyle(fontSize: 14),
                   )
                 : Container(),
             cart.deliveryPartnerTip > 0
@@ -933,7 +1119,7 @@ class _TaxAndDelivery extends StatelessWidget {
                     icon: Icons.volunteer_activism_outlined,
                     label: 'Delivery Partner Tip',
                     amount: '${cart.deliveryPartnerTip}',
-                    font: const TextStyle(fontSize: 16),
+                    font: const TextStyle(fontSize: 14),
                   )
                 : Container(),
             const Divider(),
@@ -963,7 +1149,7 @@ class TotalAmountSaved extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           stops: [0.3, 0.5],
-          colors: [Colors.white, Colors.deepPurpleAccent],
+          colors: [Colors.white, Colors.lightGreenAccent],
         ),
         borderRadius: BorderRadius.circular(10), // Rounded corners
         boxShadow: [
@@ -996,7 +1182,7 @@ class TotalAmountSaved extends StatelessWidget {
                 textStyle: const TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w400,
-                    color: Colors.white)),
+                    color: Colors.black)),
           )
         ],
       ),

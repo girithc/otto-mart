@@ -230,7 +230,7 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.tealAccent,
+                      color: Colors.lightGreenAccent,
                     ),
                     child: Center(
                       child: Text(
@@ -247,7 +247,7 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.tealAccent,
+                      color: Colors.lightGreenAccent,
                     ),
                     child: Center(
                       child: RichText(

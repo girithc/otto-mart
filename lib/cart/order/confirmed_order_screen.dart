@@ -12,7 +12,6 @@ import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class OrderConfirmed extends StatefulWidget {
   const OrderConfirmed({super.key, required this.newOrder, this.orderId});
@@ -25,7 +24,7 @@ class OrderConfirmed extends StatefulWidget {
 }
 
 class _OrderConfirmedState extends State<OrderConfirmed> {
-  String? _orderDetails;
+  //String? _orderDetails;
   bool _isLoading = true;
   bool _isError = false;
   String? _errorMsg;
@@ -34,9 +33,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   OrderInfo? _orderInfo;
   String? OTP;
   String orderType = 'delivery';
-  final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
-  late CameraPosition _kGooglePlex;
   final Set<Marker> _markers = {};
   String? orderCartId;
 
@@ -76,11 +72,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     DateTime updatedDate = parsedDate.add(Duration(hours: 5, minutes: 32));
     return DateFormat('h:mm a').format(updatedDate);
   }
-
-  int _numberOfItems = 0;
-  String _customerAddress = '';
-  String _paymentType = '';
-  String _orderDate = '';
 
   void updateOrderStatus(String url) {
     setState(() {
@@ -155,20 +146,30 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   @override
   void initState() {
     super.initState();
-    fetchOrderDetails();
-    !widget.newOrder ? fetchOrderInfo() : null;
-    _setupPeriodicFetch();
-    _kGooglePlex = CameraPosition(
-      target: LatLng(19.12465300, 72.83164800),
-      zoom: 16,
-    );
+
     _markers.add(
       Marker(
         markerId: const MarkerId("selected-location"),
         position: LatLng(19.12465300, 72.83164800),
       ),
     );
-    // Set up periodic fetch of order info
+
+    // Introduce a 2-second delay before fetching order details and order info
+    Future.delayed(Duration(seconds: widget.newOrder ? 2 : 0), () {
+      //fetchOrderDetails(); // Call fetchOrderDetails after a 2-second delay
+      fetchOrderInfo(); // Call fetchOrderInfo after a 2-second delay
+    });
+
+    // Set up periodic fetch of order info with a timer
+    _setupPeriodicFetch();
+  }
+
+  void _setupPeriodicFetch() {
+    // This sets up a timer that periodically calls fetchOrderInfo
+    _timer = Timer.periodic(Duration(seconds: 15), (Timer t) {
+      //fetchOrderDetails();
+      fetchOrderInfo(); // Modify this as needed, currently set to 45 seconds
+    });
   }
 
   @override
@@ -177,97 +178,15 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     super.dispose();
   }
 
-  void _setupPeriodicFetch() {
-    _timer =
-        Timer.periodic(Duration(seconds: 45), (Timer t) => fetchOrderInfo());
-    // This sets up a timer that calls fetchOrderInfo every 2 minutes
-  }
-
-  Future<void> fetchOrderDetails() async {
-    // Retrieve customerId and cartId from secure storage
-
-    String? customerId = await _storage.read(key: 'customerId');
-    String? cartId;
-    final networkService = NetworkService();
-    if (widget.newOrder) {
-      cartId = await _storage.read(key: 'cartId');
-      orderCartId = cartId;
-      fetchOrderInfo();
-      print("Cart ID: $cartId");
-    } else {
-      cartId = widget.orderId.toString();
-    }
-
-    if (cartId == null || customerId == null) {
-      throw Exception('Customer ID or Cart ID is missing');
-    }
-
-    final Map<String, dynamic> body = {
-      'customer_id': int.parse(customerId),
-      'cart_id': int.parse(cartId),
-    };
-
-    //print("Body: $body ");
-
-    final response =
-        await networkService.postWithAuth('/sales-order', additionalData: body);
-
-    //print("Confirmed Order Response: ${response.body}");
-
-    if (response.statusCode == 200) {
-      Map<String, dynamic> responseData = json.decode(response.body);
-      String paymentType = responseData['payment_type'];
-
-      if (responseData.isNotEmpty) {
-        if (widget.newOrder) {
-          String? oldCartId = await _storage.read(key: 'cartId');
-          await _storage.write(key: 'placedCartId', value: oldCartId);
-
-          final String newCartId = responseData["new_cart_id"].toString();
-          await _storage.write(key: 'cartId', value: newCartId);
-        }
-
-        //await _storage.write(key: 'orderStatus', value: "Preparing Order");
-
-        setState(() {
-          _isLoading = false;
-          _orderDetails = paymentType;
-
-          //_deliveryPartnerName = responseData['delivery_partner']['name'];
-          _numberOfItems =
-              responseData['products'].length; // Assuming 'products' is a list
-          _customerAddress = responseData['address']['street_address'];
-          _paymentType = responseData['payment_type'];
-          _orderDate = responseData['order_date'];
-        });
-      } else {
-        setState(() {
-          _isError = true;
-          _errorMsg = 'No Order Found.';
-        });
-        throw Exception('Empty response data');
-      }
-    } else {
-      setState(() {
-        _isError = true;
-        _errorMsg = 'Error loading order details.';
-      });
-      throw Exception('Failed to load order details');
-    }
-  }
-
-  Future<void> fetchOrderInfo({int? optionalParameter}) async {
+  Future<void> fetchOrderInfo() async {
     final customerId = await _storage.read(key: 'customerId');
+    String? cartId = await _storage.read(key: 'cartId');
 
-    String? cartId;
-    if (widget.newOrder) {
-      cartId = orderCartId;
-    } else {
+    if (!widget.newOrder) {
       cartId = widget.orderId.toString();
     }
     //cartId = await _storage.read(key: 'placedCartId');
 
-    print("PlacedCart ID: $cartId");
     final Map<String, dynamic> body = {
       'customer_id': int.parse(customerId!),
       'cart_id': int.parse(cartId!),
@@ -284,6 +203,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     _orderInfo = OrderInfo.fromJson(jsonResponse);
 
     setState(() {
+      _isLoading = false;
       orderStatus = _orderInfo!.orderStatus;
       orderLottie = orderStatusToInfo[orderStatus]!.lottieUrl;
       orderLottieTransform = orderStatusToInfo[orderStatus]!.transform;
@@ -381,72 +301,61 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.only(
-                              left: 10, right: 10, top: 0, bottom: 0),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                                BorderRadius.circular(10), // Rounded corners
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                spreadRadius: 1,
-                                blurRadius: 0,
-                                offset: const Offset(
-                                    0, 1), // Changes position of shadow
-                              ),
-                            ],
-                            border: Border.all(color: Colors.white, width: 1.0),
-                          ),
-                          child: Text(
-                            "Order ${orderStatus}", // Right side text, assuming orderStatus is a variable holding the status
-                            textAlign:
-                                TextAlign.right, // Aligns text to the right
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.deepPurpleAccent,
+                            margin: const EdgeInsets.only(
+                                left: 10, right: 10, top: 0, bottom: 0),
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(10), // Rounded corners
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.1),
+                                  spreadRadius: 1,
+                                  blurRadius: 0,
+                                  offset: const Offset(
+                                      0, 1), // Changes position of shadow
+                                ),
+                              ],
+                              border:
+                                  Border.all(color: Colors.white, width: 1.0),
                             ),
-                          ),
-                        ),
+                            child: (orderStatus == "received" ||
+                                    orderStatus == "accepted")
+                                ? (orderStatus == "received"
+                                    ? Text(
+                                        "Order accepted", // Right side text, assuming orderStatus is a variable holding the status
+                                        textAlign: TextAlign
+                                            .right, // Aligns text to the right
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurpleAccent,
+                                        ),
+                                      )
+                                    : Text(
+                                        "Order getting packed", // Right side text, assuming orderStatus is a variable holding the status
+                                        textAlign: TextAlign
+                                            .right, // Aligns text to the right
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.deepPurpleAccent,
+                                        ),
+                                      ))
+                                : Text(
+                                    "Order ${orderStatus}", // Right side text, assuming orderStatus is a variable holding the status
+                                    textAlign: TextAlign
+                                        .right, // Aligns text to the right
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.deepPurpleAccent,
+                                    ),
+                                  )),
 
                         const SizedBox(height: 15),
 
-                        //otp
-
-                        /*
-                        Container(
-                          width: MediaQuery.of(context).size.width,
-                          margin: const EdgeInsets.only(
-                              left: 10, right: 10, top: 5, bottom: 5),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius:
-                                BorderRadius.circular(10), // Rounded corners
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                spreadRadius: 1,
-                                blurRadius: 2,
-                                offset: const Offset(
-                                    0, 1), // Changes position of shadow
-                              ),
-                            ],
-                            border: Border.all(color: Colors.white, width: 1.0),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Number of Items: $_numberOfItems'),
-                              Text('Payment Type: $_paymentType'),
-                              Text(
-                                  'Order Date: ${formatOrderDate(_orderDate)}'),
-                            ],
-                          ),
-                        ),
-                        */
                         Container(
                           width: MediaQuery.of(context).size.width,
                           margin: const EdgeInsets.only(

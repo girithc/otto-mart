@@ -1,13 +1,15 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:lottie/lottie.dart';
+//import 'package:lottie/lottie.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/catalog/catalog_screen.dart';
@@ -34,10 +36,25 @@ class _MyPlanState extends State<MyPlan> {
   final Logger _logger = Logger();
   bool isLoading = false;
 
+  final Completer<GoogleMapController> _controller =
+      Completer<GoogleMapController>();
+  late CameraPosition _kGooglePlex;
+  final Set<Marker> _markers = {};
+
   @override
   void initState() {
     super.initState();
     fetchCategories();
+    _kGooglePlex = CameraPosition(
+      target: LatLng(19.12465300, 72.83164800),
+      zoom: 14.5,
+    );
+    _markers.add(
+      Marker(
+        markerId: const MarkerId("location"),
+        position: LatLng(19.12465300, 72.83164800),
+      ),
+    );
   }
 
   Future<void> fetchCategories() async {
@@ -141,61 +158,189 @@ class _MyPlanState extends State<MyPlan> {
           ),
           toolbarHeight: 70,
         ),
-        body: Container(
-          color: Colors.white,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Center(
-                child: Transform.scale(
-                  scale: 1.1, // Increase the size by 30%
-                  child: Lottie.network(
-                    'https://lottie.host/61c9c5b7-2bde-412b-adbf-27b160a88233/MpwpIRyS1u.json',
-                    fit: BoxFit.contain,
+        body: SingleChildScrollView(
+          child: Container(
+            color: Colors.white,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 20,
+                ),
+                Container(
+                  alignment: Alignment.center,
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    color: Color.fromARGB(255, 110, 88, 255),
+                    borderRadius: BorderRadius.circular(15.0),
+                    border: Border.all(color: Colors.white),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade400,
+                        spreadRadius: 0,
+                        blurRadius: 1,
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 2, vertical: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          border: Border.all(color: Colors.white),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.shade400,
+                              spreadRadius: 0,
+                              blurRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Coming Soon To Your Location',
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 24,
+                            height:
+                                1.5, // Adjust the multiplier to increase line spacing
+                          ),
+                          textAlign: TextAlign.center,
+                          // Centers each line of text horizontally
+                        ),
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text(
+                        '${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}, ${cart.deliveryAddress.lineTwo}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          height:
+                              1.5, // Adjust the multiplier to increase line spacing
+                        ),
+                        textAlign: TextAlign.center,
+                        // Centers each line of text horizontally
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              Text(
-                'to ${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}',
-                style: const TextStyle(
-                  fontSize: 20,
-                  height: 1.5, // Adjust the multiplier to increase line spacing
+                SizedBox(
+                  height: 20,
                 ),
-                textAlign:
-                    TextAlign.center, // Centers each line of text horizontally
-              ),
-              const SizedBox(
-                height: 120,
-              ),
-              ElevatedButton(
-                onPressed: () async {
-                  context.go('/select-address');
-                },
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.deepPurpleAccent, // Button color
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(
-                        8), // Smaller rounded corners for a squarish look
+                Container(
+                  alignment: Alignment.center,
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20.0),
+                    border: Border.all(color: Colors.white),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.shade400,
+                        spreadRadius: 0,
+                        blurRadius: 1,
+                      ),
+                    ],
                   ),
-                  elevation: 5, // Floating effect
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20, // Slightly more horizontal padding
-                    vertical: 10, // Slightly more vertical padding
+                  child: Column(
+                    children: [
+                      Text(
+                        'Delivery Available in \nDN Nagar, Andheri West, Mumbai',
+                        style: const TextStyle(
+                          color: Colors.black,
+                          fontSize: 24,
+                          height:
+                              1.5, // Adjust the multiplier to increase line spacing
+                        ),
+                        textAlign: TextAlign.center,
+                        // Centers each line of text horizontally
+                      ),
+                      SizedBox(height: 10),
+                      Container(
+                        height: MediaQuery.of(context).size.height * 0.25,
+                        margin: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.height * 0.01,
+                          vertical: MediaQuery.of(context).size.height * 0.01,
+                        ),
+                        padding: const EdgeInsets.all(1),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(25)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withOpacity(0.5),
+                              blurRadius: 2.0,
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          // Use ClipRRect to clip the child widget with rounded corners
+                          borderRadius: const BorderRadius.all(Radius.circular(
+                              15)), // Match the parent Container's borderRadius
+                          child: GoogleMap(
+                            mapType: MapType.terrain,
+                            initialCameraPosition: _kGooglePlex,
+                            markers: _markers, // Use the _markers set here
+                            onMapCreated: (GoogleMapController controller) {
+                              _controller.complete(controller);
+                            },
+                            // ignore: prefer_collection_literals
+                            gestureRecognizers:
+                                Set(), // Disable gesture recognizers
+                            zoomGesturesEnabled: false, // Disable zoom gestures
+                            scrollGesturesEnabled:
+                                false, // Disable scroll gestures
+                            rotateGesturesEnabled:
+                                false, // Disable rotate gestures
+                            tiltGesturesEnabled: false,
+                            myLocationButtonEnabled: false,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: const Text(
-                  "Change Address",
-                  style: TextStyle(fontSize: 20),
+                const SizedBox(
+                  height: 20,
                 ),
-              ),
-              const SizedBox(
-                height: 40,
-              ),
-            ],
+                ElevatedButton(
+                  onPressed: () async {
+                    context.go('/select-address');
+                  },
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor:
+                        Color.fromARGB(255, 110, 88, 255), // Button color
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(
+                          10), // Smaller rounded corners for a squarish look
+                    ),
+                    elevation: 5, // Floating effect
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20, // Slightly more horizontal padding
+                      vertical: 10, // Slightly more vertical padding
+                    ),
+                  ),
+                  child: const Text(
+                    "Change Address",
+                    style: TextStyle(fontSize: 20),
+                  ),
+                ),
+                const SizedBox(
+                  height: 40,
+                ),
+              ],
+            ),
           ),
         ));
   }
