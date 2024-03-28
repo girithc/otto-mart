@@ -65,6 +65,9 @@ var authRequirements = map[string]Permission{
 	CheckoutCancel:                        {Role: "Customer", AuthRequired: true},
 	CustomerPlacedOrder:                   {Role: "Customer", AuthRequired: true},
 	CustomerPickupOrder:                   {Role: "Customer", AuthRequired: true},
+	CustomerCartDetails:                   {Role: "Customer", AuthRequired: true},
+	CartSlots:                             {Role: "Customer", AuthRequired: true},
+	AssignCartSlots:                       {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerLogin:                  {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerGet:                    {Role: "Customer", AuthRequired: true},
 	DeliveryPartnerUpdate:                 {Role: "Customer", AuthRequired: true},
@@ -130,6 +133,7 @@ var authRequirements = map[string]Permission{
 	ManagerInitShelf:                      {Role: "Manager", AuthRequired: true},
 	ManagerFindItem:                       {Role: "Manager", AuthRequired: true},
 	ManagerCreateOrder:                    {Role: "Manager", AuthRequired: true},
+	ManagerFCM:                            {Role: "Manager", AuthRequired: true},
 	ManagerAssignItemShelf:                {Role: "Manager", AuthRequired: true},
 	StoreAddressGet:                       {Role: "Customer", AuthRequired: true},
 	PackerGetOrder:                        {Role: "Customer", AuthRequired: true},
@@ -195,6 +199,9 @@ const (
 	CheckoutCancel                        = "checkout-cancel"
 	CustomerPlacedOrder                   = "customer-placed-order"
 	CustomerPickupOrder                   = "customer-pickup-order"
+	CustomerCartDetails                   = "customer-cart-details"
+	CartSlots                             = "customer-cart-slots"
+	AssignCartSlots                       = "customer-assign-cart-slots"
 	DeliveryPartnerLogin                  = "delivery-partner-login"
 	DeliveryPartnerGet                    = "delivery-partner-get"
 	DeliveryPartnerUpdate                 = "delivery-partner-update"
@@ -264,4 +271,5 @@ const (
 	ManagerAssignItemShelf                = "manager-assign-item-shelf"
 	ManagerFindItem                       = "manager-find-item"
 	ManagerCreateOrder                    = "manager-create-order"
+	ManagerFCM                            = "manager-fcm"
 )

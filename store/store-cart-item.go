@@ -256,6 +256,23 @@ func (s *PostgresStore) GetCartDetails(cartId int, cartItem types.CartDetails) (
 
 	cartItem.CartId = cartId
 
+	deliveryAmountQuery := `
+		SELECT dd.min_delivery_amount
+		FROM shopping_cart sc
+		JOIN address a ON sc.address_id = a.id
+		JOIN delivery_distance dd ON a.distance_to_store > dd.min_distance AND a.distance_to_store <= dd.max_distance
+		WHERE sc.id = $1
+		LIMIT 1`
+
+	var minDeliveryAmount int
+	err = s.db.QueryRow(deliveryAmountQuery, cartId).Scan(&minDeliveryAmount)
+	if err != nil {
+		fmt.Print("Error fetching minimum delivery amount: ", err)
+		return nil, err
+	}
+
+	cartItem.FreeDeliveryAmount = minDeliveryAmount
+
 	// Return the cart item details
 	return &cartItem, nil
 }

@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
+	"firebase.google.com/go/messaging"
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
 )
@@ -372,4 +375,109 @@ func (s *PostgresStore) ManagerUpdateItemBarcode(item types.ItemBarcodeBasic) (t
 		Barcode:  item.Barcode,
 		ItemName: itemName,
 	}, nil
+}
+
+func (s *PostgresStore) ManagerSendFCM(phone string) (bool, error) {
+
+	var registrationToken string
+	query := `SELECT fcm FROM customer WHERE phone = $1`
+	err := s.db.QueryRow(query, phone).Scan(&registrationToken)
+	if err != nil {
+		// Handle error (e.g., no token found for phone number)
+		log.Printf("Error retrieving registration token for phone %s: %v", phone, err)
+		return false, err
+	}
+	// See documentation on defining a message payload.
+	message := &messaging.Message{
+		Data: map[string]string{
+			"score": "850",
+			"time":  "2:45",
+		},
+		Token: registrationToken,
+		Notification: &messaging.Notification{
+			Title: "Manager Notification",
+			Body:  "Good Morning From Otto Mart ",
+		},
+		Android: &messaging.AndroidConfig{
+			Notification: &messaging.AndroidNotification{
+				Title: "Manager Notification",
+				Body:  "Good Morning From Otto Mart ", // Optional: if you want to override the main notification body
+				Color: "#800080",                      // Purple color in ARGB format
+			},
+			// Additional Android-specific configuration...
+		},
+	}
+
+	// Send a message to the device corresponding to the provided
+	// registration token.
+	response, err := s.firebaseClient.Send(s.context, message)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	// Response is a message ID string.
+	fmt.Println("Successfully sent message:", response)
+
+	return true, nil
+}
+
+func (s *PostgresStore) sendOrderNotifToPacker() (bool, error) {
+	// Query to select all FCM tokens from packers
+	query := `SELECT fcm FROM packer`
+	rows, err := s.db.Query(query)
+	if err != nil {
+		log.Printf("Error querying FCM tokens: %v", err)
+		return false, err
+	}
+	defer rows.Close()
+
+	// Calculate the time now plus 5 hours and 30 minutes
+	futureTime := time.Now().Add(5*time.Hour + 30*time.Minute).Format(time.RFC3339)
+
+	// Loop through all the rows
+	for rows.Next() {
+		var registrationToken string
+		if err := rows.Scan(&registrationToken); err != nil {
+			log.Printf("Error scanning registration token: %v", err)
+			continue // Move to the next row if there's an error
+		}
+
+		// Define the message payload with the adjusted time and new order value
+		message := &messaging.Message{
+			Data: map[string]string{
+				"order": "new order",
+				"time":  futureTime,
+			},
+			Token: registrationToken,
+			Notification: &messaging.Notification{
+				Title: "New Order",
+				Body:  "Start Packing Order",
+			},
+			Android: &messaging.AndroidConfig{
+				Notification: &messaging.AndroidNotification{
+					Title: "New Order",
+					Body:  "Start Packing Order",
+					Color: "#800080", // Purple color in ARGB format
+				},
+				// Additional Android-specific configuration...
+			},
+		}
+
+		// Send a message to the device corresponding to the provided registration token
+		response, err := s.firebaseClient.Send(s.context, message)
+		if err != nil {
+			log.Printf("Failed to send message to token %s: %v", registrationToken, err)
+			continue // Move to the next token if there's an error
+		}
+
+		// Log the successful sending of the message
+		log.Printf("Successfully sent message to token %s: %s", registrationToken, response)
+	}
+
+	// Check for errors from iterating over rows
+	if err = rows.Err(); err != nil {
+		log.Printf("Error iterating rows: %v", err)
+		return false, err
+	}
+
+	return true, nil
 }

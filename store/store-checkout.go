@@ -173,8 +173,9 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		return false, err
 	}
 
+	var defaultAddressID int
 	// Fetch customer_id, store_id, and order_type from shopping_cart
-	err = s.db.QueryRow(`SELECT customer_id, store_id, order_type FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID, &orderType)
+	err = s.db.QueryRow(`SELECT customer_id, store_id, order_type, address_id FROM shopping_cart WHERE id = $1`, cart_id).Scan(&customerID, &storeID, &orderType, &defaultAddressID)
 	if err != nil {
 		return false, fmt.Errorf("failed to fetch shopping cart data for cart %d: %s", cart_id, err)
 	}
@@ -183,15 +184,17 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		return false, fmt.Errorf("customer ID is null or invalid for cart %d", cart_id)
 	}
 
-	// Get the default address ID for the customer
-	var defaultAddressID int
-	err = s.db.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
-	if err != nil {
-		return false, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
-	}
+	/*
+		// Get the default address ID for the customer
+		err = s.db.QueryRow(`SELECT id FROM address WHERE customer_id = $1 AND is_default = TRUE`, customerID.Int64).Scan(&defaultAddressID)
+		if err != nil {
+			return false, fmt.Errorf("failed to fetch default address for customer %d: %s", customerID.Int64, err)
+		}
+	*/
 
 	// Check for an existing active shopping cart before creating a new one
 	var existingCartID int
+
 	err = s.db.QueryRow(`SELECT id FROM shopping_cart WHERE customer_id = $1 AND active = true LIMIT 1`, customerID.Int64).Scan(&existingCartID)
 	if err != nil && err != sql.ErrNoRows {
 		return false, fmt.Errorf("failed to check for existing active shopping cart for customer %d: %s", customerID.Int64, err)
@@ -199,9 +202,15 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 
 	// Create a new shopping cart if no active cart exists
 	if existingCartID == 0 {
-		_, err = tx.Exec(`INSERT INTO shopping_cart (customer_id, active) VALUES ($1, true)`, customerID.Int64)
+		_, err = tx.Exec(`INSERT INTO shopping_cart (customer_id, active, address_id) VALUES ($1, true, $2)`, customerID.Int64, defaultAddressID)
 		if err != nil {
 			return false, fmt.Errorf("failed to create a new shopping cart for customer %d: %s", customerID.Int64, err)
+		}
+	} else {
+		// Update the address_id field of the existing active cart to defaultAddressId
+		_, err = tx.Exec(`UPDATE shopping_cart SET address_id = $1 WHERE id = $2 AND customer_id = $3 AND active = true`, defaultAddressID, existingCartID, customerID.Int64)
+		if err != nil {
+			return false, fmt.Errorf("failed to update the address for the existing shopping cart %d for customer %d: %s", existingCartID, customerID.Int64, err)
 		}
 	}
 
@@ -264,8 +273,6 @@ type IsLockStock struct {
 func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
 
 	var resp IsLockStock
-
-	return IsLockStock{}, fmt.Errorf("error in LockStock")
 
 	cartItems, err := s.getCartItems(cart_id)
 	if err != nil {
@@ -424,6 +431,11 @@ func (s *PostgresStore) PayStockCash(cart_id int, sign string, merchantTransacti
 	err = tx.Commit()
 	if err != nil {
 		return IsPaid{false}, fmt.Errorf("error committing transaction: %s", err)
+	}
+
+	_, err = s.sendOrderNotifToPacker()
+	if err != nil {
+		print("Error Sending Notification, ", err)
 	}
 
 	return IsPaid{IsPaid: success}, nil

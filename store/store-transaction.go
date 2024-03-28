@@ -218,5 +218,10 @@ func (s *PostgresStore) FetchCompletedTransactionDetailsAndCreateOrder(cartID in
 		return false, fmt.Errorf("error committing transaction: %w", err)
 	}
 
+	_, err = s.sendOrderNotifToPacker()
+	if err != nil {
+		print("Error Sending Notification, ", err)
+	}
+
 	return result, nil // Return the result of CreateOrder
 }

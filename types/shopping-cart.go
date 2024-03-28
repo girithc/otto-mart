@@ -21,6 +21,17 @@ type Get_Shopping_Cart struct {
 	Active      bool `json:"active"`
 }
 
+type Shopping_Cart_Details struct {
+	Customer_Id int `json:"customer_id"`
+	Cart_Id     int `json:"cart_id"`
+}
+
+type AssignSlot struct {
+	Customer_Id int `json:"customer_id"`
+	Cart_Id     int `json:"cart_id"`
+	Slot_Id     int `json:slot_id`
+}
+
 func New_Shopping_Cart(customer_id int) (*Create_Shopping_Cart, error) {
 	return &Create_Shopping_Cart{
 		Customer_Id: customer_id,

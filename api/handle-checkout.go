@@ -18,7 +18,12 @@ func (s *Server) handlePostCheckoutLockItems(res http.ResponseWriter, req *http.
 		return err
 	}
 
-	_, err := s.store.GenMerchantUserId(new_req.Cart_Id)
+	err := s.store.IsTestUser(new_req.Cart_Id)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.store.GenMerchantUserId(new_req.Cart_Id)
 	if err != nil {
 		return err
 	}

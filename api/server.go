@@ -54,6 +54,9 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 
 	http.HandleFunc("/customer-placed-order", makeHTTPHandleFunc(s.handleCustomerPlacedOrder))
 	http.HandleFunc("/customer-pickup-order", makeHTTPHandleFunc(s.handleCustomerPickupOrder))
+	http.HandleFunc("/customer-cart", makeHTTPHandleFunc(s.handleCustomerCartDetails))
+	http.HandleFunc("/get-slots", makeHTTPHandleFunc(s.handleGetCartSlots))
+	http.HandleFunc("/assign-slots", makeHTTPHandleFunc(s.handleAssignCartSlots))
 
 	http.HandleFunc("/packer-get-order", makeHTTPHandleFunc(s.handlePackerGetCustomerOrder))
 	http.HandleFunc("/packer-complete-order", makeHTTPHandleFunc(s.handlePackerCompleteOrder))
@@ -132,6 +135,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/manager-init-shelf", makeHTTPHandleFunc(s.handleManagerInitShelf))
 	http.HandleFunc("/manager-assign-item-shelf", makeHTTPHandleFunc(s.handleManagerAssignItemShelf))
 	http.HandleFunc("/manager-find-item", makeHTTPHandleFunc(s.handleManagerFindItem))
+	http.HandleFunc("/manager-fcm", makeHTTPHandleFunc(s.handleManagerFCM))
 
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))

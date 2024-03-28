@@ -10,9 +10,18 @@ require (
 )
 
 require (
+	cloud.google.com/go v0.110.8 // indirect
+	cloud.google.com/go/firestore v1.13.0 // indirect
+	cloud.google.com/go/longrunning v0.5.2 // indirect
+	cloud.google.com/go/storage v1.30.1 // indirect
+	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
+)
+
+require (
 	cloud.google.com/go/compute v1.23.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.3 // indirect
+	firebase.google.com/go v3.13.0+incompatible
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect

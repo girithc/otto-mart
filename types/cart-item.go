@@ -21,6 +21,7 @@ type CartDetails struct {
 	Subtotal             int  `json:"subtotal"`
 	Discounts            int  `json:"discounts"`
 	OutOfStock           bool `json:"out_of_stock"`
+	FreeDeliveryAmount   int  `json:"free_delivery_amount"`
 }
 
 type CartItemResponse struct {

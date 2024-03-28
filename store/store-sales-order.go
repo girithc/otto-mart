@@ -91,6 +91,13 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 		return err
 	}
 
+	// Update existing records to set store_id to 1
+	updateQuery := `UPDATE sales_order SET store_id = 1 WHERE store_id IS NULL OR store_id <> 1`
+	_, err = tx.Exec(updateQuery)
+	if err != nil {
+		return err
+	}
+
 	return err
 }
 
@@ -258,6 +265,9 @@ type CustomerOrderDetails struct {
 	PackagingFee         int         `json:"packaging_fee"`
 	PeakTimeSurcharge    int         `json:"peak_time_surcharge"`
 	Subtotal             int         `json:"subtotal"`
+	DeliveryDate         time.Time   `json:"delivery_date"`
+	SlotStartTime        time.Time   `json:"slot_start_time"`
+	SlotEndTime          time.Time   `json:"slot_end_time"`
 }
 
 type OrderItem struct {
@@ -347,6 +357,18 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 	err = s.db.QueryRow(addressQuery, cartId).Scan(&orderDetails.Address)
 	if err != nil {
 		return nil, fmt.Errorf("error querying for address details: %w", err)
+	}
+
+	// New: Fetch delivery_date, slot start_time, and end_time
+	slotQuery := `
+        SELECT sc.delivery_date, sl.start_time, sl.end_time
+        FROM shopping_cart sc
+        LEFT JOIN slot sl ON sc.slot_id = sl.id
+        WHERE sc.id = $1
+    `
+	err = s.db.QueryRow(slotQuery, cartId).Scan(&orderDetails.DeliveryDate, &orderDetails.SlotStartTime, &orderDetails.SlotEndTime)
+	if err != nil {
+		return nil, fmt.Errorf("error querying for delivery date and slot times: %w", err)
 	}
 
 	return orderDetails, nil

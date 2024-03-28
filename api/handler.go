@@ -610,6 +610,14 @@ func (s *Server) handleManagerFindItem(res http.ResponseWriter, req *http.Reques
 	return nil
 }
 
+func (s *Server) handleManagerFCM(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "manager-fcm")
+		return s.goRoutineWrapper(ManagerFCM, s.handleManagerFCMBasic, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handleManagerCreateOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "manager-create-order")
@@ -734,6 +742,30 @@ func (s *Server) handleCustomerPickupOrder(res http.ResponseWriter, req *http.Re
 	if req.Method == "POST" {
 		print_path("POST", "customer-pickup-order")
 		return s.goRoutineWrapper(CustomerPickupOrder, s.handleCustomerPickup, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleCustomerCartDetails(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "customer-cart-details")
+		return s.goRoutineWrapper(CustomerCartDetails, s.handleGetCustomerCartDetails, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleGetCartSlots(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "cart-slot")
+		return s.goRoutineWrapper(CartSlots, s.handleGetCustomerCartSlots, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleAssignCartSlots(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "cart-slot")
+		return s.goRoutineWrapper(AssignCartSlots, s.handleAssignCustomerCartSlots, res, req)
 	}
 	return nil
 }

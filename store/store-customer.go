@@ -4,8 +4,10 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
@@ -111,6 +113,52 @@ func (s *PostgresStore) GenMerchantUserId(cart_id int) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (s *PostgresStore) IsTestUser(cartId int) error {
+	var customerId int
+	var phone string
+	var slotId *int // Using a pointer to int to handle NULL values
+
+	// Step 1: Get customer_id and slot_id from shopping_cart table
+	query := `SELECT customer_id, slot_id FROM shopping_cart WHERE id = $1`
+	err := s.db.QueryRow(query, cartId).Scan(&customerId, &slotId)
+	if err != nil {
+		log.Printf("Error retrieving customer_id and slot_id for cartId %d: %v", cartId, err)
+		return err // Handle the error appropriately
+	}
+
+	// Check if slot_id is not populated
+	if slotId == nil {
+		log.Printf("No delivery slot selected", cartId)
+		return fmt.Errorf("please select a delivery slot") // Return an error if slot_id is not populated
+	}
+
+	// Step 2: Get phone from customer table using customer_id
+	query = `SELECT phone FROM customer WHERE id = $1`
+	err = s.db.QueryRow(query, customerId).Scan(&phone)
+	if err != nil {
+		log.Printf("Error retrieving phone for customerId %d: %v", customerId, err)
+		return err // Handle the error appropriately
+	}
+
+	// Step 3: Check if the phone number matches the test user's phone number
+	if phone == "1234567890" {
+		// Throw an error indicating a test user checkout attempt
+		return fmt.Errorf("test user cannot checkout")
+	}
+
+	// If a slot_id is populated, update the delivery_date to now + 5:30 hours + 1 day
+	newDeliveryDate := time.Now().Add(5*time.Hour+30*time.Minute).AddDate(0, 0, 1)
+	updateQuery := `UPDATE shopping_cart SET delivery_date = $1 WHERE id = $2`
+	_, err = s.db.Exec(updateQuery, newDeliveryDate, cartId)
+	if err != nil {
+		log.Printf("Error updating delivery_date for cartId %d: %v", cartId, err)
+		return err // Handle the error appropriately
+	}
+
+	// If the phone number does not match, there's no error
+	return nil
 }
 
 func (s *PostgresStore) SendOtpMSG91(phone string) (*types.SendOTPResponse, error) {

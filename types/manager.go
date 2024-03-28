@@ -24,3 +24,7 @@ type ManagerFCM struct {
 	Phone string `json:"phone"`
 	FCM   string `json:"fcm"`
 }
+
+type FCM struct {
+	Phone string `json:"phone"`
+}

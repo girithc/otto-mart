@@ -129,6 +129,21 @@ func (s *Server) handleManagerCreateOrderBasic(res http.ResponseWriter, req *htt
 
 }
 
+func (s *Server) handleManagerFCMBasic(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.FCM)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in handleManagerFCMBasic")
+		return err
+	}
+
+	result, err := s.store.ManagerSendFCM(new_req.Phone)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, result)
+}
+
 func (s *Server) handlePackerGetOrder(res http.ResponseWriter, req *http.Request) error {
 	new_req := new(types.GetOrderBasic)
 	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {

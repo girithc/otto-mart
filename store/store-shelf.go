@@ -99,7 +99,7 @@ func (s *PostgresStore) ManagerInitShelf(storeID int) (bool, error) {
 	success := true
 
 	for _, vertical := range verticals {
-		for horizontal := 1; horizontal <= 130; horizontal++ {
+		for horizontal := 1; horizontal <= 134; horizontal++ {
 			query := `
 			INSERT INTO Shelf (store_id, horizontal, vertical)
 			VALUES ($1, $2, $3)
@@ -145,66 +145,64 @@ type ShelfAssignmentResponse struct {
 // Assuming PostgresStore structure and other necessary imports and setups are already done
 
 func (s *PostgresStore) ManagerAssignItemToShelf(req types.AssignItemShelf) (*ShelfAssignmentResponse, error) {
-	var currentItemID int
+	// Start a transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("failed to start transaction: %v", err)
+	}
+	defer tx.Rollback() // The rollback will be ignored if the tx has been committed later in the function
+
 	var newItemName string
 	shelfID := fmt.Sprintf("%s%d", req.Vertical, req.Horizontal)
 
 	// Retrieve the name of the item to be assigned
-	getItemNameQuery := `
-	SELECT name FROM Item WHERE barcode = $1;
-	`
-	err := s.db.QueryRow(getItemNameQuery, req.ItemBarcode).Scan(&newItemName)
+	getItemNameQuery := `SELECT name FROM Item WHERE barcode = $1;`
+	err = tx.QueryRow(getItemNameQuery, req.ItemBarcode).Scan(&newItemName)
 	if err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("item with barcode '%s' does not exist", req.ItemBarcode)
-		}
 		return nil, fmt.Errorf("error retrieving item name: %v", err)
 	}
 
-	// Check if the shelf already has an item assigned and if it does, validate the stock and locked quantity
-	checkQuery := `
-	SELECT i.id
-	FROM Shelf s
-	LEFT JOIN item i ON s.item_id = i.id
-	LEFT JOIN item_store istore ON i.id = istore.item_id
-	WHERE s.store_id = $1 AND s.horizontal = $2 AND s.vertical = $3
-	AND (istore.stock_quantity > 0 OR istore.locked_quantity > 0);
-	`
-	err = s.db.QueryRow(checkQuery, req.StoreID, req.Horizontal, req.Vertical).Scan(&currentItemID)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, fmt.Errorf("error checking current shelf item: %v", err)
-	}
-	if currentItemID != 0 {
-		message := fmt.Sprintf("Shelf %s already has an item with stock or locked quantity", shelfID)
-		return &ShelfAssignmentResponse{Horizontal: req.Horizontal, Vertical: req.Vertical, Message: message}, fmt.Errorf(message)
+	// Remove existing assignments of the item from all shelves
+	removeAssignmentsQuery := `
+    UPDATE Shelf
+    SET item_id = NULL
+    WHERE item_id IN (SELECT id FROM Item WHERE barcode = $1) AND store_id = $2;
+    `
+	_, err = tx.Exec(removeAssignmentsQuery, req.ItemBarcode, req.StoreID)
+	if err != nil {
+		return nil, fmt.Errorf("error removing existing assignments: %v", err)
 	}
 
-	// Check if the item is already assigned to another shelf and has locked quantity greater than 0
-	otherShelfCheckQuery := `
-	SELECT COUNT(*)
-	FROM Shelf s
-	JOIN item i ON s.item_id = i.id
-	JOIN item_store istore ON i.id = istore.item_id
-	WHERE i.barcode = $1 AND s.store_id = $2 AND (s.horizontal != $3 OR s.vertical != $4) AND istore.locked_quantity > 0;
-	`
-	var count int
-	err = s.db.QueryRow(otherShelfCheckQuery, req.ItemBarcode, req.StoreID, req.Horizontal, req.Vertical).Scan(&count)
-	if err != nil {
-		return nil, fmt.Errorf("error checking other shelves for the item: %v", err)
+	// Check if the new shelf already has an assigned item with stock quantity greater than zero
+	checkShelfQuery := `
+    SELECT istore.stock_quantity
+    FROM Shelf s
+    JOIN item_store istore ON s.item_id = istore.item_id
+    WHERE s.store_id = $1 AND s.horizontal = $2 AND s.vertical = $3;
+    `
+	var stockQuantity int
+	err = tx.QueryRow(checkShelfQuery, req.StoreID, req.Horizontal, req.Vertical).Scan(&stockQuantity)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("error checking new shelf: %v", err)
 	}
-	if count > 0 {
-		message := fmt.Sprintf("Item '%s' is already assigned to another shelf with locked quantity", newItemName)
-		return &ShelfAssignmentResponse{Horizontal: req.Horizontal, Vertical: req.Vertical, Message: message}, fmt.Errorf(message)
+	if err != sql.ErrNoRows && stockQuantity > 0 {
+		return nil, fmt.Errorf("new shelf %s already has an item with stock quantity", shelfID)
 	}
-	// Assign the item to the shelf
-	updateQuery := `
-	UPDATE Shelf
-	SET item_id = (SELECT id FROM Item WHERE barcode = $1)
-	WHERE store_id = $2 AND horizontal = $3 AND vertical = $4;
-	`
-	_, err = s.db.Exec(updateQuery, req.ItemBarcode, req.StoreID, req.Horizontal, req.Vertical)
+
+	// Assign the item to the new shelf
+	assignItemQuery := `
+    UPDATE Shelf
+    SET item_id = (SELECT id FROM Item WHERE barcode = $1)
+    WHERE store_id = $2 AND horizontal = $3 AND vertical = $4;
+    `
+	_, err = tx.Exec(assignItemQuery, req.ItemBarcode, req.StoreID, req.Horizontal, req.Vertical)
 	if err != nil {
-		return nil, fmt.Errorf("error updating shelf: %v", err)
+		return nil, fmt.Errorf("error assigning item to new shelf: %v", err)
+	}
+
+	// Commit the transaction
+	if err := tx.Commit(); err != nil {
+		return nil, fmt.Errorf("transaction commit failed: %v", err)
 	}
 
 	// Return the ShelfAssignmentResponse struct with a success message and the item name

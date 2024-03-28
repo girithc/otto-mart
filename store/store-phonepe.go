@@ -114,6 +114,11 @@ func (s *PostgresStore) PhonePeCheckStatus(customerPhone string, cartID int, mer
 			return response, fmt.Errorf("error committing transaction: %w", err)
 		}
 
+		_, err = s.sendOrderNotifToPacker()
+		if err != nil {
+			print("Error Sending Notification, ", err)
+		}
+
 		println("Transaction completed successfully")
 		response.Done = true
 		response.Status = "SUCCESS"
@@ -606,6 +611,11 @@ func (s *PostgresStore) PhonePePaymentCallback(cartID int, sign string, response
 		if err = tx.Commit(); err != nil {
 			fmt.Printf("Error committing transaction: %v\n", err)
 			return nil, err
+		}
+
+		_, err = s.sendOrderNotifToPacker()
+		if err != nil {
+			print("Error Sending Notification, ", err)
 		}
 
 		// Create the result struct

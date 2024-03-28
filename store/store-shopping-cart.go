@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"math"
 	"time"
 
 	"github.com/girithc/pronto-go/types"
@@ -52,17 +53,33 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
 		return err
 	}
 
-	// Alter table to set default store_id to 1
-	alterTableQueryForStoreId := `ALTER TABLE shopping_cart
-        ALTER COLUMN store_id SET DEFAULT 1;`
-
-	_, err = tx.Exec(alterTableQueryForStoreId)
+	// Step 1: Update existing records
+	updateQuery := `UPDATE shopping_cart SET store_id = 1 WHERE store_id IS NULL`
+	_, err = tx.Exec(updateQuery)
 	if err != nil {
 		return err
 	}
 
+	// Step 2: Alter the column to not allow NULL and ensure the default value is 1
 	alterTableQuery := `ALTER TABLE shopping_cart
+                       ALTER COLUMN store_id SET NOT NULL,
+                        ALTER COLUMN store_id SET DEFAULT 1;`
+	_, err = tx.Exec(alterTableQuery)
+	if err != nil {
+		return err
+	}
+
+	alterTableQuery = `ALTER TABLE shopping_cart
         ADD COLUMN IF NOT EXISTS order_type order_type DEFAULT 'delivery';`
+
+	_, err = tx.Exec(alterTableQuery)
+	if err != nil {
+		return err
+	}
+
+	alterTableQuery = `ALTER TABLE shopping_cart
+        ADD COLUMN IF NOT EXISTS slot_id INT REFERENCES slot(id) ON DELETE SET NULL,
+        ADD COLUMN IF NOT EXISTS delivery_date DATE;`
 
 	_, err = tx.Exec(alterTableQuery)
 	if err != nil {
@@ -90,6 +107,91 @@ func (s *PostgresStore) SetShoppingCartForeignKey(tx *sql.Tx) error {
 
 	_, err := tx.Exec(query)
 	return err
+}
+
+func (s *PostgresStore) CreateSlotTable(tx *sql.Tx) error {
+	createTableQuery := `
+        CREATE TABLE IF NOT EXISTS slot (
+            id SERIAL PRIMARY KEY,
+            start_time TIME NOT NULL,
+            end_time TIME NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE(start_time, end_time)
+        )`
+
+	_, err := tx.Exec(createTableQuery)
+	if err != nil {
+		return err
+	}
+
+	// Create an index on start_time and end_time for more efficient querying
+	createIndexQuery := `CREATE INDEX IF NOT EXISTS idx_slot_times ON slot(start_time, end_time);`
+	_, err = tx.Exec(createIndexQuery)
+	if err != nil {
+		return err
+	}
+
+	// Define your time slots here
+	slots := []struct {
+		StartTime string
+		EndTime   string
+	}{
+		{"06:00:00", "08:00:00"},
+		{"08:00:00", "10:00:00"},
+		{"10:00:00", "12:00:00"},
+	}
+
+	for _, slot := range slots {
+		insertSlotQuery := `INSERT INTO slot (start_time, end_time) 
+                            VALUES ($1::TIME, $2::TIME) 
+                            ON CONFLICT DO NOTHING`
+		_, err := tx.Exec(insertSlotQuery, slot.StartTime, slot.EndTime)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (s *PostgresStore) CreateDeliveryDistanceTable(tx *sql.Tx) error {
+	createTableQuery := `
+        CREATE TABLE IF NOT EXISTS delivery_distance (
+            id SERIAL PRIMARY KEY,
+            min_distance DECIMAL(10, 2) NOT NULL,
+            max_distance DECIMAL(10, 2) NOT NULL,
+            min_delivery_amount INT NOT NULL,
+            CONSTRAINT distance_check CHECK (min_distance < max_distance),
+            UNIQUE(min_distance, max_distance)
+        )`
+
+	_, err := tx.Exec(createTableQuery)
+	if err != nil {
+		return err
+	}
+
+	// Alter min_distance and max_distance columns to DECIMAL(10, 2) if needed
+	alterDistanceColumnsQuery := `
+        ALTER TABLE delivery_distance
+        ALTER COLUMN min_distance TYPE DECIMAL(10, 2),
+        ALTER COLUMN max_distance TYPE DECIMAL(10, 2)`
+
+	_, err = tx.Exec(alterDistanceColumnsQuery)
+	if err != nil {
+		return err
+	}
+
+	// Alter min_delivery_amount column to INT if needed
+	alterDeliveryAmountColumnQuery := `
+        ALTER TABLE delivery_distance
+        ALTER COLUMN min_delivery_amount TYPE INT`
+
+	_, err = tx.Exec(alterDeliveryAmountColumnQuery)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (*types.Shopping_Cart, error) {
@@ -132,6 +234,27 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 		return err
 	}
 
+	var addressId int
+	addressQuery := `SELECT address_id FROM shopping_cart WHERE id = $1`
+	err = s.db.QueryRow(addressQuery, cart_id).Scan(&addressId)
+	if err != nil {
+		return err
+	}
+
+	var distanceToStore float64
+	distanceQuery := `SELECT distance_to_store FROM address WHERE id = $1`
+	err = s.db.QueryRow(distanceQuery, addressId).Scan(&distanceToStore)
+	if err != nil {
+		return err
+	}
+
+	var minDeliveryAmount int
+	minDeliveryAmountQuery := `SELECT min_delivery_amount FROM delivery_distance WHERE $1 > min_distance AND $1 <= max_distance`
+	err = s.db.QueryRow(minDeliveryAmountQuery, distanceToStore).Scan(&minDeliveryAmount)
+	if err != nil {
+		return err
+	}
+
 	// Calculate total item cost and discounts from cart_item and item_store
 	query := `
     SELECT 
@@ -147,28 +270,17 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 		return err
 	}
 
+	platformFee = math.Max(2, math.Round(float64(itemCost)*0.01))
+
 	if orderType == "delivery" {
 		switch {
-		case itemCost >= 199:
+		case itemCost >= float64(minDeliveryAmount):
 			deliveryFee = 0
-		case itemCost >= 99:
-			deliveryFee = 9
-		default:
-			deliveryFee = 19
-		}
-
-		switch {
-		case itemCost > 199:
 			smallOrderFee = 0
-		case itemCost > 99:
-			smallOrderFee = 5
-		default:
-			smallOrderFee = 9
-		}
 
-		switch {
 		default:
-			platformFee = 1
+			deliveryFee = 35
+			smallOrderFee = 35
 		}
 
 		switch {
@@ -187,10 +299,73 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
     SET item_cost = $2, delivery_fee = $3, platform_fee = $4, small_order_fee = $5, 
         packaging_fee = $6, discounts = $7, number_of_items = $8
     WHERE id = $1`
-	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, platformFee, smallOrderFee, packagingFee, discounts, numberOfItems)
+	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, int(platformFee), smallOrderFee, packagingFee, discounts, numberOfItems)
 	return err
 }
 
+/*
+	func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
+		print("Calculating cart total for cart_id: ", cart_id)
+		var itemCost, discounts, numberOfItems, minDeliveryAmount, smallOrderFee, platformFee, packagingFee, deliveryFee int // Changed to float64 to handle decimal values
+
+		var distanceToStore float64
+
+		var orderType string
+
+		// Fetch the order type for the cart
+		orderTypeQuery := `SELECT order_type, address.distance_store FROM shopping_cart
+	                       JOIN address ON shopping_cart.address_id = address.id
+	                       WHERE shopping_cart.id = $1`
+		err := s.db.QueryRow(orderTypeQuery, cart_id).Scan(&orderType, &distanceToStore)
+		if err != nil {
+			return err
+		}
+
+		// Calculate total item cost and discounts from cart_item and item_store
+		query := `
+	    SELECT
+	        COALESCE(SUM(CAST(ci.sold_price AS DECIMAL(10, 2)) * ci.quantity), 0),
+	        COALESCE(SUM(ci.quantity), 0),
+	        COALESCE(SUM((ifin.mrp_price - CAST(ci.sold_price AS DECIMAL(10, 2))) * ci.quantity), 0)
+	    FROM cart_item ci
+	    JOIN item_financial ifin ON ci.item_id = ifin.item_id
+	    WHERE ci.cart_id = $1`
+
+		err = s.db.QueryRow(query, cart_id).Scan(&itemCost, &numberOfItems, &discounts)
+		if err != nil {
+			return err
+		}
+
+		platformFee = int(math.Max(2, math.Round(float64(itemCost)*0.01)))
+
+		if orderType == "delivery" {
+
+			minDeliveryAmountQuery := `SELECT min_delivery_amount FROM delivery_distance
+			WHERE $1 > min_distance AND $1 <= max_distance`
+			err = s.db.QueryRow(minDeliveryAmountQuery, distanceToStore).Scan(&minDeliveryAmount)
+			if err != nil {
+				return err
+			}
+
+			switch {
+			case itemCost >= minDeliveryAmount:
+				deliveryFee = 0
+				smallOrderFee = 0
+			default:
+				deliveryFee = 35
+				smallOrderFee = 35
+			}
+		}
+
+		updateQuery := `
+	    UPDATE shopping_cart
+	    SET item_cost = $2, delivery_fee = $3, platform_fee = $4, small_order_fee = $5,
+	        packaging_fee = $6, discounts = $7, number_of_items = $8
+	    WHERE id = $1`
+		_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, platformFee, smallOrderFee, packagingFee, discounts, numberOfItems)
+		return err
+	}
+*/
 func (s *PostgresStore) Get_All_Active_Shopping_Carts() ([]*types.Shopping_Cart, error) {
 	rows, err := s.db.Query("select * from shopping_cart where active = $1", true)
 	if err != nil {
@@ -221,6 +396,146 @@ func (s *PostgresStore) Get_Shopping_Cart_By_Customer_Id(customer_id int, active
 	}
 
 	return nil, nil
+}
+
+type CartDeliveryDetails struct {
+	DeliveryDate time.Time
+	StartTime    time.Time
+	EndTime      time.Time
+}
+
+func (s *PostgresStore) GetCustomerCart(customerId int, cartId int) (*CartDeliveryDetails, error) {
+	// SQL query to join shopping_cart and slot tables and retrieve the required information
+	query := `
+        SELECT sc.delivery_date, sl.start_time, sl.end_time
+        FROM shopping_cart sc
+        JOIN slot sl ON sc.slot_id = sl.id
+        WHERE sc.customer_id = $1 AND sc.id = $2
+    `
+
+	// Assuming you have a DB connection set up and available via s.DB or similar
+	var details CartDeliveryDetails
+	err := s.db.QueryRow(query, customerId, cartId).Scan(&details.DeliveryDate, &details.StartTime, &details.EndTime)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Handle the case where there's no such cart for the customer
+			return nil, nil // or an appropriate error
+		}
+		// Handle other potential errors
+		return nil, err
+	}
+
+	return &details, nil
+}
+
+type Slot struct {
+	StartTime time.Time
+	EndTime   time.Time
+	Id        int
+}
+
+type CartSlotDetails struct {
+	AvailableSlots []Slot
+	ChosenSlot     *Slot // Using a pointer so it can be nil if no slot is chosen
+	DeliveryDate   time.Time
+}
+
+func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetails, error) {
+	var cartSlots CartSlotDetails
+
+	newDeliveryDate := time.Now().Add(5*time.Hour+30*time.Minute).AddDate(0, 0, 1)
+
+	// Update the delivery_date in the shopping_cart table
+	updateQuery := `UPDATE shopping_cart SET delivery_date = $1 WHERE id = $2 AND customer_id = $3`
+	_, err := s.db.Exec(updateQuery, newDeliveryDate, cartId, customerId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Query to fetch available slots
+	slotsQuery := `SELECT start_time, end_time, slot.id FROM slot`
+	rows, err := s.db.Query(slotsQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	const timeLayout = "15:04:05" // Time layout to parse PostgreSQL TIME
+	for rows.Next() {
+		var startTimeStr, endTimeStr string
+		var id int
+		if err := rows.Scan(&startTimeStr, &endTimeStr, &id); err != nil {
+			return nil, err
+		}
+
+		startTime, err := time.Parse(timeLayout, startTimeStr)
+		if err != nil {
+			return nil, err
+		}
+
+		endTime, err := time.Parse(timeLayout, endTimeStr)
+		if err != nil {
+			return nil, err
+		}
+
+		cartSlots.AvailableSlots = append(cartSlots.AvailableSlots, Slot{
+			StartTime: startTime,
+			EndTime:   endTime,
+			Id:        id,
+		})
+	}
+
+	// Query to fetch the chosen slot
+	chosenSlotQuery := `SELECT slot.start_time, slot.end_time, slot.id FROM shopping_cart
+                        JOIN slot ON shopping_cart.slot_id = slot.id
+                        WHERE shopping_cart.id = $1`
+	var chosenStartTimeStr, chosenEndTimeStr string
+	var id int
+	err = s.db.QueryRow(chosenSlotQuery, cartId).Scan(&chosenStartTimeStr, &chosenEndTimeStr, &id)
+
+	if err == nil {
+		chosenStartTime, err := time.Parse(timeLayout, chosenStartTimeStr)
+		if err != nil {
+			return nil, err
+		}
+
+		chosenEndTime, err := time.Parse(timeLayout, chosenEndTimeStr)
+		if err != nil {
+			return nil, err
+		}
+
+		cartSlots.ChosenSlot = &Slot{
+			StartTime: chosenStartTime,
+			EndTime:   chosenEndTime,
+			Id:        id,
+		}
+	} else if err != sql.ErrNoRows {
+		return nil, err // return error if it's not the "no rows" error
+	}
+
+	cartSlots.DeliveryDate = newDeliveryDate
+
+	return &cartSlots, nil
+}
+func (s *PostgresStore) AssignCartSlot(customerId int, cartId int, slotId int) (*CartSlotDetails, error) {
+	// Calculate the delivery date by adding 5:30 hours to the current time and then adding 1 day
+	currentTime := time.Now()
+	adjustedTime := currentTime.Add(5*time.Hour + 30*time.Minute)
+	deliveryDate := adjustedTime.AddDate(0, 0, 1)
+
+	// Update the slot_id and delivery_date in the shopping_cart table in one query
+	updateQuery := `
+        UPDATE shopping_cart
+        SET slot_id = $1, delivery_date = $2
+        WHERE id = $3 AND customer_id = $4`
+
+	_, err := s.db.Exec(updateQuery, slotId, deliveryDate, cartId, customerId)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the updated cart slots
+	return s.GetCartSlots(customerId, cartId)
 }
 
 func (s *PostgresStore) DoesCartExist(cartID int) (bool, error) {
