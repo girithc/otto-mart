@@ -6,13 +6,13 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
-import 'package:pronto/payments/phonepe.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 
@@ -29,24 +29,20 @@ class _MyCartState extends State<MyCart> {
   String? cartId;
   final storage = const FlutterSecureStorage();
   bool isLoading = true;
-  bool storeOpen = true;
-  String storeOpenTime = '';
+  String? error;
 
   @override
   void initState() {
-    fetchCartId();
     super.initState();
-    getStoreAddress();
+    fetchCartId();
   }
 
   Future<void> fetchCartId() async {
-    //await Future.delayed(const Duration(seconds: 3)); // Introduce a 3-second delay
-
     cartId = await storage.read(key: 'cartId');
+    print("CartID $cartId");
   }
 
-  Future<LockStockResponse> checkoutLockItems(int cartId) async {
-    //const String apiUrl = '$baseUrl/checkout-lock-items';
+  Future<LockStockResponse?> checkoutLockItems(int cartId) async {
     final Map<String, dynamic> body = {'cart_id': cartId};
     final networkService = NetworkService();
 
@@ -60,46 +56,34 @@ class _MyCartState extends State<MyCart> {
         final jsonResponse = json.decode(response.body);
         return LockStockResponse.fromJson(jsonResponse);
       } else {
-        // Handle the case when the server does not respond with a success code
-        print('Request failed with status: ${response.statusCode}.');
-        throw Exception('Failed to cancel checkout items');
+        print("Response Body ${response.body}");
+        final jsonResponse = json.decode(response.body);
+        String errorMessage = jsonResponse['error'].toString();
+
+        // Show a snackbar with the error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Center(
+              child: Text(
+                errorMessage,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: Colors.black),
+              ),
+            ),
+            backgroundColor: Colors.greenAccent,
+          ),
+        );
+
+        //throw Exception('Failed to lock checkout items: $errorMessage');
       }
-    } on Exception catch (e) {
-      // Handle any exceptions here
-      print('Caught exception: $e');
-      throw Exception(e); // Re-throw the caught exception
+    } catch (e) {
+      //print('Caught exception: $e');
+      //throw Exception('Failed to lock checkout items'); // Re-throw the caught exception
     }
-  }
 
-  Future<void> getStoreAddress() async {
-    print("Entered Get Store Address");
-    final storeId = await storage.read(key: 'storeId');
-    final networkService = NetworkService();
-    Map<String, dynamic> body = {
-      "store_id": int.parse(storeId!),
-    };
-    final response = await networkService.postWithAuth('/store-address',
-        additionalData: body);
-
-    print("Response Store Address ${response.body}");
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-
-      setState(() {
-        streetAddress = data['address'];
-        storeOpen = data['store_open'];
-        if (!storeOpen) {
-          DateTime parsedStoreOpenTime = DateTime.parse(data['opening_time']);
-
-          // Add 5 hours and 30 minutes to the parsed time
-          DateTime adjustedStoreOpenTime =
-              parsedStoreOpenTime.add(Duration(hours: 5, minutes: 30));
-
-          // Format the adjusted time part into a verbal format like "9:00 AM"
-          storeOpenTime = DateFormat('h:mm a').format(adjustedStoreOpenTime);
-        }
-      });
-    } else {}
+    return null;
   }
 
   Future<PaymentResult> initiatePhonePePayment() async {
@@ -239,11 +223,7 @@ class _MyCartState extends State<MyCart> {
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.all(0),
-                      child: CartList(
-                        streetAddress: streetAddress ??
-                            "", // Fallback to an empty string if streetAddress is null
-                        isLoading: isLoading,
-                      ),
+                      child: CartList(),
                     ),
                   )
 
@@ -338,79 +318,38 @@ class _MyCartState extends State<MyCart> {
                                     onPressed: () async {
                                       String? cartId =
                                           await storage.read(key: 'cartId');
-                                      if (storeOpen) {
-                                        if (cartId != null) {
-                                          int cartIdInt = int.parse(cartId);
-                                          print("CartID INT: $cartIdInt");
 
-                                          checkoutLockItems(cartIdInt)
-                                              .then((success) {
+                                      if (cartId != null) {
+                                        int cartIdInt = int.parse(cartId);
+                                        print("CartID INT: $cartIdInt");
+
+                                        checkoutLockItems(cartIdInt)
+                                            .then((success) {
+                                          if (success != null) {
                                             if (success.lock) {
-                                              // If the checkout lock is successful, navigate to the PaymentsPage
                                               Navigator.pushReplacement(
                                                 context,
                                                 MaterialPageRoute(
                                                   builder: (context) =>
                                                       PaymentsPage(
-                                                    sign: success.sign,
+                                                    sign: success!.sign,
                                                     merchantTransactionID: success
                                                         .merchantTransactionID,
                                                     amount: cart.totalPrice,
                                                   ),
                                                 ),
                                               );
-                                            } else {
-                                              // If the checkout lock is unsuccessful, you might want to show an error message
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                      'Test User. Cannot Checkout Items.'),
-                                                  backgroundColor:
-                                                      Colors.redAccent,
-                                                ),
-                                              );
                                             }
-                                          }).catchError((error) {
-                                            // Handle any errors here
-
-                                            ScaffoldMessenger.of(context)
-                                                .showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                    'Test User. Cannot Checkout Items.'),
-                                                backgroundColor:
-                                                    Colors.redAccent,
-                                              ),
-                                            );
-                                          });
-                                        } else {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                  'Error: Cart Id Not Found'),
-                                              backgroundColor: Colors.redAccent,
-                                            ),
-                                          );
-                                        }
+                                            // If the checkout lock is successful, navigate to the PaymentsPage
+                                          }
+                                        });
                                       } else {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
-                                          SnackBar(
-                                            content: Center(
-                                              // Wrap the Text widget with Center
-                                              child: Text(
-                                                'Store Will Open at $storeOpenTime.',
-                                                style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold),
-                                                textAlign: TextAlign
-                                                    .center, // Center-align the text
-                                              ),
-                                            ),
-                                            backgroundColor:
-                                                Colors.deepPurpleAccent,
+                                          const SnackBar(
+                                            content: Text(
+                                                'Error: Cart Id Not Found'),
+                                            backgroundColor: Colors.redAccent,
                                           ),
                                         );
                                       }
@@ -445,87 +384,46 @@ class _MyCartState extends State<MyCart> {
                                     ),
                                     child: Center(
                                         child: !(cart.isEmpty())
-                                            ? (storeOpen
-                                                ? Row(
-                                                    children: [
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 30,
-                                                                vertical: 15),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color:
-                                                              Colors.pinkAccent,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(20),
-                                                          boxShadow: const [],
-                                                          border: Border.all(
-                                                              color: Colors
-                                                                  .transparent,
-                                                              width: 1.0),
-                                                        ),
-                                                        child: Text(
-                                                          'Complete Payment',
-                                                          style: TextStyle(
-                                                              fontSize: 22,
-                                                              color:
-                                                                  Colors.white),
-                                                        ), // Consistent text size
-                                                      ),
-                                                      const SizedBox(
-                                                        width: 10,
-                                                      ),
-                                                      Center(
-                                                        child: Text(
-                                                          '\u{20B9}${cart.totalPrice}',
-                                                          style: const TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .normal,
-                                                              color:
-                                                                  Colors.black),
-                                                        ),
-                                                      )
-                                                    ],
+                                            ? Row(
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets
+                                                        .symmetric(
+                                                        horizontal: 30,
+                                                        vertical: 15),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.pinkAccent,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              20),
+                                                      boxShadow: const [],
+                                                      border: Border.all(
+                                                          color: Colors
+                                                              .transparent,
+                                                          width: 1.0),
+                                                    ),
+                                                    child: Text(
+                                                      'Complete Payment',
+                                                      style: TextStyle(
+                                                          fontSize: 22,
+                                                          color: Colors.white),
+                                                    ), // Consistent text size
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 10,
+                                                  ),
+                                                  Center(
+                                                    child: Text(
+                                                      '\u{20B9}${cart.totalPrice}',
+                                                      style: const TextStyle(
+                                                          fontSize: 16,
+                                                          fontWeight:
+                                                              FontWeight.normal,
+                                                          color: Colors.black),
+                                                    ),
                                                   )
-                                                : Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .center,
-                                                    children: [
-                                                      Container(
-                                                        padding:
-                                                            const EdgeInsets
-                                                                .symmetric(
-                                                                horizontal: 30,
-                                                                vertical: 15),
-                                                        decoration:
-                                                            BoxDecoration(
-                                                          color:
-                                                              Colors.pinkAccent,
-                                                          borderRadius:
-                                                              BorderRadius
-                                                                  .circular(20),
-                                                          boxShadow: const [],
-                                                          border: Border.all(
-                                                              color: Colors
-                                                                  .transparent,
-                                                              width: 1.0),
-                                                        ),
-                                                        child: Text(
-                                                          'Closed. Will Open @ $storeOpenTime',
-                                                          style: TextStyle(
-                                                              fontSize: 18,
-                                                              color:
-                                                                  Colors.white),
-                                                        ), // Consistent text size
-                                                      ),
-                                                    ],
-                                                  ))
+                                                ],
+                                              )
                                             : Container(
                                                 color: Colors.white,
                                               )),
@@ -569,16 +467,75 @@ class _MyCartState extends State<MyCart> {
 }
 
 class CartList extends StatefulWidget {
-  CartList({super.key, required this.streetAddress, required this.isLoading});
-
-  final String streetAddress;
-  final bool isLoading;
+  CartList({super.key});
 
   @override
   State<CartList> createState() => CartListState();
 }
 
 class CartListState extends State<CartList> {
+  CartSlotDetails? cartSlotDetails;
+
+  @override
+  void initState() {
+    super.initState();
+    getSlots();
+  }
+
+  void getSlots() async {
+    final networkService = NetworkService();
+    final _storage = FlutterSecureStorage();
+    final cartId = await _storage.read(key: 'cartId');
+    final customerId = await _storage.read(key: 'customerId');
+
+    Map<String, dynamic> body = {
+      "cart_id": int.parse(cartId!),
+      "customer_id": int.parse(customerId!)
+    };
+
+    final response =
+        await networkService.postWithAuth('/get-slots', additionalData: body);
+
+    //print("SLOT: ${response.body}");
+
+    if (response.statusCode == 200) {
+      setState(() {
+        cartSlotDetails = CartSlotDetails.fromJson(jsonDecode(response.body));
+      });
+    } else {
+      print("Error fetching slots: ${response.body}");
+    }
+  }
+
+  void assignSlot(int slotId) async {
+    final networkService = NetworkService();
+    final _storage = FlutterSecureStorage();
+    final cartId = await _storage.read(key: 'cartId');
+    final customerId = await _storage.read(key: 'customerId');
+
+    Map<String, dynamic> body = {
+      "cart_id": int.parse(cartId!),
+      "customer_id": int.parse(customerId!),
+      "slot_id": slotId
+    };
+
+    print(
+      "Assign Slot Body $body",
+    );
+
+    final response = await networkService.postWithAuth('/assign-slots',
+        additionalData: body);
+
+    print("Assign Slot ${response.body}");
+    if (response.statusCode == 200) {
+      setState(() {
+        cartSlotDetails = CartSlotDetails.fromJson(jsonDecode(response.body));
+      });
+    } else {
+      print("Error fetching slots: ${response.body}");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -777,7 +734,7 @@ class CartListState extends State<CartList> {
               const SizedBox(height: 15),
               const TotalAmountSaved(),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               /*
               const _DeliveryPartnerTip(),
               */
@@ -800,7 +757,7 @@ class CartListState extends State<CartList> {
                                 .min, // To make the dialog wrap its content
                             children: <Widget>[
                               Text(
-                                'Select Time Slot',
+                                'Select Time',
                                 style: TextStyle(
                                     fontSize: 24.0,
                                     fontWeight: FontWeight.normal),
@@ -808,115 +765,66 @@ class CartListState extends State<CartList> {
                               SizedBox(
                                 height: 10,
                               ),
-                              Container(
-                                alignment: Alignment.centerLeft,
-                                margin: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 5),
-                                padding: EdgeInsets.symmetric(horizontal: 15),
-                                height:
-                                    MediaQuery.of(context).size.height * 0.05,
-                                width: MediaQuery.of(context).size.width * 0.8,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                      10), // Rounded corners
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.2),
-                                      spreadRadius: 1,
-                                      blurRadius: 1,
-                                      offset:
-                                          const Offset(0, 0), // Shadow position
-                                    ),
-                                  ],
-                                  border: Border.all(color: Colors.greenAccent),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("6:00 - 8:00"),
-                                    Text("available")
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              Container(
-                                alignment: Alignment.centerLeft,
-                                margin: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 5),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 15, vertical: 5),
-                                height:
-                                    MediaQuery.of(context).size.height * 0.05,
-                                width: MediaQuery.of(context).size.width * 0.8,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                      10), // Rounded corners
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.2),
-                                      spreadRadius: 1,
-                                      blurRadius: 1,
-                                      offset:
-                                          const Offset(0, 0), // Shadow position
-                                    ),
-                                  ],
-                                  border: Border.all(color: Colors.greenAccent),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("8:00 - 10:00"),
-                                    Text("available")
-                                  ],
-                                ),
-                              ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              Container(
-                                alignment: Alignment.centerLeft,
-                                margin: EdgeInsets.symmetric(
-                                    horizontal: 5, vertical: 5),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: 15, vertical: 5),
-                                height:
-                                    MediaQuery.of(context).size.height * 0.05,
-                                width: MediaQuery.of(context).size.width * 0.8,
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(
-                                      10), // Rounded corners
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(0.2),
-                                      spreadRadius: 1,
-                                      blurRadius: 1,
-                                      offset:
-                                          const Offset(0, 0), // Shadow position
-                                    ),
-                                  ],
-                                  border: Border.all(color: Colors.redAccent),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text("10:00 - 12:00"),
-                                    Text("limited slots")
-                                  ],
-                                ),
-                              ),
 
                               // Add your time slot selection widget here
 
                               // For example, you could use a list of options or a time picker widget
-                              SizedBox(height: 20.0),
+                              if (cartSlotDetails != null)
+                                ...cartSlotDetails!.availableSlots.map((slot) {
+                                  // Format the slot times for display
+                                  String slotTime = DateFormat('h:mm a')
+                                          .format(slot.startTime) +
+                                      ' - ' +
+                                      DateFormat('h:mm a').format(slot.endTime);
+
+                                  return GestureDetector(
+                                    onTap: () {
+                                      assignSlot(slot.id);
+                                      Navigator.pop(context);
+                                    },
+                                    child: Container(
+                                      alignment: Alignment.centerLeft,
+                                      margin: EdgeInsets.symmetric(
+                                          horizontal: 5, vertical: 10),
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 15),
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.065,
+                                      width: MediaQuery.of(context).size.width *
+                                          0.9,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                            10), // Rounded corners
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            spreadRadius: 1,
+                                            blurRadius: 1,
+                                            offset: const Offset(
+                                                0, 0), // Shadow position
+                                          ),
+                                        ],
+                                        border: Border.all(
+                                            color: Colors.greenAccent,
+                                            width: 2),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(slotTime,
+                                              style: TextStyle(fontSize: 14)),
+                                          Text("available",
+                                              style: TextStyle(
+                                                  fontSize:
+                                                      14)) // You might want to change this based on slot availability
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
                             ],
                           ),
                         ),
@@ -924,48 +832,264 @@ class CartListState extends State<CartList> {
                     },
                   );
                 },
-                child: Container(
-                  height: 55,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Colors.lightGreenAccent, Colors.greenAccent],
-                    ),
-                    borderRadius: BorderRadius.circular(10), // Rounded corners
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.2),
-                        spreadRadius: 1,
-                        blurRadius: 1,
-                        offset: const Offset(0, 1), // Shadow position
-                      ),
-                    ],
-                    border:
-                        Border.all(color: Colors.lightGreenAccent, width: 2.0),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 15),
-                  margin: const EdgeInsets.symmetric(horizontal: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(
-                        width: 13,
-                      ),
-                      Text(
-                        'Choose Delivery Slot  ',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w400,
-                        ),
-                      ),
-                      Icon(Icons.electric_moped_outlined)
-                    ],
-                  ),
-                ),
+                child: cartSlotDetails == null
+                    ? Center(
+                        child: LinearProgressIndicator(),
+                      )
+                    : cartSlotDetails!.chosenSlot == null
+                        ? Container(
+                            height: 55,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Colors.lightGreenAccent,
+                                  Colors.greenAccent
+                                ],
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(10), // Rounded corners
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 1,
+                                  offset: const Offset(0, 1), // Shadow position
+                                ),
+                              ],
+                              //border: Border.all(color: Colors.white, width: 2.0),
+                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 15),
+                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 13,
+                                ),
+                                Text(
+                                  'Choose Delivery Slot  ',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                Icon(Icons.electric_moped_outlined)
+                              ],
+                            ),
+                          )
+                        : Container(
+                            height: 55,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                stops: [0.7, 0.72],
+                                colors: [Colors.white, Colors.white],
+                              ),
+                              borderRadius:
+                                  BorderRadius.circular(10), // Rounded corners
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 1,
+                                  offset: const Offset(
+                                      0, 1), // Changes position of shadow
+                                ),
+                              ],
+                              border: Border.all(
+                                  color: Colors.lightGreenAccent, width: 2),
+                            ),
+                            padding: const EdgeInsets.only(left: 25, right: 15),
+                            margin: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                    DateFormat('h:mm a').format(cartSlotDetails!
+                                            .chosenSlot!.startTime) +
+                                        ' - ' +
+                                        DateFormat('h:mm a').format(
+                                            cartSlotDetails!
+                                                .chosenSlot!.endTime),
+                                    style: TextStyle(fontSize: 14)),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.lightGreenAccent,
+                                    borderRadius: BorderRadius.circular(
+                                        15), // Rounded corners
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.2),
+                                        spreadRadius: 1,
+                                        blurRadius: 1,
+                                        offset: const Offset(
+                                            0, 1), // Changes position of shadow
+                                      ),
+                                    ],
+                                    border: Border.all(
+                                        color: Colors.white, width: 2.0),
+                                  ),
+                                  child: Text(
+                                    DateFormat('dd MMMM').format(cartSlotDetails!
+                                        .deliveryDate), // Added a space for visual separation
+                                    style: const TextStyle(
+                                      fontSize:
+                                          14, // This adds the line through effect
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
               ),
+              const SizedBox(height: 5),
 
+              cartSlotDetails != null
+                  ? cartSlotDetails!.chosenSlot != null
+                      ? GestureDetector(
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return Dialog(
+                                  surfaceTintColor: Colors.white,
+                                  backgroundColor: Colors
+                                      .white, // Set the background color of the dialog
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(
+                                          12.0)), // Rounded corners for the dialog
+                                  child: Container(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize
+                                          .min, // To make the dialog wrap its content
+                                      children: <Widget>[
+                                        Text(
+                                          'Select Time',
+                                          style: TextStyle(
+                                              fontSize: 24.0,
+                                              fontWeight: FontWeight.normal),
+                                        ),
+                                        SizedBox(
+                                          height: 10,
+                                        ),
+
+                                        // Add your time slot selection widget here
+
+                                        // For example, you could use a list of options or a time picker widget
+                                        if (cartSlotDetails != null)
+                                          ...cartSlotDetails!.availableSlots
+                                              .map((slot) {
+                                            // Format the slot times for display
+                                            String slotTime =
+                                                DateFormat('h:mm a').format(
+                                                        slot.startTime) +
+                                                    ' - ' +
+                                                    DateFormat('h:mm a')
+                                                        .format(slot.endTime);
+
+                                            return GestureDetector(
+                                              onTap: () {
+                                                assignSlot(slot.id);
+                                                Navigator.pop(context);
+                                              },
+                                              child: Container(
+                                                alignment: Alignment.centerLeft,
+                                                margin: EdgeInsets.symmetric(
+                                                    horizontal: 5,
+                                                    vertical: 10),
+                                                padding: EdgeInsets.symmetric(
+                                                    horizontal: 15),
+                                                height: MediaQuery.of(context)
+                                                        .size
+                                                        .height *
+                                                    0.065,
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.9,
+                                                decoration: BoxDecoration(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          10), // Rounded corners
+                                                  boxShadow: [
+                                                    BoxShadow(
+                                                      color: Colors.grey
+                                                          .withOpacity(0.2),
+                                                      spreadRadius: 1,
+                                                      blurRadius: 1,
+                                                      offset: const Offset(0,
+                                                          0), // Shadow position
+                                                    ),
+                                                  ],
+                                                  border: Border.all(
+                                                      color: Colors.greenAccent,
+                                                      width: 2),
+                                                ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Text(slotTime,
+                                                        style: TextStyle(
+                                                            fontSize: 14)),
+                                                    Text("available",
+                                                        style: TextStyle(
+                                                            fontSize:
+                                                                14)) // You might want to change this based on slot availability
+                                                  ],
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                          child: Container(
+                            height: 35,
+                            alignment: Alignment.centerLeft,
+                            decoration: BoxDecoration(
+                                color: Colors.lightGreenAccent,
+                                borderRadius: BorderRadius.circular(
+                                    10), // Rounded corners
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.grey.withOpacity(0.2),
+                                    spreadRadius: 1,
+                                    blurRadius: 1,
+                                    offset: const Offset(
+                                        0, 1), // Changes position of shadow
+                                  ),
+                                ],
+                                border:
+                                    Border.all(color: Colors.white, width: 2)),
+                            margin: EdgeInsets.only(
+                              left: 10,
+                              right: 10,
+                            ),
+                            padding:
+                                EdgeInsets.only(left: 25, top: 5, bottom: 5),
+                            //margin: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Text(
+                              'Change Time Slot',
+                              style: TextStyle(fontSize: 14),
+                            ),
+                          ),
+                        )
+                      : Container()
+                  : Container(),
               const SizedBox(height: 15),
 
               _TaxAndDelivery(), // Add a separator
@@ -1004,7 +1128,7 @@ class _TaxAndDelivery extends StatelessWidget {
               icon: Icons.done_all_outlined,
               label: 'Item Total',
               amount: '${cart.totalPriceItems}',
-              font: const TextStyle(fontSize: 16),
+              font: const TextStyle(fontSize: 14),
             ),
             cart.smallOrderFee > 0
                 ? Padding(
@@ -1015,16 +1139,16 @@ class _TaxAndDelivery extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.electric_bike_outlined, size: 20),
+                            Icon(Icons.shopping_bag_outlined, size: 20),
                             const SizedBox(width: 10),
                             Text(
                               "Small Order Fee ",
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 12),
                             ),
                             Text(
-                              "25", // Added a space for visual separation
+                              "45", // Added a space for visual separation
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 12,
                                 decoration: TextDecoration
                                     .lineThrough, // This adds the line through effect
                               ),
@@ -1049,10 +1173,10 @@ class _TaxAndDelivery extends StatelessWidget {
                                     Border.all(color: Colors.white, width: 2.0),
                               ),
                               child: Text(
-                                "0 above 499", // Added a space for visual separation
+                                "0 above ${cart.freeDeliveryAmount}", // Added a space for visual separation
                                 style: const TextStyle(
                                   fontSize:
-                                      14, // This adds the line through effect
+                                      12, // This adds the line through effect
                                 ),
                               ),
                             ),
@@ -1063,7 +1187,7 @@ class _TaxAndDelivery extends StatelessWidget {
                               right: 40, top: 0, bottom: 0),
                           child: Text(
                             cart.smallOrderFee.toString(),
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
                       ],
@@ -1081,12 +1205,12 @@ class _TaxAndDelivery extends StatelessWidget {
                       const SizedBox(width: 10),
                       Text(
                         "Delivery Fee ",
-                        style: const TextStyle(fontSize: 14),
+                        style: const TextStyle(fontSize: 12),
                       ),
                       Text(
-                        "35", // Added a space for visual separation
+                        "45", // Added a space for visual separation
                         style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: 12,
                           decoration: TextDecoration
                               .lineThrough, // This adds the line through effect
                         ),
@@ -1112,10 +1236,10 @@ class _TaxAndDelivery extends StatelessWidget {
                                     Border.all(color: Colors.white, width: 2.0),
                               ),
                               child: Text(
-                                "0 above 49", // Added a space for visual separation
+                                "0 above ${cart.freeDeliveryAmount}",
                                 style: const TextStyle(
                                   fontSize:
-                                      14, // This adds the line through effect
+                                      12, // This adds the line through effect
                                 ),
                               ),
                             )
@@ -1126,7 +1250,7 @@ class _TaxAndDelivery extends StatelessWidget {
                     margin: const EdgeInsets.only(right: 40, top: 0, bottom: 0),
                     child: Text(
                       cart.deliveryFee.toString(),
-                      style: const TextStyle(fontSize: 14),
+                      style: const TextStyle(fontSize: 12),
                     ),
                   ),
                 ],
@@ -1141,16 +1265,16 @@ class _TaxAndDelivery extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.shopping_bag_outlined, size: 20),
+                            Icon(Icons.store_mall_directory_outlined, size: 20),
                             const SizedBox(width: 10),
                             Text(
                               "Platform Fee ",
-                              style: const TextStyle(fontSize: 14),
+                              style: const TextStyle(fontSize: 12),
                             ),
                             Text(
                               "10", // Added a space for visual separation
                               style: const TextStyle(
-                                fontSize: 14,
+                                fontSize: 12,
                                 decoration: TextDecoration
                                     .lineThrough, // This adds the line through effect
                               ),
@@ -1162,7 +1286,7 @@ class _TaxAndDelivery extends StatelessWidget {
                               right: 40, top: 0, bottom: 0),
                           child: Text(
                             cart.platformFee.toString(),
-                            style: const TextStyle(fontSize: 14),
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
                       ],
@@ -1208,13 +1332,10 @@ class TotalAmountSaved extends StatelessWidget {
     return Container(
       height: 55,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          stops: [0.3, 0.5],
-          colors: [Colors.white, Colors.lightGreenAccent],
-        ),
-        borderRadius: BorderRadius.circular(10), // Rounded corners
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+            color: Colors.lightGreenAccent, width: 2), // Rounded corners
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.2),
@@ -1231,7 +1352,7 @@ class TotalAmountSaved extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           const SizedBox(
-            width: 13,
+            width: 10,
           ),
           Text('Total Saved',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
@@ -1454,5 +1575,52 @@ class LockStockResponse {
       'sign': sign,
       'merchantTransactionId': merchantTransactionID
     };
+  }
+}
+
+class Slot {
+  final DateTime startTime;
+  final DateTime endTime;
+  final int id;
+
+  Slot({required this.startTime, required this.endTime, required this.id});
+
+  factory Slot.fromJson(Map<String, dynamic> json) {
+    return Slot(
+        startTime: DateTime.parse(json['StartTime']),
+        endTime: DateTime.parse(json['EndTime']),
+        id: json['Id']);
+  }
+}
+
+class CartSlotDetails {
+  final List<Slot> availableSlots;
+  final Slot? chosenSlot;
+  final DateTime deliveryDate;
+
+  CartSlotDetails({
+    required this.availableSlots,
+    this.chosenSlot,
+    required this.deliveryDate,
+  });
+
+  factory CartSlotDetails.fromJson(Map<String, dynamic> json) {
+    List<Slot> slots = (json['AvailableSlots'] as List)
+        .map((i) => Slot.fromJson(i as Map<String, dynamic>))
+        .toList();
+
+    Slot? chosenSlot;
+    // Only try to parse ChosenSlot if it's not null
+    if (json['ChosenSlot'] != null) {
+      chosenSlot = Slot.fromJson(json['ChosenSlot'] as Map<String, dynamic>);
+    }
+
+    DateTime deliveryDate = DateTime.parse(json['DeliveryDate']);
+
+    return CartSlotDetails(
+      availableSlots: slots,
+      chosenSlot: chosenSlot,
+      deliveryDate: deliveryDate,
+    );
   }
 }

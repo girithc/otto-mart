@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:lottie/lottie.dart' as lt;
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
@@ -33,7 +32,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   OrderInfo? _orderInfo;
   String? OTP;
   String orderType = 'delivery';
-  final Set<Marker> _markers = {};
   String? orderCartId;
 
   String orderStatus = 'Preparing Order';
@@ -146,13 +144,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   @override
   void initState() {
     super.initState();
-
-    _markers.add(
-      Marker(
-        markerId: const MarkerId("selected-location"),
-        position: LatLng(19.12465300, 72.83164800),
-      ),
-    );
 
     // Introduce a 2-second delay before fetching order details and order info
     Future.delayed(Duration(seconds: widget.newOrder ? 2 : 0), () {
@@ -400,7 +391,82 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                 ],
                               ),
                               const SizedBox(height: 10),
-
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.25,
+                                    child: Text("Delivery Date"),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.lightGreenAccent,
+                                      borderRadius: BorderRadius.circular(
+                                          15), // Rounded corners
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          spreadRadius: 1,
+                                          blurRadius: 1,
+                                          offset: const Offset(0,
+                                              1), // Changes position of shadow
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                          color: Colors.white, width: 2.0),
+                                    ),
+                                    child: Text(
+                                      // Assuming _orderInfo!.orderDate is a string representing a date,
+                                      // you'll first need to parse it into a DateTime object.
+                                      // Then, add 5 hours and 30 minutes to it.
+                                      // Finally, format it using the DateFormat class.
+                                      DateFormat('h:mm a').format(
+                                              _orderInfo!.slotStartTime) +
+                                          ' - ' +
+                                          DateFormat('h:mm a')
+                                              .format(_orderInfo!.slotEndTime),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 10,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 5),
+                                    decoration: BoxDecoration(
+                                      color: Colors.lightGreenAccent,
+                                      borderRadius: BorderRadius.circular(
+                                          15), // Rounded corners
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          spreadRadius: 1,
+                                          blurRadius: 1,
+                                          offset: const Offset(0,
+                                              1), // Changes position of shadow
+                                        ),
+                                      ],
+                                      border: Border.all(
+                                          color: Colors.white, width: 2.0),
+                                    ),
+                                    child: Text(
+                                      DateFormat('dd MMMM').format(_orderInfo!
+                                          .deliveryDate), // Added a space for visual separation
+                                      style: const TextStyle(
+                                        fontSize:
+                                            14, // This adds the line through effect
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -845,6 +911,9 @@ class OrderInfo {
   final int packagingFee;
   final int peakTimeSurcharge;
   final int subtotal;
+  final DateTime deliveryDate;
+  final DateTime slotStartTime;
+  final DateTime slotEndTime;
 
   OrderInfo({
     required this.orderStatus,
@@ -864,28 +933,33 @@ class OrderInfo {
     required this.packagingFee,
     required this.peakTimeSurcharge,
     required this.subtotal,
+    required this.deliveryDate,
+    required this.slotStartTime,
+    required this.slotEndTime,
   });
 
   factory OrderInfo.fromJson(Map<String, dynamic> json) {
     return OrderInfo(
-      orderStatus: json['order_status'],
-      orderDpStatus: json['order_dp_status'],
-      paymentType: json['payment_type'],
-      paidStatus: json['paid_status'],
-      orderDate: json['order_date'],
-      totalAmountPaid: json['total_amount_paid'],
-      items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
-      address: json['address'],
-      itemCost: json['item_cost'],
-      deliveryFee: json['delivery_fee'],
-      platformFee: json['platform_fee'],
-      smallOrderFee: json['small_order_fee'],
-      rainFee: json['rain_fee'],
-      highTrafficSurcharge: json['high_traffic_surcharge'],
-      packagingFee: json['packaging_fee'],
-      peakTimeSurcharge: json['peak_time_surcharge'],
-      subtotal: json['subtotal'],
-    );
+        orderStatus: json['order_status'],
+        orderDpStatus: json['order_dp_status'],
+        paymentType: json['payment_type'],
+        paidStatus: json['paid_status'],
+        orderDate: json['order_date'],
+        totalAmountPaid: json['total_amount_paid'],
+        items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
+        address: json['address'],
+        itemCost: json['item_cost'],
+        deliveryFee: json['delivery_fee'],
+        platformFee: json['platform_fee'],
+        smallOrderFee: json['small_order_fee'],
+        rainFee: json['rain_fee'],
+        highTrafficSurcharge: json['high_traffic_surcharge'],
+        packagingFee: json['packaging_fee'],
+        peakTimeSurcharge: json['peak_time_surcharge'],
+        subtotal: json['subtotal'],
+        deliveryDate: DateTime.parse(json['delivery_date']),
+        slotStartTime: DateTime.parse(json['slot_start_time']),
+        slotEndTime: DateTime.parse(json['slot_end_time']));
   }
 }
 

@@ -237,6 +237,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     int randomNumber = 3 + Random().nextInt(5);
+    var cart = context.watch<CartModel>(); // Access the CartModel instance
 
     return Scaffold(
       key: _scaffoldKey,
@@ -261,8 +262,6 @@ class _MyHomePageState extends State<MyHomePage>
                         builder: (context, cart, child) {
                           return Column(
                             children: [
-                              // Your other body content
-
                               promotions.isNotEmpty
                                   ? Highlights(
                                       customerId: customerId,
@@ -384,10 +383,10 @@ class _MyHomePageState extends State<MyHomePage>
                         ),
                         child: Center(
                           child: Text(
-                            'Free Delivery Above 499',
+                            'Free Delivery Above ${cart.freeDeliveryAmount}',
                             style: TextStyle(
                               color: Colors.black,
-                              fontSize: 18.0,
+                              fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -405,25 +404,22 @@ class _MyHomePageState extends State<MyHomePage>
                               style: TextStyle(
                                 // Default text style
                                 color: Colors.black,
-                                fontSize: 14.0,
+                                fontSize: 12.0,
                                 fontWeight: FontWeight.bold,
                               ),
                               children: <TextSpan>[
                                 TextSpan(
                                   text:
-                                      'FLAT 5', // The part you want to emphasize
-                                  style: TextStyle(
-                                      fontSize:
-                                          19.0), // Increase the font size for emphasis
-                                ),
-                                TextSpan(
-                                    text: ' to '), // Unchanged part of the text
+                                      'Upto ', // The part you want to emphasize
+                                  style:
+                                      TextStyle(), // Increase the font size for emphasis
+                                ), // Unchanged part of the text
                                 TextSpan(
                                   text:
                                       '50% Discount', // The second part you want to emphasize
                                   style: TextStyle(
                                       fontSize:
-                                          19.0), // Increase the font size for emphasis
+                                          16.0), // Increase the font size for emphasis
                                 ),
                                 TextSpan(
                                     text:

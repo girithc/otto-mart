@@ -82,10 +82,10 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                     child: Center(
                       child: Text(
-                        'Free Delivery Above 499',
+                        'Free Delivery Above ${cart.freeDeliveryAmount}',
                         style: TextStyle(
                           color: Colors.black,
-                          fontSize: 16.0,
+                          fontSize: 14.0,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -103,28 +103,22 @@ class _SearchPageState extends State<SearchPage> {
                           style: TextStyle(
                             // Default text style
                             color: Colors.black,
-                            fontSize: 14.0,
+                            fontSize: 12.0,
                             fontWeight: FontWeight.bold,
                           ),
                           children: <TextSpan>[
                             TextSpan(
-                              text: 'FLAT 5', // The part you want to emphasize
-                              style: TextStyle(
-                                  fontSize:
-                                      19.0), // Increase the font size for emphasis
-                            ),
-                            TextSpan(
-                                text: ' to '), // Unchanged part of the text
+                              text: 'Upto ', // The part you want to emphasize
+                              // Increase the font size for emphasis
+                            ), // Unchanged part of the text
                             TextSpan(
                               text:
                                   '50% Discount', // The second part you want to emphasize
                               style: TextStyle(
                                   fontSize:
-                                      19.0), // Increase the font size for emphasis
+                                      14.0), // Increase the font size for emphasis
                             ),
-                            TextSpan(
-                                text:
-                                    ' on All Items'), // Unchanged part of the text
+                            // Unchanged part of the text
                           ],
                         ),
                       ),

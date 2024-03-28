@@ -50,7 +50,7 @@ class CategoryItemsAppBar extends StatelessWidget
     return Material(
       elevation: 4.0,
       child: Container(
-        padding: const EdgeInsets.only(top: 10),
+        padding: const EdgeInsets.only(top: 6),
         margin: const EdgeInsets.all(0),
         decoration: BoxDecoration(
           border: Border.all(
@@ -214,10 +214,15 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-    return BottomAppBar(
+    return Container(
+      padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).size.height * 0.025,
+          left: MediaQuery.of(context).size.width * 0.02,
+          right: MediaQuery.of(context).size.width * 0.02,
+          top: MediaQuery.of(context).size.height * 0.015),
       color: Colors.white,
-      shadowColor: Colors.white,
-      surfaceTintColor: Colors.white,
+      //shadowColor: Colors.white,
+      //surfaceTintColor: Colors.white,
       child: Container(
         margin: EdgeInsets.zero,
         child: Row(
@@ -234,7 +239,7 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                     ),
                     child: Center(
                       child: Text(
-                        'Free Delivery Above 499',
+                        'Free Delivery Above ${cart.freeDeliveryAmount}',
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 14.0,
@@ -255,28 +260,22 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                           style: TextStyle(
                             // Default text style
                             color: Colors.black,
-                            fontSize: 14.0,
+                            fontSize: 12.0,
                             fontWeight: FontWeight.bold,
                           ),
                           children: <TextSpan>[
                             TextSpan(
-                              text: 'FLAT 5', // The part you want to emphasize
-                              style: TextStyle(
-                                  fontSize:
-                                      19.0), // Increase the font size for emphasis
-                            ),
-                            TextSpan(
-                                text: ' to '), // Unchanged part of the text
+                              text: 'Upto ', // The part you want to emphasize
+                              // Increase the font size for emphasis
+                            ), // Unchanged part of the text
                             TextSpan(
                               text:
                                   '50% Discount', // The second part you want to emphasize
                               style: TextStyle(
                                   fontSize:
-                                      19.0), // Increase the font size for emphasis
+                                      14.0), // Increase the font size for emphasis
                             ),
-                            TextSpan(
-                                text:
-                                    ' on All Items'), // Unchanged part of the text
+                            // Unchanged part of the text
                           ],
                         ),
                       ),

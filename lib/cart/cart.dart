@@ -3,7 +3,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
-import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 
 class CartItem {
@@ -51,6 +50,7 @@ class CartDetails {
   final int subtotal;
   final int discounts;
   final bool outOfStock;
+  final int freeDeliveryAmount;
 
   CartDetails(
       {required this.cartId,
@@ -66,7 +66,8 @@ class CartDetails {
       required this.peakTimeSurcharge,
       required this.subtotal,
       required this.discounts,
-      required this.outOfStock});
+      required this.outOfStock,
+      required this.freeDeliveryAmount});
 
   factory CartDetails.fromJson(Map<String, dynamic> json) {
     return CartDetails(
@@ -83,7 +84,8 @@ class CartDetails {
         peakTimeSurcharge: json['peak_time_surcharge'],
         subtotal: json['subtotal'],
         discounts: json['discounts'],
-        outOfStock: json['out_of_stock']);
+        outOfStock: json['out_of_stock'],
+        freeDeliveryAmount: json['free_delivery_amount']);
   }
 }
 
@@ -136,7 +138,8 @@ class CartModel extends ChangeNotifier {
         peakTimeSurcharge: 0,
         subtotal: 0,
         discounts: 0,
-        outOfStock: false);
+        outOfStock: false,
+        freeDeliveryAmount: 0);
 
     _fetchDefaultAddress();
     _fetchCartId().then((_) {
@@ -318,6 +321,7 @@ class CartModel extends ChangeNotifier {
   int get packagingFee => _cartDetails!.packagingFee;
   int get deliveryFee => _cartDetails!.deliveryFee;
   int get smallOrderFee => _cartDetails!.smallOrderFee;
+  int get freeDeliveryAmount => _cartDetails!.freeDeliveryAmount;
 
   int get deliveryPartnerTip => _deliveryPartnerTip;
 
@@ -360,7 +364,7 @@ class CartModel extends ChangeNotifier {
         .postWithAuth('/cart-item', additionalData: body)
         .then((response) {
       //print("Response Status Code ${response.statusCode}");
-      //print("Response Body ${response.body}");
+      print("Response Body ${response.body}");
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -474,11 +478,6 @@ class AddressModel extends ChangeNotifier {
   AddressModel(this.customerId);
 
   void fetchAddresses() {
-    final url = Uri.parse('$baseUrl/address');
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-
     int? parsedCustomerId;
     try {
       parsedCustomerId = int.parse(customerId);
@@ -521,11 +520,6 @@ class AddressModel extends ChangeNotifier {
   // adds addresss to profile
   // sets address to default
   void addAddress() {
-    final url = Uri.parse('$baseUrl/address');
-    final headers = <String, String>{
-      'Content-Type': 'application/json',
-    };
-
     int? parsedCustomerId;
     try {
       parsedCustomerId = int.parse(customerId);
