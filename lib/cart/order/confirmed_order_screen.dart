@@ -33,6 +33,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
   String? OTP;
   String orderType = 'delivery';
   String? orderCartId;
+  bool fetchOrder = false;
 
   String orderStatus = 'Preparing Order';
   String orderLottie =
@@ -146,7 +147,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     super.initState();
 
     // Introduce a 2-second delay before fetching order details and order info
-    Future.delayed(Duration(seconds: widget.newOrder ? 2 : 0), () {
+    Future.delayed(Duration(seconds: widget.newOrder ? 1 : 0), () {
       //fetchOrderDetails(); // Call fetchOrderDetails after a 2-second delay
       fetchOrderInfo(); // Call fetchOrderInfo after a 2-second delay
     });
@@ -175,7 +176,14 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
     if (!widget.newOrder) {
       cartId = widget.orderId.toString();
+      print("CartId: $cartId");
     }
+    if (fetchOrder) {
+      cartId = orderCartId;
+    } else {
+      orderCartId = cartId;
+    }
+
     //cartId = await _storage.read(key: 'placedCartId');
 
     final Map<String, dynamic> body = {
@@ -195,10 +203,15 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
     setState(() {
       _isLoading = false;
+      fetchOrder = true;
       orderStatus = _orderInfo!.orderStatus;
       orderLottie = orderStatusToInfo[orderStatus]!.lottieUrl;
       orderLottieTransform = orderStatusToInfo[orderStatus]!.transform;
     });
+
+    if (widget.newOrder) {
+      _storage.write(key: 'cartId', value: _orderInfo!.newCartId.toString());
+    }
   }
 
   String formatDate(String orderDateString) {
@@ -402,67 +415,72 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                   SizedBox(
                                     width: 10,
                                   ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.lightGreenAccent,
-                                      borderRadius: BorderRadius.circular(
-                                          15), // Rounded corners
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.2),
-                                          spreadRadius: 1,
-                                          blurRadius: 1,
-                                          offset: const Offset(0,
-                                              1), // Changes position of shadow
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.lightGreenAccent,
+                                          borderRadius: BorderRadius.circular(
+                                              15), // Rounded corners
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.grey.withOpacity(0.2),
+                                              spreadRadius: 1,
+                                              blurRadius: 1,
+                                              offset: const Offset(0,
+                                                  1), // Changes position of shadow
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                              color: Colors.white, width: 2.0),
                                         ),
-                                      ],
-                                      border: Border.all(
-                                          color: Colors.white, width: 2.0),
-                                    ),
-                                    child: Text(
-                                      // Assuming _orderInfo!.orderDate is a string representing a date,
-                                      // you'll first need to parse it into a DateTime object.
-                                      // Then, add 5 hours and 30 minutes to it.
-                                      // Finally, format it using the DateFormat class.
-                                      DateFormat('h:mm a').format(
-                                              _orderInfo!.slotStartTime) +
-                                          ' - ' +
-                                          DateFormat('h:mm a')
-                                              .format(_orderInfo!.slotEndTime),
-                                    ),
-                                  ),
-                                  SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 5),
-                                    decoration: BoxDecoration(
-                                      color: Colors.lightGreenAccent,
-                                      borderRadius: BorderRadius.circular(
-                                          15), // Rounded corners
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.grey.withOpacity(0.2),
-                                          spreadRadius: 1,
-                                          blurRadius: 1,
-                                          offset: const Offset(0,
-                                              1), // Changes position of shadow
+                                        child: Text(
+                                          DateFormat('dd MMMM').format(_orderInfo!
+                                              .deliveryDate), // Added a space for visual separation
+                                          style: const TextStyle(
+                                            fontSize:
+                                                14, // This adds the line through effect
+                                          ),
                                         ),
-                                      ],
-                                      border: Border.all(
-                                          color: Colors.white, width: 2.0),
-                                    ),
-                                    child: Text(
-                                      DateFormat('dd MMMM').format(_orderInfo!
-                                          .deliveryDate), // Added a space for visual separation
-                                      style: const TextStyle(
-                                        fontSize:
-                                            14, // This adds the line through effect
                                       ),
-                                    ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.lightGreenAccent,
+                                          borderRadius: BorderRadius.circular(
+                                              15), // Rounded corners
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.grey.withOpacity(0.2),
+                                              spreadRadius: 1,
+                                              blurRadius: 1,
+                                              offset: const Offset(0,
+                                                  1), // Changes position of shadow
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                              color: Colors.white, width: 2.0),
+                                        ),
+                                        child: Text(
+                                          // Assuming _orderInfo!.orderDate is a string representing a date,
+                                          // you'll first need to parse it into a DateTime object.
+                                          // Then, add 5 hours and 30 minutes to it.
+                                          // Finally, format it using the DateFormat class.
+                                          DateFormat('h:mm a').format(
+                                                  _orderInfo!.slotStartTime) +
+                                              ' - ' +
+                                              DateFormat('h:mm a').format(
+                                                  _orderInfo!.slotEndTime),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -914,52 +932,55 @@ class OrderInfo {
   final DateTime deliveryDate;
   final DateTime slotStartTime;
   final DateTime slotEndTime;
+  final int newCartId;
 
-  OrderInfo({
-    required this.orderStatus,
-    required this.orderDpStatus,
-    required this.paymentType,
-    required this.paidStatus,
-    required this.orderDate,
-    required this.totalAmountPaid,
-    required this.items,
-    required this.address,
-    required this.itemCost,
-    required this.deliveryFee,
-    required this.platformFee,
-    required this.smallOrderFee,
-    required this.rainFee,
-    required this.highTrafficSurcharge,
-    required this.packagingFee,
-    required this.peakTimeSurcharge,
-    required this.subtotal,
-    required this.deliveryDate,
-    required this.slotStartTime,
-    required this.slotEndTime,
-  });
+  OrderInfo(
+      {required this.orderStatus,
+      required this.orderDpStatus,
+      required this.paymentType,
+      required this.paidStatus,
+      required this.orderDate,
+      required this.totalAmountPaid,
+      required this.items,
+      required this.address,
+      required this.itemCost,
+      required this.deliveryFee,
+      required this.platformFee,
+      required this.smallOrderFee,
+      required this.rainFee,
+      required this.highTrafficSurcharge,
+      required this.packagingFee,
+      required this.peakTimeSurcharge,
+      required this.subtotal,
+      required this.deliveryDate,
+      required this.slotStartTime,
+      required this.slotEndTime,
+      required this.newCartId});
 
   factory OrderInfo.fromJson(Map<String, dynamic> json) {
     return OrderInfo(
-        orderStatus: json['order_status'],
-        orderDpStatus: json['order_dp_status'],
-        paymentType: json['payment_type'],
-        paidStatus: json['paid_status'],
-        orderDate: json['order_date'],
-        totalAmountPaid: json['total_amount_paid'],
-        items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
-        address: json['address'],
-        itemCost: json['item_cost'],
-        deliveryFee: json['delivery_fee'],
-        platformFee: json['platform_fee'],
-        smallOrderFee: json['small_order_fee'],
-        rainFee: json['rain_fee'],
-        highTrafficSurcharge: json['high_traffic_surcharge'],
-        packagingFee: json['packaging_fee'],
-        peakTimeSurcharge: json['peak_time_surcharge'],
-        subtotal: json['subtotal'],
-        deliveryDate: DateTime.parse(json['delivery_date']),
-        slotStartTime: DateTime.parse(json['slot_start_time']),
-        slotEndTime: DateTime.parse(json['slot_end_time']));
+      orderStatus: json['order_status'],
+      orderDpStatus: json['order_dp_status'],
+      paymentType: json['payment_type'],
+      paidStatus: json['paid_status'],
+      orderDate: json['order_date'],
+      totalAmountPaid: json['total_amount_paid'],
+      items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
+      address: json['address'],
+      itemCost: json['item_cost'],
+      deliveryFee: json['delivery_fee'],
+      platformFee: json['platform_fee'],
+      smallOrderFee: json['small_order_fee'],
+      rainFee: json['rain_fee'],
+      highTrafficSurcharge: json['high_traffic_surcharge'],
+      packagingFee: json['packaging_fee'],
+      peakTimeSurcharge: json['peak_time_surcharge'],
+      subtotal: json['subtotal'],
+      deliveryDate: DateTime.parse(json['delivery_date']),
+      slotStartTime: DateTime.parse(json['slot_start_time']),
+      slotEndTime: DateTime.parse(json['slot_end_time']),
+      newCartId: json['new_cart_id'],
+    );
   }
 }
 

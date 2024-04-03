@@ -410,7 +410,7 @@ class _MyCartState extends State<MyCart> {
                                                     ), // Consistent text size
                                                   ),
                                                   const SizedBox(
-                                                    width: 10,
+                                                    width: 5,
                                                   ),
                                                   Center(
                                                     child: Text(
@@ -779,8 +779,10 @@ class CartListState extends State<CartList> {
 
                                   return GestureDetector(
                                     onTap: () {
-                                      assignSlot(slot.id);
-                                      Navigator.pop(context);
+                                      if (slot.available) {
+                                        assignSlot(slot.id);
+                                        Navigator.pop(context);
+                                      }
                                     },
                                     child: Container(
                                       alignment: Alignment.centerLeft,
@@ -807,7 +809,9 @@ class CartListState extends State<CartList> {
                                           ),
                                         ],
                                         border: Border.all(
-                                            color: Colors.greenAccent,
+                                            color: slot.available
+                                                ? Colors.greenAccent
+                                                : Colors.redAccent,
                                             width: 2),
                                       ),
                                       child: Row(
@@ -816,7 +820,11 @@ class CartListState extends State<CartList> {
                                         children: [
                                           Text(slotTime,
                                               style: TextStyle(fontSize: 14)),
-                                          Text("available",
+                                          Text(
+                                              slot.available
+                                                  ? "available"
+                                                  : "slots\n booked",
+                                              textAlign: TextAlign.center,
                                               style: TextStyle(
                                                   fontSize:
                                                       14)) // You might want to change this based on slot availability
@@ -996,8 +1004,10 @@ class CartListState extends State<CartList> {
 
                                             return GestureDetector(
                                               onTap: () {
-                                                assignSlot(slot.id);
-                                                Navigator.pop(context);
+                                                if (slot.available) {
+                                                  assignSlot(slot.id);
+                                                  Navigator.pop(context);
+                                                }
                                               },
                                               child: Container(
                                                 alignment: Alignment.centerLeft,
@@ -1030,7 +1040,9 @@ class CartListState extends State<CartList> {
                                                     ),
                                                   ],
                                                   border: Border.all(
-                                                      color: Colors.greenAccent,
+                                                      color: slot.available
+                                                          ? Colors.greenAccent
+                                                          : Colors.redAccent,
                                                       width: 2),
                                                 ),
                                                 child: Row(
@@ -1041,7 +1053,12 @@ class CartListState extends State<CartList> {
                                                     Text(slotTime,
                                                         style: TextStyle(
                                                             fontSize: 14)),
-                                                    Text("available",
+                                                    Text(
+                                                        slot.available
+                                                            ? "available"
+                                                            : "slots\n booked",
+                                                        textAlign:
+                                                            TextAlign.center,
                                                         style: TextStyle(
                                                             fontSize:
                                                                 14)) // You might want to change this based on slot availability
@@ -1581,14 +1598,20 @@ class LockStockResponse {
 class Slot {
   final DateTime startTime;
   final DateTime endTime;
+  final bool available;
   final int id;
 
-  Slot({required this.startTime, required this.endTime, required this.id});
+  Slot(
+      {required this.startTime,
+      required this.endTime,
+      required this.id,
+      required this.available});
 
   factory Slot.fromJson(Map<String, dynamic> json) {
     return Slot(
         startTime: DateTime.parse(json['StartTime']),
         endTime: DateTime.parse(json['EndTime']),
+        available: json['Available'],
         id: json['Id']);
   }
 }

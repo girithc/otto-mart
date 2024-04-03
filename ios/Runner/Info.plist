@@ -19,7 +19,7 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>2.0.23</string>
+	<string>2.0.32</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleURLTypes</key>
@@ -35,8 +35,9 @@
 			</array>
 		</dict>
 	</array>
+	
 	<key>CFBundleVersion</key>
-	<string>2.0.23</string>
+	<string>2.0.32</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>ppemerchantsdkv1</string>

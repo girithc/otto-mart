@@ -6,6 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:pronto/cart/address/worker/debouncer.dart';
 import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
+import 'package:location/location.dart';
 
 import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/utils/constants.dart';
@@ -38,14 +39,61 @@ class _AddressScreenState extends State<AddressScreen> {
       tilt: 59.440717697143555,
       zoom: 19.151926040649414);
 
+  bool _isLocationEnabled = false;
+  final Location location = Location();
+
+  @override
+  void initState() {
+    super.initState();
+    _checkLocationService();
+  }
+
+  void _checkLocationService() async {
+    Location location = new Location();
+    bool _serviceEnabled;
+    // Check if the location service is enabled
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      // If not, request to enable it
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        // If the user refuses to enable the location, update the UI accordingly
+        setState(() {
+          _isLocationEnabled = false;
+        });
+        return;
+      }
+    }
+    // If location service is enabled, update the state
+    setState(() {
+      _isLocationEnabled = true;
+    });
+  }
+
+  Future<void> _requestLocationService() async {
+    bool _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+    // Update the state or navigate to another screen as needed
+  }
+
   final _debouncer = Debouncer(milliseconds: 100); // Adjust the delay as needed
 
   void placeAutocomplete(String query) async {
-    Uri uri =
-        Uri.https("maps.googleapis.com", "maps/api/place/autocomplete/json", {
-      "input": query,
-      "key": modApikey,
-    });
+    Uri uri = Uri.https(
+      "maps.googleapis.com",
+      "maps/api/place/autocomplete/json",
+      {
+        "input": query,
+        "key": modApikey,
+        // Add the components parameter with country code for India
+        "components": "country:IN",
+      },
+    );
 
     //print('Api Key: $modApikey');
 
@@ -99,227 +147,298 @@ class _AddressScreenState extends State<AddressScreen> {
   Widget build(BuildContext context) {
     //var cart = context.watch<CartModel>();
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new,
-            color: Colors.black,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(
+              Icons.arrow_back_ios_new,
+              color: Colors.black,
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+            },
           ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: const Text(
-          "Enter Address",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.white,
-        centerTitle: true,
-      ),
-      body: SingleChildScrollView(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
+          title: const Text(
+            "Enter Address",
+            style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
           ),
-          child: GestureDetector(
-            onTap: () => FocusScope.of(context).unfocus(),
-            child: Container(
-              color: Colors.white,
-              width: MediaQuery.of(context).size.width,
-              height: MediaQuery.of(context).size.height,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: GoogleMap(
-                      mapType: MapType.normal,
-                      initialCameraPosition: _kGooglePlex,
-                      onMapCreated: (GoogleMapController controller) {
-                        _controller.complete(controller);
-                      },
-                    ),
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          centerTitle: true,
+        ),
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Container(
+            color: Colors.white,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: GoogleMap(
+                    mapType: MapType.normal,
+                    initialCameraPosition: _kGooglePlex,
+                    onMapCreated: (GoogleMapController controller) {
+                      _controller.complete(controller);
+                    },
                   ),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 18),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 10),
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(15),
-                            topRight: Radius.circular(15),
-                          ),
-                        ),
-                        child: TextField(
-                          onChanged: (value) => {
-                            _debouncer.run(() {
-                              placeAutocomplete(value);
-                            })
-                          }, //placeAutocomplete(value)},
-                          decoration: const InputDecoration(
-                            hintText: 'Enter Your Address',
-                            hintStyle: TextStyle(
-                              color: Colors.black,
-                            ),
-                            border: OutlineInputBorder(),
-                          ),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 18),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
                         ),
                       ),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 10),
-                        margin: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: Colors.white,
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Position position = await _determinePosition();
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ConfirmAddressInit(
-                                  placeId: '',
-                                  paramLatLng: LatLng(
-                                      position.latitude, position.longitude),
-                                ),
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Position position = await _determinePosition();
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ConfirmAddressInit(
+                                placeId: '',
+                                paramLatLng: LatLng(
+                                    position.latitude, position.longitude),
                               ),
-                            );
-                            // Close the address bottom sheet
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurpleAccent,
-                            foregroundColor: Colors.white,
-                            shadowColor: Colors.transparent,
-                            elevation: 0,
-                            fixedSize: const Size(double.infinity, 45),
-                            shape: const RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(8)),
                             ),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.near_me_outlined),
-                              SizedBox(
-                                width: 10,
-                              ),
-                              Text(
-                                'Current Location',
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                          );
+                          // Close the address bottom sheet
+                        },
+                        style: ElevatedButton.styleFrom(
+                          padding: EdgeInsets.symmetric(
+                              vertical: 20, horizontal: 20),
+                          backgroundColor: Color.fromARGB(255, 255, 235, 235),
+                          elevation: 0,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.all(Radius.circular(8)),
                           ),
                         ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          margin: const EdgeInsets.only(
-                              left: 10, right: 10, bottom: 30),
-                          decoration: const BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(15),
-                              bottomRight: Radius.circular(15),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: Icon(
+                                Icons.my_location_outlined,
+                                color: Colors.redAccent,
+                                size: 24,
+                              ),
                             ),
-                          ),
-                          // Adjust as needed
-                          child: ListView.builder(
-                            itemCount: placePredictions.length,
-                            itemBuilder: (context, index) {
-                              return Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  border: Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade300,
+                            _isLocationEnabled
+                                ? SizedBox(
+                                    width: 10,
+                                  )
+                                : SizedBox.shrink(),
+                            _isLocationEnabled
+                                ? Expanded(
+                                    flex: 5,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Current Location',
+                                          style: TextStyle(
+                                              color: Colors.redAccent,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 18),
+                                        ),
+                                      ],
+                                    ),
+                                  )
+                                : Expanded(
+                                    flex: 5,
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Current Location',
+                                          style: TextStyle(
+                                              color: Colors.redAccent,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 18),
+                                        ),
+                                        SizedBox(
+                                          height: 5,
+                                        ),
+                                        Text(
+                                          'Enable your current \nlocation for better services',
+                                          style: TextStyle(
+                                              fontSize: 16,
+                                              color: Colors.black54),
+                                        )
+                                      ],
                                     ),
                                   ),
-                                  borderRadius:
-                                      index == (placePredictions.length - 1)
-                                          ? const BorderRadius.only(
-                                              bottomLeft: Radius.circular(15),
-                                              bottomRight: Radius.circular(15))
-                                          : const BorderRadius.all(
-                                              Radius.circular(0)),
-                                ),
-                                child: ListTile(
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ConfirmAddressInit(
-                                          placeId:
-                                              placePredictions[index].placeId!,
+                            _isLocationEnabled
+                                ? Container()
+                                : Expanded(
+                                    flex: 2,
+                                    child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(
+                                              horizontal: 2, vertical: 5),
+                                          backgroundColor: Colors.white,
+                                          surfaceTintColor: Colors.white,
+                                          // Define the shape and border of the button
+                                          shape: RoundedRectangleBorder(
+                                            // Less roundish borders
+                                            borderRadius: BorderRadius.circular(
+                                                10), // You can adjust the radius to make it less/more round
+                                            // Red accent border color
+                                            side: BorderSide(
+                                                color: Colors.redAccent,
+                                                width:
+                                                    0.5), // You can adjust the width as needed
+                                          ),
                                         ),
-                                      ),
-                                    );
-                                  },
-                                  horizontalTitleGap: 10,
-                                  leading: Icon(
-                                    Icons
-                                        .location_city_outlined, // Replace with the desired icon
-                                    color: Colors.deepPurpleAccent
-                                        .shade400, // Replace with the desired color
+                                        onPressed: () {
+                                          _requestLocationService();
+                                        },
+                                        child: Text(
+                                          'Enable',
+                                          style: TextStyle(
+                                              color: Colors.redAccent,
+                                              fontWeight: FontWeight.bold),
+                                        )),
+                                  )
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 10),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                      ),
+                      child: TextField(
+                        onChanged: (value) => {
+                          _debouncer.run(() {
+                            placeAutocomplete(value);
+                          })
+                        },
+                        //placeAutocomplete(value)},
+                        decoration: const InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 25, vertical: 20),
+                          hintText: 'Enter Your Address',
+                          hintStyle: TextStyle(
+                            color: Colors.black,
+                          ),
+                          focusColor: Colors.white,
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: Color.fromARGB(255, 255, 135,
+                                    175)), // Make the default border transparent
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                                color: Color.fromARGB(255, 255, 135,
+                                    175)), // Make the border transparent when the TextField is enabled but not focused
+                            borderRadius: BorderRadius.all(Radius.circular(10)),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.only(
+                            left: 10, right: 10, bottom: 30),
+                        decoration: const BoxDecoration(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
+                          ),
+                        ),
+                        // Adjust as needed
+                        child: ListView.builder(
+                          itemCount: placePredictions.length,
+                          itemBuilder: (context, index) {
+                            return Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                border: Border(
+                                  bottom: BorderSide(
+                                    color: Colors.grey.shade300,
                                   ),
-                                  title: Text(
-                                    placePredictions[index]
-                                        .structuredFormatting!
-                                        .mainText!,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16),
-                                  ),
-                                  subtitle: Text(
-                                      placePredictions[index].description!,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 14)),
                                 ),
-                              );
-
-                              /*
-                              LocationListTile(
-                                location: placePredictions[index].description!,
-                                press: () {
+                                borderRadius:
+                                    index == (placePredictions.length - 1)
+                                        ? const BorderRadius.only(
+                                            bottomLeft: Radius.circular(15),
+                                            bottomRight: Radius.circular(15))
+                                        : const BorderRadius.all(
+                                            Radius.circular(0)),
+                              ),
+                              child: ListTile(
+                                onTap: () {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => ConfirmAddressInit(
-                                          placeId:
-                                              placePredictions[index].placeId!),
+                                        placeId:
+                                            placePredictions[index].placeId!,
+                                      ),
                                     ),
                                   );
                                 },
-                              );
-                              */
-                            },
-                          ),
+                                horizontalTitleGap: 10,
+                                leading: Icon(
+                                  Icons
+                                      .location_city_outlined, // Replace with the desired icon
+                                  color: Colors
+                                      .pinkAccent, // Replace with the desired color
+                                ),
+                                title: Text(
+                                  placePredictions[index]
+                                      .structuredFormatting!
+                                      .mainText!,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16),
+                                ),
+                                subtitle: Text(
+                                    placePredictions[index].description!,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 14)),
+                              ),
+                            );
+                          },
                         ),
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          )),
-    );
+          ),
+        ));
   }
 }

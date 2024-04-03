@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+      <key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPICategorySystemBootTime</key>
+			<string>Optimizes app performance by aligning updates with low usage periods.</string>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPICategoryFileTimestamp</key>
+			<string>Ensures data integrity by syncing the most recent user data across devices.</string>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPICategoryUserDefaults</key>
+			<string>Personalizes user experience by saving preferences and settings.</string>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPICategoryDiskSpace</key>
+			<string>Manages storage efficiently to minimize app footprint and ensure performance.</string>
+		</dict>
+	</array>
+
+  </dict>
+</plist>

@@ -10,6 +10,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
+import 'package:pinput/pinput.dart';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
@@ -64,8 +65,10 @@ class _MyHomePageState extends State<MyHomePage>
   int currentIndex = 0;
   final Logger _logger = Logger();
   final storage = const FlutterSecureStorage();
+  List<Order> orders = [];
+  int selectedOrder = 0;
 
-  bool isLoading = true;
+  //bool isLoading = true;
   @override
   void initState() {
     super.initState();
@@ -207,30 +210,23 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> checkForPlacedOrder() async {
-    print("\n\n\n\n Enter Check For Placed Order \n\n\n\n");
+    print("Enter Check For Placed Order");
     final phone = await storage.read(key: 'phone');
-
-    Map<String, dynamic> body = {
-      "phone": phone,
-    };
-    ("Placed Order Response ${body}");
-
     final response = await network.postWithAuth('/check-for-placed-order',
-        additionalData: body);
+        additionalData: {"phone": phone});
 
-    ("Placed Order Response ${response.body}");
     if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      List<dynamic> jsonResponse = jsonDecode(response.body);
+
       setState(() {
-        orderId = data['cart_id'];
-        orderStatus = data['status'];
-        isLoading = false;
+        orders =
+            jsonResponse.map((orderJson) => Order.fromJson(orderJson)).toList();
+        if (orders.length > 0) {
+          selectedOrder = 1;
+        }
       });
     } else {
-      setState(() {
-        isLoading = false;
-      });
-      // Handle the error; maybe set isLoading to false or show a message
+      // Handle error
     }
   }
 
@@ -247,80 +243,77 @@ class _MyHomePageState extends State<MyHomePage>
         storeOpen: storeOpen,
         storeOpenTime: storeOpenTime,
       ),
-      body: isLoading
-          ? const CircularProgressIndicator()
-          : RefreshIndicator(
-              key: _refreshIndicatorKey,
-              onRefresh: _onRefresh,
-              child: Container(
-                color: Colors.white,
-                child: CustomScrollView(
-                  // <-- Using CustomScrollView
-                  slivers: <Widget>[
-                    SliverToBoxAdapter(
-                      child: Consumer<CartModel>(
-                        builder: (context, cart, child) {
-                          return Column(
-                            children: [
-                              promotions.isNotEmpty
-                                  ? Highlights(
-                                      customerId: customerId,
-                                      phone: phone,
-                                      promos: promotions)
-                                  : Container(
-                                      height: 40), // Pass retrieved values
-                              Container(
-                                color: Colors.white,
-                                alignment: Alignment
-                                    .centerLeft, // Align text to the left
-                                padding: const EdgeInsets.only(
-                                    left: 16, top: 8.0, bottom: 4.0),
-                                child: const Text(
-                                  'Explore By Categories',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black),
-                                ),
-                              ),
-                              SizedBox(
-                                height: 10,
-                              )
-                            ],
-                          );
-                        },
-                      ),
-                    ),
-                    SliverGrid(
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 4,
-                        crossAxisSpacing: 2,
-                        mainAxisSpacing: 8,
-                        childAspectRatio: 0.625,
-                      ),
-                      delegate: SliverChildBuilderDelegate(
-                        (BuildContext context, int index) {
-                          return _buildCategoryContainer(
-                              context,
-                              index,
-                              categories[index].id,
-                              categories[index].name,
-                              categories[index].image);
-                        },
-                        childCount: categories.length,
-                      ),
-                    ),
-                  ],
+      body: RefreshIndicator(
+        key: _refreshIndicatorKey,
+        onRefresh: _onRefresh,
+        child: Container(
+          color: Colors.white,
+          child: CustomScrollView(
+            // <-- Using CustomScrollView
+            slivers: <Widget>[
+              SliverToBoxAdapter(
+                child: Consumer<CartModel>(
+                  builder: (context, cart, child) {
+                    return Column(
+                      children: [
+                        promotions.isNotEmpty
+                            ? Highlights(
+                                customerId: customerId,
+                                phone: phone,
+                                promos: promotions)
+                            : Container(height: 40), // Pass retrieved values
+                        Container(
+                          color: Colors.white,
+                          alignment:
+                              Alignment.centerLeft, // Align text to the left
+                          padding: const EdgeInsets.only(
+                              left: 16, top: 8.0, bottom: 4.0),
+                          child: const Text(
+                            'Explore By Categories',
+                            style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black),
+                          ),
+                        ),
+                        SizedBox(
+                          height: 10,
+                        )
+                      ],
+                    );
+                  },
                 ),
               ),
-            ),
+              SliverGrid(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 4,
+                  crossAxisSpacing: 2,
+                  mainAxisSpacing: 8,
+                  childAspectRatio: 0.625,
+                ),
+                delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int index) {
+                    return _buildCategoryContainer(
+                        context,
+                        index,
+                        categories[index].id,
+                        categories[index].name,
+                        categories[index].image);
+                  },
+                  childCount: categories.length,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
       bottomNavigationBar: Container(
-        height: //orderStatus != null
-            MediaQuery.of(context).size.height * 0.15,
+        height: orders.isNotEmpty
+            ? MediaQuery.of(context).size.height * 0.175
+            : MediaQuery.of(context).size.height * 0.15,
         //: MediaQuery.of(context).size.height * 0.095,
         padding: EdgeInsets.only(
-            bottom: orderStatus != null
+            bottom: orders.isNotEmpty
                 ? MediaQuery.of(context).size.height * 0.012
                 : MediaQuery.of(context).size.height * 0.014,
             top: 5,
@@ -343,35 +336,101 @@ class _MyHomePageState extends State<MyHomePage>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            orderStatus != null
+            orders.isNotEmpty
                 ? // Use Dart's collection-if to include a widget conditionally
-                GestureDetector(
-                    onTap: () {
-                      // Navigate to Cart
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => OrderConfirmed(
-                                newOrder: false, orderId: orderId)),
-                      );
-                    },
-                    child: Container(
-                      padding: EdgeInsets.symmetric(vertical: 10),
-                      width: MediaQuery.of(context).size.width,
-                      decoration: BoxDecoration(
-                        color: Colors.deepPurpleAccent,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.white),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate to Cart
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => OrderConfirmed(
+                                newOrder: false,
+                                orderId: orders[selectedOrder - 1].cartId,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          padding: EdgeInsets.symmetric(vertical: 10),
+                          width:
+                              MediaQuery.of(context).size.width * (0.95 - 0.25),
+                          decoration: BoxDecoration(
+                            color: Colors.deepPurpleAccent,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.white),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Circular avatar-like container
+                              Container(
+                                alignment: Alignment.center,
+                                padding: EdgeInsets.all(5),
+                                height: 30, // Diameter of the circle
+                                decoration: BoxDecoration(
+                                  color: Colors.white, // White background color
+                                  shape: BoxShape
+                                      .circle, // Makes the container circular
+                                ),
+                                child: Center(
+                                  // Optional: Add an icon or text inside the circle here
+                                  child: Text(
+                                    '$selectedOrder', // Example text, replace with what you need
+                                    style: TextStyle(
+                                      color:
+                                          Colors.deepPurpleAccent, // Text color
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 18, // Adjust the size as needed
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                  width:
+                                      10), // Spacing between the circle and text
+                              // Text
+                              Text(
+                                'Order ${orders[selectedOrder - 1].status}',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 19,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                      child: Center(
-                          child: Text(
-                        'Order $orderStatus',
-                        style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 19),
-                      )),
-                    ),
+                      Container(
+                        height: 50, // Set a fixed height for the ListView
+                        width: MediaQuery.of(context).size.width * (0.25),
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) {
+                            return InkWell(
+                              onTap: () {
+                                setState(() {
+                                  selectedOrder = index + 1;
+                                });
+                              },
+                              child: Chip(
+                                label: Text(
+                                  '${index + 1}',
+                                  style: TextStyle(color: Colors.black),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   )
                 : CarouselSlider(
                     items: [
@@ -1075,6 +1134,20 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
           toolbarHeight: MediaQuery.of(context).size.height * 0.16,
         ),
       ),
+    );
+  }
+}
+
+class Order {
+  final int cartId;
+  final String status;
+
+  Order({required this.cartId, required this.status});
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    return Order(
+      cartId: json['cart_id'],
+      status: json['status'],
     );
   }
 }

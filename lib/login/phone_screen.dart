@@ -187,7 +187,9 @@ class _MyPhoneState extends State<MyPhone> {
                                   1.0, // Adjust the scale to zoom in. 1.0 is the original size, so 1.1 zooms in slightly.
                               child: Image.asset(
                                 'assets/icon/icon.jpeg',
-                                height: 140,
+                                height:
+                                    140, //MediaQuery.of(context).size.height *
+                                //0.25, //140
                                 fit: BoxFit
                                     .cover, // Ensure the image covers the scaled area
                               ),
@@ -205,7 +207,7 @@ class _MyPhoneState extends State<MyPhone> {
                                       MediaQuery.of(context).size.width * 0.04),
                               width: MediaQuery.of(context).size.width * 0.75,
                               child: Text(
-                                "Free \nGrocery \nDelivery",
+                                "Morning\nGrocery \nDelivery ",
                                 style: GoogleFonts.ubuntu(
                                   // Tinos is a serif font similar to Times New Roman
                                   textStyle: const TextStyle(

@@ -34,6 +34,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   String _postalCode = "";
   String _adminArea = "";
   String _subAdminArea = "";
+  bool _isMapAndAddressLoaded = false; // New variable to track loading state
 
   @override
   void initState() {
@@ -51,6 +52,8 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       _setInitialMapLocationFromPlaceId();
     } else {
       _cameraPosition = CameraPosition(target: widget.paramLatLng!, zoom: 17.5);
+      _isMapAndAddressLoaded =
+          true; // Map is considered loaded if there's no placeId
     }
   }
 
@@ -75,7 +78,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     return Scaffold(
       appBar: PreferredSize(
         preferredSize:
-            Size.fromHeight(MediaQuery.of(context).size.height * 0.12),
+            Size.fromHeight(MediaQuery.of(context).size.height * 0.135),
         child: GestureDetector(
           onTap: () => Navigator.pop(context),
           child: Container(
@@ -128,8 +131,8 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       body: _buildBody(),
       bottomNavigationBar: Container(
         color: Colors.white,
-        height: MediaQuery.of(context).size.height * 0.20,
-        margin: const EdgeInsets.only(bottom: 20),
+        height: MediaQuery.of(context).size.height * 0.208,
+        margin: const EdgeInsets.only(bottom: 15),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -139,12 +142,14 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
               minVerticalPadding: 0,
               title: Text(
                 _draggedAddress_one,
+                maxLines: 2,
                 style: const TextStyle(
                   height: 1.3,
                 ),
               ),
               subtitle: Text(
                 _draggedAddress_two,
+                maxLines: 2,
                 style: const TextStyle(
                   height: 1.3,
                 ),
@@ -165,25 +170,28 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ReconfirmAddressInit(
-                      coordinates: _draggedLatlng,
-                      lineOneAddress: _draggedAddress_one,
-                      lineTwoAddress: _draggedAddress_two,
-                      locality: _locality,
-                      sublocality: _sublocality,
-                      thoroughfare: _thoroughfare,
-                      subthoroughfare: _subthoroughfare,
-                      administrativeArea: _adminArea,
-                      subAdministrativeArea: _subAdminArea,
-                      postalCode: _postalCode,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _isMapAndAddressLoaded
+                  ? () {
+                      // Check if map and address are loaded
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReconfirmAddressInit(
+                            coordinates: _draggedLatlng,
+                            lineOneAddress: _draggedAddress_one,
+                            lineTwoAddress: _draggedAddress_two,
+                            locality: _locality,
+                            sublocality: _sublocality,
+                            thoroughfare: _thoroughfare,
+                            subthoroughfare: _subthoroughfare,
+                            administrativeArea: _adminArea,
+                            subAdministrativeArea: _subAdminArea,
+                            postalCode: _postalCode,
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.pinkAccent, //const Color(0xFF6200EE),
                 padding: EdgeInsets.only(
@@ -215,30 +223,9 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       _getCustomPin(),
       Positioned(
           bottom: MediaQuery.of(context).size.height * 0.37,
-          left: MediaQuery.of(context).size.width * 0.25,
+          left: MediaQuery.of(context).size.width * 0.205,
           child: _getCustomPinGuide())
     ]);
-  }
-
-  Widget _showDraggedAddress() {
-    return SafeArea(
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        height: 60,
-        margin: const EdgeInsets.symmetric(horizontal: 5.0),
-        decoration: const BoxDecoration(
-          color: Colors.deepPurpleAccent,
-          borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(5), bottomRight: Radius.circular(5)),
-        ),
-        child: Center(
-            child: Text(
-          _draggedAddress_one + _draggedAddress_two,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-        )),
-      ),
-    );
   }
 
   Widget _getMap() {
@@ -290,7 +277,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 27, 0, 101),
+        color: Colors.pinkAccent,
         borderRadius: BorderRadius.circular(15),
         boxShadow: const [
           BoxShadow(
@@ -308,7 +295,8 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
           textAlign:
               TextAlign.center, // Aligns the text to the center horizontally
 
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
       ),
     );
@@ -334,6 +322,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       _postalCode = address.postalCode!;
       _adminArea = address.administrativeArea!;
       _subAdminArea = address.subAdministrativeArea!;
+      _isMapAndAddressLoaded = true;
     });
     return null;
   }
