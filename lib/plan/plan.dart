@@ -47,13 +47,7 @@ class _MyPlanState extends State<MyPlan> {
     fetchCategories();
     _kGooglePlex = CameraPosition(
       target: LatLng(19.12465300, 72.83164800),
-      zoom: 14.5,
-    );
-    _markers.add(
-      Marker(
-        markerId: const MarkerId("location"),
-        position: LatLng(19.12465300, 72.83164800),
-      ),
+      zoom: 11.5,
     );
   }
 
@@ -254,7 +248,8 @@ class _MyPlanState extends State<MyPlan> {
                   child: Column(
                     children: [
                       Text(
-                        'Delivery Available in \nDN Nagar, Andheri West, Mumbai',
+                        'Delivery Available in\n Mumbai Suburban ',
+
                         style: const TextStyle(
                           color: Colors.black,
                           fontSize: 24,
@@ -266,7 +261,7 @@ class _MyPlanState extends State<MyPlan> {
                       ),
                       SizedBox(height: 10),
                       Container(
-                        height: MediaQuery.of(context).size.height * 0.25,
+                        height: 300,
                         margin: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.height * 0.01,
                           vertical: MediaQuery.of(context).size.height * 0.01,

@@ -913,11 +913,8 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Colors.deepPurpleAccent
-                        .withOpacity(0.8), // Top color of the gradient
-                    Colors.deepPurpleAccent
-                        .withOpacity(0.4), // Top color of the gradient
-                    Colors.grey.shade100.withOpacity(0.1),
+                    // Top color of the gradient
+                    Colors.white10,
                     Colors.white, // Bottom color of the gradient
                   ],
                 )
@@ -980,7 +977,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                           children: [
                             SizedBox(
                                 height:
-                                    MediaQuery.of(context).size.height * 0.01),
+                                    MediaQuery.of(context).size.height * 0.001),
                             !storeOpen
                                 ? Text(
                                     "Closed. Will Open @ $storeOpenTime",
@@ -1002,9 +999,9 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                       children: <TextSpan>[
                                         TextSpan(
                                           text:
-                                              'Next Day', // Part of the text you want to style differently
+                                              'Morning', // Part of the text you want to style differently
                                           style: TextStyle(
-                                              color: Colors.black87,
+                                              color: Colors.deepPurpleAccent,
                                               fontSize: 24
                                               // Different color for this part
                                               // You can add more styles here if needed
@@ -1041,15 +1038,18 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                       textAlign: TextAlign.center,
                                       style: const TextStyle(
                                         fontSize:
-                                            15, // Adjust the font size as needed
+                                            18, // Adjust the font size as needed
                                         color: Colors.black,
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ),
+                                  SizedBox(
+                                    width: 5,
+                                  ),
                                   const Icon(
-                                    Icons.keyboard_arrow_down,
-                                    size: 12, // Downward caret icon
+                                    Icons.directions_bike_outlined,
+                                    size: 20, // Downward caret icon
                                     color: Colors.black, // Icon color
                                   ),
                                 ],

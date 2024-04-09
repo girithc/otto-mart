@@ -4,12 +4,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
-import 'package:pronto/deprecated/cart.dart';
-import 'package:pronto/cart/order/place_order_screen.dart';
 import 'package:pronto/payments/verify.dart';
-import 'package:pronto/setting/setting_screen.dart';
 import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
@@ -210,7 +206,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
 
   @override
   Widget build(BuildContext context) {
-    var cart = context.watch<CartModel>();
+    //var cart = context.watch<CartModel>();
 
     return Scaffold(
       appBar: AppBar(
@@ -219,9 +215,10 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
             Icons.arrow_back,
             color: Colors.white,
           ),
-          onPressed: () {
+          onPressed: () async {
             // Call your function here
-            String? cartId = cart.cartId;
+            String? cartId = await storage.read(key: 'cartId');
+
             int cartIdInt = int.parse(cartId!);
             checkoutCancelItems(cartIdInt).then((success) {
               if (success) {

@@ -322,27 +322,25 @@ class _MyCartState extends State<MyCart> {
                                       if (cartId != null) {
                                         int cartIdInt = int.parse(cartId);
                                         print("CartID INT: $cartIdInt");
-
-                                        checkoutLockItems(cartIdInt)
-                                            .then((success) {
-                                          if (success != null) {
-                                            if (success.lock) {
-                                              Navigator.pushReplacement(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      PaymentsPage(
-                                                    sign: success!.sign,
-                                                    merchantTransactionID: success
-                                                        .merchantTransactionID,
-                                                    amount: cart.totalPrice,
-                                                  ),
+                                        final success =
+                                            await checkoutLockItems(cartIdInt);
+                                        if (success != null) {
+                                          if (success.lock) {
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    PaymentsPage(
+                                                  sign: success!.sign,
+                                                  merchantTransactionID: success
+                                                      .merchantTransactionID,
+                                                  amount: cart.totalPrice,
                                                 ),
-                                              );
-                                            }
-                                            // If the checkout lock is successful, navigate to the PaymentsPage
+                                              ),
+                                            );
                                           }
-                                        });
+                                          // If the checkout lock is successful, navigate to the PaymentsPage
+                                        }
                                       } else {
                                         ScaffoldMessenger.of(context)
                                             .showSnackBar(
@@ -956,7 +954,58 @@ class CartListState extends State<CartList> {
                             ),
                           ),
               ),
-              const SizedBox(height: 5),
+              const SizedBox(height: 15),
+              Container(
+                height: 90,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.grey.withOpacity(0.2),
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 1), // Shadow position
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 13,
+                        ),
+                        Text(
+                          'Promo Code  ',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Icon(Icons.payments_outlined)
+                      ],
+                    ), // Adding the TextField
+                    TextField(
+                      decoration: InputDecoration(
+                        fillColor: Colors
+                            .greenAccent, // Background color of the text field
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(30), // Rounded borders
+                          borderSide: BorderSide.none, // No border side
+                        ),
+                        // If you need to remove the label, just don't set the labelText or set it to null
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
               cartSlotDetails != null
                   ? cartSlotDetails!.chosenSlot != null

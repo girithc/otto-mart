@@ -7,6 +7,7 @@ import 'package:pronto/cart/address/worker/debouncer.dart';
 import 'package:pronto/cart/address/worker/location_list_tile.dart';
 import 'package:pronto/cart/address/worker/network_utility.dart';
 import 'package:location/location.dart';
+import 'package:app_settings/app_settings.dart'; // Make sure to add app_settings to your pubspec.yaml
 
 import 'package:pronto/home/address/confirm_address_screen.dart';
 import 'package:pronto/utils/constants.dart';
@@ -40,12 +41,36 @@ class _AddressScreenState extends State<AddressScreen> {
       zoom: 19.151926040649414);
 
   bool _isLocationEnabled = false;
+  bool _locationPermissionDeniedForever = false; // Define the variable here
+
   final Location location = Location();
 
   @override
   void initState() {
     super.initState();
-    _checkLocationService();
+    _checkLocationServiceAndPermission(); // Check both service and permission
+  }
+
+  void _checkLocationServiceAndPermission() async {
+    bool _serviceEnabled = await location.serviceEnabled();
+    LocationPermission _permission = await Geolocator.checkPermission();
+
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+    }
+
+    if (_permission == LocationPermission.denied) {
+      _permission = await Geolocator.requestPermission();
+    }
+
+    setState(() {
+      _isLocationEnabled = _serviceEnabled &&
+          _permission != LocationPermission.denied &&
+          _permission != LocationPermission.deniedForever;
+      _locationPermissionDeniedForever =
+          _permission == LocationPermission.deniedForever;
+      print("Location Disabled $_isLocationEnabled");
+    });
   }
 
   void _checkLocationService() async {
@@ -71,14 +96,37 @@ class _AddressScreenState extends State<AddressScreen> {
   }
 
   Future<void> _requestLocationService() async {
-    bool _serviceEnabled = await location.serviceEnabled();
-    if (!_serviceEnabled) {
-      _serviceEnabled = await location.requestService();
-      if (!_serviceEnabled) {
-        return;
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled');
+    }
+
+    permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+
+      if (permission == LocationPermission.denied) {
+        AppSettings.openAppSettings();
+      } else if (permission == LocationPermission.deniedForever) {
+        AppSettings.openAppSettings();
+      } else {
+        setState(() {
+          _isLocationEnabled = true;
+          _locationPermissionDeniedForever = false;
+        });
       }
     }
-    // Update the state or navigate to another screen as needed
+    if (permission == LocationPermission.deniedForever) {
+      AppSettings.openAppSettings();
+    }
+
+    // Location service is enabled
+    // You can proceed with obtaining the location or updating your state as necessary
   }
 
   final _debouncer = Debouncer(milliseconds: 100); // Adjust the delay as needed
@@ -136,6 +184,10 @@ class _AddressScreenState extends State<AddressScreen> {
       }
     }
     if (permission == LocationPermission.deniedForever) {
+      setState(() {
+        _isLocationEnabled = false;
+        _locationPermissionDeniedForever = true;
+      });
       return Future.error('Location permisssions are permanently denied');
     }
 
@@ -237,12 +289,14 @@ class _AddressScreenState extends State<AddressScreen> {
                                 size: 24,
                               ),
                             ),
-                            _isLocationEnabled
+                            _isLocationEnabled ||
+                                    !_locationPermissionDeniedForever
                                 ? SizedBox(
                                     width: 10,
                                   )
                                 : SizedBox.shrink(),
-                            _isLocationEnabled
+                            _isLocationEnabled ||
+                                    !_locationPermissionDeniedForever
                                 ? Expanded(
                                     flex: 5,
                                     child: Column(
@@ -284,7 +338,8 @@ class _AddressScreenState extends State<AddressScreen> {
                                       ],
                                     ),
                                   ),
-                            _isLocationEnabled
+                            _isLocationEnabled ||
+                                    !_locationPermissionDeniedForever
                                 ? Container()
                                 : Expanded(
                                     flex: 2,

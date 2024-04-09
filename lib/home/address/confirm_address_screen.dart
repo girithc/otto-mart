@@ -23,8 +23,8 @@ class ConfirmAddressInit extends StatefulWidget {
 class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   final Completer<GoogleMapController> _googleMapController = Completer();
   CameraPosition? _cameraPosition;
-  late LatLng _defaultLatLng;
-  late LatLng _draggedLatlng;
+  LatLng? _defaultLatLng;
+  LatLng? _draggedLatlng;
   String _draggedAddress_one = "";
   String _draggedAddress_two = "";
   String _locality = "";
@@ -46,7 +46,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   _init() {
     _defaultLatLng = const LatLng(90, 104);
     _draggedLatlng = _defaultLatLng;
-    _cameraPosition = CameraPosition(target: _defaultLatLng, zoom: 17.5);
+    _cameraPosition = CameraPosition(target: _defaultLatLng!, zoom: 17.5);
     //_gotoUserCurrentPosition();
     if (widget.placeId.isNotEmpty) {
       _setInitialMapLocationFromPlaceId();
@@ -64,10 +64,10 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       setState(() {
         _defaultLatLng = initialLatLng;
         _draggedLatlng = _defaultLatLng;
-        _cameraPosition = CameraPosition(target: _defaultLatLng, zoom: 17.5);
+        _isMapAndAddressLoaded = true;
+        _cameraPosition = CameraPosition(target: _defaultLatLng!, zoom: 17.5);
         _gotoSpecificPosition(
-                LatLng(_defaultLatLng.latitude, _defaultLatLng.longitude))
-            as String;
+            LatLng(_defaultLatLng!.latitude, _defaultLatLng!.longitude));
         print("LatLang $_defaultLatLng");
       });
     }
@@ -75,146 +75,146 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: PreferredSize(
-        preferredSize:
-            Size.fromHeight(MediaQuery.of(context).size.height * 0.135),
-        child: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            color: Colors.white,
-            padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Center(
-                  child: Text(
-                    "Location Information",
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
-                  ),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    margin:
-                        const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.grey.shade500),
-                    ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search, size: 22, color: Colors.grey),
-                        SizedBox(width: 10),
-                        Text(
-                          "Search",
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-      body: _buildBody(),
-      bottomNavigationBar: Container(
-        color: Colors.white,
-        height: MediaQuery.of(context).size.height * 0.208,
-        margin: const EdgeInsets.only(bottom: 15),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              minVerticalPadding: 0,
-              title: Text(
-                _draggedAddress_one,
-                maxLines: 2,
-                style: const TextStyle(
-                  height: 1.3,
-                ),
-              ),
-              subtitle: Text(
-                _draggedAddress_two,
-                maxLines: 2,
-                style: const TextStyle(
-                  height: 1.3,
-                ),
-              ),
-              leading: GestureDetector(
-                onTap: () {
-                  // Action to perform when leading is pressed
-                  _gotoUserCurrentPosition();
-                },
-                child: const CircleAvatar(
-                  backgroundColor: Color.fromARGB(255, 27, 0, 101),
-                  child: Icon(
-                    Icons.restart_alt_sharp,
-                    size: 28,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: _isMapAndAddressLoaded
-                  ? () {
-                      // Check if map and address are loaded
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ReconfirmAddressInit(
-                            coordinates: _draggedLatlng,
-                            lineOneAddress: _draggedAddress_one,
-                            lineTwoAddress: _draggedAddress_two,
-                            locality: _locality,
-                            sublocality: _sublocality,
-                            thoroughfare: _thoroughfare,
-                            subthoroughfare: _subthoroughfare,
-                            administrativeArea: _adminArea,
-                            subAdministrativeArea: _subAdminArea,
-                            postalCode: _postalCode,
+    return _isMapAndAddressLoaded
+        ? Scaffold(
+            appBar: PreferredSize(
+              preferredSize:
+                  Size.fromHeight(MediaQuery.of(context).size.height * 0.125),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  color: Colors.white,
+                  padding:
+                      EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(
+                              vertical: 4, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(color: Colors.grey.shade500),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.search, size: 22, color: Colors.grey),
+                              SizedBox(width: 10),
+                              Text(
+                                "Search Location",
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.black54),
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    }
-                  : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.pinkAccent, //const Color(0xFF6200EE),
-                padding: EdgeInsets.only(
-                    left: MediaQuery.of(context).size.height * 0.05,
-                    right: MediaQuery.of(context).size.height * 0.05,
-                    top: MediaQuery.of(context).size.height * 0.02,
-                    bottom: MediaQuery.of(context).size.height * 0.02),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              child: const Text(
-                "Confirm & Continue",
-                style: TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold),
+            ),
+            body: _buildBody(),
+            bottomNavigationBar: Container(
+              color: Colors.white,
+              height: MediaQuery.of(context).size.height * 0.208,
+              margin: const EdgeInsets.only(bottom: 15),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ListTile(
+                    contentPadding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    minVerticalPadding: 0,
+                    title: Text(
+                      _draggedAddress_one,
+                      maxLines: 2,
+                      style: const TextStyle(
+                        height: 1.3,
+                      ),
+                    ),
+                    subtitle: Text(
+                      _draggedAddress_two,
+                      maxLines: 2,
+                      style: const TextStyle(
+                        height: 1.3,
+                      ),
+                    ),
+                    leading: GestureDetector(
+                      onTap: () {
+                        // Action to perform when leading is pressed
+                        _gotoUserCurrentPosition();
+                      },
+                      child: const CircleAvatar(
+                        backgroundColor: Color.fromARGB(255, 27, 0, 101),
+                        child: Icon(
+                          Icons.restart_alt_sharp,
+                          size: 28,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _isMapAndAddressLoaded
+                        ? () {
+                            // Check if map and address are loaded
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ReconfirmAddressInit(
+                                  coordinates: _draggedLatlng!,
+                                  lineOneAddress: _draggedAddress_one,
+                                  lineTwoAddress: _draggedAddress_two,
+                                  locality: _locality,
+                                  sublocality: _sublocality,
+                                  thoroughfare: _thoroughfare,
+                                  subthoroughfare: _subthoroughfare,
+                                  administrativeArea: _adminArea,
+                                  subAdministrativeArea: _subAdminArea,
+                                  postalCode: _postalCode,
+                                ),
+                              ),
+                            );
+                          }
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          Colors.pinkAccent, //const Color(0xFF6200EE),
+                      padding: EdgeInsets.only(
+                          left: MediaQuery.of(context).size.height * 0.05,
+                          right: MediaQuery.of(context).size.height * 0.05,
+                          top: MediaQuery.of(context).size.height * 0.02,
+                          bottom: MediaQuery.of(context).size.height * 0.02),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                    child: const Text(
+                      "Confirm & Continue",
+                      style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  )
+                ],
               ),
-            )
-          ],
-        ),
-      ),
-    );
+            ),
+          )
+        : Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
   }
 
   Widget _buildBody() {
@@ -234,7 +234,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
       initialCameraPosition: _cameraPosition!,
       mapType: MapType.normal,
       onCameraIdle: () {
-        _getAddress(_draggedLatlng);
+        _getAddress(_draggedLatlng!);
       },
       onCameraMove: (cameraPosition) {
         _draggedLatlng = cameraPosition.target;
@@ -306,8 +306,6 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
     List<Placemark> placemarks =
         await placemarkFromCoordinates(position.latitude, position.longitude);
     Placemark address = placemarks[0];
-    //print("Placemarks: ${placemarks[0].locality} ");
-    //print("Address: $address");
 
     setState(() {
       //_draggedAddress = addressStr;
@@ -330,7 +328,7 @@ class _ConfirmAddressInitState extends State<ConfirmAddressInit> {
   Future _gotoUserCurrentPosition() async {
     //Position currentPosition = await _determineUserCurrentPosition();
     _gotoSpecificPosition(
-        LatLng(_defaultLatLng.latitude, _defaultLatLng.longitude));
+        LatLng(_defaultLatLng!.latitude, _defaultLatLng!.longitude));
   }
 
   Future _gotoSpecificPosition(LatLng position) async {

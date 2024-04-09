@@ -60,7 +60,7 @@ class _ReconfirmAddressInitState extends State<ReconfirmAddressInit> {
     // Initialize _kGooglePlex here using widget.coordinates
     _kGooglePlex = CameraPosition(
       target: widget.coordinates,
-      zoom: 16,
+      zoom: 15.25,
     );
     _markers.add(
       Marker(
