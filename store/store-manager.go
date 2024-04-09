@@ -378,44 +378,69 @@ func (s *PostgresStore) ManagerUpdateItemBarcode(item types.ItemBarcodeBasic) (t
 }
 
 func (s *PostgresStore) ManagerSendFCM(phone string) (bool, error) {
+	var tokens []string // A slice to hold the FCM tokens
 
-	var registrationToken string
-	query := `SELECT fcm FROM customer WHERE phone = $1`
-	err := s.db.QueryRow(query, phone).Scan(&registrationToken)
-	if err != nil {
-		// Handle error (e.g., no token found for phone number)
-		log.Printf("Error retrieving registration token for phone %s: %v", phone, err)
-		return false, err
+	// Check if the provided phone number is the specific one
+	if phone == "9867898519" {
+		// If it is, select FCM tokens for all customers
+		query := `SELECT fcm FROM customer`
+		rows, err := s.db.Query(query)
+		if err != nil {
+			log.Printf("Error retrieving FCM tokens: %v", err)
+			return false, err
+		}
+		defer rows.Close()
+
+		for rows.Next() {
+			var token string
+			if err := rows.Scan(&token); err != nil {
+				log.Printf("Error scanning token: %v", err)
+				continue // Skip this token and move to the next
+			}
+			tokens = append(tokens, token) // Add the token to the slice
+		}
+
+	} else {
+		// If not, select the FCM token for the provided phone number
+		var registrationToken string
+		query := `SELECT fcm FROM customer WHERE phone = $1`
+		err := s.db.QueryRow(query, phone).Scan(&registrationToken)
+		if err != nil {
+			log.Printf("Error retrieving registration token for phone %s: %v", phone, err)
+			return false, err
+		}
+		tokens = append(tokens, registrationToken) // Add the single token to the slice
 	}
-	// See documentation on defining a message payload.
-	message := &messaging.Message{
-		Data: map[string]string{
-			"score": "850",
-			"time":  "2:45",
-		},
-		Token: registrationToken,
-		Notification: &messaging.Notification{
-			Title: "Manager Notification",
-			Body:  "Good Morning From Otto Mart ",
-		},
-		Android: &messaging.AndroidConfig{
-			Notification: &messaging.AndroidNotification{
-				Title: "Manager Notification",
-				Body:  "Good Morning From Otto Mart ", // Optional: if you want to override the main notification body
-				Color: "#800080",                      // Purple color in ARGB format
+
+	// Iterate over the tokens and send the message to each
+	for _, token := range tokens {
+		message := &messaging.Message{
+			Data: map[string]string{
+				"action": "new_morning_delivery",
+				"time":   "available now",
 			},
-			// Additional Android-specific configuration...
-		},
-	}
+			Token: token,
+			Notification: &messaging.Notification{
+				Title: "Start Your Mornings w Otto Mart",
+				Body:  "Get Morning Delivery in your area. Tap to order now!",
+			},
+			Android: &messaging.AndroidConfig{
+				Notification: &messaging.AndroidNotification{
+					Title: "Start Your Mornings w Otto Mart",
+					Body:  "Get Morning Delivery in your area. Tap to order now!",
+					Color: "#800080",
+				},
+			},
+		}
 
-	// Send a message to the device corresponding to the provided
-	// registration token.
-	response, err := s.firebaseClient.Send(s.context, message)
-	if err != nil {
-		log.Fatalln(err)
+		// Send the message to the device corresponding to the current token
+		response, err := s.firebaseClient.Send(s.context, message)
+		if err != nil {
+			log.Printf("Failed to send message to token %s: %v", token, err)
+			continue // Skip this token and move to the next
+		}
+		fmt.Printf("Successfully sent message to token %s: %s\n", token, response)
 	}
-	// Response is a message ID string.
-	fmt.Println("Successfully sent message:", response)
 
 	return true, nil
 }

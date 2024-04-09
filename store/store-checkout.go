@@ -392,11 +392,11 @@ func (s *PostgresStore) PayStockCash(cart_id int, sign string, merchantTransacti
 
 	println("Start Payment Details")
 	var payDetails TransactionDetails
-	payDetails.Status = "COMPLETED"
-	payDetails.MerchantID = "PGTESTPAYUAT"
+	payDetails.Status = "ORDER PLACED"
+	payDetails.MerchantID = "OTTO MART"
 	payDetails.MerchantTransactionID = merchantTransactionID
 	payDetails.PaymentDetails = nil
-	payDetails.ResponseCode = "SUCCESS"
+	payDetails.ResponseCode = "IN PROGRESS"
 	payDetails.PaymentGatewayName = "Self-Service"
 	payDetails.PaymentMethod = "Cash"
 

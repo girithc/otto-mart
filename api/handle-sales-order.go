@@ -288,7 +288,7 @@ func (s *Server) CheckForPlacedOrder(res http.ResponseWriter, req *http.Request)
 		return err
 	}
 
-	records, err := s.store.CheckForPlacedOrder(new_req.Phone)
+	records, err := s.store.CheckForPlacedOrders(new_req.Phone)
 	if err != nil {
 		return err
 	}

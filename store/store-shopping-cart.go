@@ -432,6 +432,7 @@ type Slot struct {
 	StartTime time.Time
 	EndTime   time.Time
 	Id        int
+	Available bool
 }
 
 type CartSlotDetails struct {
@@ -442,6 +443,7 @@ type CartSlotDetails struct {
 
 func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetails, error) {
 	var cartSlots CartSlotDetails
+	var distanceStore float64
 
 	newDeliveryDate := time.Now().Add(5*time.Hour+30*time.Minute).AddDate(0, 0, 1)
 
@@ -452,7 +454,16 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 		return nil, err
 	}
 
-	// Query to fetch available slots
+	// Query to fetch the distance_store from the address table using the address_id in the shopping_cart table
+	distanceQuery := `SELECT distance_to_store FROM address
+					  JOIN shopping_cart ON address.id = shopping_cart.address_id
+					  WHERE shopping_cart.id = $1`
+	err = s.db.QueryRow(distanceQuery, cartId).Scan(&distanceStore)
+	if err != nil {
+		return nil, err
+	}
+
+	// Query to fetch all slots
 	slotsQuery := `SELECT start_time, end_time, slot.id FROM slot`
 	rows, err := s.db.Query(slotsQuery)
 	if err != nil {
@@ -478,10 +489,17 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 			return nil, err
 		}
 
+		// Determine availability based on distance
+		available := true
+		if distanceStore >= 4 {
+			available = startTime.Hour() == 6 && endTime.Hour() == 8
+		}
+
 		cartSlots.AvailableSlots = append(cartSlots.AvailableSlots, Slot{
 			StartTime: startTime,
 			EndTime:   endTime,
 			Id:        id,
+			Available: available,
 		})
 	}
 
@@ -492,7 +510,6 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 	var chosenStartTimeStr, chosenEndTimeStr string
 	var id int
 	err = s.db.QueryRow(chosenSlotQuery, cartId).Scan(&chosenStartTimeStr, &chosenEndTimeStr, &id)
-
 	if err == nil {
 		chosenStartTime, err := time.Parse(timeLayout, chosenStartTimeStr)
 		if err != nil {
@@ -508,6 +525,8 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 			StartTime: chosenStartTime,
 			EndTime:   chosenEndTime,
 			Id:        id,
+			// Assuming the chosen slot respects the distance rule and is thus available
+			Available: true,
 		}
 	} else if err != sql.ErrNoRows {
 		return nil, err // return error if it's not the "no rows" error
@@ -517,6 +536,7 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 
 	return &cartSlots, nil
 }
+
 func (s *PostgresStore) AssignCartSlot(customerId int, cartId int, slotId int) (*CartSlotDetails, error) {
 	// Calculate the delivery date by adding 5:30 hours to the current time and then adding 1 day
 	currentTime := time.Now()

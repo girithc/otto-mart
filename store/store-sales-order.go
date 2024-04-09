@@ -268,6 +268,7 @@ type CustomerOrderDetails struct {
 	DeliveryDate         time.Time   `json:"delivery_date"`
 	SlotStartTime        time.Time   `json:"slot_start_time"`
 	SlotEndTime          time.Time   `json:"slot_end_time"`
+	NewCartID            int         `json:"new_cart_id"`
 }
 
 type OrderItem struct {
@@ -359,16 +360,62 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 		return nil, fmt.Errorf("error querying for address details: %w", err)
 	}
 
-	// New: Fetch delivery_date, slot start_time, and end_time
+	var startTimeStr, endTimeStr string
 	slotQuery := `
-        SELECT sc.delivery_date, sl.start_time, sl.end_time
-        FROM shopping_cart sc
-        LEFT JOIN slot sl ON sc.slot_id = sl.id
-        WHERE sc.id = $1
-    `
-	err = s.db.QueryRow(slotQuery, cartId).Scan(&orderDetails.DeliveryDate, &orderDetails.SlotStartTime, &orderDetails.SlotEndTime)
+    SELECT sc.delivery_date, sl.start_time, sl.end_time
+    FROM shopping_cart sc
+    LEFT JOIN slot sl ON sc.slot_id = sl.id
+    WHERE sc.id = $1
+`
+	err = s.db.QueryRow(slotQuery, cartId).Scan(&orderDetails.DeliveryDate, &startTimeStr, &endTimeStr)
 	if err != nil {
 		return nil, fmt.Errorf("error querying for delivery date and slot times: %w", err)
+	}
+
+	const timeLayout = "15:04:05" // Use this layout if your times are stored without date
+	orderDetails.SlotStartTime, err = time.Parse(timeLayout, startTimeStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing slot start time: %w", err)
+	}
+
+	orderDetails.SlotEndTime, err = time.Parse(timeLayout, endTimeStr)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing slot end time: %w", err)
+	}
+
+	activeCartQuery := `
+        SELECT id
+        FROM shopping_cart
+        WHERE customer_id = $1 AND id <> $2 AND active = TRUE
+        LIMIT 1
+    `
+	err = s.db.QueryRow(activeCartQuery, customerId, cartId).Scan(&orderDetails.NewCartID)
+	if err == sql.ErrNoRows {
+		// No active cart found, create a new one
+		// First, get the address_id from the current cart
+		var addressId int
+		getAddressQuery := `
+            SELECT address_id
+            FROM shopping_cart
+            WHERE id = $1
+        `
+		err = s.db.QueryRow(getAddressQuery, cartId).Scan(&addressId)
+		if err != nil {
+			return nil, fmt.Errorf("error retrieving address_id from shopping cart: %w", err)
+		}
+
+		// Insert a new shopping cart with the retrieved address_id
+		createCartQuery := `
+            INSERT INTO shopping_cart (customer_id, address_id, active)
+            VALUES ($1, $2, TRUE)
+            RETURNING id
+        `
+		err = s.db.QueryRow(createCartQuery, customerId, addressId).Scan(&orderDetails.NewCartID)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new shopping cart: %w", err)
+		}
+	} else if err != nil {
+		return nil, fmt.Errorf("error checking for active shopping cart: %w", err)
 	}
 
 	return orderDetails, nil
@@ -510,6 +557,7 @@ func (s *PostgresStore) GetOrdersByCustomerId(customer_id int) ([]OrderDetails, 
         FROM sales_order so
         JOIN address a ON so.address_id = a.id
         WHERE so.customer_id = $1
+		ORDER BY so.order_date DESC
     `
 
 	// Execute the query
@@ -1045,21 +1093,34 @@ type CheckForPlacedOrder struct {
 	Status string `json:"status"`
 }
 
-func (s *PostgresStore) CheckForPlacedOrder(phone string) (CheckForPlacedOrder, error) {
-	var order CheckForPlacedOrder
+func (s *PostgresStore) CheckForPlacedOrders(phone string) ([]CheckForPlacedOrder, error) {
+	var orders []CheckForPlacedOrder
 	query := `
         SELECT cart_id, order_status 
         FROM sales_order
         WHERE customer_id = (SELECT id FROM customer WHERE phone = $1)
           AND order_status NOT IN ('completed')
         ORDER BY order_date DESC
-        LIMIT 1
     `
-	err := s.db.QueryRow(query, phone).Scan(&order.CartId, &order.Status)
+	rows, err := s.db.Query(query, phone)
 	if err != nil {
-		return order, err
+		return nil, err
 	}
-	return order, nil
+	defer rows.Close()
+
+	for rows.Next() {
+		var order CheckForPlacedOrder
+		if err := rows.Scan(&order.CartId, &order.Status); err != nil {
+			return nil, err
+		}
+		orders = append(orders, order)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return orders, nil
 }
 
 func (s *PostgresStore) GetOrderDetails(orderID int) ([]OrderDetail, error) {

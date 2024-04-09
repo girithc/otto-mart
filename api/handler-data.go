@@ -106,6 +106,7 @@ var authRequirements = map[string]Permission{
 	PhonePeCheckStatus:                    {Role: "Customer", AuthRequired: true},
 	PhonePeCallback:                       {Role: "Customer", AuthRequired: false},
 	PhonePePaymentInit:                    {Role: "Customer", AuthRequired: true},
+	PhonePePaymentLink:                    {Role: "Customer", AuthRequired: true},
 	PhonePePaymentVerify:                  {Role: "Customer", AuthRequired: true},
 	OtpSend:                               {Role: "Customer", AuthRequired: false},
 	OtpVerify:                             {Role: "Customer", AuthRequired: false},
@@ -241,6 +242,7 @@ const (
 	PhonePeCheckStatus                    = "phonepe-check-status"
 	PhonePeCallback                       = "phonepe-callback"
 	PhonePePaymentInit                    = "phonepe-payment-init"
+	PhonePePaymentLink                    = "phonepe-payment-link"
 	PhonePePaymentVerify                  = "phonepe-payment-verify"
 	OtpSend                               = "send-otp"
 	OtpVerify                             = "verify-otp"

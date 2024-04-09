@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -12,44 +13,57 @@ import (
 func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_CategoryID_And_StoreID_noCategory, error) {
 	fmt.Println("Entered Search_Items")
 
-	// Prepare the query string for partial and fuzzy matching
-	fuzzyMatchQuery := "%" + query + "%"
+	lowerQuery := strings.ToLower(query) // Ensure the query is case-insensitive
+	fuzzyMatchQuery := "%" + lowerQuery + "%"
 
-	rows, err := s.db.Query(`
-    SELECT 
-        item.id, 
-        item.name, 
-        item_financial.mrp_price, 
-        item_store.discount,
-        item_store.store_price,
-        store.name AS store_name,
-        item_store.stock_quantity, 
-        item_store.locked_quantity, 
-        (SELECT image_url FROM item_image WHERE item_image.item_id = item.id ORDER BY order_position LIMIT 1) AS image_url, 
-        brand.name AS brand_name,
-        item.quantity,
-        item.unit_of_quantity,
-        item.created_at, 
-        item.created_by  
-    FROM item
-    INNER JOIN item_store ON item.id = item_store.item_id 
-    INNER JOIN item_financial ON item.id = item_financial.item_id 
-    LEFT JOIN store ON item_store.store_id = store.id
-    LEFT JOIN brand ON item.brand_id = brand.id
-    WHERE item.name ILIKE $1 OR SIMILARITY(item.name, $1) > 0.3
-       OR brand.name ILIKE $1 OR SIMILARITY(brand.name, $1) > 0.3
-       OR item.description ILIKE $1 OR SIMILARITY(item.description, $1) > 0.3
-    ORDER BY item_store.stock_quantity DESC
-    `, fuzzyMatchQuery)
+	_, err := s.db.Exec("SELECT set_limit(0.15);") // Set a lower similarity threshold
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error setting similarity threshold: %v", err)
 	}
 
+	rows, err := s.db.Query(`
+    SELECT
+        item.id,
+        MAX(item.name) AS name,
+        MAX(item_financial.mrp_price) AS mrp_price,
+        MAX(item_store.discount) AS discount,
+        MAX(item_store.store_price) AS store_price,
+        MAX(store.name) AS store_name,
+        MAX(item_store.stock_quantity) AS stock_quantity,
+        MAX(item_store.locked_quantity) AS locked_quantity,
+        MAX((SELECT image_url FROM item_image WHERE item_image.item_id = item.id ORDER BY order_position LIMIT 1)) AS image_url,
+        MAX(brand.name) AS brand_name,
+        MAX(item.quantity) AS quantity,
+        MAX(item.unit_of_quantity) AS unit_of_quantity,
+        MAX(item.created_at) AS created_at,
+        MAX(item.created_by) AS created_by
+    FROM item
+    INNER JOIN item_store ON item.id = item_store.item_id
+    INNER JOIN item_financial ON item.id = item_financial.item_id
+    LEFT JOIN store ON item_store.store_id = store.id
+    LEFT JOIN brand ON item.brand_id = brand.id
+    LEFT JOIN item_category ON item.id = item_category.item_id
+    LEFT JOIN category ON item_category.category_id = category.id
+    WHERE lower(item.name) % $1 OR
+          lower(brand.name) % $1 OR
+          lower(item.description) % $1 OR
+          lower(category.name) % $1
+    GROUP BY item.id
+    ORDER BY MAX(similarity(lower(item.name), $1) * 0.4 + 
+                 similarity(lower(brand.name), $1) * 0.3 +
+                 similarity(lower(item.description), $1) * 0.2 +
+                 similarity(lower(category.name), $1) * 0.2) DESC, 
+             MAX(item_store.stock_quantity) DESC
+    `, fuzzyMatchQuery)
+
+	if err != nil {
+		return nil, fmt.Errorf("error executing search query: %v", err)
+	}
 	defer rows.Close()
 
-	items := []*types.Get_Items_By_CategoryID_And_StoreID_noCategory{}
+	var items []*types.Get_Items_By_CategoryID_And_StoreID_noCategory
 	for rows.Next() {
-		item := &types.Get_Items_By_CategoryID_And_StoreID_noCategory{}
+		var item types.Get_Items_By_CategoryID_And_StoreID_noCategory
 		var imageURL sql.NullString
 		var createdBy sql.NullInt64
 		var mrpPrice sql.NullFloat64
@@ -64,23 +78,22 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 			&item.Stock_Quantity,
 			&item.Locked_Quantity,
 			&imageURL,
-			&item.Brand, // Make sure to add this field to your struct if it's not already there
+			&item.Brand,
 			&item.Quantity,
 			&item.Unit_Of_Quantity,
 			&item.Created_At,
 			&createdBy,
 		)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("error scanning row: %v", err)
 		}
 
+		// Handle null values
 		if mrpPrice.Valid {
 			item.MRP_Price = mrpPrice.Float64
 		} else {
 			item.MRP_Price = 0.0
 		}
-
-		item.Store_Price = item.MRP_Price - item.Discount
 
 		if imageURL.Valid {
 			item.Image = imageURL.String
@@ -94,7 +107,14 @@ func (s *PostgresStore) Search_Items(query string) ([]*types.Get_Items_By_Catego
 			item.Created_By = 0
 		}
 
-		items = append(items, item)
+		item.Store_Price = item.MRP_Price - item.Discount
+
+		items = append(items, &item)
+	}
+
+	_, err = s.db.Exec("SELECT set_limit(0.3);") // Reset the similarity threshold
+	if err != nil {
+		return nil, fmt.Errorf("error resetting similarity threshold: %v", err)
 	}
 
 	return items, nil

@@ -795,6 +795,24 @@ func (s *PostgresStore) DeliveryPartnerCompleteOrderDelivery(phone string, order
 		return nil, err
 	}
 
+	if amountCollected > 0 {
+
+		// Verify the delivery partner ID
+		var cartId int
+		err = tx.QueryRow("SELECT cart_id FROM sales_order WHERE id = $1", order_id).Scan(&cartId)
+		if err != nil {
+			return nil, err
+		}
+		updateQuery := `
+		UPDATE transaction
+		SET status = $1, 
+			response_code = $2,
+			payment_method = $3
+		WHERE cart_id = $4`
+
+		_, _ = s.db.Exec(updateQuery, "COMPLETED", "SUCCESS", "Cash", cartId)
+	}
+
 	// Return the delivery completion result indicating success
 	return &DeliveryCompletionResult{Success: true}, nil
 }

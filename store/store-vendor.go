@@ -71,22 +71,29 @@ func (s *PostgresStore) CreateVendorBrandTable(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) CreateItemSchemeTable(tx *sql.Tx) error {
-	createBrandSchemeTableQuery := `
+	createItemSchemeTableQuery := `
     CREATE TABLE IF NOT EXISTS item_scheme (
         id SERIAL PRIMARY KEY,
         brand_id INTEGER REFERENCES brand(id),
-		item_id INTEGER REFERENCES item(id),
-        vendor_id INTEGER REFERENCES vendor(id),
-        discount DECIMAL(5,2) CHECK (discount >= 0 AND discount <= 100), 
+        item_id INTEGER REFERENCES item(id),
+        vendor_id INTEGER REFERENCES vendor(id), -- Assuming this is already nullable; if not, see the alter query below
+        discount DECIMAL(10,2) CHECK (discount >= 0 AND discount <= 100), 
         start_date DATE,
         end_date DATE,
-		minimum_quantity INTEGER NOT NULL CHECK (minimum_quantity > 0),
+        minimum_quantity INTEGER NOT NULL CHECK (minimum_quantity > 0),
         CONSTRAINT valid_dates CHECK (start_date <= end_date)
     );`
 
-	_, err := tx.Exec(createBrandSchemeTableQuery)
+	_, err := tx.Exec(createItemSchemeTableQuery)
 	if err != nil {
-		return fmt.Errorf("error creating brand_scheme table: %w", err)
+		return fmt.Errorf("error creating item_scheme table: %w", err)
+	}
+
+	// Alter discount column to DECIMAL(10,2)
+	alterDiscountQuery := `ALTER TABLE item_scheme ALTER COLUMN discount TYPE DECIMAL(10,2);`
+	_, err = tx.Exec(alterDiscountQuery)
+	if err != nil {
+		return fmt.Errorf("error altering discount column: %w", err)
 	}
 
 	return nil

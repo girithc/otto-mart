@@ -31,27 +31,56 @@ func (s *PostgresStore) CreateItemFinancialTable(tx *sql.Tx) error {
 	return nil
 }
 
+type ItemFinancialDetails struct {
+	ItemID          int             `json:"item_id"`
+	ItemName        string          `json:"item_name"`
+	UnitOfQuantity  string          `json:"unit_of_quantity"`
+	Quantity        int             `json:"quantity"`
+	BuyPrice        sql.NullFloat64 `json:"buy_price,omitempty"`
+	MRPPrice        sql.NullFloat64 `json:"mrp_price,omitempty"`
+	GSTRate         sql.NullFloat64 `json:"gst_rate,omitempty"` // GST rate as a percentage
+	Cess            sql.NullFloat64 `json:"cess,omitempty"`     // Cess rate as a percentage
+	GSTOnBuy        sql.NullFloat64 `json:"gst_on_buy,omitempty"`
+	GSTOnMRP        sql.NullFloat64 `json:"gst_on_mrp,omitempty"`
+	CessOnBuy       sql.NullFloat64 `json:"cess_on_buy,omitempty"`
+	CessOnMRP       sql.NullFloat64 `json:"cess_on_mrp,omitempty"`
+	Margin          sql.NullFloat64 `json:"margin,omitempty"`
+	TaxID           sql.NullInt32   `json:"tax_id,omitempty"`            // Adjusted for potential NULL values
+	CurrentSchemeID sql.NullInt32   `json:"current_scheme_id,omitempty"` // Adjusted for potential NULL values
+	// New fields added from item_scheme table
+	Discount        sql.NullFloat64 `json:"discount,omitempty"`         // Discount percentage
+	MinimumQuantity sql.NullInt32   `json:"minimum_quantity,omitempty"` // Minimum quantity for discount to apply
+	StartDate       sql.NullString  `json:"start_date,omitempty"`       // Start date of the discount scheme
+	EndDate         sql.NullString  `json:"end_date,omitempty"`         // End date of the discount scheme
+}
+
 func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinancialDetails, error) {
 	var details ItemFinancialDetails
 
+	// Extended the query to include item_scheme fields
 	query := `
     SELECT i.id, i.name, i.unit_of_quantity, i.quantity,
-           (if.buy_price - if.gst_on_buy - if.cess_on_buy) AS adjusted_buy_price, 
+           (if.buy_price - if.gst_on_buy - if.cess_on_buy) AS adjusted_buy_price,
            if.mrp_price, t.gst as gst_rate, t.cess as cess_rate,
            if.gst_on_buy, if.cess_on_buy, if.gst_on_mrp, if.cess_on_mrp,
-           if.margin, if.tax_id, if.current_scheme_id
+           if.margin, if.tax_id, if.current_scheme_id,
+           istore.discount, istore.minimum_quantity, istore.start_date, istore.end_date  -- New fields from item_scheme
     FROM item i
     LEFT JOIN item_financial if ON i.id = if.item_id
     LEFT JOIN tax t ON if.tax_id = t.id
+    LEFT JOIN item_scheme istore ON i.id = istore.item_id  -- Join with item_scheme table
     WHERE i.id = $1
     `
 
+	// Add fields to scan into, handling potential NULL values appropriately
 	err := s.db.QueryRow(query, itemID).Scan(
 		&details.ItemID, &details.ItemName, &details.UnitOfQuantity, &details.Quantity,
 		&details.BuyPrice, // This will now hold the adjusted buy price
 		&details.MRPPrice, &details.GSTRate, &details.Cess,
 		&details.GSTOnBuy, &details.CessOnBuy, &details.GSTOnMRP, &details.CessOnMRP,
 		&details.Margin, &details.TaxID, &details.CurrentSchemeID,
+		// New fields
+		&details.Discount, &details.MinimumQuantity, &details.StartDate, &details.EndDate,
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -59,9 +88,6 @@ func (s *PostgresStore) ManagerGetItemFinancialByItemId(itemID int) (*ItemFinanc
 		}
 		return nil, fmt.Errorf("error retrieving item financial details: %w", err)
 	}
-
-	// Note: The BuyPrice field of details now contains the adjusted buy price,
-	//       after subtracting GST and CESS on the buy price.
 
 	return &details, nil
 }
@@ -139,7 +165,41 @@ func (s *PostgresStore) ManagerEditItemFinancialByItemId(itemFinance types.ItemF
 		}
 	}
 
-	// Retrieve the updated/inserted item financial details
+	var schemeID int
+	// Check if a record exists in item_scheme for the given item_id
+	checkSchemeExistenceQuery := `SELECT id FROM item_scheme WHERE item_id = $1`
+	err = s.db.QueryRow(checkSchemeExistenceQuery, itemFinance.ItemID).Scan(&schemeID)
+
+	if err != nil && err != sql.ErrNoRows {
+		// Handle unexpected errors
+		return nil, fmt.Errorf("error checking for existing item scheme record: %w", err)
+	}
+
+	if err == sql.ErrNoRows {
+		// No existing record, insert a new one
+		insertSchemeQuery := `
+            INSERT INTO item_scheme (item_id, discount, minimum_quantity, start_date, end_date)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING id
+        `
+		err = s.db.QueryRow(insertSchemeQuery, itemFinance.ItemID, itemFinance.Discount, itemFinance.MinimumQuantity, itemFinance.StartDate, itemFinance.EndDate).Scan(&schemeID)
+		if err != nil {
+			return nil, fmt.Errorf("error inserting new item scheme record: %w", err)
+		}
+	} else {
+		// Existing record, update it
+		updateSchemeQuery := `
+            UPDATE item_scheme
+            SET discount = $2, minimum_quantity = $3, start_date = $4, end_date = $5
+            WHERE item_id = $1
+        `
+		_, err = s.db.Exec(updateSchemeQuery, itemFinance.ItemID, itemFinance.Discount, itemFinance.MinimumQuantity, itemFinance.StartDate, itemFinance.EndDate)
+		if err != nil {
+			return nil, fmt.Errorf("error updating existing item scheme record: %w", err)
+		}
+	}
+
+	// Retrieve the updated item financial details along with item scheme details
 	return s.ManagerGetItemFinancialByItemId(itemFinance.ItemID)
 }
 
@@ -149,22 +209,4 @@ type ItemFinance struct {
 	MRPPrice float64 `json:"mrp_price"`
 	GST      float64 `json:"gst"`
 	Margin   float64 `json:"margin"`
-}
-
-type ItemFinancialDetails struct {
-	ItemID          int             `json:"item_id"`
-	ItemName        string          `json:"item_name"`
-	UnitOfQuantity  string          `json:"unit_of_quantity"`
-	Quantity        int             `json:"quantity"`
-	BuyPrice        sql.NullFloat64 `json:"buy_price,omitempty"`
-	MRPPrice        sql.NullFloat64 `json:"mrp_price,omitempty"`
-	GSTRate         sql.NullFloat64 `json:"gst_rate,omitempty"` // GST rate as a percentage
-	Cess            sql.NullFloat64 `json:"cess,omitempty"`     // Cess rate as a percentage
-	GSTOnBuy        sql.NullFloat64 `json:"gst_on_buy,omitempty"`
-	GSTOnMRP        sql.NullFloat64 `json:"gst_on_mrp,omitempty"`
-	CessOnBuy       sql.NullFloat64 `json:"cess_on_buy,omitempty"`
-	CessOnMRP       sql.NullFloat64 `json:"cess_on_mrp,omitempty"`
-	Margin          sql.NullFloat64 `json:"margin,omitempty"`
-	TaxID           sql.NullInt32   `json:"tax_id,omitempty"`            // Adjusted for potential NULL values
-	CurrentSchemeID sql.NullInt32   `json:"current_scheme_id,omitempty"` // Adjusted for potential NULL values
 }

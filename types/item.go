@@ -212,11 +212,15 @@ type ItemFinancials struct {
 }
 
 type ItemFinance struct {
-	ItemID   int     `json:"item_id"`
-	BuyPrice float64 `json:"buy_price"`
-	MRPPrice float64 `json:"mrp_price"`
-	GST      float64 `json:"gst"`
-	Margin   float64 `json:"margin"`
+	ItemID          int     `json:"item_id"`
+	BuyPrice        float64 `json:"buy_price"`
+	MRPPrice        float64 `json:"mrp_price"`
+	GST             float64 `json:"gst"`
+	Margin          float64 `json:"margin"`
+	Discount        float64 `json:"discount"`         // New field
+	MinimumQuantity int     `json:"minimum_quantity"` // New field
+	StartDate       string  `json:"start_date"`       // New field
+	EndDate         string  `json:"end_date"`         // New field
 }
 
 type ItemBasic struct {
