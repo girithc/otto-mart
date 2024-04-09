@@ -551,8 +551,8 @@ func (s *PostgresStore) GetStoreAddress(storeId int, addressId int) (*StoreAddre
 	now := time.Now().In(istOffset)
 
 	// Set opening and closing times
-	openingTime := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, istOffset)   // 9:00 AM IST
-	closingTime := time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 0, 0, istOffset) // 8:45 PM IST
+	openingTime := time.Date(now.Year(), now.Month(), now.Day(), 6, 0, 0, 0, istOffset)   // 9:00 AM IST
+	closingTime := time.Date(now.Year(), now.Month(), now.Day(), 16, 30, 0, 0, istOffset) // 8:45 PM IST
 
 	// Determine if the store is currently open
 	address.StoreOpen = now.Before(closingTime) && now.After(openingTime)
