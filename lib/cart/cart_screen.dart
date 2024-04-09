@@ -846,11 +846,11 @@ class CartListState extends State<CartList> {
                         ? Container(
                             height: 55,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.lightGreenAccent,
+                                  Colors.greenAccent.shade200,
                                   Colors.greenAccent
                                 ],
                               ),
@@ -956,7 +956,7 @@ class CartListState extends State<CartList> {
               ),
               const SizedBox(height: 15),
               Container(
-                height: 90,
+                height: 110, // Container height
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10), // Rounded corners
@@ -969,7 +969,8 @@ class CartListState extends State<CartList> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 15),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
                 margin: const EdgeInsets.symmetric(horizontal: 10),
                 child: Column(
                   children: [
@@ -989,18 +990,28 @@ class CartListState extends State<CartList> {
                         ),
                         Icon(Icons.payments_outlined)
                       ],
-                    ), // Adding the TextField
-                    TextField(
-                      decoration: InputDecoration(
-                        fillColor: Colors
-                            .greenAccent, // Background color of the text field
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(30), // Rounded borders
-                          borderSide: BorderSide.none, // No border side
+                    ),
+                    SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 13),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                          fillColor: Colors.lightGreenAccent.withOpacity(
+                              0.6), // Background color of the text field
+                          filled: true,
+                          hintText: 'Enter Code',
+
+                          prefixIcon: Icon(Icons
+                              .subdirectory_arrow_right_rounded), // Add an icon to the hint text
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10), // Rounded borders
+                            borderSide: BorderSide.none, // No border side
+                          ),
                         ),
-                        // If you need to remove the label, just don't set the labelText or set it to null
                       ),
                     ),
                   ],
@@ -1400,8 +1411,7 @@ class TotalAmountSaved extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-            color: Colors.lightGreenAccent, width: 2), // Rounded corners
+        //border: Border.all(color: Colors.lightGreenAccent, width: 2), // Rounded corners
         boxShadow: [
           BoxShadow(
             color: Colors.grey.withOpacity(0.2),
