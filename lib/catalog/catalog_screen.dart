@@ -440,51 +440,39 @@ class CategoryItem extends StatelessWidget {
               categoryID: categoryID, storeID: 1, categoryName: categoryName));
         },
         child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 2),
+          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 1),
+          padding: const EdgeInsets.symmetric(
+            vertical: 4,
+          ),
           decoration: BoxDecoration(
             gradient: isSelected
                 ? LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.pinkAccent.shade200.withOpacity(0.15),
-                      Colors.pinkAccent.shade100.withOpacity(0.2),
+                      Colors.pinkAccent.shade100.withOpacity(0.4),
+                      Colors.pinkAccent.shade100.withOpacity(0.15),
                     ],
                     stops: const [0.1, 1.0],
                   )
                 : null, // No gradient when not selected
             borderRadius: const BorderRadius.all(
-              Radius.circular(10.0),
+              Radius.circular(4.0),
             ),
           ),
           child: Column(
             children: [
               Container(
                 height: MediaQuery.of(context).size.height * 0.08,
-                margin: EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                margin: EdgeInsets.symmetric(
+                    horizontal: MediaQuery.of(context).size.width * 0.025,
+                    vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20.0),
-                  border: Border.all(
-                      color: Colors.deepPurpleAccent.withOpacity(0.2)),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 0,
-                            blurRadius: 1,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            spreadRadius: 0,
-                            blurRadius: 1,
-                            offset: const Offset(0, 2),
-                          )
-                        ],
-                ),
+                    color: Colors
+                        .transparent, //Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(12.0),
+                    border:
+                        Border.all(color: Color.fromARGB(255, 250, 239, 255))),
                 child: Center(
                     child: categoryImage.isNotEmpty
                         ? categoryImage.contains('.avif')
@@ -528,7 +516,7 @@ class CategoryItem extends StatelessWidget {
                                     alignment: Alignment.center,
                                     child: const Center(
                                       child: Text(
-                                        'image',
+                                        '',
                                         style: TextStyle(
                                             fontSize: 12, color: Colors.grey),
                                       ),
@@ -539,7 +527,7 @@ class CategoryItem extends StatelessWidget {
                         : Container(
                             child: Center(
                                 child: Text(
-                              "image",
+                              "",
                               style: TextStyle(
                                 fontSize: 10,
                               ),
@@ -553,10 +541,10 @@ class CategoryItem extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: isSelected
                       ? const TextStyle(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: Colors.black,
                           fontWeight: FontWeight.normal)
-                      : const TextStyle(fontSize: 14, color: Colors.black),
+                      : const TextStyle(fontSize: 13, color: Colors.black),
                 ),
               ),
             ],

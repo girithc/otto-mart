@@ -262,6 +262,7 @@ class _MyHomePageState extends State<MyHomePage>
                                 phone: phone,
                                 promos: promotions)
                             : Container(height: 40), // Pass retrieved values
+
                         Container(
                           color: Colors.white,
                           alignment:
@@ -276,6 +277,8 @@ class _MyHomePageState extends State<MyHomePage>
                                 color: Colors.black),
                           ),
                         ),
+
+                        Container(),
                         SizedBox(
                           height: 10,
                         )
@@ -310,8 +313,7 @@ class _MyHomePageState extends State<MyHomePage>
       bottomNavigationBar: Container(
         height: orders.isNotEmpty
             ? MediaQuery.of(context).size.height * 0.175
-            : MediaQuery.of(context).size.height * 0.15,
-        //: MediaQuery.of(context).size.height * 0.095,
+            : MediaQuery.of(context).size.height * 0.09,
         padding: EdgeInsets.only(
             bottom: orders.isNotEmpty
                 ? MediaQuery.of(context).size.height * 0.012
@@ -338,6 +340,7 @@ class _MyHomePageState extends State<MyHomePage>
           children: [
             orders.isNotEmpty
                 ? // Use Dart's collection-if to include a widget conditionally
+
                 Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
@@ -432,14 +435,15 @@ class _MyHomePageState extends State<MyHomePage>
                       ),
                     ],
                   )
-                : CarouselSlider(
+                : Container(),
+            /*CarouselSlider(
                     items: [
                       // First tab
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                          color: Colors.lightGreenAccent,
-                        ),
+                            borderRadius: BorderRadius.circular(8.0),
+                            color: Colors.white,
+                            border: Border.all(color: Colors.deepPurpleAccent)),
                         child: Center(
                           child: Text(
                             'Free Delivery Above ${cart.freeDeliveryAmount}',
@@ -454,9 +458,9 @@ class _MyHomePageState extends State<MyHomePage>
                       // Second tab
                       Container(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                          color: Colors.lightGreenAccent,
-                        ),
+                            borderRadius: BorderRadius.circular(8.0),
+                            color: Colors.white,
+                            border: Border.all(color: Colors.deepPurpleAccent)),
                         child: Center(
                           child: RichText(
                             text: TextSpan(
@@ -502,6 +506,7 @@ class _MyHomePageState extends State<MyHomePage>
                       viewportFraction: 0.95,
                     ),
                   ),
+                */
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               mainAxisSize: MainAxisSize.max,
@@ -613,6 +618,101 @@ class _MyHomePageState extends State<MyHomePage>
           ],
         ),
       ),
+      /*
+      floatingActionButton: FloatingActionButton.extended(
+        label: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            GestureDetector(
+              onTap: () {
+                // Navigate to Cart
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OrderConfirmed(
+                      newOrder: false,
+                      orderId: orders[selectedOrder - 1].cartId,
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                alignment: Alignment.center,
+                padding: EdgeInsets.symmetric(vertical: 10),
+                width: MediaQuery.of(context).size.width * (0.7),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurpleAccent,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.white),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Circular avatar-like container
+                    Container(
+                      alignment: Alignment.center,
+                      padding: EdgeInsets.all(5),
+                      height: 30, // Diameter of the circle
+                      decoration: BoxDecoration(
+                        color: Colors.white, // White background color
+                        shape: BoxShape.circle, // Makes the container circular
+                      ),
+                      child: Center(
+                        // Optional: Add an icon or text inside the circle here
+                        child: Text(
+                          '$selectedOrder', // Example text, replace with what you need
+                          style: TextStyle(
+                            color: Colors.deepPurpleAccent, // Text color
+                            fontWeight: FontWeight.bold,
+                            fontSize: 18, // Adjust the size as needed
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 10), // Spacing between the circle and text
+                    // Text
+                    Text(
+                      'Order ${orders[selectedOrder - 1].status}',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 19,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Container(
+              height: 50, // Set a fixed height for the ListView
+              width: MediaQuery.of(context).size.width * (0.25),
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: orders.length,
+                itemBuilder: (context, index) {
+                  return InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedOrder = index + 1;
+                      });
+                    },
+                    child: Chip(
+                      label: Text(
+                        '${index + 1}',
+                        style: TextStyle(color: Colors.black),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+        onPressed: () {},
+        backgroundColor: Colors.white,
+      ),
+      */
     );
   }
 
@@ -642,18 +742,7 @@ class _MyHomePageState extends State<MyHomePage>
                 : const EdgeInsets.only(left: 2.5, right: 2.5, bottom: 1),
         padding: const EdgeInsets.only(left: 0, right: 0, bottom: 1),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15.0),
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.white, //lightGreenAccent,
-              Color.fromARGB(255, 248, 242, 255), // Top color of the gradient
-              Color.fromARGB(
-                  255, 249, 229, 255), // Bottom color of the gradient
-            ],
-          ),
-        ),
+            borderRadius: BorderRadius.circular(15.0), color: Colors.white),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -662,7 +751,7 @@ class _MyHomePageState extends State<MyHomePage>
               height: MediaQuery.of(context).size.height * 0.12,
               margin: const EdgeInsets.only(left: 3, right: 3, top: 3),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20.0),
                 border: Border.all(color: Colors.white),
                 boxShadow: const [],

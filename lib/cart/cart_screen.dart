@@ -371,7 +371,7 @@ class _MyCartState extends State<MyCart> {
 
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(
-                                            20.0), // Slightly more rounded
+                                            40.0), // Slightly more rounded
                                       ),
                                       elevation:
                                           5, // Adding some shadow for depth
@@ -393,7 +393,7 @@ class _MyCartState extends State<MyCart> {
                                                       color: Colors.pinkAccent,
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                              20),
+                                                              25),
                                                       boxShadow: const [],
                                                       border: Border.all(
                                                           color: Colors
