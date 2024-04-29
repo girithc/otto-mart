@@ -111,7 +111,7 @@ class _CatalogPageState extends State<CatalogPage> {
                       child: Center(
                         child: Text(
                           'Free Delivery Above ${cart.freeDeliveryAmount}',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.black,
                             fontSize: 14.0,
                             fontWeight: FontWeight.bold,
@@ -127,7 +127,7 @@ class _CatalogPageState extends State<CatalogPage> {
                       ),
                       child: Center(
                         child: RichText(
-                          text: TextSpan(
+                          text: const TextSpan(
                             style: TextStyle(
                               // Default text style
                               color: Colors.black,
@@ -160,7 +160,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     //aspectRatio: 16 / 9,
                     autoPlayCurve: Curves.fastOutSlowIn,
                     enableInfiniteScroll: true,
-                    autoPlayAnimationDuration: Duration(
+                    autoPlayAnimationDuration: const Duration(
                       seconds: 3,
                     ),
                     viewportFraction: 0.95,
@@ -457,7 +457,7 @@ class CategoryItem extends StatelessWidget {
                   )
                 : null, // No gradient when not selected
             borderRadius: const BorderRadius.all(
-              Radius.circular(4.0),
+              Radius.circular(20.0),
             ),
           ),
           child: Column(
@@ -469,10 +469,10 @@ class CategoryItem extends StatelessWidget {
                     vertical: 2),
                 decoration: BoxDecoration(
                     color: Colors
-                        .transparent, //Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
+                        .white, //Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
                     borderRadius: BorderRadius.circular(12.0),
-                    border:
-                        Border.all(color: Color.fromARGB(255, 250, 239, 255))),
+                    border: Border.all(
+                        color: const Color.fromARGB(255, 250, 239, 255))),
                 child: Center(
                     child: categoryImage.isNotEmpty
                         ? categoryImage.contains('.avif')
@@ -525,7 +525,7 @@ class CategoryItem extends StatelessWidget {
                                 },
                               )
                         : Container(
-                            child: Center(
+                            child: const Center(
                                 child: Text(
                               "",
                               style: TextStyle(
@@ -544,7 +544,10 @@ class CategoryItem extends StatelessWidget {
                           fontSize: 13,
                           color: Colors.black,
                           fontWeight: FontWeight.normal)
-                      : const TextStyle(fontSize: 13, color: Colors.black),
+                      : const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w500),
                 ),
               ),
             ],
@@ -654,7 +657,7 @@ class _ListItem2State extends State<ListItem2> {
           children: [
             GestureDetector(
               onTap: () async {
-                final storage = FlutterSecureStorage();
+                const storage = FlutterSecureStorage();
 
                 // Read the cartId from storage
                 String? cartId = await storage.read(key: 'cartId');
@@ -856,8 +859,9 @@ class _ListItem2State extends State<ListItem2> {
                                                           SnackBar(
                                                             content: Text(
                                                                 'Only limited quantity available: ${value.stockQuantity}'),
-                                                            duration: Duration(
-                                                                seconds: 2),
+                                                            duration:
+                                                                const Duration(
+                                                                    seconds: 2),
                                                           ),
                                                         )
                                                       }
@@ -987,7 +991,7 @@ class _ListItem2State extends State<ListItem2> {
                       color: Colors.deepPurpleAccent.withOpacity(0.85),
                       borderRadius: BorderRadius.circular(10.0),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Coming Soon',
                       style: TextStyle(color: Colors.white, fontSize: 12),
                     ),

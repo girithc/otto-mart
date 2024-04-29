@@ -158,7 +158,7 @@ class _MyHomePageState extends State<MyHomePage>
 
           // Add 5 hours and 30 minutes to the parsed time
           DateTime adjustedStoreOpenTime =
-              parsedStoreOpenTime.add(Duration(hours: 5, minutes: 30));
+              parsedStoreOpenTime.add(const Duration(hours: 5, minutes: 30));
 
           // Format the adjusted time part into a verbal format like "9:00 AM"
           storeOpenTime = DateFormat('h:mm a').format(adjustedStoreOpenTime);
@@ -221,7 +221,7 @@ class _MyHomePageState extends State<MyHomePage>
       setState(() {
         orders =
             jsonResponse.map((orderJson) => Order.fromJson(orderJson)).toList();
-        if (orders.length > 0) {
+        if (orders.isNotEmpty) {
           selectedOrder = 1;
         }
       });
@@ -279,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage>
                         ),
 
                         Container(),
-                        SizedBox(
+                        const SizedBox(
                           height: 10,
                         )
                       ],
@@ -360,7 +360,7 @@ class _MyHomePageState extends State<MyHomePage>
                         },
                         child: Container(
                           alignment: Alignment.center,
-                          padding: EdgeInsets.symmetric(vertical: 10),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           width:
                               MediaQuery.of(context).size.width * (0.95 - 0.25),
                           decoration: BoxDecoration(
@@ -374,9 +374,9 @@ class _MyHomePageState extends State<MyHomePage>
                               // Circular avatar-like container
                               Container(
                                 alignment: Alignment.center,
-                                padding: EdgeInsets.all(5),
+                                padding: const EdgeInsets.all(5),
                                 height: 30, // Diameter of the circle
-                                decoration: BoxDecoration(
+                                decoration: const BoxDecoration(
                                   color: Colors.white, // White background color
                                   shape: BoxShape
                                       .circle, // Makes the container circular
@@ -385,7 +385,7 @@ class _MyHomePageState extends State<MyHomePage>
                                   // Optional: Add an icon or text inside the circle here
                                   child: Text(
                                     '$selectedOrder', // Example text, replace with what you need
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       color:
                                           Colors.deepPurpleAccent, // Text color
                                       fontWeight: FontWeight.bold,
@@ -394,13 +394,13 @@ class _MyHomePageState extends State<MyHomePage>
                                   ),
                                 ),
                               ),
-                              SizedBox(
+                              const SizedBox(
                                   width:
                                       10), // Spacing between the circle and text
                               // Text
                               Text(
                                 'Order ${orders[selectedOrder - 1].status}',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 19,
@@ -410,7 +410,7 @@ class _MyHomePageState extends State<MyHomePage>
                           ),
                         ),
                       ),
-                      Container(
+                      SizedBox(
                         height: 50, // Set a fixed height for the ListView
                         width: MediaQuery.of(context).size.width * (0.25),
                         child: ListView.builder(
@@ -426,7 +426,7 @@ class _MyHomePageState extends State<MyHomePage>
                               child: Chip(
                                 label: Text(
                                   '${index + 1}',
-                                  style: TextStyle(color: Colors.black),
+                                  style: const TextStyle(color: Colors.black),
                                 ),
                               ),
                             );
@@ -751,7 +751,8 @@ class _MyHomePageState extends State<MyHomePage>
               height: MediaQuery.of(context).size.height * 0.12,
               margin: const EdgeInsets.only(left: 3, right: 3, top: 3),
               decoration: BoxDecoration(
-                color: Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
+                color: const Color.fromARGB(255, 227, 184, 255).withOpacity(
+                    0.45), // Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20.0),
                 border: Border.all(color: Colors.white),
                 boxShadow: const [],
@@ -859,7 +860,7 @@ class Highlights extends StatelessWidget {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: [
-        SizedBox(
+        const SizedBox(
           height: 15,
         ),
         CarouselSlider(
@@ -910,7 +911,7 @@ class Highlights extends StatelessWidget {
             viewportFraction: 0.95,
           ),
         ),
-        SizedBox(
+        const SizedBox(
           height: 10,
         ),
       ],
@@ -998,7 +999,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: storeOpen
-              ? LinearGradient(
+              ? const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
@@ -1070,7 +1071,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                             !storeOpen
                                 ? Text(
                                     "Closed. Will Open @ $storeOpenTime",
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.bold),
                                   )
@@ -1133,7 +1134,7 @@ class HomeScreenAppBar extends StatelessWidget implements PreferredSizeWidget {
                                       ),
                                     ),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 5,
                                   ),
                                   const Icon(

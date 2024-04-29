@@ -15,6 +15,7 @@ import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
+import 'package:shimmer/shimmer.dart';
 
 class MyCart extends StatefulWidget {
   const MyCart({super.key});
@@ -66,7 +67,7 @@ class _MyCartState extends State<MyCart> {
             content: Center(
               child: Text(
                 errorMessage,
-                style: TextStyle(
+                style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                     color: Colors.black),
@@ -160,42 +161,40 @@ class _MyCartState extends State<MyCart> {
           // Future is complete, you can use the fetched cartId here
           return Scaffold(
             appBar: AppBar(
-              title: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const MyHomePage(
-                        title: 'Otto Mart',
-                      ),
+              actions: <Widget>[
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                    shadowColor: Colors.transparent,
+                    backgroundColor: Colors.pinkAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
-                  );
-                },
-                child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.pinkAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15.0),
-                      ),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MyHomePage(
-                            title: 'Otto Mart',
-                          ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MyHomePage(
+                          title: 'Otto Mart',
                         ),
-                      );
-                    },
-                    child: Text(
-                      'Add More Items +',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16),
-                    )),
-              ),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'add items +',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(
+                  width: 15,
+                )
+              ],
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new),
                 onPressed: () {
@@ -218,11 +217,11 @@ class _MyCartState extends State<MyCart> {
             ),
             body: Container(
               color: const Color.fromARGB(255, 253, 248, 255),
-              child: Column(
+              child: const Column(
                 children: [
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.all(0),
+                      padding: EdgeInsets.all(0),
                       child: CartList(),
                     ),
                   )
@@ -296,137 +295,116 @@ class _MyCartState extends State<MyCart> {
                         ]))
                 : Container(
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 253, 248, 255),
+                      color: Colors.deepPurpleAccent.shade400,
                       borderRadius: BorderRadius.circular(0),
                       boxShadow: const [], // Add border
                     ),
                     padding: EdgeInsets.zero,
                     margin: EdgeInsets.zero,
-                    height: MediaQuery.of(context).size.height * 0.15,
+                    height: MediaQuery.of(context).size.height * 0.1,
                     child: !(cart.isEmpty())
-                        ? Column(
-                            // Align children at the start
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                  padding: const EdgeInsets.only(
-                                      left: 20, right: 20, bottom: 10, top: 2),
-                                  height: MediaQuery.of(context).size.height *
-                                      (0.18 - 0.065),
-                                  child: ElevatedButton(
-                                    onPressed: () async {
-                                      String? cartId =
-                                          await storage.read(key: 'cartId');
+                        ? GestureDetector(
+                            onTap: () async {
+                              String? cartId =
+                                  await storage.read(key: 'cartId');
 
-                                      if (cartId != null) {
-                                        int cartIdInt = int.parse(cartId);
-                                        print("CartID INT: $cartIdInt");
-                                        final success =
-                                            await checkoutLockItems(cartIdInt);
-                                        if (success != null) {
-                                          if (success.lock) {
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    PaymentsPage(
-                                                  sign: success!.sign,
-                                                  merchantTransactionID: success
-                                                      .merchantTransactionID,
-                                                  amount: cart.totalPrice,
-                                                ),
-                                              ),
-                                            );
-                                          }
-                                          // If the checkout lock is successful, navigate to the PaymentsPage
-                                        }
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                                'Error: Cart Id Not Found'),
-                                            backgroundColor: Colors.redAccent,
-                                          ),
-                                        );
-                                      }
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      surfaceTintColor: Colors.white,
-                                      foregroundColor: Colors.black,
-                                      shadowColor:
-                                          Colors.white.withOpacity(0.8),
-
-                                      textStyle: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge!
-                                          .copyWith(
-                                            fontWeight: FontWeight
-                                                .bold, // Making the font bold
-                                          ),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 8, vertical: 2),
-
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(
-                                            40.0), // Slightly more rounded
+                              if (cartId != null) {
+                                int cartIdInt = int.parse(cartId);
+                                print("CartID INT: $cartIdInt");
+                                final success =
+                                    await checkoutLockItems(cartIdInt);
+                                if (success != null) {
+                                  if (success.lock) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => PaymentsPage(
+                                          sign: success.sign,
+                                          merchantTransactionID:
+                                              success.merchantTransactionID,
+                                          amount: cart.totalPrice,
+                                        ),
                                       ),
-                                      elevation:
-                                          5, // Adding some shadow for depth
-                                      side: const BorderSide(
-                                          color: Colors.white,
-                                          width:
-                                              1), // Border for a more defined look
+                                    );
+                                  }
+                                  // If the checkout lock is successful, navigate to the PaymentsPage
+                                }
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Error: Cart Id Not Found'),
+                                    backgroundColor: Colors.redAccent,
+                                  ),
+                                );
+                              }
+                            },
+                            child: Container(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal:
+                                      MediaQuery.of(context).size.width * 0.05),
+                              child: Center(
+                                  child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceEvenly,
+                                children: [
+                                  Shimmer.fromColors(
+                                    baseColor: Colors.white,
+                                    highlightColor: const Color.fromARGB(
+                                        255, 223, 177, 255),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 15),
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(25),
+                                        boxShadow: const [],
+                                        border: Border.all(
+                                            color: Colors.transparent,
+                                            width: 1.0),
+                                      ),
+                                      child: const Text(
+                                        'Complete Payment',
+                                        style: TextStyle(
+                                            fontSize: 24,
+                                            color: Colors.white,
+                                            fontStyle: FontStyle.normal,
+                                            fontWeight: FontWeight.bold),
+                                      ), // Consistent text size
                                     ),
-                                    child: Center(
-                                        child: !(cart.isEmpty())
-                                            ? Row(
-                                                children: [
-                                                  Container(
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        horizontal: 30,
-                                                        vertical: 15),
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.pinkAccent,
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              25),
-                                                      boxShadow: const [],
-                                                      border: Border.all(
-                                                          color: Colors
-                                                              .transparent,
-                                                          width: 1.0),
-                                                    ),
-                                                    child: Text(
-                                                      'Complete Payment',
-                                                      style: TextStyle(
-                                                          fontSize: 22,
-                                                          color: Colors.white),
-                                                    ), // Consistent text size
-                                                  ),
-                                                  const SizedBox(
-                                                    width: 5,
-                                                  ),
-                                                  Center(
-                                                    child: Text(
-                                                      '\u{20B9}${cart.totalPrice}',
-                                                      style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.normal,
-                                                          color: Colors.black),
-                                                    ),
-                                                  )
-                                                ],
-                                              )
-                                            : Container(
-                                                color: Colors.white,
-                                              )),
-                                  )),
-                            ],
+                                  ),
+                                  const SizedBox(
+                                    width: 2.5,
+                                  ),
+                                  Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10, vertical: 5),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(
+                                            15), // Rounded corners
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            spreadRadius: 1,
+                                            blurRadius: 1,
+                                            offset: const Offset(0,
+                                                1), // Changes position of shadow
+                                          ),
+                                        ],
+                                        border: Border.all(
+                                            color: Colors.white, width: 2.0),
+                                      ),
+                                      child: Shimmer.fromColors(
+                                        baseColor: Colors.black,
+                                        highlightColor: Colors.deepPurpleAccent,
+                                        child: Text(
+                                          '\u{20B9}${cart.totalPrice}',
+                                          style: const TextStyle(
+                                              color: Colors.black),
+                                        ),
+                                      )),
+                                ],
+                              )),
+                            ),
                           )
                         : Container()),
 
@@ -465,7 +443,7 @@ class _MyCartState extends State<MyCart> {
 }
 
 class CartList extends StatefulWidget {
-  CartList({super.key});
+  const CartList({super.key});
 
   @override
   State<CartList> createState() => CartListState();
@@ -482,9 +460,9 @@ class CartListState extends State<CartList> {
 
   void getSlots() async {
     final networkService = NetworkService();
-    final _storage = FlutterSecureStorage();
-    final cartId = await _storage.read(key: 'cartId');
-    final customerId = await _storage.read(key: 'customerId');
+    const storage = FlutterSecureStorage();
+    final cartId = await storage.read(key: 'cartId');
+    final customerId = await storage.read(key: 'customerId');
 
     Map<String, dynamic> body = {
       "cart_id": int.parse(cartId!),
@@ -507,9 +485,9 @@ class CartListState extends State<CartList> {
 
   void assignSlot(int slotId) async {
     final networkService = NetworkService();
-    final _storage = FlutterSecureStorage();
-    final cartId = await _storage.read(key: 'cartId');
-    final customerId = await _storage.read(key: 'customerId');
+    const storage = FlutterSecureStorage();
+    final cartId = await storage.read(key: 'cartId');
+    final customerId = await storage.read(key: 'customerId');
 
     Map<String, dynamic> body = {
       "cart_id": int.parse(cartId!),
@@ -588,14 +566,7 @@ class CartListState extends State<CartList> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(15), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 1,
-                      offset: const Offset(0, 1), // Changes position of shadow
-                    ),
-                  ],
+                  boxShadow: const [],
                 ),
                 child: Column(
                   children: [
@@ -603,11 +574,11 @@ class CartListState extends State<CartList> {
                       Container(
                         //padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
                         margin: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 10),
+                            vertical: 5, horizontal: 5),
                         child: Row(
                           children: [
                             Expanded(
-                              flex: 4,
+                              flex: 3,
                               child: Container(
                                 decoration: const BoxDecoration(
                                     // Add border
@@ -638,8 +609,11 @@ class CartListState extends State<CartList> {
                                 ),
                               ),
                             ),
+                            const SizedBox(
+                              width: 2.5,
+                            ),
                             Expanded(
-                              flex: 6,
+                              flex: 7,
                               child: Container(
                                 decoration: const BoxDecoration(
                                     //border: Border.all( color: Colors.black), // Add border
@@ -647,6 +621,30 @@ class CartListState extends State<CartList> {
                                 child: Text(
                                   item.productName,
                                   style: itemNameStyle,
+                                  textAlign: TextAlign.start,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 2.5,
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                    // Add border
+                                    ),
+                                child: Center(
+                                  child: Text(
+                                      "\u{20B9}${item.soldPrice * item.quantity}", // Replace with your price calculation
+                                      style: itemNameStyle
+                                      /*
+                                        const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.normal,
+                                        ),
+                                        */
+                                      ),
                                 ),
                               ),
                             ),
@@ -654,9 +652,10 @@ class CartListState extends State<CartList> {
                               flex: 4,
                               child: Container(
                                   decoration: BoxDecoration(
-                                      color:
-                                          Colors.deepPurpleAccent, // Add border
-                                      borderRadius: BorderRadius.circular(8.0)),
+                                    color:
+                                        Colors.deepPurpleAccent, // Add border
+                                    borderRadius: BorderRadius.circular(20.0),
+                                  ),
                                   height:
                                       MediaQuery.of(context).size.height * 0.04,
                                   child: Center(
@@ -702,26 +701,6 @@ class CartListState extends State<CartList> {
                                     ),
                                   )),
                             ),
-                            Expanded(
-                              flex: 3,
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                    // Add border
-                                    ),
-                                child: Center(
-                                  child: Text(
-                                      "\u{20B9}${item.soldPrice * item.quantity}", // Replace with your price calculation
-                                      style: itemNameStyle
-                                      /*
-                                        const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                        */
-                                      ),
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ),
@@ -729,10 +708,10 @@ class CartListState extends State<CartList> {
                 ),
               ),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 10),
               const TotalAmountSaved(),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 10),
               /*
               const _DeliveryPartnerTip(),
               */
@@ -749,18 +728,18 @@ class CartListState extends State<CartList> {
                             borderRadius: BorderRadius.circular(
                                 12.0)), // Rounded corners for the dialog
                         child: Container(
-                          padding: EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(16.0),
                           child: Column(
                             mainAxisSize: MainAxisSize
                                 .min, // To make the dialog wrap its content
                             children: <Widget>[
-                              Text(
+                              const Text(
                                 'Select Time',
                                 style: TextStyle(
                                     fontSize: 24.0,
                                     fontWeight: FontWeight.normal),
                               ),
-                              SizedBox(
+                              const SizedBox(
                                 height: 10,
                               ),
 
@@ -770,10 +749,8 @@ class CartListState extends State<CartList> {
                               if (cartSlotDetails != null)
                                 ...cartSlotDetails!.availableSlots.map((slot) {
                                   // Format the slot times for display
-                                  String slotTime = DateFormat('h:mm a')
-                                          .format(slot.startTime) +
-                                      ' - ' +
-                                      DateFormat('h:mm a').format(slot.endTime);
+                                  String slotTime =
+                                      '${DateFormat('h:mm a').format(slot.startTime)} - ${DateFormat('h:mm a').format(slot.endTime)}';
 
                                   return GestureDetector(
                                     onTap: () {
@@ -784,10 +761,10 @@ class CartListState extends State<CartList> {
                                     },
                                     child: Container(
                                       alignment: Alignment.centerLeft,
-                                      margin: EdgeInsets.symmetric(
+                                      margin: const EdgeInsets.symmetric(
                                           horizontal: 5, vertical: 10),
-                                      padding:
-                                          EdgeInsets.symmetric(horizontal: 15),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 15),
                                       height:
                                           MediaQuery.of(context).size.height *
                                               0.065,
@@ -817,13 +794,14 @@ class CartListState extends State<CartList> {
                                             MainAxisAlignment.spaceBetween,
                                         children: [
                                           Text(slotTime,
-                                              style: TextStyle(fontSize: 14)),
+                                              style: const TextStyle(
+                                                  fontSize: 14)),
                                           Text(
                                               slot.available
                                                   ? "available"
                                                   : "slots\n booked",
                                               textAlign: TextAlign.center,
-                                              style: TextStyle(
+                                              style: const TextStyle(
                                                   fontSize:
                                                       14)) // You might want to change this based on slot availability
                                         ],
@@ -839,40 +817,33 @@ class CartListState extends State<CartList> {
                   );
                 },
                 child: cartSlotDetails == null
-                    ? Center(
+                    ? const Center(
                         child: LinearProgressIndicator(),
                       )
                     : cartSlotDetails!.chosenSlot == null
                         ? Container(
                             height: 55,
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.greenAccent.shade200,
-                                  Colors.greenAccent
-                                ],
-                              ),
+                              color: Colors.white,
                               borderRadius:
                                   BorderRadius.circular(10), // Rounded corners
-                              boxShadow: [
+                              boxShadow: const [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
+                                  color: Colors.greenAccent,
                                   spreadRadius: 1,
                                   blurRadius: 1,
-                                  offset: const Offset(0, 1), // Shadow position
+                                  offset: Offset(0, 2), // Shadow position
                                 ),
                               ],
                               //border: Border.all(color: Colors.white, width: 2.0),
                             ),
                             padding: const EdgeInsets.symmetric(horizontal: 15),
                             margin: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Row(
+                            child: const Row(
                               mainAxisAlignment: MainAxisAlignment.start,
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                const SizedBox(
+                                SizedBox(
                                   width: 13,
                                 ),
                                 Text(
@@ -890,24 +861,14 @@ class CartListState extends State<CartList> {
                             height: 55,
                             decoration: BoxDecoration(
                               gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                stops: [0.7, 0.72],
-                                colors: [Colors.white, Colors.white],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                stops: [0.7, 0.70],
+                                colors: [Colors.white, Colors.deepPurpleAccent],
                               ),
                               borderRadius:
                                   BorderRadius.circular(10), // Rounded corners
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  spreadRadius: 1,
-                                  blurRadius: 1,
-                                  offset: const Offset(
-                                      0, 1), // Changes position of shadow
-                                ),
-                              ],
-                              border: Border.all(
-                                  color: Colors.lightGreenAccent, width: 2),
+                              boxShadow: const [],
                             ),
                             padding: const EdgeInsets.only(left: 25, right: 15),
                             margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -915,18 +876,13 @@ class CartListState extends State<CartList> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                    DateFormat('h:mm a').format(cartSlotDetails!
-                                            .chosenSlot!.startTime) +
-                                        ' - ' +
-                                        DateFormat('h:mm a').format(
-                                            cartSlotDetails!
-                                                .chosenSlot!.endTime),
-                                    style: TextStyle(fontSize: 14)),
+                                    '${DateFormat('h:mm a').format(cartSlotDetails!.chosenSlot!.startTime)} - ${DateFormat('h:mm a').format(cartSlotDetails!.chosenSlot!.endTime)}',
+                                    style: const TextStyle(fontSize: 14)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 5),
                                   decoration: BoxDecoration(
-                                    color: Colors.lightGreenAccent,
+                                    color: Colors.white,
                                     borderRadius: BorderRadius.circular(
                                         15), // Rounded corners
                                     boxShadow: [
@@ -954,69 +910,7 @@ class CartListState extends State<CartList> {
                             ),
                           ),
               ),
-              const SizedBox(height: 15),
-              Container(
-                height: 110, // Container height
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(10), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
-                      spreadRadius: 1,
-                      blurRadius: 1,
-                      offset: const Offset(0, 1), // Shadow position
-                    ),
-                  ],
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                margin: const EdgeInsets.symmetric(horizontal: 10),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const SizedBox(
-                          width: 13,
-                        ),
-                        Text(
-                          'Promo Code  ',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                        Icon(Icons.payments_outlined)
-                      ],
-                    ),
-                    SizedBox(
-                      height: 10,
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 13),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                          fillColor: Colors.lightGreenAccent.withOpacity(
-                              0.6), // Background color of the text field
-                          filled: true,
-                          hintText: 'Enter Code',
-
-                          prefixIcon: Icon(Icons
-                              .subdirectory_arrow_right_rounded), // Add an icon to the hint text
-                          border: OutlineInputBorder(
-                            borderRadius:
-                                BorderRadius.circular(10), // Rounded borders
-                            borderSide: BorderSide.none, // No border side
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 2.5),
 
               cartSlotDetails != null
                   ? cartSlotDetails!.chosenSlot != null
@@ -1033,18 +927,18 @@ class CartListState extends State<CartList> {
                                       borderRadius: BorderRadius.circular(
                                           12.0)), // Rounded corners for the dialog
                                   child: Container(
-                                    padding: EdgeInsets.all(16.0),
+                                    padding: const EdgeInsets.all(16.0),
                                     child: Column(
                                       mainAxisSize: MainAxisSize
                                           .min, // To make the dialog wrap its content
                                       children: <Widget>[
-                                        Text(
+                                        const Text(
                                           'Select Time',
                                           style: TextStyle(
                                               fontSize: 24.0,
                                               fontWeight: FontWeight.normal),
                                         ),
-                                        SizedBox(
+                                        const SizedBox(
                                           height: 10,
                                         ),
 
@@ -1056,11 +950,7 @@ class CartListState extends State<CartList> {
                                               .map((slot) {
                                             // Format the slot times for display
                                             String slotTime =
-                                                DateFormat('h:mm a').format(
-                                                        slot.startTime) +
-                                                    ' - ' +
-                                                    DateFormat('h:mm a')
-                                                        .format(slot.endTime);
+                                                '${DateFormat('h:mm a').format(slot.startTime)} - ${DateFormat('h:mm a').format(slot.endTime)}';
 
                                             return GestureDetector(
                                               onTap: () {
@@ -1071,11 +961,13 @@ class CartListState extends State<CartList> {
                                               },
                                               child: Container(
                                                 alignment: Alignment.centerLeft,
-                                                margin: EdgeInsets.symmetric(
-                                                    horizontal: 5,
-                                                    vertical: 10),
-                                                padding: EdgeInsets.symmetric(
-                                                    horizontal: 15),
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 5,
+                                                        vertical: 10),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                        horizontal: 15),
                                                 height: MediaQuery.of(context)
                                                         .size
                                                         .height *
@@ -1111,7 +1003,7 @@ class CartListState extends State<CartList> {
                                                           .spaceBetween,
                                                   children: [
                                                     Text(slotTime,
-                                                        style: TextStyle(
+                                                        style: const TextStyle(
                                                             fontSize: 14)),
                                                     Text(
                                                         slot.available
@@ -1119,7 +1011,7 @@ class CartListState extends State<CartList> {
                                                             : "slots\n booked",
                                                         textAlign:
                                                             TextAlign.center,
-                                                        style: TextStyle(
+                                                        style: const TextStyle(
                                                             fontSize:
                                                                 14)) // You might want to change this based on slot availability
                                                   ],
@@ -1138,37 +1030,105 @@ class CartListState extends State<CartList> {
                             height: 35,
                             alignment: Alignment.centerLeft,
                             decoration: BoxDecoration(
-                                color: Colors.lightGreenAccent,
-                                borderRadius: BorderRadius.circular(
-                                    10), // Rounded corners
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    spreadRadius: 1,
-                                    blurRadius: 1,
-                                    offset: const Offset(
-                                        0, 1), // Changes position of shadow
-                                  ),
-                                ],
-                                border:
-                                    Border.all(color: Colors.white, width: 2)),
-                            margin: EdgeInsets.only(
+                              color: Colors.deepPurpleAccent,
+                              borderRadius:
+                                  BorderRadius.circular(10), // Rounded corners
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  spreadRadius: 1,
+                                  blurRadius: 1,
+                                  offset: const Offset(
+                                      0, 1), // Changes position of shadow
+                                ),
+                              ],
+                            ),
+                            margin: const EdgeInsets.only(
                               left: 10,
                               right: 10,
                             ),
-                            padding:
-                                EdgeInsets.only(left: 25, top: 5, bottom: 5),
+                            padding: const EdgeInsets.only(
+                                left: 25, top: 5, bottom: 5),
                             //margin: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Text(
+                            child: const Text(
                               'Change Time Slot',
-                              style: TextStyle(fontSize: 14),
+                              style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold),
                             ),
                           ),
                         )
                       : Container()
                   : Container(),
-              const SizedBox(height: 15),
+              const SizedBox(height: 10),
+              Container(
+                height: 110, // Container height
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10), // Rounded corners
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.deepPurpleAccent.shade700,
+                      spreadRadius: 1,
+                      blurRadius: 1,
+                      offset: const Offset(0, 2), // Shadow position
+                    ),
+                  ],
+                ),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                margin: const EdgeInsets.symmetric(horizontal: 10),
+                child: Column(
+                  children: [
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 13,
+                        ),
+                        Text(
+                          'Promo Code  ',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Icon(Icons.payments_outlined)
+                      ],
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 13),
+                      decoration: const BoxDecoration(),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          contentPadding:
+                              const EdgeInsets.symmetric(horizontal: 10),
+                          fillColor: Colors.grey
+                              .shade100, // Background color of the text field
+                          filled: true,
+                          hintText: 'Enter Code',
 
+                          prefixIcon: const Icon(Icons
+                              .subdirectory_arrow_right_rounded), // Add an icon to the hint text
+                          border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(10), // Rounded borders
+                            borderSide: BorderSide.none, // No border side
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 15,
+              ),
               _TaxAndDelivery(), // Add a separator
             ],
           ),
@@ -1187,14 +1147,7 @@ class _TaxAndDelivery extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15), // Rounded corners
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: const Offset(0, 1), // Changes position of shadow
-          ),
-        ],
+        boxShadow: const [],
         border: Border.all(color: Colors.white, width: 2.0),
       ),
       child: Padding(
@@ -1216,25 +1169,28 @@ class _TaxAndDelivery extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.shopping_bag_outlined, size: 20),
+                            const Icon(Icons.shopping_bag_outlined, size: 20),
                             const SizedBox(width: 10),
-                            Text(
+                            const Text(
                               "Small Order Fee ",
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(fontSize: 12),
                             ),
-                            Text(
+                            const Text(
                               "45", // Added a space for visual separation
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 decoration: TextDecoration
                                     .lineThrough, // This adds the line through effect
                               ),
                             ),
+                            const SizedBox(
+                              width: 5,
+                            ),
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.lightGreenAccent,
+                                color: Colors.pinkAccent,
                                 borderRadius: BorderRadius.circular(
                                     15), // Rounded corners
                                 boxShadow: [
@@ -1246,12 +1202,12 @@ class _TaxAndDelivery extends StatelessWidget {
                                         0, 1), // Changes position of shadow
                                   ),
                                 ],
-                                border:
-                                    Border.all(color: Colors.white, width: 2.0),
                               ),
                               child: Text(
                                 "0 above ${cart.freeDeliveryAmount}", // Added a space for visual separation
                                 style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
                                   fontSize:
                                       12, // This adds the line through effect
                                 ),
@@ -1278,26 +1234,29 @@ class _TaxAndDelivery extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.electric_bike_outlined, size: 20),
+                      const Icon(Icons.electric_bike_outlined, size: 20),
                       const SizedBox(width: 10),
-                      Text(
+                      const Text(
                         "Delivery Fee ",
-                        style: const TextStyle(fontSize: 12),
+                        style: TextStyle(fontSize: 12),
                       ),
-                      Text(
+                      const Text(
                         "45", // Added a space for visual separation
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           decoration: TextDecoration
                               .lineThrough, // This adds the line through effect
                         ),
+                      ),
+                      const SizedBox(
+                        width: 5,
                       ),
                       cart.deliveryFee > 0
                           ? Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.lightGreenAccent,
+                                color: Colors.pinkAccent,
                                 borderRadius: BorderRadius.circular(
                                     15), // Rounded corners
                                 boxShadow: [
@@ -1309,18 +1268,18 @@ class _TaxAndDelivery extends StatelessWidget {
                                         0, 1), // Changes position of shadow
                                   ),
                                 ],
-                                border:
-                                    Border.all(color: Colors.white, width: 2.0),
                               ),
                               child: Text(
                                 "0 above ${cart.freeDeliveryAmount}",
                                 style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                   fontSize:
                                       12, // This adds the line through effect
                                 ),
                               ),
                             )
-                          : SizedBox.shrink(),
+                          : const SizedBox.shrink(),
                     ],
                   ),
                   Container(
@@ -1340,17 +1299,17 @@ class _TaxAndDelivery extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
+                        const Row(
                           children: [
                             Icon(Icons.store_mall_directory_outlined, size: 20),
-                            const SizedBox(width: 10),
+                            SizedBox(width: 10),
                             Text(
                               "Platform Fee ",
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(fontSize: 12),
                             ),
                             Text(
                               "10", // Added a space for visual separation
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
                                 decoration: TextDecoration
                                     .lineThrough, // This adds the line through effect
@@ -1412,14 +1371,7 @@ class TotalAmountSaved extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         //border: Border.all(color: Colors.lightGreenAccent, width: 2), // Rounded corners
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 1,
-            offset: const Offset(0, 1), // Changes position of shadow
-          ),
-        ],
+        boxShadow: const [],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 15),
       margin: const EdgeInsets.symmetric(horizontal: 10),
@@ -1430,8 +1382,8 @@ class TotalAmountSaved extends StatelessWidget {
           const SizedBox(
             width: 10,
           ),
-          Text('Total Saved',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
+          const Text('Total Saved',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w400)),
           const SizedBox(
             width: 33,
           ),
