@@ -105,9 +105,15 @@ class _CatalogPageState extends State<CatalogPage> {
                     // First tab
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        color: Colors.lightGreenAccent,
-                      ),
+                          borderRadius: BorderRadius.circular(8.0),
+                          color: Colors.white,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.grey,
+                              spreadRadius: 1,
+                              blurRadius: 1,
+                            )
+                          ]),
                       child: Center(
                         child: Text(
                           'Free Delivery Above ${cart.freeDeliveryAmount}',
@@ -122,9 +128,15 @@ class _CatalogPageState extends State<CatalogPage> {
                     // Second tab
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8.0),
-                        color: Colors.lightGreenAccent,
-                      ),
+                          borderRadius: BorderRadius.circular(8.0),
+                          color: Colors.white,
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.grey,
+                              spreadRadius: 1,
+                              blurRadius: 1,
+                            )
+                          ]),
                       child: Center(
                         child: RichText(
                           text: const TextSpan(
@@ -163,7 +175,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     autoPlayAnimationDuration: const Duration(
                       seconds: 3,
                     ),
-                    viewportFraction: 0.95,
+                    viewportFraction: 0.90,
                   ),
                 ),
               ),
@@ -957,15 +969,15 @@ class _ListItem2State extends State<ListItem2> {
                     left: 0, // Adjust the position as needed
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 5, vertical: 2.5),
+                          horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: Colors.deepPurpleAccent,
-                        borderRadius: BorderRadius.circular(10.0),
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(5.0),
                       ),
                       child: Text(
                         '\u{20B9}${widget.discount} OFF',
                         style: const TextStyle(
-                          color: Colors.white,
+                          color: Colors.pinkAccent,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -1012,7 +1024,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(65); // Increased height to accommodate content
+      const Size.fromHeight(40); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {
@@ -1021,12 +1033,14 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
       color: Colors.white,
       shadowColor: Colors.white,
       child: Container(
-        padding: const EdgeInsets.only(top: 1),
-        margin: const EdgeInsets.all(0),
+        padding: const EdgeInsets.only(
+          top: 1,
+        ),
+        margin: const EdgeInsets.only(top: 55),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment:
-              CrossAxisAlignment.end, // Aligns children to the edges
+              CrossAxisAlignment.center, // Aligns children to the edges
           children: [
             Container(
               decoration: BoxDecoration(
@@ -1047,8 +1061,6 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
             Container(
-              alignment: Alignment.bottomCenter,
-              padding: const EdgeInsets.only(bottom: 10, top: 10),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: Colors.white,

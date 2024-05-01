@@ -138,7 +138,7 @@ class _ProductState extends State<Product> {
                                 ),
                               ),
                               Container(
-                                padding: EdgeInsets.symmetric(
+                                padding: const EdgeInsets.symmetric(
                                     horizontal: 8.0, vertical: 4.0),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -261,7 +261,7 @@ class _ProductState extends State<Product> {
                       widget.brand,
                       style: const TextStyle(
                           fontSize: 14,
-                          color: Colors.deepPurple,
+                          color: Colors.pinkAccent,
                           fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -305,17 +305,17 @@ class _ProductState extends State<Product> {
                                     horizontal: 4.0, vertical: 3.0),
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(5),
-                                  color: Colors.deepPurpleAccent,
+                                  color: Colors.white,
                                 ),
                                 child: Text(
                                   '\u{20B9}${widget.discount} OFF',
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.white,
+                                      color: Colors.pinkAccent,
                                       fontSize: 15),
                                 ),
                               )
-                            : SizedBox.shrink(),
+                            : const SizedBox.shrink(),
                       ],
                     ),
                   ),
@@ -452,7 +452,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(4.0),
+                    borderRadius: BorderRadius.circular(8.0),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.deepPurpleAccent,
