@@ -313,7 +313,7 @@ class _MyHomePageState extends State<MyHomePage>
       bottomNavigationBar: Container(
         height: orders.isNotEmpty
             ? MediaQuery.of(context).size.height * 0.175
-            : MediaQuery.of(context).size.height * 0.09,
+            : MediaQuery.of(context).size.height * 0.1,
         padding: EdgeInsets.only(
             bottom: orders.isNotEmpty
                 ? MediaQuery.of(context).size.height * 0.012

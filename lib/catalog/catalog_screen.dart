@@ -1023,8 +1023,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CatalogAppBar({required this.categoryName, Key? key}) : super(key: key);
 
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(40); // Increased height to accommodate content
+  Size get preferredSize => const Size.fromHeight(65);
 
   @override
   Widget build(BuildContext context) {
@@ -1036,7 +1035,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
         padding: const EdgeInsets.only(
           top: 1,
         ),
-        margin: const EdgeInsets.only(top: 55),
+        margin: const EdgeInsets.only(top: 30),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment:
