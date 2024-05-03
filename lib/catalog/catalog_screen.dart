@@ -109,7 +109,7 @@ class _CatalogPageState extends State<CatalogPage> {
                           color: Colors.white,
                           boxShadow: const [
                             BoxShadow(
-                              color: Colors.grey,
+                              color: Colors.deepPurpleAccent,
                               spreadRadius: 1,
                               blurRadius: 1,
                             )
@@ -132,7 +132,7 @@ class _CatalogPageState extends State<CatalogPage> {
                           color: Colors.white,
                           boxShadow: const [
                             BoxShadow(
-                              color: Colors.grey,
+                              color: Colors.deepPurpleAccent,
                               spreadRadius: 1,
                               blurRadius: 1,
                             )
@@ -204,7 +204,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pinkAccent,
+                    backgroundColor: Colors.deepPurpleAccent,
                     foregroundColor: Colors.white,
                     textStyle: const TextStyle(
                       fontSize: 20,
@@ -288,7 +288,7 @@ class _ListOfItemsState extends State<ListOfItems> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.center,
-          colors: [Colors.white, Color.fromARGB(255, 248, 219, 253)],
+          colors: [Colors.white, Color.fromARGB(255, 222, 180, 255)],
         ),
       ),
       child: Row(
@@ -462,8 +462,8 @@ class CategoryItem extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.pinkAccent.shade100.withOpacity(0.4),
-                      Colors.pinkAccent.shade100.withOpacity(0.15),
+                      Colors.deepPurpleAccent.shade100.withOpacity(0.4),
+                      Colors.deepPurpleAccent.shade100.withOpacity(0.15),
                     ],
                     stops: const [0.1, 1.0],
                   )
@@ -817,7 +817,8 @@ class _ListItem2State extends State<ListItem2> {
                                   margin: const EdgeInsets.symmetric(
                                       horizontal: 2, vertical: 2),
                                   decoration: BoxDecoration(
-                                      color: Colors.pinkAccent, // Add border
+                                      color:
+                                          Colors.deepPurpleAccent, // Add border
                                       borderRadius:
                                           BorderRadius.circular(10.0)),
                                   child: Row(
@@ -969,7 +970,7 @@ class _ListItem2State extends State<ListItem2> {
                     left: 0, // Adjust the position as needed
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                          horizontal: 5, vertical: 5),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(5.0),
@@ -1052,7 +1053,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: IconButton(
                 icon: const Icon(
                   Icons.arrow_back_ios_outlined,
-                  color: Colors.black,
+                  color: Colors.deepPurpleAccent,
                 ),
                 onPressed: () {
                   Navigator.pop(context);
@@ -1092,7 +1093,7 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
                   scale: 1.7, // Adjust the scale factor as needed
                   child: const Icon(
                     Icons.search_outlined,
-                    color: Colors.black,
+                    color: Colors.deepPurpleAccent,
                   ),
                 ),
                 onPressed: () async {

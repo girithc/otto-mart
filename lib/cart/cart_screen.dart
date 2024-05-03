@@ -167,10 +167,11 @@ class _MyCartState extends State<MyCart> {
                   style: ElevatedButton.styleFrom(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    shadowColor: Colors.transparent,
-                    backgroundColor: Colors.pinkAccent,
+                    shadowColor: Colors.grey,
+                    backgroundColor: Colors.white,
+                    surfaceTintColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20.0),
+                      borderRadius: BorderRadius.circular(10.0),
                     ),
                   ),
                   onPressed: () {
@@ -186,7 +187,7 @@ class _MyCartState extends State<MyCart> {
                   child: const Text(
                     'add items +',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Colors.pinkAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -1232,10 +1233,9 @@ class _TaxAndDelivery extends StatelessWidget {
         child: Column(
           children: [
             _CustomListItem(
-              icon: Icons.done_all_outlined,
               label: 'Item Total',
               amount: '${cart.totalPriceItems}',
-              font: const TextStyle(fontSize: 14),
+              font: const TextStyle(fontSize: 12),
             ),
             cart.smallOrderFee > 0
                 ? Padding(
@@ -1246,19 +1246,9 @@ class _TaxAndDelivery extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.shopping_bag_outlined, size: 20),
-                            const SizedBox(width: 10),
                             const Text(
                               "Small Order Fee ",
                               style: TextStyle(fontSize: 12),
-                            ),
-                            const Text(
-                              "45", // Added a space for visual separation
-                              style: TextStyle(
-                                fontSize: 12,
-                                decoration: TextDecoration
-                                    .lineThrough, // This adds the line through effect
-                              ),
                             ),
                             const SizedBox(
                               width: 5,
@@ -1267,9 +1257,9 @@ class _TaxAndDelivery extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.pinkAccent,
+                                color: Colors.white,
                                 borderRadius: BorderRadius.circular(
-                                    15), // Rounded corners
+                                    10), // Rounded corners
                                 boxShadow: [
                                   BoxShadow(
                                     color: Colors.grey.withOpacity(0.2),
@@ -1283,7 +1273,7 @@ class _TaxAndDelivery extends StatelessWidget {
                               child: Text(
                                 "0 above ${cart.freeDeliveryAmount}", // Added a space for visual separation
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: Colors.pinkAccent,
                                   fontWeight: FontWeight.bold,
                                   fontSize:
                                       12, // This adds the line through effect
@@ -1311,19 +1301,9 @@ class _TaxAndDelivery extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.electric_bike_outlined, size: 20),
-                      const SizedBox(width: 10),
                       const Text(
                         "Delivery Fee ",
                         style: TextStyle(fontSize: 12),
-                      ),
-                      const Text(
-                        "45", // Added a space for visual separation
-                        style: TextStyle(
-                          fontSize: 12,
-                          decoration: TextDecoration
-                              .lineThrough, // This adds the line through effect
-                        ),
                       ),
                       const SizedBox(
                         width: 5,
@@ -1333,7 +1313,8 @@ class _TaxAndDelivery extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 5, vertical: 2),
                               decoration: BoxDecoration(
-                                color: Colors.pinkAccent,
+                                color: Colors.white,
+
                                 borderRadius: BorderRadius.circular(
                                     15), // Rounded corners
                                 boxShadow: [
@@ -1350,7 +1331,7 @@ class _TaxAndDelivery extends StatelessWidget {
                                 "0 above ${cart.freeDeliveryAmount}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: Colors.pinkAccent,
                                   fontSize:
                                       12, // This adds the line through effect
                                 ),
@@ -1378,19 +1359,9 @@ class _TaxAndDelivery extends StatelessWidget {
                       children: [
                         const Row(
                           children: [
-                            Icon(Icons.store_mall_directory_outlined, size: 20),
-                            SizedBox(width: 10),
                             Text(
                               "Platform Fee ",
                               style: TextStyle(fontSize: 12),
-                            ),
-                            Text(
-                              "10", // Added a space for visual separation
-                              style: TextStyle(
-                                fontSize: 12,
-                                decoration: TextDecoration
-                                    .lineThrough, // This adds the line through effect
-                              ),
                             ),
                           ],
                         ),
@@ -1408,7 +1379,6 @@ class _TaxAndDelivery extends StatelessWidget {
                 : Container(),
             cart.packagingFee > 0
                 ? _CustomListItem(
-                    icon: Icons.shopping_bag_outlined,
                     label: 'Packaging Fee',
                     amount: '${cart.packagingFee}',
                     font: const TextStyle(fontSize: 14),
@@ -1416,7 +1386,6 @@ class _TaxAndDelivery extends StatelessWidget {
                 : Container(),
             cart.deliveryPartnerTip > 0
                 ? _CustomListItem(
-                    icon: Icons.volunteer_activism_outlined,
                     label: 'Delivery Partner Tip',
                     amount: '${cart.deliveryPartnerTip}',
                     font: const TextStyle(fontSize: 14),
@@ -1424,7 +1393,6 @@ class _TaxAndDelivery extends StatelessWidget {
                 : Container(),
             const Divider(),
             _CustomListItem(
-              icon: Icons.payments,
               label: 'To Pay',
               amount: '\u{20B9}${cart.totalPrice}',
               font: Theme.of(context).textTheme.titleMedium,
@@ -1612,13 +1580,11 @@ class _DeliveryPartnerTipState extends State<_DeliveryPartnerTip> {
 }
 
 class _CustomListItem extends StatelessWidget {
-  final IconData icon;
   final String label;
   final String amount;
   final TextStyle? font;
 
   const _CustomListItem({
-    required this.icon,
     required this.label,
     required this.amount,
     this.font,
@@ -1633,8 +1599,6 @@ class _CustomListItem extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 20),
-              const SizedBox(width: 10),
               Text(
                 label,
                 style: font,
