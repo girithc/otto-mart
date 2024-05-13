@@ -92,3 +92,12 @@ func (s *Server) HandleGetStoreAddress(res http.ResponseWriter, req *http.Reques
 
 	return WriteJSON(res, http.StatusOK, address)
 }
+
+func (s *Server) HandleExportAllData(res http.ResponseWriter, req *http.Request) error {
+	addr, err := s.store.ExportAllData()
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, addr)
+}

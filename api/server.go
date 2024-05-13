@@ -147,6 +147,9 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/manager-create-order", makeHTTPHandleFunc(s.handleManagerCreateOrder))
 
 	http.HandleFunc("/need-to-update", makeHTTPHandleFunc(s.handleNeedToUpdate))
+
+	http.HandleFunc("/invoice", makeHTTPHandleFunc(s.handleGenInvoice))
+	http.HandleFunc("/export", makeHTTPHandleFunc(s.handleExport))
 	fmt.Println("Listening PORT", s.listen_address)
 
 	http.ListenAndServe(s.listen_address, nil)

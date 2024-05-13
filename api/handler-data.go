@@ -123,6 +123,7 @@ var authRequirements = map[string]Permission{
 	VendorAdd:                             {Role: "Customer", AuthRequired: false},
 	VendorEdit:                            {Role: "Customer", AuthRequired: false},
 	NeedToUpdate:                          {Role: "Customer", AuthRequired: false},
+	GenInvoice:                            {Role: "Customer", AuthRequired: false},
 	ManagerGetItems:                       {Role: "Customer", AuthRequired: true},
 	ManagerSearchItem:                     {Role: "Customer", AuthRequired: true},
 	ManagerItemFinanceGet:                 {Role: "Customer", AuthRequired: true},
@@ -261,6 +262,7 @@ const (
 	VendorAdd                             = "vendor-add"
 	VendorEdit                            = "vendor-edit"
 	NeedToUpdate                          = "need-to-update"
+	GenInvoice                            = "gen-invoice"
 	ManagerGetItems                       = "manager-get-items"
 	ManagerSearchItem                     = "manager-search-item"
 	ManagerItemFinanceGet                 = "manager-item-finance-get"

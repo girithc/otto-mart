@@ -11,18 +11,20 @@ import (
 	"cloud.google.com/go/cloudsqlconn/postgres/pgxv4"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
+	"firebase.google.com/go/storage"
 	"google.golang.org/api/option"
 
 	_ "github.com/lib/pq"
 )
 
 type PostgresStore struct {
-	db             *sql.DB
-	cancelFuncs    map[int]context.CancelFunc
-	lockExtended   map[int]bool
-	paymentStatus  map[int]bool
-	firebaseClient *messaging.Client
-	context        context.Context
+	db                *sql.DB
+	cancelFuncs       map[int]context.CancelFunc
+	lockExtended      map[int]bool
+	paymentStatus     map[int]bool
+	firebaseMessaging *messaging.Client
+	firebaseStorage   *storage.Client
+	context           context.Context
 }
 
 func NewPostgresStore() (*PostgresStore, func() error) {
@@ -101,13 +103,19 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			log.Fatalf("error getting Messaging client: %v\n", err)
 		}
 
+		clientStorage, err := app.Storage(ctx)
+		if err != nil {
+			log.Fatalf("error getting Messaging client: %v\n", err)
+		}
+
 		return &PostgresStore{
-			db:             db,
-			cancelFuncs:    make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
-			lockExtended:   make(map[int]bool),               // Initialize the paymentStatus map
-			paymentStatus:  make(map[int]bool),
-			firebaseClient: client,
-			context:        ctx,
+			db:                db,
+			cancelFuncs:       make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
+			lockExtended:      make(map[int]bool),               // Initialize the paymentStatus map
+			paymentStatus:     make(map[int]bool),
+			firebaseMessaging: client,
+			firebaseStorage:   clientStorage,
+			context:           ctx,
 		}, cleanup
 
 	}

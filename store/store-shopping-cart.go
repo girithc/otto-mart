@@ -490,9 +490,11 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 		}
 
 		// Determine availability based on distance
-		available := true
+		available := false
 		if distanceStore >= 4 {
 			available = startTime.Hour() == 6 && endTime.Hour() == 8
+		} else {
+			available = true
 		}
 
 		cartSlots.AvailableSlots = append(cartSlots.AvailableSlots, Slot{

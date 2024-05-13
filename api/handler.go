@@ -1261,6 +1261,22 @@ func (s *Server) handleNeedToUpdate(res http.ResponseWriter, req *http.Request) 
 	return nil
 }
 
+func (s *Server) handleGenInvoice(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "genInvoice")
+		return s.goRoutineWrapper(GenInvoice, s.HandleGenOrderInvoices, res, req)
+	}
+	return nil
+}
+
+func (s *Server) handleExport(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("GET", "export data")
+		return s.goRoutineWrapper(GenInvoice, s.HandleExportAllData, res, req)
+	}
+	return nil
+}
+
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }

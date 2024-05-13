@@ -2,11 +2,16 @@ package store
 
 import (
 	"database/sql"
+	"encoding/csv"
 	"errors"
 	"fmt"
+	"io"
+	"strings"
 
+	"cloud.google.com/go/storage"
 	"github.com/girithc/pronto-go/types"
 
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
@@ -161,4 +166,227 @@ func scan_Into_Update_Store(rows *sql.Rows) (*types.Update_Store, error) {
 	)
 
 	return store, error
+}
+
+// Helper function to get all table names
+func getAllTableNames(db *sql.DB) ([]string, error) {
+	query := "SELECT tablename FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var tables []string
+	for rows.Next() {
+		var tablename string
+		if err := rows.Scan(&tablename); err != nil {
+			return nil, err
+		}
+		tables = append(tables, tablename)
+	}
+
+	return tables, nil
+}
+
+/*
+	func (s *PostgresStore) ExportAllData() ([]string, error) {
+		tables, err := getAllTableNames(s.db)
+		if err != nil {
+			return nil, err
+		}
+
+		var urls []string // Slice to store all file URLs
+
+		for _, table := range tables {
+			// Fetch all data from each table
+			query := fmt.Sprintf("SELECT * FROM %s;", pq.QuoteIdentifier(table))
+			rows, err := s.db.Query(query)
+			if err != nil {
+				return nil, err
+			}
+
+			// Create a CSV writer
+			b := &strings.Builder{}
+			csvWriter := csv.NewWriter(b)
+
+			// Write CSV header
+			columns, err := rows.Columns()
+			if err != nil {
+				rows.Close()
+				return nil, err
+			}
+			csvWriter.Write(columns)
+
+			// Write rows
+			values := make([]interface{}, len(columns))
+			valuePtrs := make([]interface{}, len(columns))
+			for i := range values {
+				valuePtrs[i] = &values[i]
+			}
+
+			for rows.Next() {
+				rows.Scan(valuePtrs...)
+				record := make([]string, len(columns))
+				for i, col := range values {
+					if col != nil {
+						record[i] = fmt.Sprint(col)
+					}
+				}
+				csvWriter.Write(record)
+			}
+			rows.Close()
+			csvWriter.Flush()
+
+			// Get a bucket handle
+			bucketName := "seismic-ground-410711.appspot.com"
+			bucket, err := s.firebaseStorage.Bucket(bucketName)
+			if err != nil {
+				return nil, fmt.Errorf("error getting bucket: %v", err)
+			}
+
+			objectName := "data/" + table + ".csv"
+			obj := bucket.Object(objectName)
+
+			// Upload the file
+			w := obj.NewWriter(s.context)
+			if _, err := io.Copy(w, strings.NewReader(b.String())); err != nil {
+				w.Close()
+				return nil, err
+			}
+			if err := w.Close(); err != nil {
+				return nil, err
+			}
+
+			// Set file to public
+			if err := obj.ACL().Set(s.context, storage.AllUsers, storage.RoleReader); err != nil {
+				return nil, fmt.Errorf("error making file public: %v", err)
+			}
+
+			// Construct the public URL
+			publicURL := fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucketName, objectName)
+			urls = append(urls, publicURL)
+		}
+
+		return urls, nil // Return all the public URLs
+	}
+*/
+func (s *PostgresStore) ExportAllData() (string, error) {
+	tables, err := getAllTableNames(s.db)
+	if err != nil {
+		return "", err
+	}
+
+	var fileDetails []struct {
+		TableName string
+		FileURL   string
+	}
+
+	for _, table := range tables {
+		// Fetch all data from each table
+		query := fmt.Sprintf("SELECT * FROM %s;", pq.QuoteIdentifier(table))
+		rows, err := s.db.Query(query)
+		if err != nil {
+			return "", err
+		}
+
+		// Create a CSV writer
+		b := &strings.Builder{}
+		csvWriter := csv.NewWriter(b)
+
+		// Write CSV header
+		columns, err := rows.Columns()
+		if err != nil {
+			rows.Close()
+			return "", err
+		}
+		csvWriter.Write(columns)
+
+		// Write rows
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range values {
+			valuePtrs[i] = &values[i]
+		}
+
+		for rows.Next() {
+			rows.Scan(valuePtrs...)
+			record := make([]string, len(columns))
+			for i, col := range values {
+				if col != nil {
+					record[i] = fmt.Sprint(col)
+				}
+			}
+			csvWriter.Write(record)
+		}
+		rows.Close()
+		csvWriter.Flush()
+
+		// Get a bucket handle
+		bucketName := "seismic-ground-410711.appspot.com"
+		bucket, err := s.firebaseStorage.Bucket(bucketName)
+		if err != nil {
+			return "", fmt.Errorf("error getting bucket: %v", err)
+		}
+
+		objectName := "data/" + table + ".csv"
+		obj := bucket.Object(objectName)
+
+		// Upload the file
+		w := obj.NewWriter(s.context)
+		if _, err := io.Copy(w, strings.NewReader(b.String())); err != nil {
+			w.Close()
+			return "", err
+		}
+		if err := w.Close(); err != nil {
+			return "", err
+		}
+
+		// Set file to public
+		if err := obj.ACL().Set(s.context, storage.AllUsers, storage.RoleReader); err != nil {
+			return "", fmt.Errorf("error making file public: %v", err)
+		}
+
+		// Construct the public URL
+		publicURL := fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucketName, objectName)
+		fileDetails = append(fileDetails, struct {
+			TableName string
+			FileURL   string
+		}{TableName: table, FileURL: publicURL})
+	}
+
+	bucketName := "seismic-ground-410711.appspot.com"
+	bucket, err := s.firebaseStorage.Bucket(bucketName)
+	if err != nil {
+		return "", fmt.Errorf("error getting bucket: %v", err)
+	}
+
+	// Create and upload summary CSV file
+	summaryBuilder := &strings.Builder{}
+	summaryWriter := csv.NewWriter(summaryBuilder)
+	summaryWriter.Write([]string{"Table Name", "File URL"})
+	for _, detail := range fileDetails {
+		summaryWriter.Write([]string{detail.TableName, detail.FileURL})
+	}
+	summaryWriter.Flush()
+
+	summaryObjectName := "data/summary.csv"
+	summaryObj := bucket.Object(summaryObjectName)
+	w := summaryObj.NewWriter(s.context)
+	if _, err := io.Copy(w, strings.NewReader(summaryBuilder.String())); err != nil {
+		w.Close()
+		return "", err
+	}
+	if err := w.Close(); err != nil {
+		return "", err
+	}
+
+	// Set summary file to public
+	if err := summaryObj.ACL().Set(s.context, storage.AllUsers, storage.RoleReader); err != nil {
+		return "", fmt.Errorf("error making summary file public: %v", err)
+	}
+
+	// Return the URL of the summary CSV file
+	summaryURL := fmt.Sprintf("https://storage.googleapis.com/%s/%s", bucketName, summaryObjectName)
+	return summaryURL, nil
 }

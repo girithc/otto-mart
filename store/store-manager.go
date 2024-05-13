@@ -434,7 +434,7 @@ func (s *PostgresStore) ManagerSendFCM(phone string) (bool, error) {
 		}
 
 		// Send the message to the device corresponding to the current token
-		response, err := s.firebaseClient.Send(s.context, message)
+		response, err := s.firebaseMessaging.Send(s.context, message)
 		if err != nil {
 			log.Printf("Failed to send message to token %s: %v", token, err)
 			continue // Skip this token and move to the next
@@ -488,7 +488,7 @@ func (s *PostgresStore) sendOrderNotifToPacker() (bool, error) {
 		}
 
 		// Send a message to the device corresponding to the provided registration token
-		response, err := s.firebaseClient.Send(s.context, message)
+		response, err := s.firebaseMessaging.Send(s.context, message)
 		if err != nil {
 			log.Printf("Failed to send message to token %s: %v", registrationToken, err)
 			continue // Move to the next token if there's an error

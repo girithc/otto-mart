@@ -91,9 +91,27 @@ func (s *PostgresStore) CreateSalesOrderTable(tx *sql.Tx) error {
 		return err
 	}
 
+	// Alter the sales_order table to add the invoice_id column with a UUID default value
+	alterTableQuery = `ALTER TABLE sales_order
+        ADD COLUMN IF NOT EXISTS invoice_id UUID DEFAULT gen_random_uuid();`
+
+	_, err = tx.Exec(alterTableQuery)
+	if err != nil {
+		return err
+	}
+
 	// Update existing records to set store_id to 1
 	updateQuery := `UPDATE sales_order SET store_id = 1 WHERE store_id IS NULL OR store_id <> 1`
 	_, err = tx.Exec(updateQuery)
+	if err != nil {
+		return err
+	}
+
+	// Alter the sales_order table to add the invoice_url column
+	alterTableQuery = `ALTER TABLE sales_order
+        ADD COLUMN IF NOT EXISTS invoice_url TEXT;`
+
+	_, err = tx.Exec(alterTableQuery)
 	if err != nil {
 		return err
 	}

@@ -23,3 +23,13 @@ func (s *Server) HandleNeedToUpdate(res http.ResponseWriter, req *http.Request) 
 
 	return WriteJSON(res, http.StatusOK, result)
 }
+
+func (s *Server) HandleGenOrderInvoices(res http.ResponseWriter, req *http.Request) error {
+
+	file, err := s.store.GenInvoice()
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, file)
+}
