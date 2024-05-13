@@ -109,7 +109,7 @@ class _CatalogPageState extends State<CatalogPage> {
                           color: Colors.white,
                           boxShadow: const [
                             BoxShadow(
-                              color: Colors.deepPurpleAccent,
+                              color: Colors.white,
                               spreadRadius: 1,
                               blurRadius: 1,
                             )
@@ -126,55 +126,15 @@ class _CatalogPageState extends State<CatalogPage> {
                       ),
                     ),
                     // Second tab
-                    Container(
-                      decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8.0),
-                          color: Colors.white,
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.deepPurpleAccent,
-                              spreadRadius: 1,
-                              blurRadius: 1,
-                            )
-                          ]),
-                      child: Center(
-                        child: RichText(
-                          text: const TextSpan(
-                            style: TextStyle(
-                              // Default text style
-                              color: Colors.black,
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            children: <TextSpan>[
-                              TextSpan(
-                                text: 'Upto ', // The part you want to emphasize
-                                // Increase the font size for emphasis
-                              ), // Unchanged part of the text
-                              TextSpan(
-                                text:
-                                    '50% Discount', // The second part you want to emphasize
-                                style: TextStyle(
-                                    fontSize:
-                                        14.0), // Increase the font size for emphasis
-                              ),
-                              // Unchanged part of the text
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
                   ],
                   options: CarouselOptions(
                     height: MediaQuery.of(context).size.height * 0.06,
                     enlargeCenterPage: true,
-                    autoPlay: true,
+                    autoPlay: false,
                     //aspectRatio: 16 / 9,
                     autoPlayCurve: Curves.fastOutSlowIn,
                     enableInfiniteScroll: true,
-                    autoPlayAnimationDuration: const Duration(
-                      seconds: 3,
-                    ),
+
                     viewportFraction: 0.90,
                   ),
                 ),
@@ -937,7 +897,7 @@ class _ListItem2State extends State<ListItem2> {
                                         side: BorderSide(
                                           width: 1.0,
                                           color: widget.stockQuantity <= 0
-                                              ? Colors.greenAccent
+                                              ? Colors.deepPurpleAccent
                                               : Colors.pinkAccent,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -1033,8 +993,8 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
       color: Colors.white,
       shadowColor: Colors.white,
       child: Container(
-        padding: const EdgeInsets.only(
-          top: 1,
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).size.height * 0.02,
         ),
         margin: const EdgeInsets.only(top: 30),
         child: Row(

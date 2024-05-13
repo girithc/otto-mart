@@ -3,8 +3,9 @@
 // found in the LICENSE file.
 
 import 'dart:convert';
-
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -13,6 +14,7 @@ import 'package:pronto/cart/address/screen/saved_address.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'package:pronto/payments/payments_screen.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
@@ -587,6 +589,24 @@ class CartListState extends State<CartList> {
       });
     } else {
       print("Error fetching slots: ${response.body}");
+    }
+  }
+
+  Future<void> promo() async {
+    final url = Uri.parse('$baseUrl/export');
+    print("Promo entered");
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        // Handle the response appropriately
+        print('Success: ${response.body}');
+      } else {
+        // Handle the error case
+        print('Failed to fetch data: ${response.statusCode}');
+      }
+    } catch (e) {
+      // Handle any exceptions that occur during the request
+      print('Error: $e');
     }
   }
 
@@ -1199,6 +1219,11 @@ class CartListState extends State<CartList> {
                             borderSide: BorderSide.none, // No border side
                           ),
                         ),
+                        onChanged: (code) {
+                          if (code.length > 4) {
+                            promo();
+                          }
+                        },
                       ),
                     ),
                   ],
