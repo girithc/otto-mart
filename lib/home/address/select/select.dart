@@ -81,18 +81,23 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     };
 
     final networkService = NetworkService();
+    print("send get all request");
     final response =
         await networkService.postWithAuth('/address', additionalData: body);
     //("\n\n\\n\n\n");
 
-    //print("Address All: ${response.body}");
+    print("Address All: ${response.body}");
 
     //print("\n\n\\n\n\n");
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
         final List<dynamic> jsonData = json.decode(response.body);
+
+        print("Start Json Map");
         final List<Address> items =
             jsonData.map((item) => Address.fromJson(item)).toList();
+        print("End Json Map");
+
         setState(() {
           addresses = items;
           isLoadingGetAddress = false;
@@ -165,8 +170,12 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
             // Parse and return AddressResponse
+            print("Parse Address Response");
+            print("Decoded Response: $decodedResponse");
             final resp = AddressResponse.fromJson(
                 Map<String, dynamic>.from(decodedResponse));
+            print("Finish Parse Address Response");
+
             print("Setting cartId to ${resp.cartId}");
             CartModel cartModel = CartModel();
             Address? deliveryAddress = cartModel.deliveryAddress;
@@ -189,7 +198,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         print("Error: ${response.reasonPhrase}");
       }
     } catch (e) {
-      print("Exception occurred: $e");
+      print("Exception occurred (setDefaultAddress): $e");
     }
     return null;
   }
@@ -231,7 +240,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
         print("Error: ${response.body}");
       }
     } catch (e) {
-      print("Exception occurred: $e");
+      print("Exception occurred (deliverToAddress): $e");
     }
     return null;
   }

@@ -26,7 +26,7 @@ class OrderConfirmed extends StatefulWidget {
 class _OrderConfirmedState extends State<OrderConfirmed> {
   //String? _orderDetails;
   bool _isLoading = true;
-  bool _isError = false;
+  final bool _isError = false;
 
   String? _errorMsg;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
@@ -70,7 +70,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   String formatOrderDate(String orderDate) {
     DateTime parsedDate = DateTime.parse(orderDate);
-    DateTime updatedDate = parsedDate.add(Duration(hours: 5, minutes: 32));
+    DateTime updatedDate =
+        parsedDate.add(const Duration(hours: 5, minutes: 32));
     return DateFormat('h:mm a').format(updatedDate);
   }
 
@@ -160,7 +161,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
   void _setupPeriodicFetch() {
     // This sets up a timer that periodically calls fetchOrderInfo
-    _timer = Timer.periodic(Duration(seconds: 15), (Timer t) {
+    _timer = Timer.periodic(const Duration(seconds: 15), (Timer t) {
       //fetchOrderDetails();
       fetchOrderInfo(); // Modify this as needed, currently set to 45 seconds
     });
@@ -221,7 +222,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     DateTime orderDate = DateTime.parse(orderDateString);
 
     // Add 5 hours and 30 minutes to the order date
-    DateTime updatedOrderDate = orderDate.add(Duration(hours: 5, minutes: 30));
+    DateTime updatedOrderDate =
+        orderDate.add(const Duration(hours: 5, minutes: 30));
 
     // Format the date with AM/PM, e.g., "dd MMM, yyyy hh:mm a"
     // Here, "hh" is used for hour format (01-12), "mm" for minute, and "a" for AM/PM
@@ -329,7 +331,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                             child: (orderStatus == "received" ||
                                     orderStatus == "accepted")
                                 ? (orderStatus == "received"
-                                    ? Text(
+                                    ? const Text(
                                         "Order accepted", // Right side text, assuming orderStatus is a variable holding the status
                                         textAlign: TextAlign
                                             .right, // Aligns text to the right
@@ -339,7 +341,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                           color: Colors.deepPurpleAccent,
                                         ),
                                       )
-                                    : Text(
+                                    : const Text(
                                         "Order getting packed", // Right side text, assuming orderStatus is a variable holding the status
                                         textAlign: TextAlign
                                             .right, // Aligns text to the right
@@ -350,10 +352,10 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         ),
                                       ))
                                 : Text(
-                                    "Order ${orderStatus}", // Right side text, assuming orderStatus is a variable holding the status
+                                    "Order $orderStatus", // Right side text, assuming orderStatus is a variable holding the status
                                     textAlign: TextAlign
                                         .right, // Aligns text to the right
-                                    style: TextStyle(
+                                    style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
                                       color: Colors.deepPurpleAccent,
@@ -388,12 +390,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
+                                  SizedBox(
                                     width: MediaQuery.of(context).size.width *
                                         0.25,
-                                    child: Text("Order Date"),
+                                    child: const Text("Order Date"),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 10,
                                   ),
                                   Text(
@@ -409,12 +411,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
+                                  SizedBox(
                                     width: MediaQuery.of(context).size.width *
                                         0.25,
-                                    child: Text("Delivery Date"),
+                                    child: const Text("Delivery Date"),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     width: 10,
                                   ),
                                   Column(
@@ -442,8 +444,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                               color: Colors.white, width: 2.0),
                                         ),
                                         child: Text(
-                                          DateFormat('dd MMMM').format(_orderInfo!
-                                              .deliveryDate), // Added a space for visual separation
+                                          _orderInfo!
+                                              .deliveryDate, // Added a space for visual separation
                                           style: const TextStyle(
                                             fontSize:
                                                 14, // This adds the line through effect
@@ -475,11 +477,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                           // you'll first need to parse it into a DateTime object.
                                           // Then, add 5 hours and 30 minutes to it.
                                           // Finally, format it using the DateFormat class.
-                                          DateFormat('h:mm a').format(
-                                                  _orderInfo!.slotStartTime) +
-                                              ' - ' +
-                                              DateFormat('h:mm a').format(
-                                                  _orderInfo!.slotEndTime),
+                                          '${_orderInfo!.slotStartTime} - ${_orderInfo!.slotEndTime}',
                                         ),
                                       ),
                                     ],
@@ -490,11 +488,11 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                               Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
+                                  SizedBox(
                                       width: MediaQuery.of(context).size.width *
                                           0.25,
-                                      child: Text("Payment Type")),
-                                  SizedBox(
+                                      child: const Text("Payment Type")),
+                                  const SizedBox(
                                     width: 10,
                                   ),
                                   Container(
@@ -516,13 +514,13 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                 mainAxisSize: MainAxisSize
                                     .min, // To make the Row take minimum space
                                 children: [
-                                  Container(
+                                  SizedBox(
                                     width: MediaQuery.of(context).size.width *
                                         0.25,
-                                    child: Text(
+                                    child: const Text(
                                       "subtotal",
                                       maxLines: 3,
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                           fontWeight: FontWeight.normal),
                                       overflow: TextOverflow
                                           .ellipsis, // To handle long item names
@@ -555,7 +553,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                     mainAxisSize: MainAxisSize
                                         .min, // To make the Row take minimum space
                                     children: [
-                                      Container(
+                                      SizedBox(
                                         width:
                                             MediaQuery.of(context).size.width *
                                                 0.55,
@@ -583,15 +581,15 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                       mainAxisSize: MainAxisSize
                                           .min, // To make the Row take minimum space
                                       children: [
-                                        Container(
+                                        SizedBox(
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .width *
                                               0.55,
-                                          child: Text(
+                                          child: const Text(
                                             "platform fee",
                                             maxLines: 3,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.normal),
                                             overflow: TextOverflow
@@ -605,21 +603,21 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         ),
                                       ],
                                     )
-                                  : SizedBox.shrink(),
+                                  : const SizedBox.shrink(),
                               _orderInfo!.deliveryFee > 0
                                   ? Row(
                                       mainAxisSize: MainAxisSize
                                           .min, // To make the Row take minimum space
                                       children: [
-                                        Container(
+                                        SizedBox(
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .width *
                                               0.55,
-                                          child: Text(
+                                          child: const Text(
                                             "delivery fee",
                                             maxLines: 3,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.normal),
                                             overflow: TextOverflow
@@ -633,21 +631,21 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         ),
                                       ],
                                     )
-                                  : SizedBox.shrink(),
+                                  : const SizedBox.shrink(),
                               _orderInfo!.smallOrderFee > 0
                                   ? Row(
                                       mainAxisSize: MainAxisSize
                                           .min, // To make the Row take minimum space
                                       children: [
-                                        Container(
+                                        SizedBox(
                                           width: MediaQuery.of(context)
                                                   .size
                                                   .width *
                                               0.55,
-                                          child: Text(
+                                          child: const Text(
                                             "small order fee",
                                             maxLines: 3,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                                 fontSize: 13,
                                                 fontWeight: FontWeight.normal),
                                             overflow: TextOverflow
@@ -661,7 +659,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         ),
                                       ],
                                     )
-                                  : SizedBox.shrink(),
+                                  : const SizedBox.shrink(),
                             ],
                           ),
                         ),
@@ -931,9 +929,9 @@ class OrderInfo {
   final int packagingFee;
   final int peakTimeSurcharge;
   final int subtotal;
-  final DateTime deliveryDate;
-  final DateTime slotStartTime;
-  final DateTime slotEndTime;
+  final String deliveryDate;
+  final String slotStartTime;
+  final String slotEndTime;
   final int newCartId;
 
   OrderInfo(
@@ -978,9 +976,9 @@ class OrderInfo {
       packagingFee: json['packaging_fee'],
       peakTimeSurcharge: json['peak_time_surcharge'],
       subtotal: json['subtotal'],
-      deliveryDate: DateTime.parse(json['delivery_date']),
-      slotStartTime: DateTime.parse(json['slot_start_time']),
-      slotEndTime: DateTime.parse(json['slot_end_time']),
+      deliveryDate: json['delivery_date'],
+      slotStartTime: json['slot_start_time'],
+      slotEndTime: json['slot_end_time'],
       newCartId: json['new_cart_id'],
     );
   }

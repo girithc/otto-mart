@@ -118,7 +118,7 @@ class CartModel extends ChangeNotifier {
       state: '',
       streetAddress: "",
       zip: '',
-      createdAt: DateTime(2020),
+      createdAt: '2020',
       customerId: 0,
       longitude: 0.00,
       latitude: 0.0);
@@ -223,7 +223,7 @@ class CartModel extends ChangeNotifier {
     _networkService
         .postWithAuth('/address', additionalData: body)
         .then((response) {
-      //_logger.e('Response: $response');
+      _logger.e('Response: ${response.body}');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
           final List<dynamic> jsonData = json.decode(response.body);
@@ -432,7 +432,7 @@ class Address {
   final String zip;
   final double latitude;
   final double longitude;
-  final DateTime createdAt;
+  final String createdAt;
 
   Address({
     required this.id,
@@ -452,15 +452,15 @@ class Address {
     return Address(
       id: json['id'],
       customerId: json['customer_id'],
-      streetAddress: json['street_address'],
-      lineOne: json['line_one'],
-      lineTwo: json['line_two'],
-      city: json['city'],
-      state: json['state'],
-      zip: json['zip'],
+      streetAddress: json['street_address'] ?? '',
+      lineOne: json['line_one'] ?? '',
+      lineTwo: json['line_two'] ?? '',
+      city: json['city'] ?? '',
+      state: json['state'] ?? '',
+      zip: json['zip'] ?? '',
       latitude: json['latitude'].toDouble(),
       longitude: json['longitude'].toDouble(),
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'],
     );
   }
 

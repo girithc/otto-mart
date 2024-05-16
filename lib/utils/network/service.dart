@@ -45,6 +45,15 @@ class NetworkService {
       body: json.encode(additionalData),
     );
 
+    if (response.statusCode != 200) {
+      print("\n");
+      print("URL: $url");
+      print("Body: $additionalData");
+      print("Response: ${response.statusCode}");
+      print("Body: ${response.body}");
+      print("\n");
+    }
+
     return response;
   }
 }

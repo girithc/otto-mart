@@ -309,7 +309,6 @@ class _MyCartState extends State<MyCart> {
                     child: !(cart.isEmpty())
                         ? GestureDetector(
                             onTap: () async {
-                              /*
                               String? cartId =
                                   await storage.read(key: 'cartId');
 
@@ -342,7 +341,8 @@ class _MyCartState extends State<MyCart> {
                                   ),
                                 );
                               }
-                              */
+
+                              /*
 
                               Razorpay razorpay = Razorpay();
                               var options = {
@@ -367,6 +367,7 @@ class _MyCartState extends State<MyCart> {
                               razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET,
                                   handleExternalWalletSelected);
                               razorpay.open(options);
+                              */
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(
@@ -752,10 +753,14 @@ class CartListState extends State<CartList> {
                                   decoration: BoxDecoration(
                                     color:
                                         Colors.deepPurpleAccent, // Add border
-                                    borderRadius: BorderRadius.circular(20.0),
+                                    borderRadius: BorderRadius.circular(15.0),
                                   ),
+                                  padding: EdgeInsets.symmetric(
+                                      vertical:
+                                          MediaQuery.of(context).size.height *
+                                              0.005),
                                   height:
-                                      MediaQuery.of(context).size.height * 0.04,
+                                      MediaQuery.of(context).size.height * 0.05,
                                   child: Center(
                                     child: Row(
                                       mainAxisAlignment:
@@ -848,7 +853,7 @@ class CartListState extends State<CartList> {
                                 ...cartSlotDetails!.availableSlots.map((slot) {
                                   // Format the slot times for display
                                   String slotTime =
-                                      '${DateFormat('h:mm a').format(slot.startTime)} - ${DateFormat('h:mm a').format(slot.endTime)}';
+                                      '${slot.startTime} - ${slot.endTime}';
 
                                   return GestureDetector(
                                     onTap: () {
@@ -974,7 +979,7 @@ class CartListState extends State<CartList> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                    '${DateFormat('h:mm a').format(cartSlotDetails!.chosenSlot!.startTime)} - ${DateFormat('h:mm a').format(cartSlotDetails!.chosenSlot!.endTime)}',
+                                    '${cartSlotDetails!.chosenSlot!.startTime} - ${cartSlotDetails!.chosenSlot!.endTime}',
                                     style: const TextStyle(fontSize: 14)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
@@ -996,8 +1001,8 @@ class CartListState extends State<CartList> {
                                         color: Colors.white, width: 2.0),
                                   ),
                                   child: Text(
-                                    DateFormat('dd MMMM').format(cartSlotDetails!
-                                        .deliveryDate), // Added a space for visual separation
+                                    cartSlotDetails!
+                                        .deliveryDate, // Added a space for visual separation
                                     style: const TextStyle(
                                       fontSize:
                                           14, // This adds the line through effect
@@ -1048,7 +1053,7 @@ class CartListState extends State<CartList> {
                                               .map((slot) {
                                             // Format the slot times for display
                                             String slotTime =
-                                                '${DateFormat('h:mm a').format(slot.startTime)} - ${DateFormat('h:mm a').format(slot.endTime)}';
+                                                '${slot.startTime} - ${slot.endTime}';
 
                                             return GestureDetector(
                                               onTap: () {
@@ -1673,8 +1678,8 @@ class LockStockResponse {
 }
 
 class Slot {
-  final DateTime startTime;
-  final DateTime endTime;
+  final String startTime;
+  final String endTime;
   final bool available;
   final int id;
 
@@ -1685,9 +1690,15 @@ class Slot {
       required this.available});
 
   factory Slot.fromJson(Map<String, dynamic> json) {
+    DateTime startdatetime = DateTime.parse(json['StartTime']);
+    DateTime enddatetime = DateTime.parse(json['EndTime']);
+    // Format the DateTime object to the desired time format
+    String startFormattedTime = DateFormat('h:mm').format(startdatetime);
+    String endFormattedTime = DateFormat('h:mm').format(enddatetime);
+
     return Slot(
-        startTime: DateTime.parse(json['StartTime']),
-        endTime: DateTime.parse(json['EndTime']),
+        startTime: startFormattedTime,
+        endTime: endFormattedTime,
         available: json['Available'],
         id: json['Id']);
   }
@@ -1696,7 +1707,7 @@ class Slot {
 class CartSlotDetails {
   final List<Slot> availableSlots;
   final Slot? chosenSlot;
-  final DateTime deliveryDate;
+  final String deliveryDate;
 
   CartSlotDetails({
     required this.availableSlots,
@@ -1716,11 +1727,12 @@ class CartSlotDetails {
     }
 
     DateTime deliveryDate = DateTime.parse(json['DeliveryDate']);
+    String formattedDate = DateFormat('d MMMM').format(deliveryDate);
 
     return CartSlotDetails(
       availableSlots: slots,
       chosenSlot: chosenSlot,
-      deliveryDate: deliveryDate,
+      deliveryDate: formattedDate,
     );
   }
 }

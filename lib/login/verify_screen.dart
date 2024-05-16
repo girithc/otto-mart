@@ -214,7 +214,7 @@ class _MyVerifyState extends State<MyVerify> {
       extendBodyBehindAppBar: true,
       body: Container(
         height: MediaQuery.of(context).size.height,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -367,6 +367,7 @@ class _MyVerifyState extends State<MyVerify> {
                             false; // Set flag to false if pin is incorrect
                       });
                     }
+                    return null;
                   },
                   hapticFeedbackType: HapticFeedbackType.lightImpact,
                   onCompleted: (pin) {
@@ -426,14 +427,14 @@ class _MyVerifyState extends State<MyVerify> {
                     ],
                   ),
                   focusedPinTheme: defaultPinTheme.copyWith(
-                    textStyle: TextStyle(color: Colors.black),
+                    textStyle: const TextStyle(color: Colors.black),
                     decoration: defaultPinTheme.decoration!.copyWith(
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: Colors.white),
                         color: Colors.greenAccent),
                   ),
                   submittedPinTheme: defaultPinTheme.copyWith(
-                    textStyle: TextStyle(color: Colors.black),
+                    textStyle: const TextStyle(color: Colors.black),
                     decoration: defaultPinTheme.decoration!.copyWith(
                       color: isPinCorrect
                           ? Colors.greenAccent
@@ -571,7 +572,7 @@ class CustomerLogin {
   final String phone;
   final String address;
   final String merchantUserID;
-  final DateTime createdAt;
+  final String createdAt;
   final String
       token; // Adjusted for Dart, as it doesn't have a built-in UUID type
 
@@ -592,7 +593,7 @@ class CustomerLogin {
       phone: json['phone'],
       address: json['address'],
       merchantUserID: json['merchant_user_id'],
-      createdAt: DateTime.parse(json['created_at']),
+      createdAt: json['created_at'],
       token: json['token'],
     );
   }
