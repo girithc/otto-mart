@@ -223,17 +223,16 @@ class CartModel extends ChangeNotifier {
     _networkService
         .postWithAuth('/address', additionalData: body)
         .then((response) {
-      _logger.e('Response: ${response.body}');
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
           final List<dynamic> jsonData = json.decode(response.body);
+          print("Decoded $jsonData");
           final List<Address> items =
               jsonData.map((item) => Address.fromJson(item)).toList();
 
           deliveryAddress = items[0];
           notifyListeners();
         } else {
-          //print("Response  Empty");
           deliveryAddress.id = -1;
           notifyListeners();
         }
@@ -243,7 +242,6 @@ class CartModel extends ChangeNotifier {
       }
     }).catchError((error) {
       if (error != null && error is http.ClientException) {
-        // Handle the case where the response is null
         deliveryAddress.id = -1;
         _logger.e('null response');
       } else {
@@ -452,12 +450,12 @@ class Address {
     return Address(
       id: json['id'],
       customerId: json['customer_id'],
-      streetAddress: json['street_address'] ?? '',
-      lineOne: json['line_one'] ?? '',
-      lineTwo: json['line_two'] ?? '',
-      city: json['city'] ?? '',
-      state: json['state'] ?? '',
-      zip: json['zip'] ?? '',
+      streetAddress: json['street_address']['String'] ?? '',
+      lineOne: json['line_one']['String'] ?? '',
+      lineTwo: json['line_two']['String'] ?? '',
+      city: json['city']['String'] ?? '',
+      state: json['state']['String'] ?? '',
+      zip: json['zip']['String'] ?? '',
       latitude: json['latitude'].toDouble(),
       longitude: json['longitude'].toDouble(),
       createdAt: json['created_at'],
