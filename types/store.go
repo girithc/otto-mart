@@ -1,17 +1,13 @@
 package types
 
-import (
-	"time"
-)
-
 type Store struct {
-	ID         int       `json:"id"`
-	Name       string    `json:"name"`
-	Address    string    `json:"address"`
-	Latitude   float64   `json:"latitude"`  // Added field for latitude
-	Longitude  float64   `json:"longitude"` // Added field for longitude
-	Created_At time.Time `json:"created_at"`
-	Created_By int       `json:"created_by"`
+	ID         int     `json:"id"`
+	Name       string  `json:"name"`
+	Address    string  `json:"address"`
+	Latitude   float64 `json:"latitude"`  // Added field for latitude
+	Longitude  float64 `json:"longitude"` // Added field for longitude
+	Created_At string  `json:"created_at"`
+	Created_By int     `json:"created_by"`
 }
 
 type Create_Store struct {

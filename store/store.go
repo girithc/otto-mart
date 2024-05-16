@@ -7,18 +7,18 @@ import (
 	"log"
 	"os"
 
-	"cloud.google.com/go/cloudsqlconn"
-	"cloud.google.com/go/cloudsqlconn/postgres/pgxv4"
 	firebase "firebase.google.com/go"
 	"firebase.google.com/go/messaging"
 	"firebase.google.com/go/storage"
 	"google.golang.org/api/option"
 
 	_ "github.com/lib/pq"
+	"github.com/supabase-community/supabase-go"
 )
 
 type PostgresStore struct {
 	db                *sql.DB
+	db2               *sql.DB
 	cancelFuncs       map[int]context.CancelFunc
 	lockExtended      map[int]bool
 	paymentStatus     map[int]bool
@@ -49,17 +49,19 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 		}, nil
 	} else {
 		// Use Cloud SQL credentials
-		cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
-		if err != nil {
-			log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
-		}
 
-		dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
-		db, err := sql.Open("cloudsql-postgres", dsn)
-		if err != nil {
-			log.Fatalf("Error on sql.Open: %v", err)
-		}
+		/*
+			cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
+			if err != nil {
+				log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
+			}
 
+			dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
+			db, err := sql.Open("cloudsql-postgres", dsn)
+			if err != nil {
+				log.Fatalf("Error on sql.Open: %v", err)
+			}
+		*/
 		const firebaseConfig = `{
 			"type": "service_account",
 			"project_id": "seismic-ground-410711",
@@ -80,7 +82,7 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			fmt.Println("Error:", err)
 		}
 		fmt.Println("Working Directory:", wd)
-		//opt := option.WithCredentialsFile("/seismic-ground-410711-firebase-adminsdk-jac9l-4da78ed26c.json")
+		// opt := option.WithCredentialsFile("/seismic-ground-410711-firebase-adminsdk-jac9l-4da78ed26c.json")
 
 		opt := option.WithCredentialsJSON([]byte(firebaseConfig))
 
@@ -108,22 +110,49 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			log.Fatalf("error getting Messaging client: %v\n", err)
 		}
 
+		supaClient, err := supabase.NewClient("https://cuisvsgznsmttzfqujxv.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1aXN2c2d6bnNtdHR6ZnF1anh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTU2OTE3NDEsImV4cCI6MjAzMTI2Nzc0MX0.aY0mM904a0UoD5GQtlZ4o0rW5x23Dsg_R1m1sYbfe70", nil)
+		if err != nil {
+			log.Fatalf("cannot initialize Supabase client: %v", err)
+		}
+
+		// Fetching data from Supabase for verification
+		data, count, err := supaClient.From("countries").Select("*", "exact", false).Execute()
+		if err != nil {
+			fmt.Println("error executing Supabase query", err)
+		} else {
+			fmt.Printf("Fetched %d records from Supabase: %v\n", count, data)
+		}
+
+		// Use Supabase connection string
+		connStr := fmt.Sprintf("host=%s port=5432 user=%s dbname=%s password=%s sslmode=require",
+			"aws-0-ap-south-1.pooler.supabase.com",
+			"postgres.cuisvsgznsmttzfqujxv",
+			"postgres",
+			"nyhpej-3sanma-muvRyf",
+		)
+
+		db2, err := sql.Open("postgres", connStr)
+		if err != nil {
+			log.Fatalf("Error on sql.Open: %v", err)
+		}
+
 		return &PostgresStore{
-			db:                db,
+			db:                db2,
+			db2:               db2,
 			cancelFuncs:       make(map[int]context.CancelFunc), // Already initialized cancelFuncs map
 			lockExtended:      make(map[int]bool),               // Initialize the paymentStatus map
 			paymentStatus:     make(map[int]bool),
 			firebaseMessaging: client,
 			firebaseStorage:   clientStorage,
 			context:           ctx,
-		}, cleanup
+		}, nil
 
 	}
 }
 
 func (s *PostgresStore) Init() error {
 	// Start a new transaction
-	tx, err := s.db.Begin()
+	tx, err := s.db2.Begin()
 	if err != nil {
 		return err
 	}

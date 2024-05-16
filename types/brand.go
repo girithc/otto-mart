@@ -1,12 +1,10 @@
 package types
 
-import "time"
-
 type Brand struct {
-	ID         int       `json:"id"`
-	Name       string    `json:"name"`
-	Created_At time.Time `json:"created_at"`
-	Created_By int       `json:"created_by"`
+	ID         int    `json:"id"`
+	Name       string `json:"name"`
+	Created_At string `json:"created_at"`
+	Created_By int    `json:"created_by"`
 }
 
 type BrandList struct {

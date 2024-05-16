@@ -1,8 +1,6 @@
 package types
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -30,12 +28,12 @@ type MobileOtp struct {
 
 // Basic
 type Customer struct {
-	ID             int       `json:"id"`
-	Name           string    `json:"name"`
-	Phone          int       `json:"phone"`
-	Address        string    `json:"address"`
-	MerchantUserID string    `json:"merchant_user_id"`
-	Created_At     time.Time `json:"created_at"`
+	ID             int    `json:"id"`
+	Name           string `json:"name"`
+	Phone          int    `json:"phone"`
+	Address        string `json:"address"`
+	MerchantUserID string `json:"merchant_user_id"`
+	Created_At     string `json:"created_at"`
 }
 
 type Customer_Login struct {
@@ -44,7 +42,7 @@ type Customer_Login struct {
 	Phone          string    `json:"phone"`
 	Address        string    `json:"address"`
 	MerchantUserID string    `json:"merchant_user_id"`
-	Created_At     time.Time `json:"created_at"`
+	Created_At     string    `json:"created_at"`
 	Token          uuid.UUID `json:"token"`
 }
 

@@ -1,40 +1,55 @@
 package types
 
-import "time"
+import "database/sql"
+
+type Address1 struct {
+	Id               int     `json:"id"`
+	Customer_Id      int     `json:"customer_id"`
+	Street_Address   string  `json:"street_address"`
+	Line_One_Address string  `json:"line_one"`
+	Line_Two_Address string  `json:"line_two"`
+	City             string  `json:"city"`
+	State            string  `json:"state"`
+	Zipcode          string  `json:"zip"`
+	Is_Default       bool    `json:"is_default"`
+	Latitude         float64 `json:"latitude"`
+	Longitude        float64 `json:"longitude"`
+	Created_At       string  `json:"created_at"`
+}
 
 type Address struct {
-	Id               int       `json:"id"`
-	Customer_Id      int       `json:"customer_id"`
-	Street_Address   string    `json:"street_address"`
-	Line_One_Address string    `json:"line_one"`
-	Line_Two_Address string    `json:"line_two"`
-	City             string    `json:"city"`
-	State            string    `json:"state"`
-	Zipcode          string    `json:"zip"`
-	Is_Default       bool      `json:"is_default"`
-	Latitude         float64   `json:"latitude"`
-	Longitude        float64   `json:"longitude"`
-	Created_At       time.Time `json:"created_at"`
+	Id               int            `json:"id"`
+	Customer_Id      int            `json:"customer_id"`
+	Street_Address   sql.NullString `json:"street_address"`
+	Line_One_Address sql.NullString `json:"line_one"`
+	Line_Two_Address sql.NullString `json:"line_two"`
+	City             sql.NullString `json:"city"`
+	State            sql.NullString `json:"state"`
+	Zipcode          sql.NullString `json:"zip"`
+	Is_Default       bool           `json:"is_default"`
+	Latitude         float64        `json:"latitude"`
+	Longitude        float64        `json:"longitude"`
+	Created_At       string         `json:"created_at"`
 }
 
 type Default_Address struct {
-	Id               int       `json:"id"`
-	Customer_Id      int       `json:"customer_id"`
-	Street_Address   string    `json:"street_address"`
-	Line_One_Address string    `json:"line_one"`
-	Line_Two_Address string    `json:"line_two"`
-	City             string    `json:"city"`
-	State            string    `json:"state"`
-	Zipcode          string    `json:"zip"`
-	Is_Default       bool      `json:"is_default"`
-	Latitude         float64   `json:"latitude"`
-	Longitude        float64   `json:"longitude"`
-	Created_At       time.Time `json:"created_at"`
-	Deliverable      bool      `json:"deliverable"`
-	StoreId          int       `json:"store_id"`
-	HDistance        float64   `json:"h_distance"`
-	PGDistance       float64   `json:"gis_distance"`
-	CartId           int       `json:"cart_id"`
+	Id               int     `json:"id"`
+	Customer_Id      int     `json:"customer_id"`
+	Street_Address   string  `json:"street_address"`
+	Line_One_Address string  `json:"line_one"`
+	Line_Two_Address string  `json:"line_two"`
+	City             string  `json:"city"`
+	State            string  `json:"state"`
+	Zipcode          string  `json:"zip"`
+	Is_Default       bool    `json:"is_default"`
+	Latitude         float64 `json:"latitude"`
+	Longitude        float64 `json:"longitude"`
+	Created_At       string  `json:"created_at"`
+	Deliverable      bool    `json:"deliverable"`
+	StoreId          int     `json:"store_id"`
+	HDistance        float64 `json:"h_distance"`
+	PGDistance       float64 `json:"gis_distance"`
+	CartId           int     `json:"cart_id"`
 }
 
 type Create_Address struct {

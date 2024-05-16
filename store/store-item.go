@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -1026,19 +1025,19 @@ type ItemAddQuickResponse struct {
 }
 
 type ManagerItem struct {
-	ID             int       `json:"id"`
-	Name           string    `json:"name"`
-	BrandID        int       `json:"brand_id"`
-	BrandName      string    `json:"brand_name"` // New field for the brand name
-	Quantity       int       `json:"quantity"`
-	Barcode        *string   `json:"barcode"`
-	UnitOfQuantity string    `json:"unit_of_quantity"`
-	Description    string    `json:"description"`
-	CreatedAt      time.Time `json:"created_at"`
-	CreatedBy      int       `json:"created_by"`
-	CategoryIDs    []int     `json:"category_ids"`
-	CategoryNames  []string  `json:"category_names"`
-	ImageURLs      []string  `json:"image_urls"`
+	ID             int      `json:"id"`
+	Name           string   `json:"name"`
+	BrandID        int      `json:"brand_id"`
+	BrandName      string   `json:"brand_name"` // New field for the brand name
+	Quantity       int      `json:"quantity"`
+	Barcode        *string  `json:"barcode"`
+	UnitOfQuantity string   `json:"unit_of_quantity"`
+	Description    string   `json:"description"`
+	CreatedAt      string   `json:"created_at"`
+	CreatedBy      int      `json:"created_by"`
+	CategoryIDs    []int    `json:"category_ids"`
+	CategoryNames  []string `json:"category_names"`
+	ImageURLs      []string `json:"image_urls"`
 }
 
 func (s *PostgresStore) GetManagerItems() ([]ManagerItem, error) {

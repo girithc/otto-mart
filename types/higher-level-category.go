@@ -1,16 +1,12 @@
 package types
 
-import (
-	"time"
-)
-
 type Higher_Level_Category struct {
-	ID         int       `json:"id"`
-	Name       string    `json:"name"`
-	Image      string    `json:"image"`
-	Position   int       `json:"position"`
-	Created_At time.Time `json:"created_at"`
-	Created_By int       `json:"created_by"` // Updated to sql.NullInt64
+	ID         int    `json:"id"`
+	Name       string `json:"name"`
+	Image      string `json:"image"`
+	Position   int    `json:"position"`
+	Created_At string `json:"created_at"`
+	Created_By int    `json:"created_by"` // Updated to sql.NullInt64
 }
 
 type Create_Higher_Level_Category struct {

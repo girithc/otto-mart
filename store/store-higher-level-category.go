@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -71,7 +70,7 @@ func (s *PostgresStore) Get_Higher_Level_Categories() ([]*types.Higher_Level_Cat
 			name      string
 			image     sql.NullString // Placeholder variable for image
 			position  sql.NullInt64  // Placeholder variable for position
-			createdAt time.Time
+			createdAt string
 			createdBy sql.NullInt64 // Placeholder variable for createdBy
 		)
 

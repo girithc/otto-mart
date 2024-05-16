@@ -1,8 +1,6 @@
 package types
 
 import (
-	"time"
-
 	"github.com/google/uuid"
 )
 
@@ -17,7 +15,7 @@ type PackerData struct {
 	Name       string    `json:"name"`
 	Phone      string    `json:"phone"`
 	Address    string    `json:"address"`
-	Created_At time.Time `json:"created_at"`
+	Created_At string    `json:"created_at"`
 	Token      uuid.UUID `json:"token"`
 }
 

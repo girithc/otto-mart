@@ -2,7 +2,6 @@ package store
 
 import (
 	"fmt"
-	"time"
 )
 
 func (s *PostgresStore) RemoveLockQuantities(cart_id int) ([]itemStoreRecord, error) {
@@ -85,6 +84,6 @@ type itemStoreRecord struct {
 	StoreID        int
 	StockQuantity  int
 	LockedQuantity int
-	CreatedAt      time.Time
+	CreatedAt      string
 	CreatedBy      int
 }

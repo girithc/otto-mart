@@ -2,7 +2,6 @@ package types
 
 import (
 	"database/sql"
-	"time"
 )
 
 type Sales_Order struct {
@@ -14,20 +13,20 @@ type Sales_Order struct {
 	AddressID         int           `json:"address_id"`
 	Paid              bool          `json:"paid"`
 	PaymentType       string        `json:"payment_type"`
-	OrderDate         time.Time     `json:"order_date"`
+	OrderDate         string        `json:"order_date"`
 }
 
 type Sales_Order_Details struct {
-	ID                int       `json:"id"`
-	DeliveryPartnerID int       `json:"delivery_partner_id"`
-	CartID            int       `json:"cart_id"`
-	StoreID           int       `json:"store_id"`
-	StoreName         string    `json:"store_name"`
-	CustomerID        int       `json:"customer_id"`
-	CustomerName      string    `json:"customer_name"`
-	CustomerPhone     string    `json:"customer_phone"`
-	DeliveryAddress   string    `json:"delivery_address"`
-	OrderDate         time.Time `json:"order_date"`
+	ID                int    `json:"id"`
+	DeliveryPartnerID int    `json:"delivery_partner_id"`
+	CartID            int    `json:"cart_id"`
+	StoreID           int    `json:"store_id"`
+	StoreName         string `json:"store_name"`
+	CustomerID        int    `json:"customer_id"`
+	CustomerName      string `json:"customer_name"`
+	CustomerPhone     string `json:"customer_phone"`
+	DeliveryAddress   string `json:"delivery_address"`
+	OrderDate         string `json:"order_date"`
 }
 
 type Sales_Order_Delivery_Partner struct {
@@ -60,7 +59,7 @@ type Sales_Order_Cart struct {
 	AddressID   int         `json:"address_id"`
 	Paid        bool        `json:"paid"`
 	PaymentType string      `json:"payment_type"`
-	OrderDate   time.Time   `json:"order_date"`
+	OrderDate   string      `json:"order_date"`
 	NewCartID   int         `json:"new_cart_id"`
 	Products    []SOProduct `json:"products"`
 	Store       SOStore     `json:"store"`
@@ -81,11 +80,11 @@ type SODeliveryPartner struct {
 	StoreID          int            `json:"store_id"`
 	Phone            string         `json:"phone"`
 	Address          string         `json:"address"`
-	CreatedAt        time.Time      `json:"created_at"`
+	CreatedAt        string         `json:"created_at"`
 	Available        bool           `json:"available"`
 	CurrentLocation  sql.NullString `json:"current_location"`
 	ActiveDeliveries int            `json:"active_deliveries"`
-	LastAssignedTime time.Time      `json:"last_assigned_time"`
+	LastAssignedTime string         `json:"last_assigned_time"`
 }
 
 type SOProduct struct {
@@ -170,7 +169,7 @@ type DPOrderDetails struct {
 	CustomerName      string         `json:"customer_name"`
 	CustomerPhone     string         `json:"customer_phone"`
 	Subtotal          int            `json:"subtotal"`
-	OrderDate         time.Time      `json:"order_date"`
+	OrderDate         string         `json:"order_date"`
 	DeliveryAddress   AddressDetails `json:"delivery_address"`
 }
 

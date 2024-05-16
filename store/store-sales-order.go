@@ -3,7 +3,6 @@ package store
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -283,9 +282,9 @@ type CustomerOrderDetails struct {
 	PackagingFee         int         `json:"packaging_fee"`
 	PeakTimeSurcharge    int         `json:"peak_time_surcharge"`
 	Subtotal             int         `json:"subtotal"`
-	DeliveryDate         time.Time   `json:"delivery_date"`
-	SlotStartTime        time.Time   `json:"slot_start_time"`
-	SlotEndTime          time.Time   `json:"slot_end_time"`
+	DeliveryDate         string      `json:"delivery_date"`
+	SlotStartTime        string      `json:"slot_start_time"`
+	SlotEndTime          string      `json:"slot_end_time"`
 	NewCartID            int         `json:"new_cart_id"`
 }
 
@@ -391,12 +390,12 @@ func (s *PostgresStore) GetCustomerPlacedOrder(customerId, cartId int) (*Custome
 	}
 
 	const timeLayout = "15:04:05" // Use this layout if your times are stored without date
-	orderDetails.SlotStartTime, err = time.Parse(timeLayout, startTimeStr)
+	orderDetails.SlotStartTime = startTimeStr
 	if err != nil {
 		return nil, fmt.Errorf("error parsing slot start time: %w", err)
 	}
 
-	orderDetails.SlotEndTime, err = time.Parse(timeLayout, endTimeStr)
+	orderDetails.SlotEndTime = endTimeStr
 	if err != nil {
 		return nil, fmt.Errorf("error parsing slot end time: %w", err)
 	}
@@ -468,18 +467,18 @@ type PickupOrder struct {
 }
 
 type SalesOrderItem struct {
-	ItemName             string    `json:"item_name"`
-	UnitOfQuantity       string    `json:"unit_of_quantity"`
-	Quantity             int       `json:"quantity"`
-	SoldPrice            int       `json:"sold_price"`
-	OrderDate            time.Time `json:"order_date"`
-	Subtotal             int       `json:"subtotal"`
-	DeliveryFee          int       `json:"delivery_fee"`
-	PlatformFee          int       `json:"platform_fee"`
-	SmallOrderFee        int       `json:"small_order_fee"`
-	RainFee              int       `json:"rain_fee"`
-	HighTrafficSurcharge int       `json:"high_traffic_surcharge"`
-	PackingFee           int       `json:"packing_fee"`
+	ItemName             string `json:"item_name"`
+	UnitOfQuantity       string `json:"unit_of_quantity"`
+	Quantity             int    `json:"quantity"`
+	SoldPrice            int    `json:"sold_price"`
+	OrderDate            string `json:"order_date"`
+	Subtotal             int    `json:"subtotal"`
+	DeliveryFee          int    `json:"delivery_fee"`
+	PlatformFee          int    `json:"platform_fee"`
+	SmallOrderFee        int    `json:"small_order_fee"`
+	RainFee              int    `json:"rain_fee"`
+	HighTrafficSurcharge int    `json:"high_traffic_surcharge"`
+	PackingFee           int    `json:"packing_fee"`
 }
 
 func (s *PostgresStore) GetSalesOrderDetails(salesOrderID, customerID int) ([]*SalesOrderItem, error) {
@@ -1240,7 +1239,7 @@ type ShoppingCartFees struct {
 }
 
 type OrderDetailCustomer struct {
-	OrderPlacedTime time.Time        `json:"orderPlacedTime"`
+	OrderPlacedTime string           `json:"orderPlacedTime"`
 	Items           []ItemDetail     `json:"items"`
 	Fees            ShoppingCartFees `json:"fees"`
 }
@@ -1250,5 +1249,5 @@ type OrderDetail struct {
 	ItemQuantity    int // This is the quantity from the cart_item table
 	ItemSize        int // This represents the size from the item table
 	UnitOfQuantity  string
-	OrderPlacedTime time.Time
+	OrderPlacedTime string
 }

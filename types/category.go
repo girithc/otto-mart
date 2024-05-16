@@ -1,15 +1,13 @@
 package types
 
-import "time"
-
 type Category struct {
-	ID         int       `json:"id"`
-	Name       string    `json:"name"`
-	Promotion  bool      `json:"promotion"`
-	Image      string    `json:"image"`
-	Position   int       `json:"position"`
-	Created_At time.Time `json:"created_at"`
-	Created_By int       `json:"created_by"`
+	ID         int    `json:"id"`
+	Name       string `json:"name"`
+	Promotion  bool   `json:"promotion"`
+	Image      string `json:"image"`
+	Position   int    `json:"position"`
+	Created_At string `json:"created_at"`
+	Created_By int    `json:"created_by"`
 }
 
 type Create_Category struct {

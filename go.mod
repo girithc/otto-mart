@@ -14,6 +14,8 @@ require (
 	cloud.google.com/go/firestore v1.13.0 // indirect
 	cloud.google.com/go/longrunning v0.5.2 // indirect
 	cloud.google.com/go/storage v1.30.1 // indirect
+	github.com/supabase-community/supabase-go v0.0.1 // indirect
+	github.com/supabase/postgrest-go v0.0.7 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 )
 

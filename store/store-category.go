@@ -132,7 +132,7 @@ func (s *PostgresStore) Get_Categories(promotion bool) ([]*types.Category, error
 			promotion bool
 			image     *string // Change this to a pointer to a string
 			position  int
-			createdAt time.Time
+			createdAt string
 			createdBy int
 		)
 

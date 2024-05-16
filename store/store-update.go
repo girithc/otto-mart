@@ -59,8 +59,9 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateAppInput) (*UpdateRespo
 	err := s.db.QueryRow(query, newReq.PackageName, newReq.Platform).Scan(&versionNumber, &buildNumber, &maintenance)
 	if err != nil {
 		if err == sql.ErrNoRows {
+			layout := "2006-01-02 15:04:05"
 			// No records found, possibly a new app, needs to update
-			return &UpdateResponse{UpdateRequired: false, MaintenanceRequired: false, MaintenanceEndTime: time.Now().Add(6 * time.Hour)}, nil
+			return &UpdateResponse{UpdateRequired: false, MaintenanceRequired: false, MaintenanceEndTime: time.Now().Add(6 * time.Hour).Format(layout)}, nil
 		}
 		// Handle other potential errors
 		return nil, fmt.Errorf("error querying updateapp table: %w", err)
@@ -78,10 +79,11 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateAppInput) (*UpdateRespo
 		MaintenanceRequired: maintenance,
 		UpdateAvailable:     false,
 	}
+	layout := "2006-01-02 15:04:05"
 
 	// Handle maintenance end time (only if not NULL)
 	if maintenanceEndTime.Valid {
-		updateResponse.MaintenanceEndTime = maintenanceEndTime.Time
+		updateResponse.MaintenanceEndTime = maintenanceEndTime.Time.Format(layout)
 	}
 
 	if newReq.Platform == "ios" {
@@ -109,12 +111,11 @@ func (s *PostgresStore) NeedToUpdate(newReq *types.UpdateAppInput) (*UpdateRespo
 	return updateResponse, nil
 
 	// If none of the above conditions are met, an update is needed
-
 }
 
 type UpdateResponse struct {
-	UpdateRequired      bool      `json:"update_required"`
-	MaintenanceRequired bool      `json:"maintenance_required"`
-	MaintenanceEndTime  time.Time `json:"end_time"`
-	UpdateAvailable     bool      `json:"update_available"`
+	UpdateRequired      bool   `json:"update_required"`
+	MaintenanceRequired bool   `json:"maintenance_required"`
+	MaintenanceEndTime  string `json:"end_time"`
+	UpdateAvailable     bool   `json:"update_available"`
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
@@ -100,11 +99,11 @@ func (s *PostgresStore) CreatePacker(phone string) (*Packer, error) {
 
 // Packer represents the structure of a packer in the database
 type Packer struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Phone     string    `json:"phone"`
-	Address   string    `json:"address"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Phone     string `json:"phone"`
+	Address   string `json:"address"`
+	CreatedAt string `json:"created_at"`
 }
 
 func (s *PostgresStore) PackerAcceptOrder(cart_id int, phone string) error {
@@ -484,7 +483,6 @@ func (s *PostgresStore) PackerFindItem(new_req types.FindItemBasic) (*FindItemRe
 		&response.ShelfHorizontal, // This will be NULL if there's no shelf
 		&response.ShelfVertical,   // This will be NULL if there's no shelf
 	)
-
 	// If an error occurred (other than not finding a shelf), return nil and the error
 	if err != nil {
 		// You might want to handle the case where the item is not found at all (e.g., using sql.ErrNoRows)
@@ -496,12 +494,12 @@ func (s *PostgresStore) PackerFindItem(new_req types.FindItemBasic) (*FindItemRe
 }
 
 type GetOrder struct {
-	Location    int       `json:"location"`
-	Active      bool      `json:"active"`
-	CartId      int       `json:"cart_id"`
-	OrderTime   time.Time `json:"order_time"`
-	Phone       string    `json:"phone"`
-	OrderStatus string    `json:"order_status"`
+	Location    int    `json:"location"`
+	Active      bool   `json:"active"`
+	CartId      int    `json:"cart_id"`
+	OrderTime   string `json:"order_time"`
+	Phone       string `json:"phone"`
+	OrderStatus string `json:"order_status"`
 }
 
 func (s *PostgresStore) PackerCompleteOrder(cartId int, phone string) (CompleteOrder, error) {

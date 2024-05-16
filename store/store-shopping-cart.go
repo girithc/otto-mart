@@ -11,7 +11,6 @@ import (
 )
 
 func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
-
 	orderTypeQuery := `DO $$ BEGIN
         CREATE TYPE order_type AS ENUM ('delivery');
     EXCEPTION
@@ -294,12 +293,14 @@ func (s *PostgresStore) CalculateCartTotal(cart_id int) error {
 		packagingFee = 0
 	}
 
+	subtotal := itemCost + deliveryFee + platformFee + smallOrderFee + packagingFee
+
 	updateQuery := `
     UPDATE shopping_cart
     SET item_cost = $2, delivery_fee = $3, platform_fee = $4, small_order_fee = $5, 
-        packaging_fee = $6, discounts = $7, number_of_items = $8
+        packaging_fee = $6, discounts = $7, number_of_items = $8, subtotal = $9
     WHERE id = $1`
-	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, int(platformFee), smallOrderFee, packagingFee, discounts, numberOfItems)
+	_, err = s.db.Exec(updateQuery, cart_id, itemCost, deliveryFee, int(platformFee), smallOrderFee, packagingFee, discounts, numberOfItems, subtotal)
 	return err
 }
 
@@ -399,9 +400,9 @@ func (s *PostgresStore) Get_Shopping_Cart_By_Customer_Id(customer_id int, active
 }
 
 type CartDeliveryDetails struct {
-	DeliveryDate time.Time
-	StartTime    time.Time
-	EndTime      time.Time
+	DeliveryDate string
+	StartTime    string
+	EndTime      string
 }
 
 func (s *PostgresStore) GetCustomerCart(customerId int, cartId int) (*CartDeliveryDetails, error) {
@@ -429,8 +430,8 @@ func (s *PostgresStore) GetCustomerCart(customerId int, cartId int) (*CartDelive
 }
 
 type Slot struct {
-	StartTime time.Time
-	EndTime   time.Time
+	StartTime string
+	EndTime   string
 	Id        int
 	Available bool
 }
@@ -438,7 +439,7 @@ type Slot struct {
 type CartSlotDetails struct {
 	AvailableSlots []Slot
 	ChosenSlot     *Slot // Using a pointer so it can be nil if no slot is chosen
-	DeliveryDate   time.Time
+	DeliveryDate   string
 }
 
 func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetails, error) {
@@ -471,7 +472,6 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 	}
 	defer rows.Close()
 
-	const timeLayout = "15:04:05" // Time layout to parse PostgreSQL TIME
 	for rows.Next() {
 		var startTimeStr, endTimeStr string
 		var id int
@@ -479,27 +479,12 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 			return nil, err
 		}
 
-		startTime, err := time.Parse(timeLayout, startTimeStr)
-		if err != nil {
-			return nil, err
-		}
-
-		endTime, err := time.Parse(timeLayout, endTimeStr)
-		if err != nil {
-			return nil, err
-		}
-
 		// Determine availability based on distance
-		available := false
-		if distanceStore >= 4 {
-			available = startTime.Hour() == 6 && endTime.Hour() == 8
-		} else {
-			available = true
-		}
+		available := true
 
 		cartSlots.AvailableSlots = append(cartSlots.AvailableSlots, Slot{
-			StartTime: startTime,
-			EndTime:   endTime,
+			StartTime: startTimeStr,
+			EndTime:   endTimeStr,
 			Id:        id,
 			Available: available,
 		})
@@ -513,19 +498,11 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 	var id int
 	err = s.db.QueryRow(chosenSlotQuery, cartId).Scan(&chosenStartTimeStr, &chosenEndTimeStr, &id)
 	if err == nil {
-		chosenStartTime, err := time.Parse(timeLayout, chosenStartTimeStr)
-		if err != nil {
-			return nil, err
-		}
-
-		chosenEndTime, err := time.Parse(timeLayout, chosenEndTimeStr)
-		if err != nil {
-			return nil, err
-		}
+		// layout := "15:04:05"
 
 		cartSlots.ChosenSlot = &Slot{
-			StartTime: chosenStartTime,
-			EndTime:   chosenEndTime,
+			StartTime: chosenStartTimeStr,
+			EndTime:   chosenEndTimeStr,
 			Id:        id,
 			// Assuming the chosen slot respects the distance rule and is thus available
 			Available: true,
@@ -534,7 +511,8 @@ func (s *PostgresStore) GetCartSlots(customerId int, cartId int) (*CartSlotDetai
 		return nil, err // return error if it's not the "no rows" error
 	}
 
-	cartSlots.DeliveryDate = newDeliveryDate
+	layout := "2006-01-02 15:04:05"
+	cartSlots.DeliveryDate = newDeliveryDate.Format(layout)
 
 	return &cartSlots, nil
 }
@@ -581,7 +559,7 @@ func scan_Into_Shopping_Cart(rows *sql.Rows) (*types.Shopping_Cart, error) {
 		itemCost, deliveryFee, platformFee, smallOrderFee, rainFee,
 		highTrafficSurcharge, packagingFee, peakTimeSurcharge, numberOfItems,
 		subtotal, discounts int
-		createdAt time.Time
+		createdAt string
 	)
 
 	err := rows.Scan(
