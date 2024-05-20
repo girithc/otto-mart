@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart' as lt;
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/home/home_screen.dart';
 import 'dart:convert';
+import 'package:intl/intl.dart';
 
 import 'package:pronto/utils/network/service.dart';
 import 'package:provider/provider.dart';
@@ -187,8 +188,6 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
       orderCartId = cartId;
     }
 
-    //cartId = await _storage.read(key: 'placedCartId');
-
     final Map<String, dynamic> body = {
       'customer_id': int.parse(customerId!),
       'cart_id': int.parse(cartId!),
@@ -228,6 +227,16 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     // Format the date with AM/PM, e.g., "dd MMM, yyyy hh:mm a"
     // Here, "hh" is used for hour format (01-12), "mm" for minute, and "a" for AM/PM
     return DateFormat('dd MMM, yyyy hh:mm a').format(updatedOrderDate);
+  }
+
+  String formatDeliveryDate(DateTime date) {
+    final DateFormat formatter = DateFormat('d MMM');
+    return formatter.format(date);
+  }
+
+  String formatSlotTime(DateTime startTime, DateTime endTime) {
+    final DateFormat timeFormat = DateFormat('h:mm');
+    return '${timeFormat.format(startTime)} - ${timeFormat.format(endTime)}';
   }
 
   @override
@@ -403,7 +412,8 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                     // you'll first need to parse it into a DateTime object.
                                     // Then, add 5 hours and 30 minutes to it.
                                     // Finally, format it using the DateFormat class.
-                                    formatDate(_orderInfo!.orderDate),
+                                    formatDate(
+                                        _orderInfo!.orderDate.toString()),
                                   )
                                 ],
                               ),
@@ -419,7 +429,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                   const SizedBox(
                                     width: 10,
                                   ),
-                                  Column(
+                                  Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
@@ -444,8 +454,9 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                               color: Colors.white, width: 2.0),
                                         ),
                                         child: Text(
-                                          _orderInfo!
-                                              .deliveryDate, // Added a space for visual separation
+                                          formatDeliveryDate(
+                                                  _orderInfo!.deliveryDate)
+                                              .toString(), // Added a space for visual separation
                                           style: const TextStyle(
                                             fontSize:
                                                 14, // This adds the line through effect
@@ -473,12 +484,13 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                               color: Colors.white, width: 2.0),
                                         ),
                                         child: Text(
-                                          // Assuming _orderInfo!.orderDate is a string representing a date,
-                                          // you'll first need to parse it into a DateTime object.
-                                          // Then, add 5 hours and 30 minutes to it.
-                                          // Finally, format it using the DateFormat class.
-                                          '${_orderInfo!.slotStartTime} - ${_orderInfo!.slotEndTime}',
-                                        ),
+                                            // Assuming _orderInfo!.orderDate is a string representing a date,
+                                            // you'll first need to parse it into a DateTime object.
+                                            // Then, add 5 hours and 30 minutes to it.
+                                            // Finally, format it using the DateFormat class.
+                                            formatSlotTime(
+                                                _orderInfo!.slotStartTime,
+                                                _orderInfo!.slotEndTime)),
                                       ),
                                     ],
                                   ),
@@ -915,7 +927,7 @@ class OrderInfo {
   final String orderDpStatus;
   final String paymentType;
   final bool paidStatus;
-  final String orderDate;
+  final DateTime orderDate;
   final int totalAmountPaid;
   final List<Item> items;
   final String address;
@@ -929,41 +941,45 @@ class OrderInfo {
   final int packagingFee;
   final int peakTimeSurcharge;
   final int subtotal;
-  final String deliveryDate;
-  final String slotStartTime;
-  final String slotEndTime;
+  final DateTime deliveryDate;
+  final DateTime slotStartTime;
+  final DateTime slotEndTime;
   final int newCartId;
 
-  OrderInfo(
-      {required this.orderStatus,
-      required this.orderDpStatus,
-      required this.paymentType,
-      required this.paidStatus,
-      required this.orderDate,
-      required this.totalAmountPaid,
-      required this.items,
-      required this.address,
-      required this.itemCost,
-      required this.deliveryFee,
-      required this.platformFee,
-      required this.smallOrderFee,
-      required this.rainFee,
-      required this.highTrafficSurcharge,
-      required this.packagingFee,
-      required this.peakTimeSurcharge,
-      required this.subtotal,
-      required this.deliveryDate,
-      required this.slotStartTime,
-      required this.slotEndTime,
-      required this.newCartId});
+  OrderInfo({
+    required this.orderStatus,
+    required this.orderDpStatus,
+    required this.paymentType,
+    required this.paidStatus,
+    required this.orderDate,
+    required this.totalAmountPaid,
+    required this.items,
+    required this.address,
+    required this.itemCost,
+    required this.deliveryFee,
+    required this.platformFee,
+    required this.smallOrderFee,
+    required this.rainFee,
+    required this.highTrafficSurcharge,
+    required this.packagingFee,
+    required this.peakTimeSurcharge,
+    required this.subtotal,
+    required this.deliveryDate,
+    required this.slotStartTime,
+    required this.slotEndTime,
+    required this.newCartId,
+  });
 
   factory OrderInfo.fromJson(Map<String, dynamic> json) {
+    final dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS Z");
+    final deliveryDateFormat = DateFormat("yyyy-MM-dd HH:mm:ss Z");
+
     return OrderInfo(
       orderStatus: json['order_status'],
       orderDpStatus: json['order_dp_status'],
       paymentType: json['payment_type'],
       paidStatus: json['paid_status'],
-      orderDate: json['order_date'],
+      orderDate: dateFormat.parse(json['order_date'].replaceFirst(' UTC', '')),
       totalAmountPaid: json['total_amount_paid'],
       items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
       address: json['address'],
@@ -976,9 +992,10 @@ class OrderInfo {
       packagingFee: json['packaging_fee'],
       peakTimeSurcharge: json['peak_time_surcharge'],
       subtotal: json['subtotal'],
-      deliveryDate: json['delivery_date'],
-      slotStartTime: json['slot_start_time'],
-      slotEndTime: json['slot_end_time'],
+      deliveryDate: deliveryDateFormat
+          .parse(json['delivery_date'].replaceFirst(' UTC', '')),
+      slotStartTime: DateTime.parse(json['slot_start_time']),
+      slotEndTime: DateTime.parse(json['slot_end_time']),
       newCartId: json['new_cart_id'],
     );
   }

@@ -213,41 +213,52 @@ class CartModel extends ChangeNotifier {
   }
 
   Future<void> _fetchDefaultAddress() async {
-    final customerId = await storage.read(key: 'customerId');
+    try {
+      final customerId = await storage.read(key: 'customerId');
 
-    final body = <String, dynamic>{
-      'customer_id': int.parse(customerId!),
-      "is_default": true,
-    };
+      if (customerId == null) {
+        _logger.e('Customer ID is null');
+        return;
+      }
 
-    _networkService
-        .postWithAuth('/address', additionalData: body)
-        .then((response) {
+      final body = <String, dynamic>{
+        'customer_id': int.parse(customerId),
+        'is_default': true,
+      };
+
+      final response =
+          await _networkService.postWithAuth('/address', additionalData: body);
+
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
           final List<dynamic> jsonData = json.decode(response.body);
-          print("Decoded $jsonData");
-          final List<Address> items =
-              jsonData.map((item) => Address.fromJson(item)).toList();
+          print('Decoded $jsonData');
 
-          deliveryAddress = items[0];
-          notifyListeners();
+          final List<Address> items = jsonData
+              .map((item) => Address.fromJson(item as Map<String, dynamic>))
+              .toList();
+
+          if (items.isNotEmpty) {
+            deliveryAddress = items[0];
+          } else {
+            deliveryAddress.id = -1;
+          }
         } else {
           deliveryAddress.id = -1;
-          notifyListeners();
         }
+        notifyListeners();
       } else {
         _logger.e(
             'HTTP POST request failed with status code ${response.statusCode}');
       }
-    }).catchError((error) {
-      if (error != null && error is http.ClientException) {
+    } catch (error) {
+      if (error is http.ClientException) {
         deliveryAddress.id = -1;
-        _logger.e('null response');
+        _logger.e('HTTP ClientException: null response');
       } else {
-        _logger.e('(cart model) HTTP POST request error: $error');
+        _logger.e('HTTP POST request error: $error');
       }
-    });
+    }
   }
 
   Future<bool> postDeliveryAddress(
@@ -450,12 +461,12 @@ class Address {
     return Address(
       id: json['id'],
       customerId: json['customer_id'],
-      streetAddress: json['street_address']['String'] ?? '',
-      lineOne: json['line_one']['String'] ?? '',
-      lineTwo: json['line_two']['String'] ?? '',
-      city: json['city']['String'] ?? '',
-      state: json['state']['String'] ?? '',
-      zip: json['zip']['String'] ?? '',
+      streetAddress: json['street_address']?['String'] ?? '',
+      lineOne: json['line_one']?['String'] ?? '',
+      lineTwo: json['line_two']?['String'] ?? '',
+      city: json['city']?['String'] ?? '',
+      state: json['state']?['String'] ?? '',
+      zip: json['zip']?['String'] ?? '',
       latitude: json['latitude'].toDouble(),
       longitude: json['longitude'].toDouble(),
       createdAt: json['created_at'],
