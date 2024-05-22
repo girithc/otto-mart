@@ -533,10 +533,10 @@ class _MyHomePageState extends State<MyHomePage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.home_outlined,
+                      Icon(Icons.all_inclusive_outlined,
                           size: 15, color: Colors.black87), // Icon for Home
                       SizedBox(width: 4),
-                      Text('Home',
+                      Text('AI',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -566,7 +566,7 @@ class _MyHomePageState extends State<MyHomePage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.travel_explore_outlined,
+                        Icons.search,
                         size: 15,
                         color: Colors.black87,
                       ), // Icon for Cart
@@ -600,7 +600,7 @@ class _MyHomePageState extends State<MyHomePage>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        Icons.shopping_cart_outlined,
+                        Icons.shopping_bag_outlined,
                         size: 15,
                         color: Colors.black87,
                       ), // Icon for Cart
