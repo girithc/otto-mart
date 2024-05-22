@@ -312,13 +312,13 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       bottomNavigationBar: Container(
         height: orders.isNotEmpty
-            ? MediaQuery.of(context).size.height * 0.175
-            : MediaQuery.of(context).size.height * 0.1,
+            ? MediaQuery.of(context).size.height * 0.16
+            : MediaQuery.of(context).size.height * 0.08,
         padding: EdgeInsets.only(
             bottom: orders.isNotEmpty
-                ? MediaQuery.of(context).size.height * 0.012
-                : MediaQuery.of(context).size.height * 0.014,
-            top: 5,
+                ? MediaQuery.of(context).size.height * 0.0
+                : MediaQuery.of(context).size.height * 0.0,
+            top: 0,
             left: 5,
             right: 5),
         margin: const EdgeInsets.only(bottom: 0),
@@ -345,71 +345,95 @@ class _MyHomePageState extends State<MyHomePage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          // Navigate to Cart
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OrderConfirmed(
-                                newOrder: false,
-                                orderId: orders[selectedOrder - 1].cartId,
-                              ),
-                            ),
-                          );
-                        },
-                        child: Container(
-                          alignment: Alignment.center,
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          width:
-                              MediaQuery.of(context).size.width * (0.95 - 0.25),
-                          decoration: BoxDecoration(
-                            color: Colors.deepPurpleAccent,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.white),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Circular avatar-like container
-                              Container(
-                                alignment: Alignment.center,
-                                padding: const EdgeInsets.all(5),
-                                height: 30, // Diameter of the circle
-                                decoration: const BoxDecoration(
-                                  color: Colors.white, // White background color
-                                  shape: BoxShape
-                                      .circle, // Makes the container circular
-                                ),
-                                child: Center(
-                                  // Optional: Add an icon or text inside the circle here
-                                  child: Text(
-                                    '$selectedOrder', // Example text, replace with what you need
-                                    style: const TextStyle(
-                                      color:
-                                          Colors.deepPurpleAccent, // Text color
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 18, // Adjust the size as needed
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width * 0.95,
+                        child: CarouselSlider.builder(
+                          itemCount: orders.length,
+                          itemBuilder: (context, index, realIndex) {
+                            return GestureDetector(
+                              onTap: () {
+                                // Navigate to Cart
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => OrderConfirmed(
+                                      newOrder: false,
+                                      orderId: orders[index].cartId,
                                     ),
                                   ),
+                                );
+                              },
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 5),
+                                width:
+                                    MediaQuery.of(context).size.width * (0.95),
+                                decoration: BoxDecoration(
+                                  color: Colors.deepPurpleAccent,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Circular avatar-like container
+                                    Container(
+                                      alignment: Alignment.center,
+                                      padding: const EdgeInsets.all(5),
+                                      height: 30, // Diameter of the circle
+                                      decoration: const BoxDecoration(
+                                        color: Colors
+                                            .white, // White background color
+                                        shape: BoxShape
+                                            .circle, // Makes the container circular
+                                      ),
+                                      child: Center(
+                                        // Optional: Add an icon or text inside the circle here
+                                        child: Text(
+                                          (index + 1)
+                                              .toString(), // Convert int to String
+                                          // Example text, replace with what you need
+                                          style: const TextStyle(
+                                            color: Colors
+                                                .deepPurpleAccent, // Text color
+                                            fontWeight: FontWeight.bold,
+                                            fontSize:
+                                                18, // Adjust the size as needed
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                        width:
+                                            10), // Spacing between the circle and text
+                                    // Text
+                                    Text(
+                                      'Order ${orders[index].status}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 19,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(
-                                  width:
-                                      10), // Spacing between the circle and text
-                              // Text
-                              Text(
-                                'Order ${orders[selectedOrder - 1].status}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 19,
-                                ),
-                              ),
-                            ],
+                            );
+                          },
+                          options: CarouselOptions(
+                            height: MediaQuery.of(context).size.height * 0.07,
+                            enlargeCenterPage: true,
+                            autoPlay: true,
+                            autoPlayCurve: Curves.fastOutSlowIn,
+                            enableInfiniteScroll: true,
+                            autoPlayAnimationDuration:
+                                const Duration(milliseconds: 800),
+                            viewportFraction: 1,
                           ),
                         ),
                       ),
+                      /*
                       SizedBox(
                         height: 50, // Set a fixed height for the ListView
                         width: MediaQuery.of(context).size.width * (0.25),
@@ -433,6 +457,7 @@ class _MyHomePageState extends State<MyHomePage>
                           },
                         ),
                       ),
+                      */
                     ],
                   )
                 : Container(),
@@ -533,10 +558,10 @@ class _MyHomePageState extends State<MyHomePage>
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.all_inclusive_outlined,
+                      Icon(Icons.refresh_outlined,
                           size: 15, color: Colors.black87), // Icon for Home
                       SizedBox(width: 4),
-                      Text('AI',
+                      Text('Home',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,
@@ -571,7 +596,7 @@ class _MyHomePageState extends State<MyHomePage>
                         color: Colors.black87,
                       ), // Icon for Cart
                       SizedBox(width: 4),
-                      Text('Explore',
+                      Text('Search',
                           style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.bold,

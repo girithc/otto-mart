@@ -361,7 +361,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
     return storeId == null
         ? const LinearProgressIndicator()
         : Container(
-            color: const Color(0xFFF2F2F2),
+            color: const Color.fromARGB(255, 251, 245, 255),
             padding: const EdgeInsets.only(bottom: 4),
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

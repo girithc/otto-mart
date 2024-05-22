@@ -78,12 +78,12 @@ class _SearchPageState extends State<SearchPage> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.lightGreenAccent,
+                      color: Colors.white,
                     ),
                     child: Center(
                       child: Text(
                         'Free Delivery Above ${cart.freeDeliveryAmount}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14.0,
                           fontWeight: FontWeight.bold,
@@ -92,47 +92,15 @@ class _SearchPageState extends State<SearchPage> {
                     ),
                   ),
                   // Second tab
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.lightGreenAccent,
-                    ),
-                    child: Center(
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            // Default text style
-                            color: Colors.black,
-                            fontSize: 12.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: 'Upto ', // The part you want to emphasize
-                              // Increase the font size for emphasis
-                            ), // Unchanged part of the text
-                            TextSpan(
-                              text:
-                                  '50% Discount', // The second part you want to emphasize
-                              style: TextStyle(
-                                  fontSize:
-                                      14.0), // Increase the font size for emphasis
-                            ),
-                            // Unchanged part of the text
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
                 options: CarouselOptions(
                   height: MediaQuery.of(context).size.height * 0.06,
                   enlargeCenterPage: true,
-                  autoPlay: true,
+                  autoPlay: false,
                   //aspectRatio: 16 / 9,
                   autoPlayCurve: Curves.fastOutSlowIn,
                   enableInfiniteScroll: true,
-                  autoPlayAnimationDuration: Duration(
+                  autoPlayAnimationDuration: const Duration(
                     seconds: 3,
                   ),
                   viewportFraction: 0.95,
@@ -163,7 +131,7 @@ class _SearchPageState extends State<SearchPage> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pinkAccent,
+                  backgroundColor: Colors.deepPurpleAccent,
                   foregroundColor: Colors.white,
                   textStyle: const TextStyle(
                     fontSize: 20,
@@ -261,7 +229,7 @@ class _TypingAnimationState extends State<TypingAnimation> {
         //mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           const Text(
@@ -271,7 +239,7 @@ class _TypingAnimationState extends State<TypingAnimation> {
           ),
           const SizedBox(height: 10),
           Container(
-            padding: EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: BoxDecoration(
                 color: Colors.white,
                 boxShadow: [
@@ -729,17 +697,8 @@ class ListItem extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border.all(color: Colors.white, width: 1.0),
-              borderRadius: BorderRadius.circular(8.0),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.shade400
-                      .withOpacity(0.2), // Shadow color with some opacity
-                  spreadRadius: 1, // Extent of the shadow
-                  blurRadius: 1, // Blur effect
-                  offset: const Offset(0, 1), // Changes position of shadow
-                ),
-              ],
+              borderRadius: BorderRadius.circular(10.0),
+              boxShadow: const [],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -976,12 +935,12 @@ class ListItem extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(10.0),
                                     )),
                                 child: stockQuantity <= 0
-                                    ? Text(
+                                    ? const Text(
                                         'Notify',
                                         style: TextStyle(
                                             color: Colors.black, fontSize: 13),
                                       )
-                                    : Text(
+                                    : const Text(
                                         'Add',
                                         style: TextStyle(
                                             color: Colors.pinkAccent,
@@ -1003,13 +962,13 @@ class ListItem extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 2.5),
                     decoration: BoxDecoration(
-                      color: Colors.deepPurpleAccent,
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '\u{20B9}$discount OFF',
                       style: const TextStyle(
-                        color: Colors.white,
+                        color: Colors.pinkAccent,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1035,7 +994,7 @@ class ListItem extends StatelessWidget {
                     color: Colors.deepPurpleAccent.withOpacity(0.85),
                     borderRadius: BorderRadius.circular(10.0),
                   ),
-                  child: Text(
+                  child: const Text(
                     'Coming Soon',
                     style: TextStyle(color: Colors.white, fontSize: 12),
                   ),
@@ -1093,35 +1052,23 @@ class _CustomAppBarState extends State<CustomAppBar> {
     final searchData = context.watch<SearchData>();
 
     return Material(
-      elevation: 4.0,
-      shadowColor: Colors.deepPurpleAccent,
       child: Container(
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).size.height * 0.05,
         ),
         margin: const EdgeInsets.all(0),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.deepPurpleAccent,
-            width: 1.0, // Adjust the border width as needed
-          ),
-        ),
+        decoration: const BoxDecoration(color: Colors.deepPurpleAccent),
         child: Row(
           mainAxisAlignment:
               MainAxisAlignment.spaceBetween, // Aligns children to the edges
           children: [
             Container(
-              decoration: BoxDecoration(
-                border: Border.all(
-                  color: Colors.white,
-                  width: 1.0, // Adjust the border width as needed
-                ),
-              ),
+              decoration: const BoxDecoration(),
               width: MediaQuery.of(context).size.width * 0.15,
               child: IconButton(
                 icon: const Icon(
                   Icons.arrow_back_ios_outlined,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
                 onPressed: () {
                   Navigator.pop(context);
@@ -1133,7 +1080,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 focusNode: widget.searchFocusNode,
                 style: const TextStyle(
                   fontSize: 18,
-                  color: Colors.black,
+                  color: Colors.white,
                 ),
                 controller: searchController,
                 onChanged: (value) async {
@@ -1155,8 +1102,11 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 },
                 decoration: const InputDecoration(
                   hintText: 'Search Groceries',
+                  hintStyle: TextStyle(color: Colors.white),
+                  hoverColor: Colors.white,
                   border: InputBorder.none,
                 ),
+                cursorColor: Colors.white,
               ),
             ),
           ],
