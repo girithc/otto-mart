@@ -137,7 +137,7 @@ class _PhonePeWebViewState extends State<PhonePeWebView> {
   }
 
   Future<bool> checkoutCancelItems(int cartId) async {
-    const String apiUrl = '$baseUrl/checkout-cancel';
+    _timer.cancel();
     final Map<String, dynamic> payload = {
       'cart_id': cartId,
       'sign': widget.sign,

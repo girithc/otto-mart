@@ -459,18 +459,25 @@ class Address {
 
   factory Address.fromJson(Map<String, dynamic> json) {
     return Address(
-      id: json['id'],
-      customerId: json['customer_id'],
-      streetAddress: json['street_address']?['String'] ?? '',
-      lineOne: json['line_one']?['String'] ?? '',
-      lineTwo: json['line_two']?['String'] ?? '',
-      city: json['city']?['String'] ?? '',
-      state: json['state']?['String'] ?? '',
-      zip: json['zip']?['String'] ?? '',
-      latitude: json['latitude'].toDouble(),
-      longitude: json['longitude'].toDouble(),
-      createdAt: json['created_at'],
+      id: json['id'] as int,
+      customerId: json['customer_id'] as int,
+      streetAddress: Address._getStringValue(json['street_address']),
+      lineOne: Address._getStringValue(json['line_one']),
+      lineTwo: Address._getStringValue(json['line_two']),
+      city: Address._getStringValue(json['city']),
+      state: Address._getStringValue(json['state']),
+      zip: Address._getStringValue(json['zip']),
+      latitude: (json['latitude'] as num).toDouble(),
+      longitude: (json['longitude'] as num).toDouble(),
+      createdAt: json['created_at'] as String,
     );
+  }
+
+  static String _getStringValue(dynamic field) {
+    if (field is Map && field.containsKey('String')) {
+      return field['String'] ?? '';
+    }
+    return field ?? '';
   }
 
   bool isEmpty() {

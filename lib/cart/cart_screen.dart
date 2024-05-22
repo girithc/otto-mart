@@ -309,7 +309,6 @@ class _MyCartState extends State<MyCart> {
                     child: !(cart.isEmpty())
                         ? GestureDetector(
                             onTap: () async {
-                              /*
                               String? cartId =
                                   await storage.read(key: 'cartId');
 
@@ -342,7 +341,8 @@ class _MyCartState extends State<MyCart> {
                                   ),
                                 );
                               }
-                              */
+
+                              /*
 
                               Razorpay razorpay = Razorpay();
                               var options = {
@@ -367,6 +367,8 @@ class _MyCartState extends State<MyCart> {
                               razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET,
                                   handleExternalWalletSelected);
                               razorpay.open(options);
+
+                              */
                             },
                             child: Container(
                               padding: EdgeInsets.symmetric(

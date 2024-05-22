@@ -81,22 +81,22 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     };
 
     final networkService = NetworkService();
-    print("send get all request");
+    //print("send get all request");
     final response =
         await networkService.postWithAuth('/address', additionalData: body);
     //("\n\n\\n\n\n");
 
-    print("Address All: ${response.body}");
+    //print("Address All: ${response.body}");
 
     //print("\n\n\\n\n\n");
     if (response.statusCode == 200) {
       if (response.body.isNotEmpty && response.contentLength! > 3) {
         final List<dynamic> jsonData = json.decode(response.body);
 
-        print("Start Json Map");
+        //print("Start Json Map");
         final List<Address> items =
             jsonData.map((item) => Address.fromJson(item)).toList();
-        print("End Json Map");
+        //print("End Json Map");
 
         setState(() {
           addresses = items;
@@ -143,7 +143,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   }
 
   Future<AddressResponse?> setDefaultAddress(int addressId) async {
-    //print("Enter Set Default address");
     final Map<String, String> headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
@@ -162,21 +161,14 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       final response =
           await networkService.postWithAuth('/address', additionalData: body);
 
-      print(">>>>>>>>>>>>>>");
-      print(response.body.toString());
-      print(">>>>>>>>>>>>>>");
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           if (decodedResponse is Map) {
             // Parse and return AddressResponse
-            print("Parse Address Response");
-            print("Decoded Response: $decodedResponse");
             final resp = AddressResponse.fromJson(
                 Map<String, dynamic>.from(decodedResponse));
-            print("Finish Parse Address Response");
 
-            print("Setting cartId to ${resp.cartId}");
             CartModel cartModel = CartModel();
             Address? deliveryAddress = cartModel.deliveryAddress;
             await storage.write(key: 'cartId', value: resp.cartId.toString());
@@ -186,11 +178,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
             return resp;
           } else if (decodedResponse is List) {
             // Handle the case where the response is a List
-            final List<AddressResponse> items = (decodedResponse)
+            final List<AddressResponse> items = decodedResponse
                 .map((item) =>
                     AddressResponse.fromJson(Map<String, dynamic>.from(item)))
                 .toList();
-
             return items.isNotEmpty ? items[0] : null;
           }
         }
@@ -546,18 +537,36 @@ class AddressResponse {
   final int storeId;
   final int cartId;
 
-  AddressResponse(
-      {required this.address,
-      required this.deliverable,
-      required this.storeId,
-      required this.cartId});
+  AddressResponse({
+    required this.address,
+    required this.deliverable,
+    required this.storeId,
+    required this.cartId,
+  });
 
   factory AddressResponse.fromJson(Map<String, dynamic> json) {
     return AddressResponse(
-        address: Address.fromJson(json),
-        deliverable: json['deliverable'] as bool,
-        storeId: json['store_id'] as int,
-        cartId: json['cart_id'] as int);
+      address: Address.fromJson(AddressResponse._getNestedJson(json)),
+      deliverable: json['deliverable'] as bool,
+      storeId: json['store_id'] as int,
+      cartId: json['cart_id'] as int,
+    );
+  }
+
+  static Map<String, dynamic> _getNestedJson(Map<String, dynamic> json) {
+    return {
+      'id': json['id'],
+      'customer_id': json['customer_id'],
+      'street_address': json['street_address'],
+      'line_one': json['line_one'],
+      'line_two': json['line_two'],
+      'city': json['city'],
+      'state': json['state'],
+      'zip': json['zip'],
+      'latitude': json['latitude'],
+      'longitude': json['longitude'],
+      'created_at': json['created_at'],
+    };
   }
 }
 

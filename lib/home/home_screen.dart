@@ -135,7 +135,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> getStoreAddress() async {
-    print("Entered Get Store Address");
+    //print("Entered Get Store Address");
     final storeId = await storage.read(key: 'storeId');
     final addressId = await storage.read(key: 'addressId');
     final networkService = NetworkService();
@@ -146,7 +146,7 @@ class _MyHomePageState extends State<MyHomePage>
     final response = await networkService.postWithAuth('/store-address',
         additionalData: body);
 
-    print("Response Store Address ${response.body}");
+    //print("Response Store Address ${response.body}");
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
 
@@ -210,7 +210,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<void> checkForPlacedOrder() async {
-    print("Enter Check For Placed Order");
+    //print("Enter Check For Placed Order");
     final phone = await storage.read(key: 'phone');
     final response = await network.postWithAuth('/check-for-placed-order',
         additionalData: {"phone": phone});

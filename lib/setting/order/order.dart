@@ -22,7 +22,7 @@ class MyOrdersPage extends StatefulWidget {
 
 class _MyOrdersPageState extends State<MyOrdersPage> {
   List<Order> orders = [];
-  List<Order> orderSample = [];
+
   @override
   void initState() {
     super.initState();
@@ -43,13 +43,12 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
     try {
       final Map<String, dynamic> body = {"customer_id": int.parse(customerId)};
 
-      //var response = await http.post(url, headers: headers, body: body);
       final networkService = NetworkService();
       final response = await networkService.postWithAuth('/sales-order',
           additionalData: body);
 
       if (response.statusCode == 200) {
-        print("FetchOrder Response: ${response.body}");
+        //print("FetchOrder Response: ${response.body}");
         List<dynamic> data = json.decode(response.body);
 
         if (data.isEmpty) {
@@ -99,24 +98,21 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            context.go('/home');
+            Navigator.pop(context);
           },
         ),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Use a ListView.builder to dynamically create the order containers
             ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: orders.length,
               itemBuilder: (context, index) {
-                // Parse the order date string into a DateTime object
-                DateTime orderDateTime = DateTime.parse(orders[index].date!);
-                orderDateTime =
-                    orderDateTime.add(Duration(hours: 5, minutes: 30));
-                // Format the date and time in a more readable form
+                // Remove 'UTC' and handle the date string properly
+                String dateString = orders[index].date!.replaceAll(' UTC', '');
+                DateTime orderDateTime = DateTime.parse(dateString).toLocal();
                 String formattedDateTime =
                     DateFormat('MMMM d, y \'at\' h:mma').format(orderDateTime);
 
@@ -139,18 +135,16 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                       color: Colors.white,
                       border: Border(
                         top: BorderSide(
-                            color: Colors.grey.withOpacity(0.4),
-                            width:
-                                1.0), // Specify the color and width of the top border
+                          color: Colors.grey.withOpacity(0.4),
+                          width: 1.0,
+                        ),
                       ),
-                      borderRadius:
-                          BorderRadius.circular(15), // Rounded corners
+                      borderRadius: BorderRadius.circular(15),
                       boxShadow: const [],
                     ),
                     child: Center(
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment
-                            .center, // Centers the column content
+                        mainAxisAlignment: MainAxisAlignment.center,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
@@ -158,11 +152,10 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                             style: const TextStyle(fontSize: 14),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            textAlign:
-                                TextAlign.start, // Center-aligns the text
+                            textAlign: TextAlign.start,
                           ),
                           Text(
-                            formattedDateTime, // Use the formatted date
+                            formattedDateTime,
                             style: const TextStyle(fontSize: 14),
                           ),
                           const Row(
@@ -171,9 +164,10 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                               Text(
                                 'Details',
                                 style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.normal,
-                                    color: Colors.deepPurpleAccent),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                  color: Colors.deepPurpleAccent,
+                                ),
                               ),
                               SizedBox(
                                 width: 5,
@@ -184,7 +178,7 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                                 color: Colors.deepPurpleAccent,
                               )
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
@@ -192,7 +186,6 @@ class _MyOrdersPageState extends State<MyOrdersPage> {
                 );
               },
             ),
-            // Add more containers or widgets if needed
           ],
         ),
       ),

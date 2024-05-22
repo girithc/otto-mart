@@ -39,7 +39,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     final response = await networkService.postWithAuth('/sales-order-details',
         additionalData: body);
 
-    print("Response: ${response.body}");
+    //print("Response: ${response.body}");
 
     if (response.statusCode == 200) {
       return OrderDetailCustomer.fromJson(json.decode(response.body));
@@ -78,18 +78,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   }
 
   Widget buildOrderDetails(OrderDetailCustomer orderDetail) {
-    // Parse the ISO 8601 string to DateTime
-    DateTime parsedTime = DateTime.parse(orderDetail.orderPlacedTime);
-
-    // Add 5 hours and 30 minutes to the parsedTime
-    DateTime adjustedTime = parsedTime.add(Duration(hours: 5, minutes: 30));
+    // Remove 'UTC' and handle the date string properly
+    String dateString = orderDetail.orderPlacedTime.replaceAll(' UTC', '');
+    DateTime parsedTime = DateTime.parse(dateString).toLocal();
 
     // Create a new DateFormat
     DateFormat formatter = DateFormat(
         'MMMM dd, yyyy hh:mm a'); // Example format: "July 20, 2021 - 03:30 PM"
 
     // Format the adjusted DateTime object
-    String formattedTime = formatter.format(adjustedTime);
+    String formattedTime = formatter.format(parsedTime);
 
     return ListView(
       children: [
