@@ -2,6 +2,7 @@ package store
 
 import (
 	"database/sql"
+	"fmt"
 	"math"
 	"time"
 
@@ -652,4 +653,44 @@ func (s *PostgresStore) ValidShoppingCart(cartID int, customerID int) (ValidShop
 	} else {
 		return val, err
 	}
+}
+
+func (s *PostgresStore) ApplyPromo(promo string, cartId int) error {
+	if len(promo) <= 6 {
+		return fmt.Errorf("promo code must be more than six characters long")
+	}
+
+	tx, err := s.db.Begin()
+	if err != nil {
+		return fmt.Errorf("could not start transaction: %w", err)
+	}
+
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+
+	query := `
+		UPDATE cart_item 
+		SET sold_price = sold_price * (1 - discount_percentage / 100), discount_applied = discount_percentage
+		FROM (
+			SELECT ci.id, COALESCE((COALESCE(if.margin_net, 0) - 6) + COALESCE(is.discount, 0), 0) AS discount_percentage
+
+			FROM cart_item ci
+			JOIN item_financial if ON ci.item_id = if.item_id
+			JOIN item_scheme is ON if.current_scheme_id = is.id
+			WHERE ci.cart_id = $1
+		) AS discounts
+		WHERE cart_item.id = discounts.id
+	`
+
+	_, err = tx.Exec(query, cartId)
+	if err != nil {
+		return fmt.Errorf("could not apply promo: %w", err)
+	}
+
+	return nil
 }
