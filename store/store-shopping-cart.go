@@ -85,6 +85,14 @@ func (s *PostgresStore) CreateShoppingCartTable(tx *sql.Tx) error {
 		return err
 	}
 
+	// Step 3: Add the new promo_code column
+	alterTableQuery = `ALTER TABLE shopping_cart
+        ADD COLUMN IF NOT EXISTS promo_code VARCHAR(50);`
+	_, err = tx.Exec(alterTableQuery)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
