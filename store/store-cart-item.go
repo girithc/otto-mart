@@ -231,8 +231,8 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 	return cartItem, nil
 }
 
-func (s *PostgresStore) GetCartDetails(cartId int, cartItem types.CartDetails) (*types.CartDetails, error) {
-
+func (s *PostgresStore) GetCartDetails(cartId int) (*types.CartDetails, error) {
+	cartItem := types.CartDetails{}
 	err := s.CalculateCartTotal(cartId)
 	if err != nil {
 		fmt.Print("Error in CalculateCartTotal() inside Add_Cart_Item()", err)

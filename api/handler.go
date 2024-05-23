@@ -1280,3 +1280,11 @@ func (s *Server) handleExport(res http.ResponseWriter, req *http.Request) error 
 func print_path(rest_type string, table string) {
 	fmt.Printf("\n [%s] - %s \n", rest_type, table)
 }
+
+func (s *Server) handlePromo(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "apply promo")
+		return s.goRoutineWrapper(ApplyPromo, s.handleApplyPromo, res, req)
+	}
+	return nil
+}

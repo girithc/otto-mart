@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"math"
 	"time"
 
@@ -666,31 +667,118 @@ func (s *PostgresStore) ApplyPromo(promo string, cartId int) error {
 	}
 
 	defer func() {
-		if err != nil {
+		if p := recover(); p != nil {
 			tx.Rollback()
+			log.Printf("panic occurred: %v", p)
+			err = fmt.Errorf("panic occurred: %v", p)
+		} else if err != nil {
+			tx.Rollback()
+			log.Printf("transaction rollback due to error: %v", err)
 		} else {
-			tx.Commit()
+			err = tx.Commit()
+			if err != nil {
+				log.Printf("transaction commit failed: %v", err)
+			}
 		}
 	}()
 
-	query := `
-		UPDATE cart_item 
-		SET sold_price = sold_price * (1 - discount_percentage / 100), discount_applied = discount_percentage
-		FROM (
-			SELECT ci.id, COALESCE((COALESCE(if.margin_net, 0) - 6) + COALESCE(is.discount, 0), 0) AS discount_percentage
-
-			FROM cart_item ci
-			JOIN item_financial if ON ci.item_id = if.item_id
-			JOIN item_scheme is ON if.current_scheme_id = is.id
-			WHERE ci.cart_id = $1
-		) AS discounts
-		WHERE cart_item.id = discounts.id
+	// Fetch all cart_items for the given cartId
+	queryFetch := `
+		SELECT id
+		FROM cart_item
+		WHERE cart_id = $1
 	`
 
-	_, err = tx.Exec(query, cartId)
+	rows, err := tx.Query(queryFetch, cartId)
 	if err != nil {
-		return fmt.Errorf("could not apply promo: %w", err)
+		log.Printf("could not fetch cart items: %v", err)
+		return fmt.Errorf("could not fetch cart items: %w", err)
+	}
+	defer rows.Close()
+
+	var cartItems []int
+
+	for rows.Next() {
+		var itemId int
+		if err := rows.Scan(&itemId); err != nil {
+			log.Printf("error scanning cart item row: %v", err)
+			return fmt.Errorf("error scanning cart item row: %w", err)
+		}
+		cartItems = append(cartItems, itemId)
 	}
 
+	if len(cartItems) == 0 {
+		return fmt.Errorf("no cart items found for cart ID %d", cartId)
+	}
+
+	log.Printf("fetched %d cart items for cart ID %d", len(cartItems), cartId)
+
+	// Fetch cart_items with item_financial LEFT JOIN item_scheme
+	queryFetchWithJoins := `
+		SELECT ci.id, if.mrp_price, COALESCE((COALESCE(if.margin_net, 0) - 6) + COALESCE(ist.discount, 0), 0) AS discount_percentage
+		FROM cart_item ci
+		JOIN item_financial if ON ci.item_id = if.item_id
+		LEFT JOIN item_scheme ist ON if.current_scheme_id = ist.id
+		WHERE ci.cart_id = $1
+	`
+
+	rows, err = tx.Query(queryFetchWithJoins, cartId)
+	if err != nil {
+		log.Printf("could not fetch cart items with joins: %v", err)
+		return fmt.Errorf("could not fetch cart items with joins: %w", err)
+	}
+	defer rows.Close()
+
+	type CartItemDiscount struct {
+		ID                 int
+		MRP                float64
+		DiscountPercentage float64
+	}
+
+	var cartItemDiscounts []CartItemDiscount
+
+	for rows.Next() {
+		var item CartItemDiscount
+		if err := rows.Scan(&item.ID, &item.MRP, &item.DiscountPercentage); err != nil {
+			log.Printf("error scanning cart item row with joins: %v", err)
+			return fmt.Errorf("error scanning cart item row with joins: %w", err)
+		}
+		cartItemDiscounts = append(cartItemDiscounts, item)
+	}
+
+	if len(cartItemDiscounts) == 0 {
+		return fmt.Errorf("no cart items found with joins for cart ID %d", cartId)
+	}
+
+	log.Printf("fetched %d cart items with joins for cart ID %d", len(cartItemDiscounts), cartId)
+
+	// Update the sold_price of each cart_item
+	for _, item := range cartItemDiscounts {
+		discountedPrice := int(item.MRP * (1 - item.DiscountPercentage/100)) // Ensure discounted price is an integer
+		queryUpdate := `
+			UPDATE cart_item
+			SET sold_price = $1, discount_applied = $2
+			WHERE id = $3
+		`
+		_, err := tx.Exec(queryUpdate, discountedPrice, int(item.DiscountPercentage), item.ID) // Ensure discount_applied is also an integer
+		if err != nil {
+			log.Printf("could not update sold price for cart item id %d: %v", item.ID, err)
+			return fmt.Errorf("could not update sold price for cart item id %d: %w", item.ID, err)
+		}
+	}
+
+	// Update the promo_code in shopping_cart
+	queryUpdatePromo := `
+		UPDATE shopping_cart
+		SET promo_code = $1
+		WHERE id = $2
+	`
+	_, err = tx.Exec(queryUpdatePromo, promo, cartId)
+	if err != nil {
+		log.Printf("could not update promo code for cart ID %d: %v", cartId, err)
+		return fmt.Errorf("could not update promo code for cart ID %d: %w", cartId, err)
+	}
+
+	log.Printf("promo applied to %d rows", len(cartItemDiscounts))
 	return nil
 }

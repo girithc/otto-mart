@@ -137,6 +137,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/manager-find-item", makeHTTPHandleFunc(s.handleManagerFindItem))
 	http.HandleFunc("/manager-fcm", makeHTTPHandleFunc(s.handleManagerFCM))
 
+	http.HandleFunc("/apply-promo", makeHTTPHandleFunc(s.handlePromo))
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))
 

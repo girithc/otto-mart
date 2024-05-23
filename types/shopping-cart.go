@@ -30,6 +30,11 @@ type AssignSlot struct {
 	Slot_Id     int `json:slot_id`
 }
 
+type ApplyPromo struct {
+	CartId int    `json:"cart_id"`
+	Promo  string `json:"promo"`
+}
+
 func New_Shopping_Cart(customer_id int) (*Create_Shopping_Cart, error) {
 	return &Create_Shopping_Cart{
 		Customer_Id: customer_id,

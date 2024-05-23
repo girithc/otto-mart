@@ -41,7 +41,7 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 
 	print("cartDetails, ", cart)
 
-	cart, err = s.store.GetCartDetails(validCart.CartId, *cart)
+	cart, err = s.store.GetCartDetails(validCart.CartId)
 	if err != nil {
 		return err
 	}

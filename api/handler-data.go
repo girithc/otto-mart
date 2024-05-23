@@ -139,6 +139,7 @@ var authRequirements = map[string]Permission{
 	ManagerAssignItemShelf:                {Role: "Manager", AuthRequired: true},
 	StoreAddressGet:                       {Role: "Customer", AuthRequired: true},
 	PackerGetOrder:                        {Role: "Customer", AuthRequired: true},
+	ApplyPromo:                            {Role: "Customer", AuthRequired: true},
 }
 
 const (
@@ -263,6 +264,7 @@ const (
 	VendorEdit                            = "vendor-edit"
 	NeedToUpdate                          = "need-to-update"
 	GenInvoice                            = "gen-invoice"
+	ApplyPromo                            = "apply-promo"
 	ManagerGetItems                       = "manager-get-items"
 	ManagerSearchItem                     = "manager-search-item"
 	ManagerItemFinanceGet                 = "manager-item-finance-get"

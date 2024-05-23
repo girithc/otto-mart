@@ -80,3 +80,36 @@ func (s *Server) handleAssignCustomerCartSlots(res http.ResponseWriter, req *htt
 
 	return WriteJSON(res, http.StatusOK, cart)
 }
+
+func (s *Server) handleApplyPromo(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.ApplyPromo)
+
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error in Decoding req.body in CreateCategory()")
+		return err
+	}
+
+	err := s.store.ApplyPromo(new_req.Promo, new_req.CartId)
+	if err != nil {
+		return err
+	}
+
+	cartItemList, err := s.store.Get_Items_List_From_Cart_Items_By_Cart_Id(new_req.CartId)
+	if err != nil {
+		return err
+	}
+	fmt.Println("cartItemList", cartItemList)
+
+	cart, err := s.store.GetCartDetails(new_req.CartId)
+	if err != nil {
+		return err
+	}
+	print("updated cartDetails, ", cart)
+
+	cartResponse := types.CartItemResponse{
+		CartDetails:   cart,
+		CartItemsList: cartItemList,
+	}
+
+	return WriteJSON(res, http.StatusOK, cartResponse)
+}
