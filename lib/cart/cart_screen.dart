@@ -1222,8 +1222,8 @@ class CartListState extends State<CartList> {
                           ),
                         ),
                         onChanged: (code) {
-                          if (code.length > 4) {
-                            promo();
+                          if (code.length >= 6) {
+                            cart.applyPromo(code);
                           }
                         },
                       ),

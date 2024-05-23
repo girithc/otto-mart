@@ -418,6 +418,61 @@ class CartModel extends ChangeNotifier {
     return null;
   }
 
+  Future<void> applyPromo(String promo) async {
+    // Create an instance of NetworkService
+    final networkService = NetworkService();
+
+    String? cartID = await storage.read(key: 'cartId');
+
+    final Map<String, dynamic> body = {
+      'cart_id': int.parse(cartID!),
+      'promo': promo,
+    };
+
+    // Use NetworkService to make the authenticated POST request
+    networkService
+        .postWithAuth('/apply-promo', additionalData: body)
+        .then((response) {
+      //print("Response Status Code ${response.statusCode}");
+      print("Response Body ${response.body}");
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+
+        final Map<String, dynamic> cartDetailsData =
+            jsonData['cart_details'] as Map<String, dynamic>;
+        _cartDetails = CartDetails.fromJson(cartDetailsData);
+
+        final OutOfStock outOfStock = OutOfStock(
+            productId: _cartDetails!.itemId,
+            stockQuantity: _cartDetails!.quantity,
+            outOfStock: _cartDetails!.outOfStock);
+
+        if (_cartDetails?.cartId.toString() != cartID) {
+          storage.write(key: 'cartId', value: _cartDetails?.cartId.toString());
+        }
+        final List<dynamic> cartItemsList = jsonData['cart_items_list'];
+        final List<CartItem> items =
+            cartItemsList.map((item) => CartItem.fromJson(item)).toList();
+
+        print("Cart Items List $items");
+
+        itemList.clear();
+        itemList.addAll(items);
+        notifyListeners();
+
+        return outOfStock;
+      } else {
+        // Log or handle the error
+        print("Error: ${response.statusCode} ${response.body}");
+      }
+    }).catchError((error) {
+      // Handle any errors
+      _logger.e('HTTP POST request error: $error');
+    });
+
+    return null;
+  }
+
   bool isEmpty() {
     return itemList.isEmpty;
   }
