@@ -168,12 +168,13 @@ class _MyCartState extends State<MyCart> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    shadowColor: Colors.grey,
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 0),
+                    shadowColor: Colors.white,
                     backgroundColor: Colors.white,
+                    elevation: 0,
                     surfaceTintColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10.0),
+                      borderRadius: BorderRadius.circular(20.0),
                     ),
                   ),
                   onPressed: () {
@@ -189,7 +190,7 @@ class _MyCartState extends State<MyCart> {
                   child: const Text(
                     'add items +',
                     style: TextStyle(
-                      color: Colors.pinkAccent,
+                      color: Colors.deepPurpleAccent,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -680,13 +681,14 @@ class CartListState extends State<CartList> {
                             Expanded(
                               flex: 3,
                               child: Container(
+                                padding: const EdgeInsets.all(5),
                                 decoration: const BoxDecoration(
                                     // Add border
                                     ),
                                 child: Center(
                                   child: Image.network(
                                     item.image,
-                                    height: 75,
+                                    height: 65,
                                     fit: BoxFit.cover,
                                     errorBuilder: (BuildContext context,
                                         Object exception,
@@ -720,7 +722,8 @@ class CartListState extends State<CartList> {
                                     ),
                                 child: Text(
                                   item.productName,
-                                  style: itemNameStyle,
+                                  style: const TextStyle(
+                                      color: Colors.black, fontSize: 15),
                                   textAlign: TextAlign.start,
                                 ),
                               ),
@@ -737,7 +740,7 @@ class CartListState extends State<CartList> {
                                 child: Center(
                                   child: Text(
                                       "\u{20B9}${item.soldPrice * item.quantity}", // Replace with your price calculation
-                                      style: itemNameStyle
+                                      style: const TextStyle(fontSize: 15)
                                       /*
                                         const TextStyle(
                                           fontSize: 15,
@@ -895,7 +898,7 @@ class CartListState extends State<CartList> {
                                         children: [
                                           Text(slotTime,
                                               style: const TextStyle(
-                                                  fontSize: 14)),
+                                                  fontSize: 15)),
                                           Text(
                                               slot.available
                                                   ? "available"
@@ -1002,7 +1005,7 @@ class CartListState extends State<CartList> {
                                         .deliveryDate), // Added a space for visual separation
                                     style: const TextStyle(
                                       fontSize:
-                                          14, // This adds the line through effect
+                                          15, // This adds the line through effect
                                     ),
                                   ),
                                 ),
@@ -1212,6 +1215,7 @@ class CartListState extends State<CartList> {
                               .shade100, // Background color of the text field
                           filled: true,
                           hintText: 'Enter Code',
+                          hintStyle: const TextStyle(fontSize: 15),
 
                           prefixIcon: const Icon(Icons
                               .subdirectory_arrow_right_rounded), // Add an icon to the hint text
@@ -1418,11 +1422,11 @@ class _TaxAndDelivery extends StatelessWidget {
                     font: const TextStyle(fontSize: 14),
                   )
                 : Container(),
-            const Divider(),
+            const Divider(color: Colors.white),
             _CustomListItem(
               label: 'To Pay',
               amount: '\u{20B9}${cart.totalPrice}',
-              font: Theme.of(context).textTheme.titleMedium,
+              font: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ],
         ),

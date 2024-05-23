@@ -43,21 +43,14 @@ class CategoryItemsAppBar extends StatelessWidget
 
   @override
   Size get preferredSize =>
-      const Size.fromHeight(65); // Increased height to accommodate content
+      const Size.fromHeight(55); // Increased height to accommodate content
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      elevation: 4.0,
       child: Container(
-        padding: const EdgeInsets.only(top: 6),
+        padding: const EdgeInsets.only(top: 4),
         margin: const EdgeInsets.all(0),
-        decoration: BoxDecoration(
-          border: Border.all(
-            color: Colors.grey,
-            width: 1.0, // Adjust the border width as needed
-          ),
-        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment:
@@ -74,7 +67,7 @@ class CategoryItemsAppBar extends StatelessWidget
               child: IconButton(
                 icon: const Icon(
                   Icons.arrow_back_ios_outlined,
-                  color: Colors.black,
+                  color: Colors.deepPurpleAccent,
                 ),
                 onPressed: () {
                   Navigator.pop(context);
@@ -115,7 +108,7 @@ class CategoryItemsAppBar extends StatelessWidget
                   scale: 1.7, // Adjust the scale factor as needed
                   child: const Icon(
                     Icons.search_outlined,
-                    color: Colors.black,
+                    color: Colors.deepPurpleAccent,
                   ),
                 ),
                 onPressed: () {
@@ -176,6 +169,8 @@ class _CategoryItemsBodyState extends State<CategoryItemsBody> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.zero,
+      margin: const EdgeInsets.only(top: 5, left: 5, right: 5),
+      color: const Color.fromARGB(255, 251, 245, 255),
       child: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -235,12 +230,12 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.lightGreenAccent,
+                      color: Colors.white,
                     ),
                     child: Center(
                       child: Text(
                         'Free Delivery Above ${cart.freeDeliveryAmount}',
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.black,
                           fontSize: 14.0,
                           fontWeight: FontWeight.bold,
@@ -249,47 +244,15 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                     ),
                   ),
                   // Second tab
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8.0),
-                      color: Colors.lightGreenAccent,
-                    ),
-                    child: Center(
-                      child: RichText(
-                        text: TextSpan(
-                          style: TextStyle(
-                            // Default text style
-                            color: Colors.black,
-                            fontSize: 12.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          children: <TextSpan>[
-                            TextSpan(
-                              text: 'Upto ', // The part you want to emphasize
-                              // Increase the font size for emphasis
-                            ), // Unchanged part of the text
-                            TextSpan(
-                              text:
-                                  '50% Discount', // The second part you want to emphasize
-                              style: TextStyle(
-                                  fontSize:
-                                      14.0), // Increase the font size for emphasis
-                            ),
-                            // Unchanged part of the text
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
                 ],
                 options: CarouselOptions(
                   height: MediaQuery.of(context).size.height * 0.06,
                   enlargeCenterPage: true,
-                  autoPlay: true,
+                  autoPlay: false,
                   //aspectRatio: 16 / 9,
                   autoPlayCurve: Curves.fastOutSlowIn,
                   enableInfiniteScroll: true,
-                  autoPlayAnimationDuration: Duration(
+                  autoPlayAnimationDuration: const Duration(
                     seconds: 3,
                   ),
                   viewportFraction: 0.95,
@@ -320,7 +283,7 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pinkAccent,
+                  backgroundColor: Colors.deepPurpleAccent,
                   foregroundColor: Colors.white,
                   textStyle: const TextStyle(
                     fontSize: 20,
