@@ -6,7 +6,6 @@ list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   file_selector_windows
   firebase_core
-  firebase_storage
   flutter_secure_storage_windows
   smart_auth
   url_launcher_windows
