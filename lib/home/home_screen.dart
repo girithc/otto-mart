@@ -391,33 +391,43 @@ class _MyHomePageState extends State<MyHomePage>
                                           );
                                         },
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         width: 20,
                                       ),
                                       GestureDetector(
                                         onTap: () => context.go('/setting'),
                                         child: Container(
                                           alignment: Alignment.topLeft,
-                                          height:
-                                              35.0, // Set height of the container
-                                          width:
-                                              35.0, // Set width of the container
-                                          margin:
-                                              const EdgeInsets.only(right: 5),
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.07, // Set height of the container
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .height *
+                                              0.07, // Set width of the container
+                                          padding: const EdgeInsets.all(5),
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             gradient: LinearGradient(
                                               begin: Alignment.bottomCenter,
                                               end: Alignment.topCenter,
                                               colors: [
-                                                Colors.black.withOpacity(0.25),
-                                                Colors.black.withOpacity(0.65)
+                                                Colors.deepPurpleAccent.shade400
+                                                    .withOpacity(0.25),
+                                                Colors.deepPurpleAccent.shade400
+                                                    .withOpacity(0.65)
                                               ], // Gradient colors
                                             ), // Circular shape
                                           ),
-                                          child: const Center(
-                                            child: Icon(Icons.person,
-                                                color: Colors.white),
+                                          child: Center(
+                                            child: ClipOval(
+                                              child: Image.asset(
+                                                "assets/icon/icon.jpeg",
+                                                fit: BoxFit.cover,
+                                                // Adjust width if needed
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ),
@@ -491,10 +501,14 @@ class _MyHomePageState extends State<MyHomePage>
                         ),
 
                         promotions.isNotEmpty
-                            ? Highlights(
-                                customerId: customerId,
-                                phone: phone,
-                                promos: promotions)
+                            ? Container(
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 20),
+                                child: Promotions(
+                                    customerId: customerId,
+                                    phone: phone,
+                                    promos: promotions),
+                              )
                             : Container(height: 40), // Pass retrieved values
 
                         Container(
@@ -546,15 +560,9 @@ class _MyHomePageState extends State<MyHomePage>
       ),
       bottomNavigationBar: Container(
         height: orders.isNotEmpty
-            ? MediaQuery.of(context).size.height * 0.16
+            ? MediaQuery.of(context).size.height * 0.14
             : MediaQuery.of(context).size.height * 0.08,
-        padding: EdgeInsets.only(
-            bottom: orders.isNotEmpty
-                ? MediaQuery.of(context).size.height * 0.0
-                : MediaQuery.of(context).size.height * 0.0,
-            top: 0,
-            left: 5,
-            right: 5),
+        padding: const EdgeInsets.only(left: 5, right: 5),
         margin: const EdgeInsets.only(bottom: 0),
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white, width: 1),
@@ -574,7 +582,7 @@ class _MyHomePageState extends State<MyHomePage>
           children: [
             orders.isNotEmpty
                 ? // Use Dart's collection-if to include a widget conditionally
-
+                /*
                 Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
@@ -665,6 +673,100 @@ class _MyHomePageState extends State<MyHomePage>
                                 const Duration(milliseconds: 800),
                             viewportFraction: 1,
                           ),
+                        ),
+                      ),
+                    ],
+                  )
+                  */
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        height: MediaQuery.of(context).size.height *
+                            0.06, // Set a fixed height for the ListView
+
+                        width: MediaQuery.of(context).size.width * 0.95,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) {
+                            return GestureDetector(
+                              onTap: () {
+                                // Navigate to Cart
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => OrderConfirmed(
+                                      newOrder: false,
+                                      orderId: orders[index].cartId,
+                                    ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                margin: EdgeInsets.symmetric(
+                                    horizontal:
+                                        MediaQuery.of(context).size.width *
+                                            0.15),
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.all(0),
+                                height:
+                                    MediaQuery.of(context).size.height * 0.04,
+                                width: MediaQuery.of(context).size.width * 0.6,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(15),
+                                  border:
+                                      Border.all(color: Colors.grey.shade300),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Circular avatar-like container
+                                    Container(
+                                      alignment: Alignment.topCenter,
+                                      padding: const EdgeInsets.only(
+                                          left: 10,
+                                          right: 10,
+                                          bottom: 10,
+                                          top: 8),
+                                      height: 40, // Diameter of the circle
+                                      decoration: BoxDecoration(
+                                        color: Colors.deepPurpleAccent
+                                            .shade400, // White background color
+                                        shape: BoxShape
+                                            .circle, // Makes the container circular
+                                      ),
+                                      child: Text(
+                                        (index + 1)
+                                            .toString(), // Convert int to String
+                                        // Example text, replace with what you need
+                                        style: const TextStyle(
+                                          color: Colors.white, // Text color
+                                          fontWeight: FontWeight.bold,
+                                          fontSize:
+                                              18, // Adjust the size as needed
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                        width:
+                                            10), // Spacing between the circle and text
+                                    // Text
+                                    Text(
+                                      'Order ${orders[index].status}',
+                                      style: TextStyle(
+                                        color: Colors.deepPurpleAccent.shade400,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 19,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
@@ -819,7 +921,7 @@ class _MyHomePageState extends State<MyHomePage>
               height: MediaQuery.of(context).size.height * 0.12,
               margin: const EdgeInsets.only(left: 3, right: 3, top: 3),
               decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 227, 184, 255).withOpacity(
+                color: const Color.fromARGB(255, 230, 231, 238).withOpacity(
                     0.45), // Color.fromARGB(255, 242, 219, 255).withOpacity(0.5),
                 borderRadius: BorderRadius.circular(20.0),
                 border: Border.all(color: Colors.white),
@@ -1306,6 +1408,72 @@ class Order {
     return Order(
       cartId: json['cart_id'],
       status: json['status'],
+    );
+  }
+}
+
+class Promotions extends StatelessWidget {
+  const Promotions({
+    required this.customerId,
+    required this.phone,
+    required this.promos,
+    super.key,
+  });
+
+  final String customerId;
+  final String phone;
+  final List<Category> promos;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.16,
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: promos.map((promo) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CategoryItemsPage(
+                      categoryID: promo.id,
+                      categoryName: promo.name,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: buildCard(context, promo),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget buildCard(BuildContext context, Category promo) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.32,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+          color: Colors.deepPurpleAccent.shade400,
+          borderRadius: BorderRadius.circular(20.0)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            promo.name,
+            style: const TextStyle(
+                fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+          )
+        ],
+      ),
     );
   }
 }
