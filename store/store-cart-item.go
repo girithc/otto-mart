@@ -146,89 +146,99 @@ func (s *PostgresStore) Update_Cart_Item_Quantity(cart_id int, item_id int, quan
 }
 
 func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*types.CartDetails, error) {
+    
+	println("cartId %d itemId %d quantity %d", cartId, itemId, quantity)
 	// Begin a new transaction
-	var outOfStock bool = false
-	var finalQuantity int = 0
-	tx, err := s.db.Begin()
-	if err != nil {
-		return nil, err
-	}
+    var outOfStock bool = false
+    var finalQuantity int = 0
+    tx, err := s.db.Begin()
+    if err != nil {
+        return nil, fmt.Errorf("error beginning transaction: %w", err)
+    }
 
-	// Check if item exists in the item_store
-	var stockQuantity int
-	if err := tx.QueryRow("SELECT stock_quantity FROM item_store WHERE item_id=$1", itemId).Scan(&stockQuantity); err != nil {
-		tx.Rollback()
-		return nil, err
-	}
+    // Check if item exists in the item_store
+    var stockQuantity int
+    if err := tx.QueryRow("SELECT stock_quantity FROM item_store WHERE item_id=$1", itemId).Scan(&stockQuantity); err != nil {
+        tx.Rollback()
+        return nil, fmt.Errorf("error checking item stock for item_id %d: %w", itemId, err)
+    }
 
-	// Add Items
-	if quantity > 0 {
-		if stockQuantity < quantity {
-			tx.Rollback()
-			return nil, fmt.Errorf("not enough stock for item id %d", itemId)
-		}
-	}
+    // Add Items
+    if quantity > 0 {
+        if stockQuantity < quantity {
+            tx.Rollback()
+            return nil, fmt.Errorf("not enough stock for item id %d", itemId)
+        }
+    }
 
-	var cartItemQuantity int
-	cartItem := &types.CartDetails{}
+    var cartItemQuantity int
+    cartItem := &types.CartDetails{}
 
-	err = tx.QueryRow("SELECT quantity FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId).Scan(&cartItemQuantity)
+    err = tx.QueryRow("SELECT quantity FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId).Scan(&cartItemQuantity)
 
-	// item not in cart and trying to reduce quantity
-	if err == sql.ErrNoRows {
-		if quantity < 0 {
-			tx.Rollback()
-			return nil, fmt.Errorf("item not in cart")
-		} else if quantity > 0 {
-			// Calculate sold price by subtracting discount from MRP price
-			_, err = tx.Exec("INSERT INTO cart_item (cart_id, item_id, quantity, sold_price) VALUES ($1, $2, $3, (SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$2))", cartId, itemId, quantity)
-			if err != nil {
-				tx.Rollback()
-				return nil, err
-			}
-			finalQuantity = quantity
-		}
-	} else if err == nil {
+    // item not in cart and trying to reduce quantity
+    if err == sql.ErrNoRows {
+        if quantity < 0 {
+            tx.Rollback()
+            return nil, fmt.Errorf("item not in cart for cart_id %d", cartId)
+        } else if quantity > 0 {
+            var cartItemId int
+            err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM cart_item").Scan(&cartItemId)
+            if err != nil {
+                return nil, fmt.Errorf("error querying max cart_item_id: %w", err)
+            }
 
-		newTotalQuantity := cartItemQuantity + quantity
-		if newTotalQuantity < 0 {
-			tx.Rollback()
-			return nil, fmt.Errorf("resulting quantity cannot be negative")
-		} else if newTotalQuantity == 0 {
-			_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
-		} else if newTotalQuantity > stockQuantity {
-			outOfStock = true
-			if stockQuantity <= 0 {
-				_, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
-			} else {
-				_, err = tx.Exec("UPDATE cart_item SET quantity=$1, sold_price=(SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$3) WHERE cart_id=$2 AND item_id=$3", stockQuantity, cartId, itemId)
-				finalQuantity = stockQuantity
-			}
-		} else {
-			_, err = tx.Exec("UPDATE cart_item SET quantity=$1, sold_price=(SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$3) WHERE cart_id=$2 AND item_id=$3", newTotalQuantity, cartId, itemId)
-			finalQuantity = newTotalQuantity
-		}
-		if err != nil {
-			tx.Rollback()
-			return nil, err
-		}
-	} else {
-		tx.Rollback()
-		return nil, err
-	}
+            // Step 2: Increment the max cart_item_id by 1
+            cartItemId += 1
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
+            // Calculate sold price by subtracting discount from MRP price
+            _, err = tx.Exec("INSERT INTO cart_item (id, cart_id, item_id, quantity, sold_price) VALUES ($4, $1, $2, $3, (SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$2))",  cartId, itemId, quantity, cartItemId)
+            if err != nil {
+                tx.Rollback()
+                return nil, fmt.Errorf("error inserting cart item for cart_id %d: %w", cartId, err)
+            }
+            finalQuantity = quantity
+        }
+    } else if err == nil {
+        newTotalQuantity := cartItemQuantity + quantity
+        if newTotalQuantity < 0 {
+            tx.Rollback()
+            return nil, fmt.Errorf("resulting quantity cannot be negative for cart_id %d", cartId)
+        } else if newTotalQuantity == 0 {
+            _, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
+        } else if newTotalQuantity > stockQuantity {
+            outOfStock = true
+            if stockQuantity <= 0 {
+                _, err = tx.Exec("DELETE FROM cart_item WHERE cart_id=$1 AND item_id=$2", cartId, itemId)
+            } else {
+                _, err = tx.Exec("UPDATE cart_item SET quantity=$1, sold_price=(SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$3) WHERE cart_id=$2 AND item_id=$3", stockQuantity, cartId, itemId)
+                finalQuantity = stockQuantity
+            }
+        } else {
+            _, err = tx.Exec("UPDATE cart_item SET quantity=$1, sold_price=(SELECT (ifin.mrp_price - istore.discount) FROM item_financial ifin JOIN item_store istore ON ifin.item_id = istore.item_id WHERE ifin.item_id=$3) WHERE cart_id=$2 AND item_id=$3", newTotalQuantity, cartId, itemId)
+            finalQuantity = newTotalQuantity
+        }
+        if err != nil {
+            tx.Rollback()
+            return nil, fmt.Errorf("error updating cart item for cart_id %d: %w", cartId, err)
+        }
+    } else {
+        tx.Rollback()
+        return nil, fmt.Errorf("error checking cart item quantity for cart_id %d: %w", cartId, err)
+    }
 
-	cartItem.CartId = cartId
-	cartItem.ItemId = itemId
-	cartItem.Quantity = finalQuantity
-	cartItem.OutOfStock = outOfStock
+    // Commit the transaction
+    if err := tx.Commit(); err != nil {
+        return nil, fmt.Errorf("error committing transaction for cart_id %d: %w", cartId, err)
+    }
 
-	// Return the cart item details
-	return cartItem, nil
+    cartItem.CartId = cartId
+    cartItem.ItemId = itemId
+    cartItem.Quantity = finalQuantity
+    cartItem.OutOfStock = outOfStock
+
+    // Return the cart item details
+    return cartItem, nil
 }
 
 func (s *PostgresStore) GetCartDetails(cartId int) (*types.CartDetails, error) {

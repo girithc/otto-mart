@@ -1018,7 +1018,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 	}
 	defer tx.Rollback() // Rollback transaction in case of any error
 
-	// 1. Find delivery_shelf using horizontal, vertical, and store_id
+	// 1. Find delivery_shelf using location and store_id
 	var deliveryShelfID int
 	deliveryShelfQuery := `SELECT id FROM delivery_shelf WHERE location = $1 AND store_id = $2`
 	err = tx.QueryRow(deliveryShelfQuery, req.Location, req.StoreId).Scan(&deliveryShelfID)
@@ -1026,20 +1026,32 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 		return info, fmt.Errorf("error finding delivery shelf: %w", err)
 	}
 
-	// 2. Insert into Packer_Shelf
-	packerShelfQuery := `
-		INSERT INTO Packer_Shelf (sales_order_id, packer_id, delivery_shelf_id, image_url, active)
-		VALUES ($1, (SELECT id FROM Packer WHERE phone = $2), $3, $4, true)`
-	_, err = tx.Exec(packerShelfQuery, req.SalesOrderID, req.PackerPhone, deliveryShelfID, req.Image)
+	// 2. Query the maximum id from packer_shelf
+	var maxPackerShelfId int
+	err = tx.QueryRow("SELECT COALESCE(MAX(id), 0) FROM packer_shelf").Scan(&maxPackerShelfId)
 	if err != nil {
-		return info, fmt.Errorf("error inserting into Packer_Shelf: %w", err)
+		return info, fmt.Errorf("error querying max packer_shelf_id: %w", err)
 	}
 
+	// 3. Increment the max packer_shelf_id by 1
+	newPackerShelfId := maxPackerShelfId + 1
+
+	// 4. Insert into packer_shelf
+	packerShelfQuery := `
+		INSERT INTO packer_shelf (id, sales_order_id, packer_id, delivery_shelf_id, image_url, active)
+		VALUES ($1, $2, (SELECT id FROM packer WHERE phone = $3), $4, $5, true)`
+	_, err = tx.Exec(packerShelfQuery, newPackerShelfId, req.SalesOrderID, req.PackerPhone, deliveryShelfID, req.Image)
+	if err != nil {
+		return info, fmt.Errorf("error inserting into packer_shelf: %d %w", newPackerShelfId, err)
+	}
+
+	// 5. Update the order status in sales_order
 	orderStatusQuery := `UPDATE sales_order SET order_status = 'packed' WHERE id = $1 AND (order_status = 'accepted' OR order_status = 'received')`
 	_, err = tx.Exec(orderStatusQuery, req.SalesOrderID)
 	if err != nil {
 		return info, fmt.Errorf("error updating sales_order status: %w", err)
 	}
+
 	// Commit the transaction
 	err = tx.Commit()
 	if err != nil {
@@ -1056,6 +1068,7 @@ func (s *PostgresStore) PackerOrderAllocateSpace(req types.SpaceOrder) (Allocati
 
 	return info, nil
 }
+
 
 // Modified AllocationInfo struct
 type AllocationInfo struct {
