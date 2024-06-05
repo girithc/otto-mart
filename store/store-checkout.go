@@ -61,7 +61,17 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 	lockType := "lock-stock"
 	expiresAt := time.Now().Add(1 * time.Minute) // 1 minute from now
 	var sign string
-	err := tx.QueryRow(`INSERT INTO cart_lock (cart_id, lock_type, lock_timeout) VALUES ($1, $2, $3) RETURNING sign`, cartId, lockType, expiresAt).Scan(&sign)
+
+	var maxId int
+	err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM cart_lock").Scan(&maxId)
+	if err != nil {
+		return "", fmt.Errorf("error querying max cart_lock: %w", err)
+	}
+
+	// Step 2: Increment the max packer_item_id by 1
+	maxId = maxId + 1
+
+	err = tx.QueryRow(`INSERT INTO cart_lock (id, cart_id, lock_type, lock_timeout) VALUES ($4, $1, $2, $3) RETURNING sign`, cartId, lockType, expiresAt, maxId).Scan(&sign)
 	if err != nil {
 		tx.Rollback()
 		return "", fmt.Errorf("error inserting lock record for cart %d: %v", cartId, err)
@@ -98,10 +108,19 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 		// Calculate the expiration timestamp
 		expiresAt := time.Now().Add((1 * time.Minute) + (2 * time.Second))
 
+		var maxId int
+		err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM cart_lock").Scan(&maxId)
+		if err != nil {
+			return "", false, fmt.Errorf("error querying max cart_lock: %w", err)
+		}
+
+		// Step 2: Increment the max packer_item_id by 1
+		maxId = maxId + 1
+
 		lockType := "pay-verify"
 		// Insert a new cart_lock record
-		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed, lock_timeout) VALUES ($1, $2, 'started', $3) RETURNING sign`
-		row := tx.QueryRow(insertCartLockQuery, cartId, lockType, expiresAt)
+		insertCartLockQuery = `INSERT INTO cart_lock (id, cart_id, lock_type, completed, lock_timeout) VALUES ($4, $1, $2, 'started', $3) RETURNING sign`
+		row := tx.QueryRow(insertCartLockQuery, cartId, lockType, expiresAt, maxId)
 
 		// Retrieve and return the sign value
 		var sign string
@@ -134,9 +153,19 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 			println("No Cart Lock Affected")
 			return "", false, nil
 		}
+
+		var maxId int
+		err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM cart_lock").Scan(&maxId)
+		if err != nil {
+			return "", false, fmt.Errorf("error querying max cart_lock: %w", err)
+		}
+
+		// Step 2: Increment the max packer_item_id by 1
+		maxId = maxId + 1
+
 		// Insert a new cart_lock record
-		insertCartLockQuery = `INSERT INTO cart_lock (cart_id, lock_type, completed) VALUES ($1, 'paid', 'success') RETURNING sign`
-		row := tx.QueryRow(insertCartLockQuery, cartId)
+		insertCartLockQuery = `INSERT INTO cart_lock (id, cart_id, lock_type, completed) VALUES ($2, $1, 'paid', 'success') RETURNING sign`
+		row := tx.QueryRow(insertCartLockQuery, cartId, maxId)
 
 		// Retrieve and return the sign value
 		var sign string
@@ -151,7 +180,7 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string, merchantTransactionID string) (bool, error) {
 	var storeID, customerID sql.NullInt64
 	var orderType string // Variable to store order_type from the shopping cart
-	//rand.Seed(time.Now().UnixNano()) // Seed the random number generator
+	// rand.Seed(time.Now().UnixNano()) // Seed the random number generator
 
 	// Get cart items
 	query := `SELECT item_id, quantity FROM cart_item WHERE cart_id = $1 ORDER BY item_id` // Ordered by item_id to reduce deadlock chances
@@ -202,7 +231,17 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 
 	// Create a new shopping cart if no active cart exists
 	if existingCartID == 0 {
-		_, err = tx.Exec(`INSERT INTO shopping_cart (customer_id, active, address_id) VALUES ($1, true, $2)`, customerID.Int64, defaultAddressID)
+
+		var maxId int
+		err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM shopping_cart").Scan(&maxId)
+		if err != nil {
+			return false, fmt.Errorf("error querying max shopping_cart: %w", err)
+		}
+
+		// Step 2: Increment the max packer_item_id by 1
+		maxId = maxId + 1
+
+		_, err = tx.Exec(`INSERT INTO shopping_cart (id, customer_id, active, address_id) VALUES ($3, $1, true, $2)`, customerID.Int64, defaultAddressID, maxId)
 		if err != nil {
 			return false, fmt.Errorf("failed to create a new shopping cart for customer %d: %s", customerID.Int64, err)
 		}
@@ -214,21 +253,19 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		}
 	}
 
-	/*
-			otp, _ := generateOtp()
-			insertQuery := `
-		        INSERT INTO sales_order_otp (store_id, customer_id, cart_id, otp_code, active)
-		        VALUES ($1, $2, $3, $4, $5)
-		        ON CONFLICT (cart_id) DO NOTHING;`
+	var maxId int
+	err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM sales_order").Scan(&maxId)
+	if err != nil {
+		return false, fmt.Errorf("error querying max sales_order: %w", err)
+	}
 
-			// Execute the query with the provided parameters
-			_, _ = tx.Exec(insertQuery, storeID, customerID, cart_id, otp, true)
-	*/
+	// Step 2: Increment the max packer_item_id by 1
+	maxId = maxId + 1
 
 	var orderId int
 	// Insert into sales_order with the order_type set to 'delivery' if applicable
-	salesOrderQuery := `INSERT INTO sales_order (cart_id, store_id, customer_id, address_id, payment_type, order_type) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`
-	err = tx.QueryRow(salesOrderQuery, cart_id, storeID.Int64, customerID.Int64, defaultAddressID, paymentType, orderType).Scan(&orderId)
+	salesOrderQuery := `INSERT INTO sales_order (id, cart_id, store_id, customer_id, address_id, payment_type, order_type) VALUES ($7, $1, $2, $3, $4, $5, $6) RETURNING id`
+	err = tx.QueryRow(salesOrderQuery, cart_id, storeID.Int64, customerID.Int64, defaultAddressID, paymentType, orderType, maxId).Scan(&orderId)
 	if err != nil {
 		return false, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)
 	}
@@ -271,7 +308,6 @@ type IsLockStock struct {
 }
 
 func (s *PostgresStore) LockStock(cart_id int) (IsLockStock, error) {
-
 	var resp IsLockStock
 
 	cartItems, err := s.getCartItems(cart_id)

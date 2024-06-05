@@ -75,11 +75,20 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 
 	println("Set address to false")
 
+	var maxId int
+	err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM address").Scan(&maxId)
+	if err != nil {
+		return nil, fmt.Errorf("error querying max address: %w", err)
+	}
+
+	// Step 2: Increment the max packer_item_id by 1
+	maxId = maxId + 1
+
 	// Insert the new address and set is_default=true
-	query := `INSERT INTO address (customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default) 
-              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true) 
+	query := `INSERT INTO address (id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default) 
+              VALUES ($10, $1, $2, $3, $4, $5, $6, $7, $8, $9, true) 
               RETURNING id,  street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
-	row := s.db.QueryRow(query, customerID, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude)
+	row := s.db.QueryRow(query, customerID, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude, maxId)
 
 	println("insert new address")
 
@@ -97,8 +106,8 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 func (s *PostgresStore) Get_Addresses_By_Customer_Id(customer_id int, is_default bool) ([]*types.Address, error) {
 	// Include place_id, latitude, and longitude in the SELECT statement
 	query := `SELECT id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at
-		FROM address
-		WHERE customer_id = $1 AND is_default = $2`
+        FROM address
+        WHERE customer_id = $1 AND is_default = $2`
 
 	rows, err := s.db.Query(query, customer_id, is_default)
 	if err != nil {
@@ -229,7 +238,6 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
             FROM store
             WHERE id = $3
         `, addr.Latitude, addr.Longitude, nearestStoreID).Scan(&pgDistance)
-
 		if err != nil {
 			tx.Rollback()
 			return nil, err
@@ -249,8 +257,18 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	// If an active shopping cart is not found, create one
 	if err != nil {
 		if err == sql.ErrNoRows {
-			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active, address_id) VALUES ($1, $2, true, $3) RETURNING id`
-			err = tx.QueryRow(createCartQuery, customer_id, nearestStoreID, address_id).Scan(&cartId)
+
+			var maxId int
+			err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM shopping_cart").Scan(&maxId)
+			if err != nil {
+				return nil, fmt.Errorf("error querying max shopping_cart: %w", err)
+			}
+
+			// Step 2: Increment the max packer_item_id by 1
+			maxId = maxId + 1
+
+			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id) VALUES ($4, $1, $2, true, $3) RETURNING id`
+			err = tx.QueryRow(createCartQuery, customer_id, nearestStoreID, address_id, maxId).Scan(&cartId)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
@@ -390,7 +408,6 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
         FROM store
         WHERE id = $3
     `, custLat, custLon, nearestStoreID).Scan(&pgDistance)
-
 	if err != nil {
 		tx.Rollback()
 		return nil, err
@@ -403,8 +420,18 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 	// If an active shopping cart is not found, create one
 	if err != nil {
 		if err == sql.ErrNoRows {
-			createCartQuery := `INSERT INTO shopping_cart (customer_id, store_id, active, address_id, order_type) VALUES ($1, $2, true, $3, 'delivery') RETURNING id`
-			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID, addressId).Scan(&cartId)
+
+			var maxId int
+			err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM shopping_cart").Scan(&maxId)
+			if err != nil {
+				return nil, fmt.Errorf("error querying max shopping_cart: %w", err)
+			}
+
+			// Step 2: Increment the max packer_item_id by 1
+			maxId = maxId + 1
+
+			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id, order_type) VALUES ($4, $1, $2, true, $3, 'delivery') RETURNING id`
+			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID, addressId, maxId).Scan(&cartId)
 			if err != nil {
 				tx.Rollback()
 				return nil, err
@@ -512,7 +539,6 @@ type StoreAddress struct {
 	DistanceToStore float64   `json:"distance_to_store"` // Distance to the store
 	StoreOpen       bool      `json:"store_open"`        // Indicates if the store is currently open
 	OpeningTime     time.Time `json:"opening_time"`      // The next opening time of the store
-
 }
 
 func (s *PostgresStore) GetStoreAddress(storeId int, addressId int) (*StoreAddress, error) {
