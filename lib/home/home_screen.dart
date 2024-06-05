@@ -10,7 +10,6 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
-import 'package:pinput/pinput.dart';
 import 'package:pronto/cart/order/confirmed_order_screen.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
@@ -232,17 +231,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    int randomNumber = 3 + Random().nextInt(5);
-    var cart = context.watch<CartModel>(); // Access the CartModel instance
-
     return Scaffold(
       key: _scaffoldKey,
-      appBar: HomeScreenAppBar(
-        randomNumber: randomNumber,
-        streetAddress: streetAddress,
-        storeOpen: storeOpen,
-        storeOpenTime: storeOpenTime,
-      ),
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
@@ -256,6 +246,250 @@ class _MyHomePageState extends State<MyHomePage>
                   builder: (context, cart, child) {
                     return Column(
                       children: [
+                        GestureDetector(
+                          // GestureDetector captures taps on the screen
+                          onTap: () {
+                            // When a tap is detected, reset the focus
+                            FocusScope.of(context).unfocus();
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: storeOpen
+                                  ? const LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        // Top color of the gradient
+                                        Colors.white10,
+                                        Colors
+                                            .white, // Bottom color of the gradient
+                                      ],
+                                    )
+                                  : LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.redAccent.withOpacity(0.5),
+                                        Colors.redAccent.withOpacity(0.2),
+                                        Colors.grey.shade100.withOpacity(
+                                            0.1), // Top color of the gradient
+                                        Colors
+                                            .white, // Bottom color of the gradient
+                                      ],
+                                    ),
+                            ),
+                            child: AppBar(
+                              surfaceTintColor: Colors.transparent,
+                              elevation: 0,
+                              automaticallyImplyLeading:
+                                  false, // This line removes the default back button
+                              backgroundColor: Colors
+                                  .transparent, //Theme.of(context).colorScheme.inversePrimary,
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Consumer<CartModel>(
+                                        // Wrap the Expanded widget with Consumer<CartModel>
+                                        builder: (context, cart, child) {
+                                          return Expanded(
+                                            child: GestureDetector(
+                                              onTap: () =>
+                                                  context.go('/select-address'),
+                                              child: Column(
+                                                mainAxisAlignment: MainAxisAlignment
+                                                    .center, // Center the column in the expanded space
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment
+                                                        .start, // Center the text horizontally
+                                                children: [
+                                                  SizedBox(
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              0.001),
+                                                  !storeOpen
+                                                      ? Text(
+                                                          "Closed. Will Open @ $storeOpenTime",
+                                                          style: const TextStyle(
+                                                              fontSize: 18,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        )
+                                                      : RichText(
+                                                          text: TextSpan(
+                                                            children: <InlineSpan>[
+                                                              WidgetSpan(
+                                                                child: Icon(
+                                                                  Icons
+                                                                      .near_me_rounded, // Choose the icon you want to use
+                                                                  color: Colors
+                                                                      .deepPurpleAccent
+                                                                      .shade400,
+                                                                  size:
+                                                                      24, // Adjust the size of the icon
+                                                                ),
+                                                              ),
+                                                              TextSpan(
+                                                                text:
+                                                                    ' Home', // Part of the text you want to style differently
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: Colors
+                                                                      .deepPurpleAccent
+                                                                      .shade400,
+                                                                  fontSize:
+                                                                      22, // Different color for this part
+                                                                  // You can add more styles here if needed
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                  SizedBox(
+                                                      height:
+                                                          MediaQuery.of(context)
+                                                                  .size
+                                                                  .height *
+                                                              0.006),
+                                                  GestureDetector(
+                                                    onTap: () => context.go(
+                                                        '/select-address'), // Navigate to the settings page on tap
+                                                    child: Row(
+                                                      mainAxisSize: MainAxisSize
+                                                          .min, // Use the minimum space needed by the children
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center, // Center the row contents
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            "${cart.deliveryAddress.streetAddress}, ${cart.deliveryAddress.lineOne}, ${cart.deliveryAddress.lineTwo}", //streetAddress, // Placeholder for the second line of text
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style:
+                                                                const TextStyle(
+                                                              fontSize:
+                                                                  14, // Adjust the font size as needed
+                                                              color:
+                                                                  Colors.black,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      SizedBox(
+                                        width: 20,
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => context.go('/setting'),
+                                        child: Container(
+                                          alignment: Alignment.topLeft,
+                                          height:
+                                              35.0, // Set height of the container
+                                          width:
+                                              35.0, // Set width of the container
+                                          margin:
+                                              const EdgeInsets.only(right: 5),
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            gradient: LinearGradient(
+                                              begin: Alignment.bottomCenter,
+                                              end: Alignment.topCenter,
+                                              colors: [
+                                                Colors.black.withOpacity(0.25),
+                                                Colors.black.withOpacity(0.65)
+                                              ], // Gradient colors
+                                            ), // Circular shape
+                                          ),
+                                          child: const Center(
+                                            child: Icon(Icons.person,
+                                                color: Colors.white),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height *
+                                        0.015,
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      border: Border.all(
+                                          color: Colors.grey.shade500),
+                                    ),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 0.0),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 0.0),
+                                    height: MediaQuery.of(context).size.height *
+                                        0.06, // Increased height to contain the input field
+                                    child: Row(
+                                      children: [
+                                        IconButton(
+                                          icon: const Icon(Icons.search),
+                                          onPressed: () {
+                                            // Your search logic here
+                                          },
+                                        ),
+                                        Expanded(
+                                          child: GestureDetector(
+                                            onTap: () => {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        const SearchTopLevel()),
+                                              )
+                                            },
+                                            child: const AbsorbPointer(
+                                              absorbing: true,
+                                              child: TextField(
+                                                readOnly: true,
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: Colors.black,
+                                                ),
+                                                decoration: InputDecoration(
+                                                  hintText:
+                                                      'Search For Groceries',
+                                                  hintStyle: TextStyle(
+                                                    fontSize: 16,
+                                                    color: Colors.black54,
+                                                  ),
+                                                  border: InputBorder.none,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              toolbarHeight:
+                                  MediaQuery.of(context).size.height * 0.16,
+                            ),
+                          ),
+                        ),
+
                         promotions.isNotEmpty
                             ? Highlights(
                                 customerId: customerId,
@@ -433,105 +667,9 @@ class _MyHomePageState extends State<MyHomePage>
                           ),
                         ),
                       ),
-                      /*
-                      SizedBox(
-                        height: 50, // Set a fixed height for the ListView
-                        width: MediaQuery.of(context).size.width * (0.25),
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: orders.length,
-                          itemBuilder: (context, index) {
-                            return InkWell(
-                              onTap: () {
-                                setState(() {
-                                  selectedOrder = index + 1;
-                                });
-                              },
-                              child: Chip(
-                                label: Text(
-                                  '${index + 1}',
-                                  style: const TextStyle(color: Colors.black),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      */
                     ],
                   )
                 : Container(),
-            /*CarouselSlider(
-                    items: [
-                      // First tab
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            color: Colors.white,
-                            border: Border.all(color: Colors.deepPurpleAccent)),
-                        child: Center(
-                          child: Text(
-                            'Free Delivery Above ${cart.freeDeliveryAmount}',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      // Second tab
-                      Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8.0),
-                            color: Colors.white,
-                            border: Border.all(color: Colors.deepPurpleAccent)),
-                        child: Center(
-                          child: RichText(
-                            text: TextSpan(
-                              style: TextStyle(
-                                // Default text style
-                                color: Colors.black,
-                                fontSize: 12.0,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              children: <TextSpan>[
-                                TextSpan(
-                                  text:
-                                      'Upto ', // The part you want to emphasize
-                                  style:
-                                      TextStyle(), // Increase the font size for emphasis
-                                ), // Unchanged part of the text
-                                TextSpan(
-                                  text:
-                                      '50% Discount', // The second part you want to emphasize
-                                  style: TextStyle(
-                                      fontSize:
-                                          16.0), // Increase the font size for emphasis
-                                ),
-                                TextSpan(
-                                    text:
-                                        ' on All Items'), // Unchanged part of the text
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                    options: CarouselOptions(
-                      height: MediaQuery.of(context).size.height * 0.05,
-                      enlargeCenterPage: true,
-                      autoPlay: true,
-                      //aspectRatio: 16 / 9,
-                      autoPlayCurve: Curves.fastOutSlowIn,
-                      enableInfiniteScroll: true,
-                      autoPlayAnimationDuration: Duration(
-                        seconds: 3,
-                      ),
-                      viewportFraction: 0.95,
-                    ),
-                  ),
-                */
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               mainAxisSize: MainAxisSize.max,
@@ -643,101 +781,6 @@ class _MyHomePageState extends State<MyHomePage>
           ],
         ),
       ),
-      /*
-      floatingActionButton: FloatingActionButton.extended(
-        label: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            GestureDetector(
-              onTap: () {
-                // Navigate to Cart
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => OrderConfirmed(
-                      newOrder: false,
-                      orderId: orders[selectedOrder - 1].cartId,
-                    ),
-                  ),
-                );
-              },
-              child: Container(
-                alignment: Alignment.center,
-                padding: EdgeInsets.symmetric(vertical: 10),
-                width: MediaQuery.of(context).size.width * (0.7),
-                decoration: BoxDecoration(
-                  color: Colors.deepPurpleAccent,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.white),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Circular avatar-like container
-                    Container(
-                      alignment: Alignment.center,
-                      padding: EdgeInsets.all(5),
-                      height: 30, // Diameter of the circle
-                      decoration: BoxDecoration(
-                        color: Colors.white, // White background color
-                        shape: BoxShape.circle, // Makes the container circular
-                      ),
-                      child: Center(
-                        // Optional: Add an icon or text inside the circle here
-                        child: Text(
-                          '$selectedOrder', // Example text, replace with what you need
-                          style: TextStyle(
-                            color: Colors.deepPurpleAccent, // Text color
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18, // Adjust the size as needed
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 10), // Spacing between the circle and text
-                    // Text
-                    Text(
-                      'Order ${orders[selectedOrder - 1].status}',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 19,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Container(
-              height: 50, // Set a fixed height for the ListView
-              width: MediaQuery.of(context).size.width * (0.25),
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: orders.length,
-                itemBuilder: (context, index) {
-                  return InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedOrder = index + 1;
-                      });
-                    },
-                    child: Chip(
-                      label: Text(
-                        '${index + 1}',
-                        style: TextStyle(color: Colors.black),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        onPressed: () {},
-        backgroundColor: Colors.white,
-      ),
-      */
     );
   }
 

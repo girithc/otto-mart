@@ -176,7 +176,7 @@ class _CategoryItemsBodyState extends State<CategoryItemsBody> {
           crossAxisCount: 2,
           mainAxisSpacing: 6.0,
           crossAxisSpacing: 6.0,
-          childAspectRatio: 0.82,
+          childAspectRatio: 0.80,
         ),
         itemCount: items.length,
         itemBuilder: (context, index) {

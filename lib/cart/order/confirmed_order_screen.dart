@@ -93,7 +93,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
     if (widget.newOrder) {
       cartId = await _storage.read(key: 'cartId');
-      print("Cart ID: $cartId");
+      //print("Cart ID: $cartId");
     } else {
       cartId = widget.orderId.toString();
     }
@@ -180,7 +180,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
 
     if (!widget.newOrder) {
       cartId = widget.orderId.toString();
-      print("CartId: $cartId");
+      //print("CartId: $cartId");
     }
     if (fetchOrder) {
       cartId = orderCartId;
@@ -197,8 +197,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
     final response = await networkService.postWithAuth('/customer-placed-order',
         additionalData: body);
 
-    print(
-        "Response Fetch Order Info \n\n: ${response.statusCode} ${response.body}  ");
+    //print("Response Fetch Order Info \n\n: ${response.statusCode} ${response.body}  ");
     // Deserialize the JSON response
     final jsonResponse = json.decode(response.body);
     _orderInfo = OrderInfo.fromJson(jsonResponse);
@@ -322,20 +321,9 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                 left: 10, right: 10, top: 0, bottom: 0),
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: Colors.white,
+                              color: Colors.deepPurpleAccent,
                               borderRadius:
                                   BorderRadius.circular(10), // Rounded corners
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(0.1),
-                                  spreadRadius: 1,
-                                  blurRadius: 0,
-                                  offset: const Offset(
-                                      0, 1), // Changes position of shadow
-                                ),
-                              ],
-                              border:
-                                  Border.all(color: Colors.white, width: 1.0),
                             ),
                             child: (orderStatus == "received" ||
                                     orderStatus == "accepted")
@@ -347,7 +335,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurpleAccent,
+                                          color: Colors.white,
                                         ),
                                       )
                                     : const Text(
@@ -357,7 +345,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         style: TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.bold,
-                                          color: Colors.deepPurpleAccent,
+                                          color: Colors.white,
                                         ),
                                       ))
                                 : Text(
@@ -367,7 +355,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
-                                      color: Colors.deepPurpleAccent,
+                                      color: Colors.white,
                                     ),
                                   )),
 
@@ -439,19 +427,7 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                         decoration: BoxDecoration(
                                           color: Colors.lightGreenAccent,
                                           borderRadius: BorderRadius.circular(
-                                              15), // Rounded corners
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color:
-                                                  Colors.grey.withOpacity(0.2),
-                                              spreadRadius: 1,
-                                              blurRadius: 1,
-                                              offset: const Offset(0,
-                                                  1), // Changes position of shadow
-                                            ),
-                                          ],
-                                          border: Border.all(
-                                              color: Colors.white, width: 2.0),
+                                              8), // Rounded corners
                                         ),
                                         child: Text(
                                           formatDeliveryDate(
@@ -463,25 +439,16 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                                           ),
                                         ),
                                       ),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
                                       Container(
                                         padding: const EdgeInsets.symmetric(
                                             horizontal: 10, vertical: 5),
                                         decoration: BoxDecoration(
                                           color: Colors.lightGreenAccent,
                                           borderRadius: BorderRadius.circular(
-                                              15), // Rounded corners
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color:
-                                                  Colors.grey.withOpacity(0.2),
-                                              spreadRadius: 1,
-                                              blurRadius: 1,
-                                              offset: const Offset(0,
-                                                  1), // Changes position of shadow
-                                            ),
-                                          ],
-                                          border: Border.all(
-                                              color: Colors.white, width: 2.0),
+                                              8), // Rounded corners
                                         ),
                                         child: Text(
                                             // Assuming _orderInfo!.orderDate is a string representing a date,

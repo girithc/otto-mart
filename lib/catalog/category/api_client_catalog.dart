@@ -19,7 +19,7 @@ class CatalogApiClient {
 
     http.Response response = await http.get(url);
 
-    print("Response Category: ${response.statusCode} ${response.body}");
+    //print("Response Category: ${response.statusCode} ${response.body}");
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonData = json.decode(response.body);

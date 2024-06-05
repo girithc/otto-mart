@@ -232,7 +232,7 @@ class CartModel extends ChangeNotifier {
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty && response.contentLength! > 3) {
           final List<dynamic> jsonData = json.decode(response.body);
-          print('Decoded $jsonData');
+          //print('Decoded $jsonData');
 
           final List<Address> items = jsonData
               .map((item) => Address.fromJson(item as Map<String, dynamic>))
@@ -278,7 +278,7 @@ class CartModel extends ChangeNotifier {
       return false;
     }
 
-    print("Post Delivery $phone");
+    //print("Post Delivery $phone");
 
     final data = <String, dynamic>{
       'customer_id': phone,
@@ -368,12 +368,14 @@ class CartModel extends ChangeNotifier {
       // Add any other parameters you need
     };
 
+    print("Body: $body");
+
     // Use NetworkService to make the authenticated POST request
     networkService
         .postWithAuth('/cart-item', additionalData: body)
         .then((response) {
       //print("Response Status Code ${response.statusCode}");
-      print("Response Body ${response.body}");
+      //print("Response Body ${response.body}");
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 
@@ -393,7 +395,7 @@ class CartModel extends ChangeNotifier {
         final List<CartItem> items =
             cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
-        print("Cart Items List $items");
+        //print("Cart Items List $items");
 
         itemList.clear();
         itemList.addAll(items);
@@ -433,8 +435,6 @@ class CartModel extends ChangeNotifier {
     networkService
         .postWithAuth('/apply-promo', additionalData: body)
         .then((response) {
-      //print("Response Status Code ${response.statusCode}");
-      print("Response Body ${response.body}");
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonData = json.decode(response.body);
 

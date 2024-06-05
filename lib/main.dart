@@ -144,7 +144,7 @@ class _MyAppState extends State<MyApp> {
 
   init() async {
     String deviceToken = await getDeviceToken();
-    print("Device Token : $deviceToken");
+    //print("Device Token : $deviceToken");
     await storage.write(key: 'fcm', value: deviceToken);
   }
 
@@ -160,9 +160,9 @@ class _MyAppState extends State<MyApp> {
         : Platform.isIOS
             ? "ios"
             : "";
-
+    /*
     print(
-        "App Info: $appName, $packageName, $version, $buildNumber, $platform");
+        "App Info: $appName, $packageName, $version, $buildNumber, $platform");*/
     Map<String, dynamic> data = {
       "packageName": packageName,
       "version": version,
@@ -178,9 +178,9 @@ class _MyAppState extends State<MyApp> {
       body: jsonEncode(data),
     );
 
-    print("Body $data");
+    //print("Body $data");
 
-    print("Resopnse: ${response.body} ${response.statusCode}  ");
+    //print("Resopnse: ${response.body} ${response.statusCode}  ");
     if (response.statusCode == 200) {
       bool updateRequired = json.decode(response.body)['update_required'];
       bool updateAvailable = json.decode(response.body)['update_available'];
@@ -197,7 +197,7 @@ class _MyAppState extends State<MyApp> {
         maintenanceEndTime = DateTime.parse(endTimeString);
       }
 
-      print("Update Required: $updateRequired");
+      //print("Update Required: $updateRequired");
       if (updateRequired) {
         // ignore: use_build_context_synchronously
         showDialog(
@@ -520,9 +520,9 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
   }
 
   Future<bool> checkLoginStatus() async {
-    print("Attempt Login On Boot");
+    //("Attempt Login On Boot");
     String? phone = await storage.read(key: 'phone');
-    print("Attempt Login On Boot : $phone");
+    //print("Attempt Login On Boot : $phone");
     if (phone == null) {
       isLoggedIn == false;
       await storage.deleteAll();
@@ -536,7 +536,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
     final response = await networkService.postWithAuth('/customer',
         additionalData: requestData);
 
-    print("Reponse for login: ${response.statusCode} ${response.body} ");
+    //print("Reponse for login: ${response.statusCode} ${response.body} ");
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseBody = json.decode(response.body);
       final CustomerAutoLogin customer =
@@ -582,7 +582,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                 checkLoginStatus().then((loggedIn) => {
                       if (loggedIn)
                         {
-                          print("Logged IN"),
+                          //print("Logged IN"),
                           context.go('/select-address-login')
                         }
                       else

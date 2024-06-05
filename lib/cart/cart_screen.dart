@@ -298,148 +298,194 @@ class _MyCartState extends State<MyCart> {
                             ),
                           ),
                         ]))
-                : Container(
-                    decoration: BoxDecoration(
-                      color: Colors.deepPurpleAccent.shade400,
-                      borderRadius: BorderRadius.circular(0),
-                      boxShadow: const [], // Add border
-                    ),
-                    padding: EdgeInsets.zero,
-                    margin: EdgeInsets.zero,
-                    height: MediaQuery.of(context).size.height * 0.1,
-                    child: !(cart.isEmpty())
-                        ? GestureDetector(
-                            onTap: () async {
-                              String? cartId =
-                                  await storage.read(key: 'cartId');
-
-                              if (cartId != null) {
-                                int cartIdInt = int.parse(cartId);
-                                print("CartID INT: $cartIdInt");
-                                final success =
-                                    await checkoutLockItems(cartIdInt);
-                                if (success != null) {
-                                  if (success.lock) {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => PaymentsPage(
-                                          sign: success.sign,
-                                          merchantTransactionID:
-                                              success.merchantTransactionID,
-                                          amount: cart.totalPrice,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  // If the checkout lock is successful, navigate to the PaymentsPage
-                                }
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Error: Cart Id Not Found'),
-                                    backgroundColor: Colors.redAccent,
-                                  ),
-                                );
-                              }
-
-                              /*
-
-                              Razorpay razorpay = Razorpay();
-                              var options = {
-                                'key': 'rzp_test_1DP5mmOlF5G5ag',
-                                'amount': 1000,
-                                'name': 'Acme Corp.',
-                                'description': 'Fine T-Shirt',
-                                'retry': {'enabled': true, 'max_count': 1},
-                                'send_sms_hash': true,
-                                'prefill': {
-                                  'contact': '9892187088',
-                                  'email': 'test@razorpay.com'
-                                },
-                                'external': {
-                                  'wallets': ['paytm']
-                                }
-                              };
-                              razorpay.on(Razorpay.EVENT_PAYMENT_ERROR,
-                                  handlePaymentErrorResponse);
-                              razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS,
-                                  handlePaymentSuccessResponse);
-                              razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET,
-                                  handleExternalWalletSelected);
-                              razorpay.open(options);
-
-                              */
-                            },
-                            child: Container(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal:
-                                      MediaQuery.of(context).size.width * 0.05),
-                              child: Center(
-                                  child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: [
-                                  Shimmer.fromColors(
-                                    baseColor: Colors.white,
-                                    highlightColor: const Color.fromARGB(
-                                        255, 223, 177, 255),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 15),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(25),
-                                        boxShadow: const [],
-                                        border: Border.all(
-                                            color: Colors.transparent,
-                                            width: 1.0),
-                                      ),
-                                      child: const Text(
-                                        'Complete Payment',
-                                        style: TextStyle(
-                                            fontSize: 24,
-                                            color: Colors.white,
-                                            fontStyle: FontStyle.normal,
-                                            fontWeight: FontWeight.bold),
-                                      ), // Consistent text size
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 2.5,
-                                  ),
-                                  Container(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 10, vertical: 5),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(
-                                            15), // Rounded corners
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.grey.withOpacity(0.2),
-                                            spreadRadius: 1,
-                                            blurRadius: 1,
-                                            offset: const Offset(0,
-                                                1), // Changes position of shadow
-                                          ),
-                                        ],
-                                        border: Border.all(
-                                            color: Colors.white, width: 2.0),
-                                      ),
-                                      child: Shimmer.fromColors(
-                                        baseColor: Colors.black,
-                                        highlightColor: Colors.deepPurpleAccent,
-                                        child: Text(
-                                          '\u{20B9}${cart.totalPrice}',
-                                          style: const TextStyle(
-                                              color: Colors.black),
-                                        ),
-                                      )),
-                                ],
-                              )),
+                : GestureDetector(
+                    onTap: () {
+                      if (cart.isEmpty()) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const MyHomePage(
+                              title: 'Otto Mart',
                             ),
-                          )
-                        : Container()),
+                          ),
+                        );
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.deepPurpleAccent.shade400,
+                        borderRadius: BorderRadius.circular(0),
+                        boxShadow: const [], // Add border
+                      ),
+                      padding: EdgeInsets.zero,
+                      margin: EdgeInsets.zero,
+                      height: MediaQuery.of(context).size.height * 0.1,
+                      child: !(cart.isEmpty())
+                          ? GestureDetector(
+                              onTap: () async {
+                                String? cartId =
+                                    await storage.read(key: 'cartId');
+
+                                if (cartId != null) {
+                                  int cartIdInt = int.parse(cartId);
+                                  print("CartID INT: $cartIdInt");
+                                  final success =
+                                      await checkoutLockItems(cartIdInt);
+                                  if (success != null) {
+                                    if (success.lock) {
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => PaymentsPage(
+                                            sign: success.sign,
+                                            merchantTransactionID:
+                                                success.merchantTransactionID,
+                                            amount: cart.totalPrice,
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                    // If the checkout lock is successful, navigate to the PaymentsPage
+                                  }
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Error: Cart Id Not Found'),
+                                      backgroundColor: Colors.redAccent,
+                                    ),
+                                  );
+                                }
+
+                                /*
+                  
+                                Razorpay razorpay = Razorpay();
+                                var options = {
+                                  'key': 'rzp_test_1DP5mmOlF5G5ag',
+                                  'amount': 1000,
+                                  'name': 'Acme Corp.',
+                                  'description': 'Fine T-Shirt',
+                                  'retry': {'enabled': true, 'max_count': 1},
+                                  'send_sms_hash': true,
+                                  'prefill': {
+                                    'contact': '9892187088',
+                                    'email': 'test@razorpay.com'
+                                  },
+                                  'external': {
+                                    'wallets': ['paytm']
+                                  }
+                                };
+                                razorpay.on(Razorpay.EVENT_PAYMENT_ERROR,
+                                    handlePaymentErrorResponse);
+                                razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS,
+                                    handlePaymentSuccessResponse);
+                                razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET,
+                                    handleExternalWalletSelected);
+                                razorpay.open(options);
+                  
+                                */
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal:
+                                        MediaQuery.of(context).size.width *
+                                            0.05),
+                                child: Center(
+                                    child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceEvenly,
+                                  children: [
+                                    Shimmer.fromColors(
+                                      baseColor: Colors.white,
+                                      highlightColor: const Color.fromARGB(
+                                          255, 223, 177, 255),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 15),
+                                        decoration: BoxDecoration(
+                                          borderRadius:
+                                              BorderRadius.circular(25),
+                                          boxShadow: const [],
+                                          border: Border.all(
+                                              color: Colors.transparent,
+                                              width: 1.0),
+                                        ),
+                                        child: const Text(
+                                          'Complete Payment',
+                                          style: TextStyle(
+                                              fontSize: 24,
+                                              color: Colors.white,
+                                              fontStyle: FontStyle.normal,
+                                              fontWeight: FontWeight.bold),
+                                        ), // Consistent text size
+                                      ),
+                                    ),
+                                    const SizedBox(
+                                      width: 2.5,
+                                    ),
+                                    Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(
+                                              15), // Rounded corners
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.grey.withOpacity(0.2),
+                                              spreadRadius: 1,
+                                              blurRadius: 1,
+                                              offset: const Offset(0,
+                                                  1), // Changes position of shadow
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                              color: Colors.white, width: 2.0),
+                                        ),
+                                        child: Shimmer.fromColors(
+                                          baseColor: Colors.black,
+                                          highlightColor:
+                                              Colors.deepPurpleAccent,
+                                          child: Text(
+                                            '\u{20B9}${cart.totalPrice}',
+                                            style: const TextStyle(
+                                                color: Colors.black),
+                                          ),
+                                        )),
+                                  ],
+                                )),
+                              ),
+                            )
+                          : Container(
+                              child: Center(
+                                child: Shimmer.fromColors(
+                                  baseColor: Colors.white,
+                                  highlightColor:
+                                      const Color.fromARGB(255, 223, 177, 255),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 10, vertical: 20),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(25),
+                                      boxShadow: const [],
+                                      border: Border.all(
+                                          color: Colors.transparent,
+                                          width: 1.0),
+                                    ),
+                                    child: const Text(
+                                      'Add Items +',
+                                      style: TextStyle(
+                                          fontSize: 24,
+                                          color: Colors.white,
+                                          fontStyle: FontStyle.normal,
+                                          fontWeight: FontWeight.bold),
+                                    ), // Consistent text size
+                                  ),
+                                ),
+                              ),
+                            ),
+                    ),
+                  ),
 
             // Return an empty SizedBox when no delivery address
           );
@@ -633,16 +679,16 @@ class CartListState extends State<CartList> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
             decoration: BoxDecoration(
-              color: Colors.pinkAccent,
+              color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: const [],
               border: Border.all(color: Colors.transparent, width: 1.0),
             ),
-            child: const Text(
-              'Add Items',
+            child: Text(
+              'happy shopping :)',
               style: TextStyle(
                   fontSize: 24,
-                  color: Colors.white,
+                  color: Colors.deepPurpleAccent.shade400,
                   fontWeight: FontWeight.bold), // Consistent text size
             ),
           ),

@@ -41,8 +41,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
     super.initState();
 
     getAllAddresses();
-
-    // Initialize your data here
   }
 
   @override
@@ -67,12 +65,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   }
 
   Future<void> getAllAddresses() async {
-    //await retrieveCustomerInfo();
-    final Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Accept": "application/json",
-    };
-
     customerId = await storage.read(key: 'customerId');
 
     final Map<String, dynamic> body = {
@@ -161,6 +153,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       final response =
           await networkService.postWithAuth('/address', additionalData: body);
 
+      print("setDefaultAddress Response: ${response.body} ");
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
@@ -195,7 +188,6 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   }
 
   Future<DeliverableResponse?> deliverToAddress(int addressId) async {
-    print("Deliver To Address");
     final Map<String, String> headers = {
       "Content-Type": "application/json",
       "Accept": "application/json",
@@ -208,18 +200,20 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
       "address_id": addressId,
     };
 
-    print("AddressID: $addressId");
+    print("Deliver To Body $body");
 
     try {
       final networkService = NetworkService();
       final response = await networkService.postWithAuth('/deliver-to',
           additionalData: body);
 
+      print("deliverToAddress Response: ${response.body} ");
+
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final decodedResponse = json.decode(response.body);
           final resp = DeliverableResponse.fromJson(decodedResponse);
-          print("Setting cartId to ${resp.cartId}");
+          //print("Setting cartId to ${resp.cartId}");
           CartModel cartModel = CartModel();
           Address? deliveryAddress = cartModel.deliveryAddress;
           await storage.write(key: 'cartId', value: resp.cartId.toString());
@@ -430,7 +424,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   bool deliverable = true;
 
                   if (selectedAddressIndex! >= 1) {
-                    print("1a Branch");
+                    //print("1a Branch");
                     showAddress = false;
                     setDefaultAddress(addresses[selectedAddressIndex! - 1].id)
                         .then(
@@ -441,12 +435,12 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                           cart.deliveryAddress = address!.address;
                         }
                         if (!address!.deliverable) {
-                          print('Not Deliverable');
+                          //print('Not Deliverable');
                           deliverable = false;
                         }
 
                         if (deliverable) {
-                          print('Go To Home');
+                          //print('Go To Home');
                           await storage
                               .write(
                                   key: 'storeId',
@@ -461,13 +455,13 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                                   });
                         } else {
                           await storage.delete(key: 'storeId');
-                          print('Coming Soon');
+                          //print('Coming Soon');
                           context.push('/coming-soon');
                         }
                       },
                     );
                   } else if (cart.deliveryAddress.streetAddress.isNotEmpty) {
-                    print("1b Branch");
+                    //print("1b Branch");
 
                     deliverToAddress(cart.deliveryAddress.id).then(
                       (resp) async => {

@@ -352,7 +352,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
       setState(() {
         items = [];
       });
-      _logger.e('(catalog)fetchItems error $err');
+      //_logger.e('(catalog)fetchItems  categoryId ${widget.categoryId} storeId $storeId error $err ');
     }
   }
 
