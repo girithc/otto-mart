@@ -73,8 +73,6 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 		return nil, err
 	}
 
-	println("Set address to false")
-
 	var maxId int
 	err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM address").Scan(&maxId)
 	if err != nil {
@@ -85,10 +83,10 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 	maxId = maxId + 1
 
 	// Insert the new address and set is_default=true
-	query := `INSERT INTO address (id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default) 
-              VALUES ($10, $1, $2, $3, $4, $5, $6, $7, $8, $9, true) 
-              RETURNING id,  street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
-	row := s.db.QueryRow(query, customerID, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude, maxId)
+	query := `INSERT INTO address (id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default, created_at) 
+              VALUES ($10, $1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW()::text) 
+              RETURNING id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
+	row := s.db.QueryRow(query, maxId, customerID, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude)
 
 	println("insert new address")
 
@@ -99,7 +97,6 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 	}
 
 	address.Customer_Id = customerID
-	println("done executing")
 	return address, nil
 }
 
@@ -267,7 +264,7 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 			// Step 2: Increment the max packer_item_id by 1
 			maxId = maxId + 1
 
-			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id) VALUES ($4, $1, $2, true, $3) RETURNING id`
+			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id, created_at) VALUES ($4, $1, $2, true, $3, NOW()::text) RETURNING id`
 			err = tx.QueryRow(createCartQuery, customer_id, nearestStoreID, address_id, maxId).Scan(&cartId)
 			if err != nil {
 				tx.Rollback()
@@ -430,7 +427,7 @@ func (s *PostgresStore) DeliverToAddress(customerId int, addressId int) (*types.
 			// Step 2: Increment the max packer_item_id by 1
 			maxId = maxId + 1
 
-			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id, order_type) VALUES ($4, $1, $2, true, $3, 'delivery') RETURNING id`
+			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id, order_type, created_at) VALUES ($4, $1, $2, true, $3, 'delivery', NOW()::text) RETURNING id`
 			err = tx.QueryRow(createCartQuery, customerId, nearestStoreID, addressId, maxId).Scan(&cartId)
 			if err != nil {
 				tx.Rollback()

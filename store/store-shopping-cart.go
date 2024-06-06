@@ -151,10 +151,19 @@ func (s *PostgresStore) CreateSlotTable(tx *sql.Tx) error {
 	}
 
 	for _, slot := range slots {
-		insertSlotQuery := `INSERT INTO slot (start_time, end_time) 
-                            VALUES ($1::TIME, $2::TIME) 
+
+		var maxId int
+		err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM slot").Scan(&maxId)
+		if err != nil {
+			return fmt.Errorf("error querying max slot: %w", err)
+		}
+
+		// Step 2: Increment the max packer_item_id by 1
+		maxId = maxId + 1
+		insertSlotQuery := `INSERT INTO slot (id, start_time, end_time, created_at) 
+                            VALUES ($3, $1::TIME, $2::TIME, NOW()::text) 
                             ON CONFLICT DO NOTHING`
-		_, err := tx.Exec(insertSlotQuery, slot.StartTime, slot.EndTime)
+		_, err = tx.Exec(insertSlotQuery, slot.StartTime, slot.EndTime, maxId)
 		if err != nil {
 			return err
 		}
@@ -204,14 +213,24 @@ func (s *PostgresStore) CreateDeliveryDistanceTable(tx *sql.Tx) error {
 }
 
 func (s *PostgresStore) Create_Shopping_Cart(cart *types.Create_Shopping_Cart) (*types.Shopping_Cart, error) {
+	var maxId int
+	err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM shopping_cart").Scan(&maxId)
+	if err != nil {
+		return nil, fmt.Errorf("error querying max shopping_cart: %w", err)
+	}
+
+	// Step 2: Increment the max packer_item_id by 1
+	maxId = maxId + 1
+
 	query := `insert into shopping_cart
-	(customer_id, active) 
-	values ($1, $2) returning id, customer_id, active, created_at
+	(id, customer_id, active, created_at) 
+	values ($3, $1, $2, NOW()::text) returning id, customer_id, active, created_at
 	`
 	rows, err := s.db.Query(
 		query,
 		cart.Customer_Id,
 		true,
+		maxId,
 	)
 	if err != nil {
 		return nil, err
@@ -642,7 +661,16 @@ func (s *PostgresStore) ValidShoppingCart(cartID int, customerID int) (ValidShop
 		// No active cart exists for the customer
 		// No active cart exists for the customer, create a new one
 		var newCartID int
-		err = s.db.QueryRow(`INSERT INTO shopping_cart (customer_id, active) VALUES ($1, true) RETURNING id`, customerID).Scan(&newCartID)
+
+		var maxId int
+		err := s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM shopping_cart").Scan(&maxId)
+		if err != nil {
+			return val, fmt.Errorf("error querying max shopping_cart: %w", err)
+		}
+
+		// Step 2: Increment the max packer_item_id by 1
+		maxId = maxId + 1
+		err = s.db.QueryRow(`INSERT INTO shopping_cart (id, customer_id, active, created_at) VALUES ($2, $1, true, NOW()::text) RETURNING id`, customerID, maxId).Scan(&newCartID)
 		if err != nil {
 			return val, err
 		}

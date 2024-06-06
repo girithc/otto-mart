@@ -71,7 +71,7 @@ func (s *PostgresStore) cartLockStock(cartId int, tx *sql.Tx) (string, error) {
 	// Step 2: Increment the max packer_item_id by 1
 	maxId = maxId + 1
 
-	err = tx.QueryRow(`INSERT INTO cart_lock (id, cart_id, lock_type, lock_timeout) VALUES ($4, $1, $2, $3) RETURNING sign`, cartId, lockType, expiresAt, maxId).Scan(&sign)
+	err = tx.QueryRow(`INSERT INTO cart_lock (id, cart_id, lock_type, lock_timeout, last_updated) VALUES ($4, $1, $2, $3, NOW()::text) RETURNING sign`, cartId, lockType, expiresAt, maxId).Scan(&sign)
 	if err != nil {
 		tx.Rollback()
 		return "", fmt.Errorf("error inserting lock record for cart %d: %v", cartId, err)
@@ -119,7 +119,7 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 
 		lockType := "pay-verify"
 		// Insert a new cart_lock record
-		insertCartLockQuery = `INSERT INTO cart_lock (id, cart_id, lock_type, completed, lock_timeout) VALUES ($4, $1, $2, 'started', $3) RETURNING sign`
+		insertCartLockQuery = `INSERT INTO cart_lock (id, cart_id, lock_type, completed, lock_timeout, last_updated) VALUES ($4, $1, $2, 'started', $3, NOW()::text) RETURNING sign`
 		row := tx.QueryRow(insertCartLockQuery, cartId, lockType, expiresAt, maxId)
 
 		// Retrieve and return the sign value
@@ -164,7 +164,7 @@ func (s *PostgresStore) cartLockUpdate(tx *sql.Tx, cartId int, cash bool, sign s
 		maxId = maxId + 1
 
 		// Insert a new cart_lock record
-		insertCartLockQuery = `INSERT INTO cart_lock (id, cart_id, lock_type, completed) VALUES ($2, $1, 'paid', 'success') RETURNING sign`
+		insertCartLockQuery = `INSERT INTO cart_lock (id, cart_id, lock_type, completed, last_updated) VALUES ($2, $1, 'paid', 'success', NOW()::text) RETURNING sign`
 		row := tx.QueryRow(insertCartLockQuery, cartId, maxId)
 
 		// Retrieve and return the sign value
@@ -241,7 +241,7 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 		// Step 2: Increment the max packer_item_id by 1
 		maxId = maxId + 1
 
-		_, err = tx.Exec(`INSERT INTO shopping_cart (id, customer_id, active, address_id) VALUES ($3, $1, true, $2)`, customerID.Int64, defaultAddressID, maxId)
+		_, err = tx.Exec(`INSERT INTO shopping_cart (id, customer_id, active, address_id, last_updated) VALUES ($3, $1, true, $2, NOW()::text)`, customerID.Int64, defaultAddressID, maxId)
 		if err != nil {
 			return false, fmt.Errorf("failed to create a new shopping cart for customer %d: %s", customerID.Int64, err)
 		}
@@ -264,7 +264,7 @@ func (s *PostgresStore) CreateOrder(tx *sql.Tx, cart_id int, paymentType string,
 
 	var orderId int
 	// Insert into sales_order with the order_type set to 'delivery' if applicable
-	salesOrderQuery := `INSERT INTO sales_order (id, cart_id, store_id, customer_id, address_id, payment_type, order_type) VALUES ($7, $1, $2, $3, $4, $5, $6) RETURNING id`
+	salesOrderQuery := `INSERT INTO sales_order (id, cart_id, store_id, customer_id, address_id, payment_type, order_type, order_date) VALUES ($7, $1, $2, $3, $4, $5, $6, NOW()::text) RETURNING id`
 	err = tx.QueryRow(salesOrderQuery, cart_id, storeID.Int64, customerID.Int64, defaultAddressID, paymentType, orderType, maxId).Scan(&orderId)
 	if err != nil {
 		return false, fmt.Errorf("error creating sales_order for cart %d: %s", cart_id, err)

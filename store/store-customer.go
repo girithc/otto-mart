@@ -303,9 +303,18 @@ func (s *PostgresStore) Create_Customer(phone string, fcm string) (*types.Custom
 
 	phoneNumberStr := phone
 
+	var maxId int
+	err = s.db.QueryRow("SELECT COALESCE(MAX(id), 0) FROM customer").Scan(&maxId)
+	if err != nil {
+		return nil, fmt.Errorf("error querying max customer: %w", err)
+	}
+
+	// Step 2: Increment the max packer_item_id by 1
+	maxId = maxId + 1
+
 	// Create the customer
-	query := `INSERT INTO customer (name, phone, address) VALUES ($1, $2, $3) RETURNING id, name, phone, address, created_at, merchant_user_id`
-	row := tx.QueryRow(query, "", phoneNumberStr, "")
+	query := `INSERT INTO customer (id, name, phone, address, created_at) VALUES ($4, $1, $2, $3, NOW()::text) RETURNING id, name, phone, address, created_at, merchant_user_id`
+	row := tx.QueryRow(query, "", phoneNumberStr, "", maxId)
 
 	customer := &types.Customer_Login{}
 	var merchantUserID sql.NullString
