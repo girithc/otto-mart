@@ -298,6 +298,8 @@ class CartModel extends ChangeNotifier {
       final response =
           await _networkService.postWithAuth('/address', additionalData: data);
 
+      print('postdelivery response ${response.body} ${response.statusCode}');
+
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
           final data = json.decode(response.body);
@@ -470,7 +472,7 @@ class CartModel extends ChangeNotifier {
       _logger.e('HTTP POST request error: $error');
     });
 
-    return null;
+    return;
   }
 
   bool isEmpty() {
