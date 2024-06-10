@@ -503,8 +503,17 @@ class _MyHomePageState extends State<MyHomePage>
                         promotions.isNotEmpty
                             ? Container(
                                 padding:
-                                    const EdgeInsets.symmetric(vertical: 20),
+                                    const EdgeInsets.symmetric(vertical: 10),
                                 child: Promotions(
+                                    customerId: customerId,
+                                    phone: phone,
+                                    promos: promotions),
+                              )
+                            : Container(height: 40), // Pass retrieved values
+
+                        promotions.isNotEmpty
+                            ? Container(
+                                child: BrandPromotions(
                                     customerId: customerId,
                                     phone: phone,
                                     promos: promotions),
@@ -582,102 +591,6 @@ class _MyHomePageState extends State<MyHomePage>
           children: [
             orders.isNotEmpty
                 ? // Use Dart's collection-if to include a widget conditionally
-                /*
-                Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        width: MediaQuery.of(context).size.width * 0.95,
-                        child: CarouselSlider.builder(
-                          itemCount: orders.length,
-                          itemBuilder: (context, index, realIndex) {
-                            return GestureDetector(
-                              onTap: () {
-                                // Navigate to Cart
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => OrderConfirmed(
-                                      newOrder: false,
-                                      orderId: orders[index].cartId,
-                                    ),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                alignment: Alignment.center,
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 5),
-                                width:
-                                    MediaQuery.of(context).size.width * (0.95),
-                                decoration: BoxDecoration(
-                                  color: Colors.deepPurpleAccent,
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: Colors.white),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Circular avatar-like container
-                                    Container(
-                                      alignment: Alignment.center,
-                                      padding: const EdgeInsets.all(5),
-                                      height: 30, // Diameter of the circle
-                                      decoration: const BoxDecoration(
-                                        color: Colors
-                                            .white, // White background color
-                                        shape: BoxShape
-                                            .circle, // Makes the container circular
-                                      ),
-                                      child: Center(
-                                        // Optional: Add an icon or text inside the circle here
-                                        child: Text(
-                                          (index + 1)
-                                              .toString(), // Convert int to String
-                                          // Example text, replace with what you need
-                                          style: const TextStyle(
-                                            color: Colors
-                                                .deepPurpleAccent, // Text color
-                                            fontWeight: FontWeight.bold,
-                                            fontSize:
-                                                18, // Adjust the size as needed
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(
-                                        width:
-                                            10), // Spacing between the circle and text
-                                    // Text
-                                    Text(
-                                      'Order ${orders[index].status}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 19,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                          options: CarouselOptions(
-                            height: MediaQuery.of(context).size.height * 0.07,
-                            enlargeCenterPage: true,
-                            autoPlay: true,
-                            autoPlayCurve: Curves.fastOutSlowIn,
-                            enableInfiniteScroll: true,
-                            autoPlayAnimationDuration:
-                                const Duration(milliseconds: 800),
-                            viewportFraction: 1,
-                          ),
-                        ),
-                      ),
-                    ],
-                  )
-                  */
                 Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
@@ -1469,6 +1382,74 @@ class Promotions extends StatelessWidget {
             promo.name,
             style: const TextStyle(
                 fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class BrandPromotions extends StatelessWidget {
+  const BrandPromotions({
+    required this.customerId,
+    required this.phone,
+    required this.promos,
+    super.key,
+  });
+
+  final String customerId;
+  final String phone;
+  final List<Category> promos;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.16,
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        child: ListView(
+          scrollDirection: Axis.horizontal,
+          children: promos.map((promo) {
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CategoryItemsPage(
+                      categoryID: promo.id,
+                      categoryName: promo.name,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: buildCard(context, promo),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget buildCard(BuildContext context, Category promo) {
+    return Container(
+      width: MediaQuery.of(context).size.width * 0.32,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20.0)),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            promo.name,
+            style: const TextStyle(
+                fontSize: 24,
+                color: Colors.deepPurpleAccent,
+                fontWeight: FontWeight.bold),
           )
         ],
       ),
