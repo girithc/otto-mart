@@ -682,10 +682,10 @@ class _MyHomePageState extends State<MyHomePage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      SizedBox(
+                      Container(
                         height: MediaQuery.of(context).size.height *
                             0.06, // Set a fixed height for the ListView
-
+                        color: Colors.white,
                         width: MediaQuery.of(context).size.width * 0.95,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
@@ -715,10 +715,8 @@ class _MyHomePageState extends State<MyHomePage>
                                     MediaQuery.of(context).size.height * 0.04,
                                 width: MediaQuery.of(context).size.width * 0.6,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: Colors.grey.shade100,
                                   borderRadius: BorderRadius.circular(15),
-                                  border:
-                                      Border.all(color: Colors.grey.shade300),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,

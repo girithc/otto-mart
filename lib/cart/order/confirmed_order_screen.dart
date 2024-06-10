@@ -294,72 +294,45 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                     color: Colors.white,
                     child: Column(
                       children: [
+                        const SizedBox(height: 10),
                         Container(
                           height: MediaQuery.of(context).size.height * 0.24,
                           width: MediaQuery.of(context).size.width * 0.95,
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 10, vertical: 0),
-                          padding: const EdgeInsets.only(bottom: 5.0),
+                          margin: const EdgeInsets.only(
+                              left: 10, right: 10, top: 5, bottom: 5),
+                          padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.grey.shade100,
+                            borderRadius:
+                                BorderRadius.circular(10), // Rounded corners
+
+                            border: Border.all(color: Colors.white, width: 1.0),
                           ),
-                          child: Center(
-                            // Center the Lottie animation within the container
-                            child: Transform.scale(
-                              scale:
-                                  orderLottieTransform, // Increase the size by 30%
-                              child: lt.Lottie.network(
-                                orderLottie,
-                                fit: BoxFit.contain,
+                          child: Container(
+                            margin: const EdgeInsets.only(
+                                left: 10, right: 10, top: 5, bottom: 5),
+                            padding: EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.circular(10), // Rounded corners
+
+                              border:
+                                  Border.all(color: Colors.white, width: 1.0),
+                            ),
+                            child: Center(
+                              // Center the Lottie animation within the container
+                              child: Transform.scale(
+                                scale:
+                                    orderLottieTransform, // Increase the size by 30%
+                                child: lt.Lottie.network(
+                                  orderLottie,
+                                  fit: BoxFit.contain,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                        Container(
-                            margin: const EdgeInsets.only(
-                                left: 10, right: 10, top: 0, bottom: 0),
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: Colors.deepPurpleAccent,
-                              borderRadius:
-                                  BorderRadius.circular(10), // Rounded corners
-                            ),
-                            child: (orderStatus == "received" ||
-                                    orderStatus == "accepted")
-                                ? (orderStatus == "received"
-                                    ? const Text(
-                                        "Order accepted", // Right side text, assuming orderStatus is a variable holding the status
-                                        textAlign: TextAlign
-                                            .right, // Aligns text to the right
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : const Text(
-                                        "Order getting packed", // Right side text, assuming orderStatus is a variable holding the status
-                                        textAlign: TextAlign
-                                            .right, // Aligns text to the right
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                        ),
-                                      ))
-                                : Text(
-                                    "Order $orderStatus", // Right side text, assuming orderStatus is a variable holding the status
-                                    textAlign: TextAlign
-                                        .right, // Aligns text to the right
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  )),
-
-                        const SizedBox(height: 15),
 
                         Container(
                           width: MediaQuery.of(context).size.width,
@@ -369,12 +342,12 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius:
-                                BorderRadius.circular(10), // Rounded corners
+                                BorderRadius.circular(20), // Rounded corners
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withOpacity(0.1),
                                 spreadRadius: 1,
-                                blurRadius: 2,
+                                blurRadius: 1,
                                 offset: const Offset(
                                     0, 1), // Changes position of shadow
                               ),
@@ -384,205 +357,236 @@ class _OrderConfirmedState extends State<OrderConfirmed> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.25,
-                                    child: const Text("Order Date"),
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Text(
-                                    // Assuming _orderInfo!.orderDate is a string representing a date,
-                                    // you'll first need to parse it into a DateTime object.
-                                    // Then, add 5 hours and 30 minutes to it.
-                                    // Finally, format it using the DateFormat class.
-                                    formatDate(
-                                        _orderInfo!.orderDate.toString()),
-                                  )
-                                ],
+                              Container(
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)),
+                                    //border: Border.all(color: Colors.black)
+                                    color: Colors.grey.shade100),
+                                padding: EdgeInsets.all(10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.25,
+                                        child: const Text("Order Status")),
+                                    const SizedBox(
+                                      width: 20,
+                                    ),
+                                    Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 10.0, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(10.0),
+                                        ),
+                                        child: (orderStatus == "received" ||
+                                                orderStatus == "accepted")
+                                            ? (orderStatus == "received"
+                                                ? const Text(
+                                                    "accepted", // Right side text, assuming orderStatus is a variable holding the status
+                                                    textAlign: TextAlign
+                                                        .right, // Aligns text to the right
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                    ),
+                                                  )
+                                                : const Text(
+                                                    "packing in progress", // Right side text, assuming orderStatus is a variable holding the status
+                                                    textAlign: TextAlign
+                                                        .right, // Aligns text to the right
+                                                    style: TextStyle(
+                                                      color: Colors.black,
+                                                    ),
+                                                  ))
+                                            : Text(
+                                                "$orderStatus", // Right side text, assuming orderStatus is a variable holding the status
+                                                textAlign: TextAlign
+                                                    .right, // Aligns text to the right
+                                                style: const TextStyle(
+                                                  color: Colors.black,
+                                                ),
+                                              )),
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 10),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.25,
-                                    child: const Text("Delivery Date"),
-                                  ),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 5),
-                                        decoration: BoxDecoration(
-                                          color: Colors.lightGreenAccent,
-                                          borderRadius: BorderRadius.circular(
-                                              8), // Rounded corners
-                                        ),
-                                        child: Text(
-                                          formatDeliveryDate(
-                                                  _orderInfo!.deliveryDate)
-                                              .toString(), // Added a space for visual separation
+
+                              Container(
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)),
+                                    //border: Border.all(color: Colors.black)
+                                    color: Colors.grey.shade100),
+                                padding: EdgeInsets.all(10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    SizedBox(
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                0.25,
+                                        child: const Text("Payment Type")),
+                                    const SizedBox(
+                                      width: 20,
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10.0, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                      ),
+                                      child: Text(_orderInfo!.paymentType,
                                           style: const TextStyle(
-                                            fontSize:
-                                                14, // This adds the line through effect
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 10,
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 10, vertical: 5),
-                                        decoration: BoxDecoration(
-                                          color: Colors.lightGreenAccent,
-                                          borderRadius: BorderRadius.circular(
-                                              8), // Rounded corners
-                                        ),
-                                        child: Text(
-                                            // Assuming _orderInfo!.orderDate is a string representing a date,
-                                            // you'll first need to parse it into a DateTime object.
-                                            // Then, add 5 hours and 30 minutes to it.
-                                            // Finally, format it using the DateFormat class.
-                                            formatSlotTime(
-                                                _orderInfo!.slotStartTime,
-                                                _orderInfo!.slotEndTime)),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                            color: Colors.black,
+                                          )),
+                                    )
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 10),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  SizedBox(
+                              Container(
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)),
+                                    //border: Border.all(color: Colors.black)
+                                    color: Colors.grey.shade100),
+                                padding: EdgeInsets.all(10),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize
+                                      .min, // To make the Row take minimum space
+                                  children: [
+                                    SizedBox(
                                       width: MediaQuery.of(context).size.width *
                                           0.25,
-                                      child: const Text("Payment Type")),
-                                  const SizedBox(
-                                    width: 10,
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10.0, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.deepPurpleAccent,
-                                      borderRadius: BorderRadius.circular(8.0),
+                                      child: const Text(
+                                        "Subtotal",
+                                        maxLines: 3,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.normal),
+                                        overflow: TextOverflow
+                                            .ellipsis, // To handle long item names
+                                      ),
                                     ),
-                                    child: Text(_orderInfo!.paymentType,
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
-                                  )
-                                ],
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisSize: MainAxisSize
-                                    .min, // To make the Row take minimum space
-                                children: [
-                                  SizedBox(
-                                    width: MediaQuery.of(context).size.width *
-                                        0.25,
-                                    child: const Text(
-                                      "subtotal",
-                                      maxLines: 3,
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.normal),
-                                      overflow: TextOverflow
-                                          .ellipsis, // To handle long item names
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10.0, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.deepPurpleAccent,
-                                      borderRadius: BorderRadius.circular(8.0),
-                                    ),
-                                    child: Text(
-                                        '\u{20B9} ${_orderInfo!.subtotal}',
-                                        style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold)),
-                                  )
-                                ],
+                                    const SizedBox(width: 20),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 10.0, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius:
+                                            BorderRadius.circular(8.0),
+                                      ),
+                                      child: Text(
+                                          '\u{20B9} ${_orderInfo!.subtotal}',
+                                          style: const TextStyle(
+                                              color: Colors.black,
+                                              fontWeight: FontWeight.normal)),
+                                    )
+                                  ],
+                                ),
                               ),
                               const SizedBox(height: 20),
                               // Provide some spacing after the title
-                              Wrap(
-                                spacing: 10, // Horizontal space between widgets
-                                runSpacing:
-                                    10, // Vertical space between widgets
-                                children: _orderInfo!.items.map((item) {
-                                  return Row(
-                                    mainAxisSize: MainAxisSize
-                                        .min, // To make the Row take minimum space
-                                    children: [
-                                      SizedBox(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.55,
-                                        child: Text(
-                                          "${item.quantity.toString()} x  ${item.name} ${item.size}${item.unitOfQuantity}",
-                                          maxLines: 3,
-                                          style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.normal),
-                                          overflow: TextOverflow
-                                              .ellipsis, // To handle long item names
+                              Container(
+                                decoration: BoxDecoration(
+                                    borderRadius:
+                                        BorderRadius.all(Radius.circular(15)),
+                                    //border: Border.all(color: Colors.black)
+                                    color: Colors.grey.shade100),
+                                padding: EdgeInsets.all(10),
+                                child: Wrap(
+                                  spacing:
+                                      10, // Horizontal space between widgets
+                                  runSpacing:
+                                      10, // Vertical space between widgets
+                                  children: [
+                                    ..._orderInfo!.items.map((item) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(15)),
+                                          color: Colors.white,
                                         ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        '\u{20B9} ${item.soldPrice}',
-                                        style: const TextStyle(fontSize: 13),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
+                                        padding: EdgeInsets.all(10),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize
+                                              .min, // To make the Row take minimum space
+                                          children: [
+                                            SizedBox(
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width *
+                                                  0.55,
+                                              child: Text(
+                                                "${item.quantity.toString()} x ${item.name} ${item.size}${item.unitOfQuantity}",
+                                                maxLines: 3,
+                                                style: const TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                                overflow: TextOverflow
+                                                    .ellipsis, // To handle long item names
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Text(
+                                              '\u{20B9} ${item.soldPrice}',
+                                              style:
+                                                  const TextStyle(fontSize: 13),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    }).toList(),
+                                    _orderInfo!.platformFee > 0
+                                        ? Container(
+                                            decoration: BoxDecoration(
+                                              borderRadius: BorderRadius.all(
+                                                  Radius.circular(15)),
+                                              color: const Color.fromARGB(
+                                                  255, 255, 255, 255),
+                                            ),
+                                            padding: EdgeInsets.all(10),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize
+                                                  .min, // To make the Row take minimum space
+                                              children: [
+                                                SizedBox(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width *
+                                                      0.55,
+                                                  child: const Text(
+                                                    "platform fee",
+                                                    maxLines: 3,
+                                                    style: TextStyle(
+                                                        fontSize: 13,
+                                                        fontWeight:
+                                                            FontWeight.normal),
+                                                    overflow: TextOverflow
+                                                        .ellipsis, // To handle long item names
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Text(
+                                                  '\u{20B9} ${_orderInfo!.platformFee}',
+                                                  style: const TextStyle(
+                                                      fontSize: 13),
+                                                ),
+                                              ],
+                                            ),
+                                          )
+                                        : const SizedBox.shrink(),
+                                  ],
+                                ),
                               ),
-                              _orderInfo!.platformFee > 0
-                                  ? Row(
-                                      mainAxisSize: MainAxisSize
-                                          .min, // To make the Row take minimum space
-                                      children: [
-                                        SizedBox(
-                                          width: MediaQuery.of(context)
-                                                  .size
-                                                  .width *
-                                              0.55,
-                                          child: const Text(
-                                            "platform fee",
-                                            maxLines: 3,
-                                            style: TextStyle(
-                                                fontSize: 13,
-                                                fontWeight: FontWeight.normal),
-                                            overflow: TextOverflow
-                                                .ellipsis, // To handle long item names
-                                          ),
-                                        ),
-                                        const SizedBox(width: 10),
-                                        Text(
-                                          '\u{20B9} ${_orderInfo!.platformFee}',
-                                          style: const TextStyle(fontSize: 13),
-                                        ),
-                                      ],
-                                    )
-                                  : const SizedBox.shrink(),
+
                               _orderInfo!.deliveryFee > 0
                                   ? Row(
                                       mainAxisSize: MainAxisSize
@@ -894,11 +898,10 @@ class OrderInfo {
   final String orderDpStatus;
   final String paymentType;
   final bool paidStatus;
-  final DateTime orderDate;
+  //final DateTime orderDate;
   final int totalAmountPaid;
   final List<Item> items;
   final String address;
-  // Added fields for fees and subtotal
   final int itemCost;
   final int deliveryFee;
   final int platformFee;
@@ -908,7 +911,7 @@ class OrderInfo {
   final int packagingFee;
   final int peakTimeSurcharge;
   final int subtotal;
-  final DateTime deliveryDate;
+  //final DateTime deliveryDate;
   final DateTime slotStartTime;
   final DateTime slotEndTime;
   final int newCartId;
@@ -918,7 +921,7 @@ class OrderInfo {
     required this.orderDpStatus,
     required this.paymentType,
     required this.paidStatus,
-    required this.orderDate,
+    //required this.orderDate,
     required this.totalAmountPaid,
     required this.items,
     required this.address,
@@ -931,22 +934,22 @@ class OrderInfo {
     required this.packagingFee,
     required this.peakTimeSurcharge,
     required this.subtotal,
-    required this.deliveryDate,
+    //required this.deliveryDate,
     required this.slotStartTime,
     required this.slotEndTime,
     required this.newCartId,
   });
 
   factory OrderInfo.fromJson(Map<String, dynamic> json) {
-    final dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS Z");
-    final deliveryDateFormat = DateFormat("yyyy-MM-dd HH:mm:ss Z");
+    //final dateFormat = DateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS Z");
+    //final deliveryDateFormat = DateFormat("yyyy-MM-dd HH:mm:ss Z");
 
     return OrderInfo(
       orderStatus: json['order_status'],
       orderDpStatus: json['order_dp_status'],
       paymentType: json['payment_type'],
       paidStatus: json['paid_status'],
-      orderDate: dateFormat.parse(json['order_date'].replaceFirst(' UTC', '')),
+      //orderDate: dateFormat.parse(json['order_date'].replaceFirst(' UTC', '')),
       totalAmountPaid: json['total_amount_paid'],
       items: List<Item>.from(json['items'].map((i) => Item.fromJson(i))),
       address: json['address'],
@@ -959,8 +962,7 @@ class OrderInfo {
       packagingFee: json['packaging_fee'],
       peakTimeSurcharge: json['peak_time_surcharge'],
       subtotal: json['subtotal'],
-      deliveryDate: deliveryDateFormat
-          .parse(json['delivery_date'].replaceFirst(' UTC', '')),
+      //deliveryDate: deliveryDateFormat.parse(json['delivery_date'].replaceFirst(' UTC', '')),
       slotStartTime: DateTime.parse(json['slot_start_time']),
       slotEndTime: DateTime.parse(json['slot_end_time']),
       newCartId: json['new_cart_id'],

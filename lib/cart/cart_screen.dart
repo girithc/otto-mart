@@ -90,6 +90,7 @@ class _MyCartState extends State<MyCart> {
     return null;
   }
 
+  /*
   Future<PaymentResult> initiatePhonePePayment() async {
     cartId = await storage.read(key: 'cartId');
     final Map<String, dynamic> body = {
@@ -150,7 +151,7 @@ class _MyCartState extends State<MyCart> {
           merchantTransactionId: '');
     }
   }
-
+  */
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
