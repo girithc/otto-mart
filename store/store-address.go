@@ -60,7 +60,7 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 	// Retrieve customer_id using the provided phone number
 	var customerID int
 
-	println("CustomerID: ", addr.Customer_Id)
+	fmt.Println("CustomerID: ", addr.Customer_Id)
 	err := s.db.QueryRow(`SELECT id FROM customer WHERE phone = $1`, addr.Customer_Id).Scan(&customerID)
 	if err != nil {
 		return nil, err
@@ -79,16 +79,16 @@ func (s *PostgresStore) Create_Address(addr *types.Create_Address) (*types.Addre
 		return nil, fmt.Errorf("error querying max address: %w", err)
 	}
 
-	// Step 2: Increment the max packer_item_id by 1
+	// Step 2: Increment the max address_id by 1
 	maxId = maxId + 1
 
 	// Insert the new address and set is_default=true
 	query := `INSERT INTO address (id, customer_id, street_address, line_one_address, line_two_address, city, state, zipcode, latitude, longitude, is_default, created_at) 
-              VALUES ($10, $1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW()::text) 
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, NOW()::text) 
               RETURNING id, street_address, line_one_address, line_two_address, city, state, zipcode, is_default, latitude, longitude, created_at`
 	row := s.db.QueryRow(query, maxId, customerID, addr.Street_Address, addr.Line_One_Address, addr.Line_Two_Address, addr.City, addr.State, addr.Zipcode, addr.Latitude, addr.Longitude)
 
-	println("insert new address")
+	fmt.Println("insert new address")
 
 	address := &types.Address{}
 	err = row.Scan(&address.Id, &address.Street_Address, &address.Line_One_Address, &address.Line_Two_Address, &address.City, &address.State, &address.Zipcode, &address.Is_Default, &address.Latitude, &address.Longitude, &address.Created_At)
@@ -158,17 +158,27 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 	}
 
 	var addr types.Default_Address
+	var city, state, street_address, line_one_address, line_two_address, zipcode sql.NullString
+
 	err = tx.QueryRow(`
         SELECT id, customer_id, latitude, longitude, street_address, line_one_address, 
                line_two_address, city, state, zipcode, is_default, created_at 
         FROM address WHERE customer_id = $1 AND id = $2`, customer_id, address_id).Scan(
-		&addr.Id, &addr.Customer_Id, &addr.Latitude, &addr.Longitude, &addr.Street_Address,
-		&addr.Line_One_Address, &addr.Line_Two_Address, &addr.City, &addr.State, &addr.Zipcode,
+		&addr.Id, &addr.Customer_Id, &addr.Latitude, &addr.Longitude, &street_address,
+		&line_one_address, &line_two_address, &city, &state, &zipcode,
 		&addr.Is_Default, &addr.Created_At,
 	)
 	if err != nil {
 		return nil, err
 	}
+
+	// Assigning the scanned values to the address struct fields
+	addr.Street_Address = street_address.String
+	addr.Line_One_Address = line_one_address.String
+	addr.Line_Two_Address = line_two_address.String
+	addr.City = city.String
+	addr.State = state.String
+	addr.Zipcode = zipcode.String
 
 	var nearestStoreID int
 	minHDistance := math.MaxFloat64
@@ -195,7 +205,7 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 		// Calculate Haversine distance for each store
 		hDistance := haversineDistance(addr.Latitude, addr.Longitude, storeLat, storeLon)
 
-		// Check if this store is within the 1 km delivery radius
+		// Check if this store is within the delivery radius
 		const deliveryRadius = 8 // Delivery radius in km
 		if hDistance <= deliveryRadius && hDistance < minHDistance {
 			minHDistance = hDistance
@@ -261,7 +271,7 @@ func (s *PostgresStore) MakeDefaultAddress(customer_id int, address_id int, is_d
 				return nil, fmt.Errorf("error querying max shopping_cart: %w", err)
 			}
 
-			// Step 2: Increment the max packer_item_id by 1
+			// Step 2: Increment the max cart_id by 1
 			maxId = maxId + 1
 
 			createCartQuery := `INSERT INTO shopping_cart (id, customer_id, store_id, active, address_id, created_at) VALUES ($4, $1, $2, true, $3, NOW()::text) RETURNING id`
