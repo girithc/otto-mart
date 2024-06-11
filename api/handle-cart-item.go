@@ -31,7 +31,11 @@ func (s *Server) Handle_Add_Cart_Item(res http.ResponseWriter, req *http.Request
 	if err != nil {
 		return err
 	}
-	fmt.Println("cart", cart)
+
+	err = s.store.ApplyExistingPromo(validCart.CartId)
+	if err != nil {
+		return err
+	}
 
 	cartItemList, err := s.store.Get_Items_List_From_Cart_Items_By_Cart_Id(validCart.CartId)
 	if err != nil {

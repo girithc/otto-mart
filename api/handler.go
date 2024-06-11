@@ -1288,3 +1288,11 @@ func (s *Server) handlePromo(res http.ResponseWriter, req *http.Request) error {
 	}
 	return nil
 }
+
+func (s *Server) handleResetPrices(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "GET" {
+		print_path("GET", "reset prices")
+		return s.goRoutineWrapper(ResetPrices, s.handleResetPrice, res, req)
+	}
+	return nil
+}

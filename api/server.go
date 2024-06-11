@@ -71,7 +71,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
 	http.HandleFunc("/packer-check-order-to-pack", makeHTTPHandleFunc(s.handlePackerCheckOrderToPack))
 	http.HandleFunc("/packer-space-order", makeHTTPHandleFunc(s.handlePackerAllocateSpace))
-	//http.HandleFunc("/store-open")
+	// http.HandleFunc("/store-open")
 
 	http.HandleFunc("/packer-get-order-items", makeHTTPHandleFunc(s.handlePackerGetOrderItems))
 	http.HandleFunc("/delivery-partner-get-order-items", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderItems))
@@ -81,7 +81,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/delivery-partner-check-order", makeHTTPHandleFunc(s.handleDeliveryPartnerCheckOrder))
 	http.HandleFunc("/delivery-partner-dispatch-order", makeHTTPHandleFunc(s.handleDeliveryPartnerDispatchOrder))
 	http.HandleFunc("/delivery-partner-arrive", makeHTTPHandleFunc(s.handleDeliveryPartnerArrive))
-	//http.HandleFunc("/delivery-partner-get-order-details", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderDetails))
+	// http.HandleFunc("/delivery-partner-get-order-details", makeHTTPHandleFunc(s.handleDeliveryPartnerGetOrderDetails))
 
 	http.HandleFunc("/delivery-partner-get-assigned-orders", makeHTTPHandleFunc(s.handleDeliveryPartnerGetAssignedOrders))
 	http.HandleFunc("/delivery-partner-accept-order", makeHTTPHandleFunc(s.handleDeliveryPartnerAcceptOrder))
@@ -138,6 +138,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/manager-fcm", makeHTTPHandleFunc(s.handleManagerFCM))
 
 	http.HandleFunc("/apply-promo", makeHTTPHandleFunc(s.handlePromo))
+	http.HandleFunc("/reset-prices", makeHTTPHandleFunc(s.handleResetPrices))
 	http.HandleFunc("/shelf-crud", makeHTTPHandleFunc(s.handleShelfCRUD))
 	http.Handle("/lock-stock", makeHTTPHandleFunc(s.handleLockStock))
 

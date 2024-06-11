@@ -7,21 +7,22 @@ type Cart_Item struct {
 	Quantity int `json:"quantity"`
 }
 type CartDetails struct {
-	CartId               int  `json:"cart_id"`
-	ItemId               int  `json:"item_id"`
-	Quantity             int  `json:"quantity"`
-	ItemCost             int  `json:"item_cost"`
-	DeliveryFee          int  `json:"delivery_fee"`
-	PlatformFee          int  `json:"platform_fee"`
-	SmallOrderFee        int  `json:"small_order_fee"`
-	RainFee              int  `json:"rain_fee"`
-	HighTrafficSurcharge int  `json:"high_traffic_surcharge"`
-	PackagingFee         int  `json:"packaging_fee"`
-	PeakTimeSurcharge    int  `json:"peak_time_surcharge"`
-	Subtotal             int  `json:"subtotal"`
-	Discounts            int  `json:"discounts"`
-	OutOfStock           bool `json:"out_of_stock"`
-	FreeDeliveryAmount   int  `json:"free_delivery_amount"`
+	CartId               int    `json:"cart_id"`
+	ItemId               int    `json:"item_id"`
+	Quantity             int    `json:"quantity"`
+	ItemCost             int    `json:"item_cost"`
+	DeliveryFee          int    `json:"delivery_fee"`
+	PlatformFee          int    `json:"platform_fee"`
+	SmallOrderFee        int    `json:"small_order_fee"`
+	RainFee              int    `json:"rain_fee"`
+	HighTrafficSurcharge int    `json:"high_traffic_surcharge"`
+	PackagingFee         int    `json:"packaging_fee"`
+	PeakTimeSurcharge    int    `json:"peak_time_surcharge"`
+	Subtotal             int    `json:"subtotal"`
+	Discounts            int    `json:"discounts"`
+	OutOfStock           bool   `json:"out_of_stock"`
+	FreeDeliveryAmount   int    `json:"free_delivery_amount"`
+	PromoCode            string `json:"promo_code"`
 }
 
 type CartItemResponse struct {

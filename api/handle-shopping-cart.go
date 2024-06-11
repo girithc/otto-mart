@@ -113,3 +113,12 @@ func (s *Server) handleApplyPromo(res http.ResponseWriter, req *http.Request) er
 
 	return WriteJSON(res, http.StatusOK, cartResponse)
 }
+
+func (s *Server) handleResetPrice(res http.ResponseWriter, req *http.Request) error {
+	err := s.store.ResetPrices()
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, true)
+}

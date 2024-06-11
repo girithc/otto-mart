@@ -684,11 +684,37 @@ func (s *PostgresStore) ValidShoppingCart(cartID int, customerID int) (ValidShop
 	}
 }
 
-func (s *PostgresStore) ApplyPromo(promo string, cartId int) error {
-	if len(promo) <= 6 {
-		return fmt.Errorf("promo code must be more than six characters long")
+func (s *PostgresStore) ApplyExistingPromo(cartId int) error {
+	// Fetch the existing promo code from the shopping_cart table
+	var promoCode string
+	queryFetchPromo := `
+		SELECT promo_code
+		FROM shopping_cart
+		WHERE id = $1
+	`
+	err := s.db.QueryRow(queryFetchPromo, cartId).Scan(&promoCode)
+	if err != nil {
+		return fmt.Errorf("could not fetch promo code for cart ID %d: %w", cartId, err)
 	}
 
+	// Check if the promo code is not null or empty
+	if promoCode == "" {
+		log.Printf("no promo code found for cart ID %d", cartId)
+		return nil // No promo code to apply
+	}
+
+	// Call ApplyPromo with the fetched promo code
+	err = s.ApplyPromo(promoCode, cartId)
+	if err != nil {
+		return fmt.Errorf("could not apply promo code for cart ID %d: %w", cartId, err)
+	}
+
+	log.Printf("promo code %s applied for cart ID %d", promoCode, cartId)
+	return nil
+}
+
+func (s *PostgresStore) ApplyPromo(promo string, cartId int) error {
+	// Start transaction
 	tx, err := s.db.Begin()
 	if err != nil {
 		return fmt.Errorf("could not start transaction: %w", err)
@@ -780,33 +806,109 @@ func (s *PostgresStore) ApplyPromo(promo string, cartId int) error {
 
 	log.Printf("fetched %d cart items with joins for cart ID %d", len(cartItemDiscounts), cartId)
 
-	// Update the sold_price of each cart_item
-	for _, item := range cartItemDiscounts {
-		discountedPrice := int(item.MRP * (1 - item.DiscountPercentage/100)) // Ensure discounted price is an integer
-		queryUpdate := `
+	// Determine if promo code is valid
+	if len(promo) < 6 {
+		// Update the sold_price to mrp_price and set discount_applied to 0
+		for _, item := range cartItemDiscounts {
+			updateQuery := `
+				UPDATE cart_item
+				SET sold_price = (
+					SELECT mrp_price
+					FROM item_financial
+					WHERE item_id = cart_item.item_id
+				), discount_applied = 0
+				WHERE id = $1
+			`
+			_, err := tx.Exec(updateQuery, item.ID)
+			if err != nil {
+				log.Printf("could not update sold price for cart item id %d: %v", item.ID, err)
+				return fmt.Errorf("could not update sold price for cart item id %d: %w", item.ID, err)
+			}
+		}
+
+		// Update the promo_code to an empty string in shopping_cart
+		queryUpdatePromo := `
+			UPDATE shopping_cart
+			SET promo_code = ''
+			WHERE id = $1
+		`
+		_, err = tx.Exec(queryUpdatePromo, cartId)
+		if err != nil {
+			log.Printf("could not update promo code for cart ID %d: %v", cartId, err)
+			return fmt.Errorf("could not update promo code for cart ID %d: %w", cartId, err)
+		}
+	} else {
+		// Update the sold_price with discount applied
+		updateQuery := `
 			UPDATE cart_item
 			SET sold_price = $1, discount_applied = $2
 			WHERE id = $3
 		`
-		_, err := tx.Exec(queryUpdate, discountedPrice, int(item.DiscountPercentage), item.ID) // Ensure discount_applied is also an integer
+		for _, item := range cartItemDiscounts {
+			discountedPrice := int(item.MRP * (1 - item.DiscountPercentage/100))                   // Ensure discounted price is an integer
+			_, err := tx.Exec(updateQuery, discountedPrice, int(item.DiscountPercentage), item.ID) // Ensure discount_applied is also an integer
+			if err != nil {
+				log.Printf("could not update sold price for cart item id %d: %v", item.ID, err)
+				return fmt.Errorf("could not update sold price for cart item id %d: %w", item.ID, err)
+			}
+		}
+
+		// Update the promo_code in shopping_cart
+		queryUpdatePromo := `
+			UPDATE shopping_cart
+			SET promo_code = $1
+			WHERE id = $2
+		`
+		_, err = tx.Exec(queryUpdatePromo, promo, cartId)
 		if err != nil {
-			log.Printf("could not update sold price for cart item id %d: %v", item.ID, err)
-			return fmt.Errorf("could not update sold price for cart item id %d: %w", item.ID, err)
+			log.Printf("could not update promo code for cart ID %d: %v", cartId, err)
+			return fmt.Errorf("could not update promo code for cart ID %d: %w", cartId, err)
 		}
 	}
 
-	// Update the promo_code in shopping_cart
-	queryUpdatePromo := `
-		UPDATE shopping_cart
-		SET promo_code = $1
-		WHERE id = $2
-	`
-	_, err = tx.Exec(queryUpdatePromo, promo, cartId)
+	log.Printf("promo applied to %d rows", len(cartItemDiscounts))
+	return nil
+}
+
+func (s *PostgresStore) ResetPrices() error {
+	// Define the SQL query to update store prices
+	queryUpdatePrices := `
+        UPDATE item_store
+        SET store_price = item_financial.mrp_price
+        FROM item_financial
+        WHERE item_store.item_id = item_financial.item_id AND store_id = 1;
+    `
+
+	// Define the SQL query to reset discounts
+	queryResetDiscounts := `
+        UPDATE item_store
+        SET discount = 0;
+    `
+
+	// Start a transaction
+	tx, err := s.db.Begin()
 	if err != nil {
-		log.Printf("could not update promo code for cart ID %d: %v", cartId, err)
-		return fmt.Errorf("could not update promo code for cart ID %d: %w", cartId, err)
+		return fmt.Errorf("failed to begin transaction: %v", err)
 	}
 
-	log.Printf("promo applied to %d rows", len(cartItemDiscounts))
+	// Execute the price update query
+	_, err = tx.Exec(queryUpdatePrices)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to reset prices: %v", err)
+	}
+
+	// Execute the discount reset query
+	_, err = tx.Exec(queryResetDiscounts)
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("failed to reset discounts: %v", err)
+	}
+
+	// Commit the transaction
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %v", err)
+	}
+
 	return nil
 }

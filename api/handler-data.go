@@ -140,6 +140,7 @@ var authRequirements = map[string]Permission{
 	StoreAddressGet:                       {Role: "Customer", AuthRequired: true},
 	PackerGetOrder:                        {Role: "Customer", AuthRequired: true},
 	ApplyPromo:                            {Role: "Customer", AuthRequired: true},
+	ResetPrices:                           {Role: "Customer", AuthRequired: false},
 }
 
 const (
@@ -278,4 +279,5 @@ const (
 	ManagerFindItem                       = "manager-find-item"
 	ManagerCreateOrder                    = "manager-create-order"
 	ManagerFCM                            = "manager-fcm"
+	ResetPrices                           = "reset-prices"
 )
