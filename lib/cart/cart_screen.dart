@@ -1208,11 +1208,11 @@ class CartListState extends State<CartList> {
                                   Icons.discount,
                                   color: Colors.greenAccent,
                                 ), // Add an icon to the hint text
+
                           suffixIcon: cart.promoCode.isNotEmpty
                               ? IconButton(
                                   icon: const Icon(Icons.cancel),
                                   onPressed: () {
-                                    print("Cancel pressed");
                                     setState(() {
                                       cart.applyPromo("");
                                       _controller.clear();
@@ -1228,7 +1228,7 @@ class CartListState extends State<CartList> {
                         ),
                         onChanged: (code) {
                           cart.resetPrices();
-                          if (code.length > 6) {
+                          if (code.length >= 6) {
                             cart.applyPromo(code);
                           }
                         },
