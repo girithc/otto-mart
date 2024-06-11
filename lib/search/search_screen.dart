@@ -810,11 +810,10 @@ class ListItem extends StatelessWidget {
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              '$mrpPrice',
-                              style: const TextStyle(
+                            const Text(
+                              '',
+                              style: TextStyle(
                                 fontSize: 10,
-                                decoration: TextDecoration.lineThrough,
                                 decorationColor: Colors.black54,
                               ),
                             ),

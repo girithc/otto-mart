@@ -94,8 +94,11 @@ class _CatalogPageState extends State<CatalogPage> {
         color: Colors.white,
         child: Container(
           margin: EdgeInsets.zero,
-          padding:
-              const EdgeInsets.only(bottom: 25, left: 10, right: 10, top: 10),
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).size.height * 0.01,
+              left: MediaQuery.of(context).size.width * 0.02,
+              right: MediaQuery.of(context).size.width * 0.02,
+              top: MediaQuery.of(context).size.height * 0.01),
           child: Row(
             children: [
               Expanded(
@@ -755,11 +758,10 @@ class _ListItem2State extends State<ListItem2> {
                           Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  '${widget.mrpPrice}',
-                                  style: const TextStyle(
+                                const Text(
+                                  '',
+                                  style: TextStyle(
                                     fontSize: 10,
-                                    decoration: TextDecoration.lineThrough,
                                     decorationColor: Colors.black54,
                                   ),
                                 ),

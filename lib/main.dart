@@ -160,9 +160,9 @@ class _MyAppState extends State<MyApp> {
         : Platform.isIOS
             ? "ios"
             : "";
-    /*
+
     print(
-        "App Info: $appName, $packageName, $version, $buildNumber, $platform");*/
+        "App Info: $appName, $packageName, $version, $buildNumber, $platform");
     Map<String, dynamic> data = {
       "packageName": packageName,
       "version": version,
@@ -589,7 +589,7 @@ class _OpeningPageAnimationState extends State<OpeningPageAnimation> {
                         {context.go('/phone')}
                     });
               },
-              child: SizedBox.shrink(),
+              child: const SizedBox.shrink(),
             ),
             const SizedBox(
                 height:

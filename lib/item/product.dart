@@ -290,11 +290,10 @@ class _ProductState extends State<Product> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Text(
-                          '\u{20B9}${widget.mrpPrice}',
-                          style: const TextStyle(
+                        const Text(
+                          '',
+                          style: TextStyle(
                             fontSize: 15,
-                            decoration: TextDecoration.lineThrough,
                             decorationColor: Colors.black54,
                           ),
                         ),

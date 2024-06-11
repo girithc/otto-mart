@@ -510,7 +510,7 @@ class _MyHomePageState extends State<MyHomePage>
                                     promos: promotions),
                               )
                             : Container(height: 40), // Pass retrieved values
-
+/*
                         promotions.isNotEmpty
                             ? Container(
                                 child: BrandPromotions(
@@ -519,7 +519,7 @@ class _MyHomePageState extends State<MyHomePage>
                                     promos: promotions),
                               )
                             : Container(height: 40), // Pass retrieved values
-
+*/
                         Container(
                           color: Colors.white,
                           alignment:

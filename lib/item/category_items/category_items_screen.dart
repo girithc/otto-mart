@@ -211,10 +211,10 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
     var cart = context.watch<CartModel>();
     return Container(
       padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).size.height * 0.025,
+          bottom: MediaQuery.of(context).size.height * 0.01,
           left: MediaQuery.of(context).size.width * 0.02,
           right: MediaQuery.of(context).size.width * 0.02,
-          top: MediaQuery.of(context).size.height * 0.015),
+          top: MediaQuery.of(context).size.height * 0.01),
       color: Colors.white,
       //shadowColor: Colors.white,
       //surfaceTintColor: Colors.white,

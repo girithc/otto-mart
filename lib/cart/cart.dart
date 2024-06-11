@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logger/logger.dart';
+import 'package:pronto/utils/constants.dart';
 import 'package:pronto/utils/network/service.dart';
 
 class CartItem {
@@ -51,6 +52,7 @@ class CartDetails {
   final int discounts;
   final bool outOfStock;
   final int freeDeliveryAmount;
+  final String promoCode;
 
   CartDetails(
       {required this.cartId,
@@ -67,7 +69,8 @@ class CartDetails {
       required this.subtotal,
       required this.discounts,
       required this.outOfStock,
-      required this.freeDeliveryAmount});
+      required this.freeDeliveryAmount,
+      required this.promoCode});
 
   factory CartDetails.fromJson(Map<String, dynamic> json) {
     return CartDetails(
@@ -85,7 +88,8 @@ class CartDetails {
         subtotal: json['subtotal'],
         discounts: json['discounts'],
         outOfStock: json['out_of_stock'],
-        freeDeliveryAmount: json['free_delivery_amount']);
+        freeDeliveryAmount: json['free_delivery_amount'],
+        promoCode: json['promo_code']);
   }
 }
 
@@ -139,7 +143,8 @@ class CartModel extends ChangeNotifier {
         subtotal: 0,
         discounts: 0,
         outOfStock: false,
-        freeDeliveryAmount: 0);
+        freeDeliveryAmount: 0,
+        promoCode: "");
 
     _fetchDefaultAddress();
     _fetchCartId().then((_) {
@@ -157,11 +162,7 @@ class CartModel extends ChangeNotifier {
 
   Future<void> _fetchCartId() async {
     cartId = await storage.read(key: 'cartId');
-    //print("cart Id $cartId");
-    // You should handle cases where cartId is null!
     if (cartId == null) {
-      // Handle it according to your requirements.
-      // Maybe set a default value, or log an error.
       _logger.e('cartId is not found in the storage');
     } else {
       print("Fetched Cart Id $cartId");
@@ -169,7 +170,7 @@ class CartModel extends ChangeNotifier {
   }
 
   Future<void> _fetchCartItems() async {
-    print("Fetch Cart Items");
+    //print("Fetch Cart Items");
     final customerId = await storage.read(key: 'customerId');
     final cartId = await storage.read(key: 'cartId');
 
@@ -189,9 +190,6 @@ class CartModel extends ChangeNotifier {
 
           final Map<String, dynamic> cartDetailsData =
               jsonData['cart_details'] as Map<String, dynamic>;
-          _cartDetails = CartDetails.fromJson(cartDetailsData);
-          //print("Cart Details Data: $cartDetailsData");
-          // Extracting 'cart_items_list' from the response
           final List<dynamic> cartItemsList = jsonData['cart_items_list'];
           final List<CartItem> items =
               cartItemsList.map((item) => CartItem.fromJson(item)).toList();
@@ -298,7 +296,7 @@ class CartModel extends ChangeNotifier {
       final response =
           await _networkService.postWithAuth('/address', additionalData: data);
 
-      print('postdelivery response ${response.body} ${response.statusCode}');
+      //print('postdelivery response ${response.body} ${response.statusCode}');
 
       if (response.statusCode == 200) {
         if (response.body.isNotEmpty) {
@@ -333,6 +331,7 @@ class CartModel extends ChangeNotifier {
   int get deliveryFee => _cartDetails!.deliveryFee;
   int get smallOrderFee => _cartDetails!.smallOrderFee;
   int get freeDeliveryAmount => _cartDetails!.freeDeliveryAmount;
+  String get promoCode => _cartDetails!.promoCode;
 
   int get deliveryPartnerTip => _deliveryPartnerTip;
 
@@ -370,7 +369,7 @@ class CartModel extends ChangeNotifier {
       // Add any other parameters you need
     };
 
-    print("Body: $body");
+    //print("Body: $body");
 
     // Use NetworkService to make the authenticated POST request
     networkService
@@ -416,9 +415,9 @@ class CartModel extends ChangeNotifier {
     cartID = await storage.read(key: 'cartId');
     customerId = await storage.read(key: 'customerId');
 
-    print("After Add Item To Cart");
-    print("Cart Id $cartID");
-    print("Customer Id $customerId");
+    //print("After Add Item To Cart");
+    //print("Cart Id $cartID");
+    //print("Customer Id $customerId");
     return null;
   }
 
@@ -456,7 +455,7 @@ class CartModel extends ChangeNotifier {
         final List<CartItem> items =
             cartItemsList.map((item) => CartItem.fromJson(item)).toList();
 
-        print("Cart Items List $items");
+        //print("Cart Items List $items");
 
         itemList.clear();
         itemList.addAll(items);
@@ -473,6 +472,24 @@ class CartModel extends ChangeNotifier {
     });
 
     return;
+  }
+
+  Future<void> resetPrices() async {
+    const url = '$baseUrl/reset-prices';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      //print("Response Reset Prices ${response.body}");
+      if (response.statusCode == 200) {
+        return;
+      } else {
+        // Log or handle the error
+        print("Error: ${response.statusCode} ${response.body}");
+      }
+    } catch (error) {
+      // Handle any errors
+      print('HTTP GET request error: $error');
+    }
   }
 
   bool isEmpty() {

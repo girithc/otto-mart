@@ -43,7 +43,7 @@ class _MyCartState extends State<MyCart> {
 
   Future<void> fetchCartId() async {
     cartId = await storage.read(key: 'cartId');
-    print("CartID $cartId");
+    //print("CartID $cartId");
   }
 
   Future<LockStockResponse?> checkoutLockItems(int cartId) async {
@@ -53,14 +53,14 @@ class _MyCartState extends State<MyCart> {
     try {
       final response = await networkService.postWithAuth('/checkout-lock-items',
           additionalData: body);
-      print("Checkout Lock Response: ${response.body} ${response.statusCode}");
+      //print("Checkout Lock Response: ${response.body} ${response.statusCode}");
 
       if (response.statusCode == 200) {
         // Parse the JSON response into a LockStockResponse object
         final jsonResponse = json.decode(response.body);
         return LockStockResponse.fromJson(jsonResponse);
       } else {
-        print("Response Body ${response.body}");
+        //print("Response Body ${response.body}");
         final jsonResponse = json.decode(response.body);
         String errorMessage = jsonResponse['error'].toString();
 
@@ -90,68 +90,6 @@ class _MyCartState extends State<MyCart> {
     return null;
   }
 
-  /*
-  Future<PaymentResult> initiatePhonePePayment() async {
-    cartId = await storage.read(key: 'cartId');
-    final Map<String, dynamic> body = {
-      "cart_id": int.parse(cartId!),
-    };
-
-    try {
-      final networkService = NetworkService();
-      final response = await networkService
-          .postWithAuth('/phonepe-payment-init', additionalData: body);
-      //http.StreamedResponse response = await request.send();
-
-      print("Response: ${response.body} ${response.statusCode}");
-
-      if (response.statusCode == 200) {
-        //var responseBody = await response.stream.bytesToString();
-        var decodedResponse = json.decode(response.body);
-
-        print(decodedResponse);
-        String url = decodedResponse['data']['instrumentResponse']
-            ['redirectInfo']['url'];
-        String message = decodedResponse['message'];
-        bool isSuccess = decodedResponse['success'];
-        String sign = decodedResponse['sign'];
-        String merchantTransactionId = decodedResponse['merchantTransactionId'];
-
-        if (isSuccess) {
-          return PaymentResult(
-              url: url,
-              isSuccess: isSuccess,
-              sign: sign,
-              merchantTransactionId: merchantTransactionId);
-        } else {
-          return PaymentResult(
-              url: message,
-              isSuccess: isSuccess,
-              sign: sign,
-              merchantTransactionId: '');
-        }
-      } else {
-        //var errorResponse = await response.stream.bytesToString();
-        print(
-            'Request failed with status: ${response.statusCode}. ${response.body}');
-        //throw Exception('Failed to cancel checkout items');
-        //print('Error response: $errorResponse');
-        return PaymentResult(
-            url: 'Payment Error',
-            isSuccess: false,
-            sign: '',
-            merchantTransactionId: '');
-      }
-    } catch (e) {
-      print('Exception occurred: $e');
-      return PaymentResult(
-          url: 'Exception: $e',
-          isSuccess: false,
-          sign: '',
-          merchantTransactionId: '');
-    }
-  }
-  */
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
@@ -329,7 +267,7 @@ class _MyCartState extends State<MyCart> {
 
                                 if (cartId != null) {
                                   int cartIdInt = int.parse(cartId);
-                                  print("CartID INT: $cartIdInt");
+                                  //print("CartID INT: $cartIdInt");
                                   final success =
                                       await checkoutLockItems(cartIdInt);
                                   if (success != null) {
@@ -581,6 +519,7 @@ class CartList extends StatefulWidget {
 
 class CartListState extends State<CartList> {
   CartSlotDetails? cartSlotDetails;
+  final TextEditingController _controller = TextEditingController(text: "");
 
   @override
   void initState() {
@@ -663,8 +602,7 @@ class CartListState extends State<CartList> {
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-    var itemNameStyle = Theme.of(context).textTheme.titleMedium;
-    print("Cart items ${cart.items.length}");
+    _controller.text = cart.promoCode;
 
     if (cart.isEmpty()) {
       return Center(
@@ -1261,11 +1199,27 @@ class CartListState extends State<CartList> {
                           fillColor: Colors.grey
                               .shade100, // Background color of the text field
                           filled: true,
-                          hintText: 'Enter Code',
+                          hintText: cart.promoCode == "" ? 'Enter Code' : null,
                           hintStyle: const TextStyle(fontSize: 15),
-
-                          prefixIcon: const Icon(Icons
-                              .subdirectory_arrow_right_rounded), // Add an icon to the hint text
+                          prefixIcon: cart.promoCode == ""
+                              ? const Icon(
+                                  Icons.subdirectory_arrow_right_rounded)
+                              : const Icon(
+                                  Icons.discount,
+                                  color: Colors.greenAccent,
+                                ), // Add an icon to the hint text
+                          suffixIcon: cart.promoCode.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.cancel),
+                                  onPressed: () {
+                                    print("Cancel pressed");
+                                    setState(() {
+                                      cart.applyPromo("");
+                                      _controller.clear();
+                                    });
+                                  },
+                                )
+                              : null,
                           border: OutlineInputBorder(
                             borderRadius:
                                 BorderRadius.circular(10), // Rounded borders
@@ -1273,10 +1227,12 @@ class CartListState extends State<CartList> {
                           ),
                         ),
                         onChanged: (code) {
-                          if (code.length >= 6) {
+                          cart.resetPrices();
+                          if (code.length > 6) {
                             cart.applyPromo(code);
                           }
                         },
+                        controller: _controller,
                       ),
                     ),
                   ],
