@@ -167,7 +167,7 @@ class _CatalogPageState extends State<CatalogPage> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.deepPurpleAccent,
+                    backgroundColor: Colors.deepPurpleAccent.shade400,
                     foregroundColor: Colors.white,
                     textStyle: const TextStyle(
                       fontSize: 20,
@@ -365,7 +365,7 @@ class _ItemCatalogState extends State<ItemCatalog> {
         ? const LinearProgressIndicator()
         : Container(
             color: const Color.fromARGB(255, 251, 245, 255),
-            padding: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.only(bottom: 0),
             child: GridView.builder(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
@@ -779,8 +779,8 @@ class _ListItem2State extends State<ListItem2> {
                                   margin: const EdgeInsets.symmetric(
                                       horizontal: 2, vertical: 2),
                                   decoration: BoxDecoration(
-                                      color:
-                                          Colors.deepPurpleAccent, // Add border
+                                      color: Colors.deepPurpleAccent
+                                          .shade400, // Add border
                                       borderRadius:
                                           BorderRadius.circular(10.0)),
                                   child: Row(
@@ -899,7 +899,7 @@ class _ListItem2State extends State<ListItem2> {
                                         side: BorderSide(
                                           width: 1.0,
                                           color: widget.stockQuantity <= 0
-                                              ? Colors.deepPurpleAccent
+                                              ? Colors.deepPurpleAccent.shade400
                                               : Colors.pinkAccent,
                                         ),
                                         shape: RoundedRectangleBorder(
@@ -963,7 +963,7 @@ class _ListItem2State extends State<ListItem2> {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 5, vertical: 2), // Adjust padding as needed
                     decoration: BoxDecoration(
-                      color: Colors.deepPurpleAccent.withOpacity(0.85),
+                      color: Colors.deepPurpleAccent.shade400,
                       borderRadius: BorderRadius.circular(10.0),
                     ),
                     child: const Text(
@@ -991,14 +991,14 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      elevation: 1.0,
+      elevation: 0.0,
       color: Colors.white,
       shadowColor: Colors.white,
       child: Container(
         padding: EdgeInsets.only(
           top: MediaQuery.of(context).size.height * 0.02,
         ),
-        margin: const EdgeInsets.only(top: 30),
+        margin: const EdgeInsets.only(top: 32),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment:
@@ -1013,9 +1013,9 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
               width: MediaQuery.of(context).size.width * 0.15,
               child: IconButton(
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_ios_outlined,
-                  color: Colors.deepPurpleAccent,
+                  color: Colors.deepPurpleAccent.shade400,
                 ),
                 onPressed: () {
                   Navigator.pop(context);
@@ -1053,9 +1053,9 @@ class CatalogAppBar extends StatelessWidget implements PreferredSizeWidget {
                 //rpadding: const EdgeInsets.only(right: 15.0),
                 icon: Transform.scale(
                   scale: 1.7, // Adjust the scale factor as needed
-                  child: const Icon(
+                  child: Icon(
                     Icons.search_outlined,
-                    color: Colors.deepPurpleAccent,
+                    color: Colors.deepPurpleAccent.shade400,
                   ),
                 ),
                 onPressed: () async {

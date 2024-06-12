@@ -159,13 +159,12 @@ class _MyAccountPageState extends State<MyAccountPage> {
         child: Column(
           children: [
             Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                      color: Colors.grey.withOpacity(0.4), width: 1.0),
-                ),
-                borderRadius: BorderRadius.circular(2),
-                color: Colors.white,
+                borderRadius:
+                    BorderRadius.circular(10), // Apply a borderRadius of 10
+                color: Colors
+                    .grey.shade100, // Set the background color of the Container
               ),
               child: ListTile(
                 onTap: () {
@@ -216,19 +215,14 @@ class _MyAccountPageState extends State<MyAccountPage> {
                 trailing: const Icon(Icons.arrow_forward_ios_outlined),
               ),
             ),
+            const SizedBox(height: 10),
             Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                // Apply a border only at the top of the Container
-                border: Border(
-                  top: BorderSide(
-                      color: Colors.grey.withOpacity(0.4),
-                      width:
-                          1.0), // Specify the color and width of the top border
-                ),
-                borderRadius: BorderRadius.circular(
-                    2), // Apply the same borderRadius as your ListTile
-                color:
-                    Colors.white, // Set the background color of the Container
+                borderRadius:
+                    BorderRadius.circular(10), // Apply a borderRadius of 10
+                color: Colors
+                    .grey.shade100, // Set the background color of the Container
               ),
               child: ListTile(
                   onTap: () {
@@ -254,18 +248,12 @@ class _MyAccountPageState extends State<MyAccountPage> {
             ),
             const SizedBox(height: 10),
             Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                // Apply a border only at the top of the Container
-                border: Border(
-                  top: BorderSide(
-                      color: Colors.grey.withOpacity(0.4),
-                      width:
-                          1.0), // Specify the color and width of the top border
-                ),
-                borderRadius: BorderRadius.circular(
-                    2), // Apply the same borderRadius as your ListTile
-                color:
-                    Colors.white, // Set the background color of the Container
+                borderRadius:
+                    BorderRadius.circular(10), // Apply a borderRadius of 10
+                color: Colors
+                    .grey.shade100, // Set the background color of the Container
               ),
               child: ListTile(
                   onTap: () {

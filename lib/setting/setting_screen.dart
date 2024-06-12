@@ -102,6 +102,50 @@ class _SettingScreenState extends State<SettingScreen> {
         false; // Returning false if dialog is dismissed
   }
 
+  void _showNoRewardsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10), // Reduced border radius
+          ),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white, // Set the background color to white
+              borderRadius: BorderRadius.circular(20), // Reduced border radius
+            ),
+            padding: EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "0 Rewards Available",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: 16),
+                Text("Earn rewards to use this feature."),
+                SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: TextButton(
+                    child: Text("OK"),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,18 +211,126 @@ class _SettingScreenState extends State<SettingScreen> {
         child: Column(
           children: [
             Container(
+              margin: EdgeInsets.all(10),
               decoration: BoxDecoration(
-                // Apply a border only at the top of the Container
-                border: Border(
-                  top: BorderSide(
-                      color: Colors.grey.withOpacity(0.4),
-                      width:
-                          1.0), // Specify the color and width of the top border
-                ),
-                borderRadius: BorderRadius.circular(
-                    2), // Apply the same borderRadius as your ListTile
-                color:
-                    Colors.white, // Set the background color of the Container
+                  color: Colors.deepPurpleAccent,
+                  borderRadius: BorderRadius.all(Radius.circular(10))),
+              height: MediaQuery.of(context).size.height * 0.26,
+              width: MediaQuery.of(context).size.width * 0.9,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(left: 20, top: 10),
+                        child: Text(
+                          "Wallet \nBalance",
+                          style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 36,
+                              color: Colors.white),
+                        ),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.only(
+                          left: 30,
+                          top: 10,
+                          right: 20,
+                        ),
+                        child: Text(
+                          "\n0",
+                          style: TextStyle(
+                              fontWeight: FontWeight.normal,
+                              fontSize: 36,
+                              color: Colors.white),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      GestureDetector(
+                        onTap: () {
+                          _showNoRewardsDialog(context);
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          margin:
+                              EdgeInsets.only(left: 10, top: 10, bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
+                          ),
+                          height: MediaQuery.of(context).size.height * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "Redeem Balance",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.normal),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          _showNoRewardsDialog(context);
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          margin:
+                              EdgeInsets.only(left: 10, top: 10, bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
+                          ),
+                          height: MediaQuery.of(context).size.height * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "Earn Rewards",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.normal),
+                          ),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          _showNoRewardsDialog(context);
+                        },
+                        child: Container(
+                          alignment: Alignment.center,
+                          margin: EdgeInsets.only(
+                              left: 10, top: 10, bottom: 10, right: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.all(Radius.circular(5)),
+                          ),
+                          height: MediaQuery.of(context).size.height * 0.1,
+                          width: MediaQuery.of(context).size.width * 0.25,
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "Multiply Rewards",
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.normal),
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+            Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                borderRadius:
+                    BorderRadius.circular(10), // Apply a borderRadius of 10
+                color: Colors
+                    .grey.shade100, // Set the background color of the Container
               ),
               child: ListTile(
                 minVerticalPadding: 10,
@@ -195,7 +347,6 @@ class _SettingScreenState extends State<SettingScreen> {
                     style: TextStyle(fontSize: 18, color: Colors.black),
                   ),
                 ),
-                // Remove tileColor and shape from ListTile since it's now wrapped in a Container
                 trailing: const Icon(Icons.arrow_forward_ios_outlined),
               ),
             ),
@@ -203,18 +354,12 @@ class _SettingScreenState extends State<SettingScreen> {
               height: 10,
             ),
             Container(
+              margin: EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
-                // Apply a border only at the top of the Container
-                border: Border(
-                  top: BorderSide(
-                      color: Colors.grey.withOpacity(0.4),
-                      width:
-                          1.0), // Specify the color and width of the top border
-                ),
-                borderRadius: BorderRadius.circular(
-                    2), // Apply the same borderRadius as your ListTile
-                color:
-                    Colors.white, // Set the background color of the Container
+                borderRadius:
+                    BorderRadius.circular(10), // Apply a borderRadius of 10
+                color: Colors
+                    .grey.shade100, // Set the background color of the Container
               ),
               child: ListTile(
                 minVerticalPadding: 10,
@@ -231,7 +376,6 @@ class _SettingScreenState extends State<SettingScreen> {
                     style: TextStyle(fontSize: 18, color: Colors.black),
                   ),
                 ),
-                // Remove tileColor and shape from ListTile since it's now wrapped in a Container
                 trailing: const Icon(Icons.arrow_forward_ios_outlined),
               ),
             ),

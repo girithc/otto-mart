@@ -237,7 +237,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
+        backgroundColor: Colors.deepPurpleAccent.shade400,
         title: const Text(
           'Select Address',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -291,15 +291,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(15), // Rounded corners
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.5),
-                        spreadRadius: 2,
-                        blurRadius: 4,
-                        offset:
-                            const Offset(0, 2), // Changes position of shadow
-                      ),
-                    ],
+                    boxShadow: [],
                     border: Border.all(color: Colors.white, width: 1.0),
                   ),
                   child: Column(
@@ -326,7 +318,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
   Widget _buildAdvertisement() {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.30,
+      height: MediaQuery.of(context).size.height * 0.25,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -348,12 +340,8 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
           child: Container(
             height: 60.0, // Height of each skeleton loader item
             decoration: BoxDecoration(
-              color: Colors.grey[300], // Light grey color for the skeleton
+              color: Colors.grey.shade200, // Light grey color for the skeleton
               borderRadius: BorderRadius.circular(10),
-              border: const Border(
-                left: BorderSide(color: Colors.deepPurpleAccent, width: 1.0),
-                right: BorderSide(color: Colors.deepPurpleAccent, width: 1.0),
-              ),
             ),
           ),
         );
@@ -386,31 +374,28 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                     margin:
                         const EdgeInsets.only(bottom: 10, left: 10, right: 10),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.deepPurpleAccent.shade400,
                       borderRadius:
-                          BorderRadius.circular(5), // Add rounded corners
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.deepPurpleAccent.withOpacity(
-                              0.5), // Shadow color with some transparency
-                          spreadRadius: 1, // Spread radius
-                          blurRadius: 2, // Blur radius
-                          offset:
-                              const Offset(0, 1), // Changes position of shadow
-                        ),
-                      ],
+                          BorderRadius.circular(15), // Add rounded corners
+
                       border: Border.all(
-                          color: Colors.deepPurpleAccent,
+                          color: Colors.white,
                           width: 1), // Optional: add a subtle border
                     ),
                     child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add, size: 25),
+                        Icon(
+                          Icons.add,
+                          size: 25,
+                          color: Colors.white,
+                        ),
                         SizedBox(width: 5),
                         Text(" New Address",
-                            style:
-                                TextStyle(fontSize: 20, color: Colors.black)),
+                            style: TextStyle(
+                                fontSize: 20,
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ));
@@ -491,12 +476,11 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                 },
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected ? Colors.greenAccent : Colors.white,
-                    border: const Border(
-                      top: BorderSide(width: 0.5, color: Colors.grey),
-                      bottom: BorderSide(width: 0.5, color: Colors.grey),
-                    ),
-                  ),
+                      color: isSelected
+                          ? Colors.greenAccent
+                          : Colors.grey.shade100,
+                      borderRadius: BorderRadius.all(Radius.circular(15))),
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   child: ListTile(
                     minVerticalPadding: 12,
                     leading: index == 1

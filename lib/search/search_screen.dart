@@ -4,7 +4,6 @@ import 'package:flutter_avif/flutter_avif.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
-import 'package:pinput/pinput.dart';
 import 'package:pronto/cart/cart.dart';
 import 'package:pronto/cart/cart_screen.dart';
 import 'package:pronto/item/product.dart';
@@ -66,7 +65,7 @@ class _SearchPageState extends State<SearchPage> {
       //: const SearchTemplate(),
       bottomNavigationBar: Container(
         padding:
-            const EdgeInsets.only(bottom: 25, left: 10, right: 10, top: 10),
+            const EdgeInsets.only(bottom: 10, left: 10, right: 10, top: 10),
         margin: EdgeInsets.zero,
         child: Row(
           children: [
@@ -131,7 +130,7 @@ class _SearchPageState extends State<SearchPage> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurpleAccent,
+                  backgroundColor: Colors.deepPurpleAccent.shade400,
                   foregroundColor: Colors.white,
                   textStyle: const TextStyle(
                     fontSize: 20,
@@ -222,7 +221,8 @@ class _TypingAnimationState extends State<TypingAnimation> {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
+    return Container(
+      color: Colors.white,
       alignment: Alignment.topCenter,
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -241,23 +241,15 @@ class _TypingAnimationState extends State<TypingAnimation> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withOpacity(0.5),
-                    spreadRadius: 1,
-                    blurRadius: 1,
-                    offset: const Offset(0, 1), // changes position of shadow
-                  ),
-                ],
+                color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(10)),
             child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 10),
               child: Text(
                 words[index],
                 key: ValueKey<String>(words[index]),
-                style: const TextStyle(
-                    fontSize: 36, color: Colors.deepPurpleAccent),
+                style: TextStyle(
+                    fontSize: 36, color: Colors.deepPurpleAccent.shade400),
               ),
             ),
           ),
@@ -372,9 +364,9 @@ class HorizontalScrollItems extends StatelessWidget {
                                 shadowColor: Colors.white,
                                 surfaceTintColor: Colors.white,
                                 padding: const EdgeInsets.all(0),
-                                side: const BorderSide(
+                                side: BorderSide(
                                   width: 1.0,
-                                  color: Colors.deepPurpleAccent,
+                                  color: Colors.deepPurpleAccent.shade400,
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(
@@ -565,8 +557,8 @@ class SearchItemListState extends State<SearchItemList> {
                             ),
                         TextSpan(
                             text: searchQuery,
-                            style: const TextStyle(
-                                color: Colors.deepPurpleAccent)),
+                            style: TextStyle(
+                                color: Colors.deepPurpleAccent.shade400)),
                       ],
                     ),
                   )
@@ -580,7 +572,9 @@ class SearchItemListState extends State<SearchItemList> {
                         ),
                         TextSpan(
                           text: searchQuery,
-                          style: const TextStyle(color: Colors.deepPurple),
+                          style: TextStyle(
+                            color: Colors.deepPurpleAccent.shade400,
+                          ),
                         ),
                       ],
                     ),
@@ -990,7 +984,7 @@ class ListItem extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(
                       horizontal: 5, vertical: 2), // Adjust padding as needed
                   decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent.withOpacity(0.85),
+                    color: Colors.deepPurpleAccent.shade400,
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   child: const Text(
@@ -1056,7 +1050,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
           top: MediaQuery.of(context).size.height * 0.05,
         ),
         margin: const EdgeInsets.all(0),
-        decoration: const BoxDecoration(color: Colors.deepPurpleAccent),
+        decoration: BoxDecoration(color: Colors.deepPurpleAccent.shade400),
         child: Row(
           mainAxisAlignment:
               MainAxisAlignment.spaceBetween, // Aligns children to the edges

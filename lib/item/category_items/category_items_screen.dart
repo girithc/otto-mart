@@ -51,6 +51,7 @@ class CategoryItemsAppBar extends StatelessWidget
       child: Container(
         padding: const EdgeInsets.only(top: 4),
         margin: const EdgeInsets.all(0),
+        color: Colors.white,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           crossAxisAlignment:

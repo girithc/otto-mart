@@ -576,14 +576,7 @@ class _MyHomePageState extends State<MyHomePage>
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white, width: 1),
           borderRadius: BorderRadius.circular(8), // Squarish border
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 1,
-              blurRadius: 5,
-              offset: const Offset(0, 3),
-            ),
-          ],
+          boxShadow: [],
           color: Colors.white,
         ),
         child: Column(

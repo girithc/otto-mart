@@ -955,7 +955,7 @@ class CartListState extends State<CartList> {
                                 colors: [Colors.white, Colors.deepPurpleAccent],
                               ),
                               borderRadius:
-                                  BorderRadius.circular(10), // Rounded corners
+                                  BorderRadius.circular(7), // Rounded corners
                               boxShadow: const [],
                             ),
                             padding: const EdgeInsets.only(left: 25, right: 15),
@@ -1120,7 +1120,7 @@ class CartListState extends State<CartList> {
                             decoration: BoxDecoration(
                               color: Colors.deepPurpleAccent,
                               borderRadius:
-                                  BorderRadius.circular(10), // Rounded corners
+                                  BorderRadius.circular(6), // Rounded corners
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.grey.withOpacity(0.2),
@@ -1155,14 +1155,7 @@ class CartListState extends State<CartList> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10), // Rounded corners
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.deepPurpleAccent.shade700,
-                      spreadRadius: 1,
-                      blurRadius: 1,
-                      offset: const Offset(0, 2), // Shadow position
-                    ),
-                  ],
+                  boxShadow: [],
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -1183,7 +1176,7 @@ class CartListState extends State<CartList> {
                             fontWeight: FontWeight.w400,
                           ),
                         ),
-                        Icon(Icons.payments_outlined)
+                        Icon(Icons.local_mall_outlined)
                       ],
                     ),
                     const SizedBox(
@@ -1203,7 +1196,9 @@ class CartListState extends State<CartList> {
                           hintStyle: const TextStyle(fontSize: 15),
                           prefixIcon: cart.promoCode == ""
                               ? const Icon(
-                                  Icons.subdirectory_arrow_right_rounded)
+                                  Icons.subdirectory_arrow_right_rounded,
+                                  color: Colors.deepPurpleAccent,
+                                )
                               : const Icon(
                                   Icons.discount,
                                   color: Colors.greenAccent,
@@ -1250,188 +1245,235 @@ class CartListState extends State<CartList> {
   }
 }
 
-class _TaxAndDelivery extends StatelessWidget {
+class _TaxAndDelivery extends StatefulWidget {
+  @override
+  _TaxAndDeliveryState createState() => _TaxAndDeliveryState();
+}
+
+class _TaxAndDeliveryState extends State<_TaxAndDelivery> {
+  bool _isExpanded = false;
+
   @override
   Widget build(BuildContext context) {
     var cart = context.watch<CartModel>();
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15), // Rounded corners
-        boxShadow: const [],
-        border: Border.all(color: Colors.white, width: 2.0),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-        child: Column(
-          children: [
-            _CustomListItem(
-              label: 'Item Total',
-              amount: '${cart.totalPriceItems}',
-              font: const TextStyle(fontSize: 12),
-            ),
-            cart.smallOrderFee > 0
-                ? Padding(
-                    padding:
-                        const EdgeInsets.only(top: 5, left: 10.0, right: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _isExpanded = !_isExpanded;
+        });
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 10.0),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            children: [
+              if (_isExpanded)
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  padding: EdgeInsets.all(10),
+                  child: Column(
+                    children: [
+                      _CustomListItem(
+                        label: 'Item Total',
+                        amount: '${cart.totalPriceItems}',
+                        font: const TextStyle(fontSize: 14),
+                      ),
+                      if (cart.smallOrderFee > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              top: 5, left: 10.0, right: 5),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Text(
+                                    "Small Order Fee ",
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  const SizedBox(
+                                    width: 5,
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 5, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.grey.withOpacity(0.2),
+                                          spreadRadius: 1,
+                                          blurRadius: 1,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Text(
+                                      "0 above ${cart.freeDeliveryAmount}",
+                                      style: const TextStyle(
+                                        color: Colors.pinkAccent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                margin: const EdgeInsets.only(
+                                    right: 40, top: 0, bottom: 0),
+                                child: Text(
+                                  cart.smallOrderFee.toString(),
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(top: 5, left: 10.0, right: 5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              "Small Order Fee ",
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            const SizedBox(
-                              width: 5,
+                            Row(
+                              children: [
+                                const Text(
+                                  "Delivery Fee ",
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                const SizedBox(
+                                  width: 5,
+                                ),
+                                cart.deliveryFee > 0
+                                    ? Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color:
+                                                  Colors.grey.withOpacity(0.2),
+                                              spreadRadius: 1,
+                                              blurRadius: 1,
+                                              offset: const Offset(0, 1),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          "0 above ${cart.freeDeliveryAmount}",
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.pinkAccent,
+                                            fontSize: 14,
+                                          ),
+                                        ),
+                                      )
+                                    : const SizedBox.shrink(),
+                              ],
                             ),
                             Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(
-                                    10), // Rounded corners
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    spreadRadius: 1,
-                                    blurRadius: 1,
-                                    offset: const Offset(
-                                        0, 1), // Changes position of shadow
-                                  ),
-                                ],
-                              ),
+                              margin: const EdgeInsets.only(
+                                  right: 40, top: 0, bottom: 0),
                               child: Text(
-                                "0 above ${cart.freeDeliveryAmount}", // Added a space for visual separation
-                                style: const TextStyle(
-                                  color: Colors.pinkAccent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize:
-                                      12, // This adds the line through effect
-                                ),
+                                cart.deliveryFee.toString(),
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ),
                           ],
                         ),
-                        Container(
-                          margin: const EdgeInsets.only(
-                              right: 40, top: 0, bottom: 0),
-                          child: Text(
-                            cart.smallOrderFee.toString(),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : Container(),
-            Padding(
-              padding: const EdgeInsets.only(top: 5, left: 10.0, right: 5),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Text(
-                        "Delivery Fee ",
-                        style: TextStyle(fontSize: 12),
                       ),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      cart.deliveryFee > 0
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 5, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-
-                                borderRadius: BorderRadius.circular(
-                                    15), // Rounded corners
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.2),
-                                    spreadRadius: 1,
-                                    blurRadius: 1,
-                                    offset: const Offset(
-                                        0, 1), // Changes position of shadow
+                      if (cart.platformFee > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              top: 5, left: 10.0, right: 5),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Row(
+                                children: [
+                                  Text(
+                                    "Platform Fee ",
+                                    style: TextStyle(fontSize: 14),
                                   ),
                                 ],
                               ),
-                              child: Text(
-                                "0 above ${cart.freeDeliveryAmount}",
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.pinkAccent,
-                                  fontSize:
-                                      12, // This adds the line through effect
+                              Container(
+                                margin: const EdgeInsets.only(
+                                    right: 40, top: 0, bottom: 0),
+                                child: Text(
+                                  cart.platformFee.toString(),
+                                  style: const TextStyle(fontSize: 14),
                                 ),
                               ),
-                            )
-                          : const SizedBox.shrink(),
+                            ],
+                          ),
+                        ),
+                      if (cart.packagingFee > 0)
+                        _CustomListItem(
+                          label: 'Packaging Fee',
+                          amount: '${cart.packagingFee}',
+                          font: const TextStyle(fontSize: 14),
+                        ),
+                      if (cart.deliveryPartnerTip > 0)
+                        _CustomListItem(
+                          label: 'Delivery Partner Tip',
+                          amount: '${cart.deliveryPartnerTip}',
+                          font: const TextStyle(fontSize: 14),
+                        ),
                     ],
                   ),
-                  Container(
-                    margin: const EdgeInsets.only(right: 40, top: 0, bottom: 0),
-                    child: Text(
-                      cart.deliveryFee.toString(),
-                      style: const TextStyle(fontSize: 12),
+                ),
+              ListTile(
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "To Pay",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ],
+                    Text(
+                      "Incl. all taxes and charges",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.normal,
+                      ),
+                    ),
+                  ],
+                ),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '\u{20B9}${cart.totalPrice}',
+                      style: TextStyle(
+                        fontSize: 14,
+                      ),
+                    ),
+                    SizedBox(width: 10),
+                    _isExpanded
+                        ? Icon(Icons.keyboard_arrow_up)
+                        : Icon(Icons.keyboard_arrow_right),
+                  ],
+                ),
               ),
-            ),
-            cart.platformFee > 0
-                ? Padding(
-                    padding:
-                        const EdgeInsets.only(top: 5, left: 10.0, right: 5),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Text(
-                              "Platform Fee ",
-                              style: TextStyle(fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(
-                              right: 40, top: 0, bottom: 0),
-                          child: Text(
-                            cart.platformFee.toString(),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                : Container(),
-            cart.packagingFee > 0
-                ? _CustomListItem(
-                    label: 'Packaging Fee',
-                    amount: '${cart.packagingFee}',
-                    font: const TextStyle(fontSize: 14),
-                  )
-                : Container(),
-            cart.deliveryPartnerTip > 0
-                ? _CustomListItem(
-                    label: 'Delivery Partner Tip',
-                    amount: '${cart.deliveryPartnerTip}',
-                    font: const TextStyle(fontSize: 14),
-                  )
-                : Container(),
-            const Divider(color: Colors.white),
-            _CustomListItem(
-              label: 'To Pay',
-              amount: '\u{20B9}${cart.totalPrice}',
-              font: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
