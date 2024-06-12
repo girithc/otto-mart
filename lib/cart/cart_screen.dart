@@ -1155,7 +1155,7 @@ class CartListState extends State<CartList> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10), // Rounded corners
-                  boxShadow: [],
+                  boxShadow: const [],
                 ),
                 padding:
                     const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -1228,7 +1228,7 @@ class CartListState extends State<CartList> {
                           }
                         },
                         controller: _controller,
-                      ),
+                      ), //Hello
                     ),
                   ],
                 ),
@@ -1278,7 +1278,7 @@ class _TaxAndDeliveryState extends State<_TaxAndDelivery> {
                     color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  padding: EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(10),
                   child: Column(
                     children: [
                       _CustomListItem(
@@ -1437,7 +1437,7 @@ class _TaxAndDeliveryState extends State<_TaxAndDelivery> {
                   ),
                 ),
               ListTile(
-                title: Column(
+                title: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -1461,14 +1461,14 @@ class _TaxAndDeliveryState extends State<_TaxAndDelivery> {
                   children: [
                     Text(
                       '\u{20B9}${cart.totalPrice}',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 14,
                       ),
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     _isExpanded
-                        ? Icon(Icons.keyboard_arrow_up)
-                        : Icon(Icons.keyboard_arrow_right),
+                        ? const Icon(Icons.keyboard_arrow_up)
+                        : const Icon(Icons.keyboard_arrow_right),
                   ],
                 ),
               ),
