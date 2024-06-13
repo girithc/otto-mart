@@ -824,7 +824,8 @@ class ListItem extends StatelessWidget {
                               margin: const EdgeInsets.symmetric(
                                   horizontal: 2, vertical: 2),
                               decoration: BoxDecoration(
-                                  color: Colors.pinkAccent, // Add border
+                                  color: Colors
+                                      .deepPurpleAccent.shade400, // Add border
                                   borderRadius: BorderRadius.circular(10.0)),
                               child: Row(
                                 mainAxisAlignment:

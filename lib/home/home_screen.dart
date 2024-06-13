@@ -440,7 +440,7 @@ class _MyHomePageState extends State<MyHomePage>
                                   Container(
                                     decoration: BoxDecoration(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10.0),
+                                      borderRadius: BorderRadius.circular(15.0),
                                       border: Border.all(
                                           color: Colors.grey.shade500),
                                     ),
@@ -449,7 +449,7 @@ class _MyHomePageState extends State<MyHomePage>
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 0.0),
                                     height: MediaQuery.of(context).size.height *
-                                        0.06, // Increased height to contain the input field
+                                        0.065, // Increased height to contain the input field
                                     child: Row(
                                       children: [
                                         IconButton(
@@ -495,7 +495,7 @@ class _MyHomePageState extends State<MyHomePage>
                                 ],
                               ),
                               toolbarHeight:
-                                  MediaQuery.of(context).size.height * 0.16,
+                                  MediaQuery.of(context).size.height * 0.18,
                             ),
                           ),
                         ),
@@ -576,7 +576,7 @@ class _MyHomePageState extends State<MyHomePage>
         decoration: BoxDecoration(
           border: Border.all(color: Colors.white, width: 1),
           borderRadius: BorderRadius.circular(8), // Squarish border
-          boxShadow: [],
+          boxShadow: const [],
           color: Colors.white,
         ),
         child: Column(

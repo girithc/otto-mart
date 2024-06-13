@@ -126,10 +126,10 @@ class _MyCartState extends State<MyCart> {
                       ),
                     );
                   },
-                  child: const Text(
+                  child: Text(
                     'add items +',
                     style: TextStyle(
-                      color: Colors.deepPurpleAccent,
+                      color: Colors.deepPurpleAccent.shade400,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
@@ -154,7 +154,7 @@ class _MyCartState extends State<MyCart> {
                 },
               ),
               backgroundColor: Colors.white,
-              foregroundColor: Colors.deepPurple,
+              foregroundColor: Colors.deepPurple.shade400,
               shadowColor: Colors.white,
               surfaceTintColor: Colors.white,
               centerTitle: true,
@@ -384,7 +384,7 @@ class _MyCartState extends State<MyCart> {
                                         child: Shimmer.fromColors(
                                           baseColor: Colors.black,
                                           highlightColor:
-                                              Colors.deepPurpleAccent,
+                                              Colors.deepPurpleAccent.shade400,
                                           child: Text(
                                             '\u{20B9}${cart.totalPrice}',
                                             style: const TextStyle(
@@ -667,9 +667,7 @@ class CartListState extends State<CartList> {
                               flex: 3,
                               child: Container(
                                 padding: const EdgeInsets.all(5),
-                                decoration: const BoxDecoration(
-                                    // Add border
-                                    ),
+                                decoration: const BoxDecoration(),
                                 child: Center(
                                   child: Image.network(
                                     item.image,
@@ -680,11 +678,16 @@ class CartListState extends State<CartList> {
                                         StackTrace? stackTrace) {
                                       return Container(
                                         height: 50,
-                                        color: Colors.grey[200],
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey[100],
+                                            borderRadius:
+                                                const BorderRadius.all(
+                                                    Radius.circular(5))),
                                         alignment: Alignment.center,
                                         child: const Center(
                                           child: Text(
-                                            'no image',
+                                            'image',
+                                            textAlign: TextAlign.center,
                                             style: TextStyle(
                                                 fontSize: 12,
                                                 color: Colors.grey),
@@ -740,9 +743,9 @@ class CartListState extends State<CartList> {
                               flex: 4,
                               child: Container(
                                   decoration: BoxDecoration(
-                                    color:
-                                        Colors.deepPurpleAccent, // Add border
-                                    borderRadius: BorderRadius.circular(20.0),
+                                    color: Colors.deepPurpleAccent
+                                        .shade400, // Add border
+                                    borderRadius: BorderRadius.circular(12.0),
                                   ),
                                   height:
                                       MediaQuery.of(context).size.height * 0.04,
@@ -796,10 +799,10 @@ class CartListState extends State<CartList> {
                 ),
               ),
 
-              const SizedBox(height: 10),
-              const TotalAmountSaved(),
+              cart.discount > 0 ? const SizedBox(height: 15) : Container(),
+              cart.discount > 0 ? const TotalAmountSaved() : Container(),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               /*
               const _DeliveryPartnerTip(),
               */
@@ -883,7 +886,7 @@ class CartListState extends State<CartList> {
                                         children: [
                                           Text(slotTime,
                                               style: const TextStyle(
-                                                  fontSize: 15)),
+                                                  fontSize: 14)),
                                           Text(
                                               slot.available
                                                   ? "available"
@@ -932,7 +935,7 @@ class CartListState extends State<CartList> {
                               crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
                                 SizedBox(
-                                  width: 13,
+                                  width: 10,
                                 ),
                                 Text(
                                   'Choose Delivery Slot  ',
@@ -948,11 +951,15 @@ class CartListState extends State<CartList> {
                         : Container(
                             height: 55,
                             decoration: BoxDecoration(
-                              gradient: const LinearGradient(
+                              gradient: LinearGradient(
                                 begin: Alignment.centerLeft,
                                 end: Alignment.centerRight,
-                                stops: [0.7, 0.70],
-                                colors: [Colors.white, Colors.deepPurpleAccent],
+                                stops: const [0.7, 0.70],
+                                colors: [
+                                  Colors.white,
+                                  Colors.deepPurpleAccent.shade400
+                                      .withOpacity(0.2)
+                                ],
                               ),
                               borderRadius:
                                   BorderRadius.circular(7), // Rounded corners
@@ -972,7 +979,7 @@ class CartListState extends State<CartList> {
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     borderRadius: BorderRadius.circular(
-                                        15), // Rounded corners
+                                        10), // Rounded corners
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.grey.withOpacity(0.2),
@@ -990,7 +997,7 @@ class CartListState extends State<CartList> {
                                         .deliveryDate), // Added a space for visual separation
                                     style: const TextStyle(
                                       fontSize:
-                                          15, // This adds the line through effect
+                                          14, // This adds the line through effect
                                     ),
                                   ),
                                 ),
@@ -1118,7 +1125,8 @@ class CartListState extends State<CartList> {
                             height: 35,
                             alignment: Alignment.centerLeft,
                             decoration: BoxDecoration(
-                              color: Colors.deepPurpleAccent,
+                              color: Colors.deepPurpleAccent.shade400
+                                  .withOpacity(0.2),
                               borderRadius:
                                   BorderRadius.circular(6), // Rounded corners
                               boxShadow: [
@@ -1136,20 +1144,28 @@ class CartListState extends State<CartList> {
                               right: 10,
                             ),
                             padding: const EdgeInsets.only(
-                                left: 25, top: 5, bottom: 5),
+                                left: 20, top: 5, bottom: 5),
                             //margin: const EdgeInsets.symmetric(horizontal: 10),
-                            child: const Text(
-                              'Change Time Slot',
-                              style: TextStyle(
-                                  fontSize: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 2),
+                              decoration: const BoxDecoration(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold),
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10))),
+                              child: const Text(
+                                'change time slot',
+                                style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black,
+                                    fontWeight: FontWeight.normal),
+                              ),
                             ),
                           ),
                         )
                       : Container()
                   : Container(),
-              const SizedBox(height: 10),
+              const SizedBox(height: 15),
               Container(
                 height: 110, // Container height
                 decoration: BoxDecoration(
@@ -1167,7 +1183,7 @@ class CartListState extends State<CartList> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         SizedBox(
-                          width: 13,
+                          width: 10,
                         ),
                         Text(
                           'Promo Code  ',
@@ -1183,7 +1199,7 @@ class CartListState extends State<CartList> {
                       height: 10,
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 13),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
                       decoration: const BoxDecoration(),
                       child: TextField(
                         decoration: InputDecoration(
@@ -1193,11 +1209,11 @@ class CartListState extends State<CartList> {
                               .shade100, // Background color of the text field
                           filled: true,
                           hintText: cart.promoCode == "" ? 'Enter Code' : null,
-                          hintStyle: const TextStyle(fontSize: 15),
+                          hintStyle: const TextStyle(fontSize: 14),
                           prefixIcon: cart.promoCode == ""
-                              ? const Icon(
+                              ? Icon(
                                   Icons.subdirectory_arrow_right_rounded,
-                                  color: Colors.deepPurpleAccent,
+                                  color: Colors.deepPurpleAccent.shade400,
                                 )
                               : const Icon(
                                   Icons.discount,
@@ -1467,7 +1483,7 @@ class _TaxAndDeliveryState extends State<_TaxAndDelivery> {
                     ),
                     const SizedBox(width: 10),
                     _isExpanded
-                        ? const Icon(Icons.keyboard_arrow_up)
+                        ? const Icon(Icons.keyboard_arrow_down)
                         : const Icon(Icons.keyboard_arrow_right),
                   ],
                 ),

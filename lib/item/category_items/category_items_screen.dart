@@ -284,7 +284,7 @@ class _CategoryItemsBottomBarState extends State<CategoryItemsBottomBar> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepPurpleAccent,
+                  backgroundColor: Colors.deepPurpleAccent.shade400,
                   foregroundColor: Colors.white,
                   textStyle: const TextStyle(
                     fontSize: 20,

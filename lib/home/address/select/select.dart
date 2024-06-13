@@ -285,13 +285,12 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
 
               Expanded(
                 child: Container(
-                  margin: const EdgeInsets.only(
-                      bottom: 10, top: 5, left: 5, right: 5),
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
+                  margin: const EdgeInsets.only(top: 5, left: 5, right: 5),
+                  padding: const EdgeInsets.symmetric(vertical: 0.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(15), // Rounded corners
-                    boxShadow: [],
+                    boxShadow: const [],
                     border: Border.all(color: Colors.white, width: 1.0),
                   ),
                   child: Column(
@@ -305,9 +304,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                   ),
                 ),
               ),
-              const SizedBox(
-                height: 10,
-              ),
+
               //_buildActionButton(),
             ],
           ),
@@ -319,6 +316,7 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
   Widget _buildAdvertisement() {
     return Container(
       height: MediaQuery.of(context).size.height * 0.25,
+      margin: const EdgeInsets.symmetric(vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -479,8 +477,10 @@ class _AddressSelectionWidgetState extends State<AddressSelectionWidget> {
                       color: isSelected
                           ? Colors.greenAccent
                           : Colors.grey.shade100,
-                      borderRadius: BorderRadius.all(Radius.circular(15))),
-                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      borderRadius:
+                          const BorderRadius.all(Radius.circular(15))),
+                  margin:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                   child: ListTile(
                     minVerticalPadding: 12,
                     leading: index == 1
