@@ -56,6 +56,7 @@ var authRequirements = map[string]Permission{
 	PackerFetchItem:                       {Role: "Customer", AuthRequired: true},
 	PackerGetPackedItems:                  {Role: "Customer", AuthRequired: true},
 	PackerPackItem:                        {Role: "Customer", AuthRequired: true},
+	PackerPackItemQuick: 				   {Role: "Customer", AuthRequired: true},
 	PackerCancelOrder:                     {Role: "Customer", AuthRequired: true},
 	PackerCheckOrderToPack:                {Role: "Customer", AuthRequired: true},
 	PackerAllocateSpace:                   {Role: "Customer", AuthRequired: true},
@@ -192,6 +193,7 @@ const (
 	PackerFetchItem                       = "packer-fetch-item"
 	PackerGetPackedItems                  = "packer-get-packed-items"
 	PackerPackItem                        = "packer-pack-item"
+	PackerPackItemQuick 				  = "packer-pack-item-quick"
 	PackerCancelOrder                     = "packer-cancel-order"
 	PackerCheckOrderToPack                = "packer-check-order-to-pack"
 	PackerAllocateSpace                   = "packer-allocate-space"

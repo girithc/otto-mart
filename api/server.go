@@ -68,6 +68,7 @@ func (s *Server) Run( /*gs *GoogleServer*/ ) {
 	http.HandleFunc("/packer-fetch-item", makeHTTPHandleFunc(s.handlePackerFetchItem))
 	http.HandleFunc("/packer-get-items", makeHTTPHandleFunc(s.handlePackerGetAllItems))
 	http.HandleFunc("/packer-pack-item", makeHTTPHandleFunc(s.handlePackerPackItem))
+	http.HandleFunc("/packer-pack-item-quick", makeHTTPHandleFunc(s.handlePackerPackItemQuick))
 	http.HandleFunc("/packer-cancel-order", makeHTTPHandleFunc(s.handlePackerCancelOrder))
 	http.HandleFunc("/packer-check-order-to-pack", makeHTTPHandleFunc(s.handlePackerCheckOrderToPack))
 	http.HandleFunc("/packer-space-order", makeHTTPHandleFunc(s.handlePackerAllocateSpace))

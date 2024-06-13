@@ -241,50 +241,61 @@ func (s *PostgresStore) Add_Cart_Item(cartId int, itemId int, quantity int) (*ty
 }
 
 func (s *PostgresStore) GetCartDetails(cartId int) (*types.CartDetails, error) {
-	cartItem := types.CartDetails{}
-	err := s.CalculateCartTotal(cartId)
-	if err != nil {
-		fmt.Print("Error in CalculateCartTotal() inside Add_Cart_Item()", err)
-	}
+    cartItem := types.CartDetails{}
+    err := s.CalculateCartTotal(cartId)
+    if err != nil {
+        fmt.Print("Error in CalculateCartTotal() inside Add_Cart_Item(): ", err)
+    }
 
-	// Query the updated shopping cart
-	cartQuery := `
-		SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, 
-			high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal, 
-			discounts, number_of_items, promo_code
-		FROM shopping_cart
-		WHERE id = $1`
+    // Query the updated shopping cart
+    cartQuery := `
+        SELECT item_cost, delivery_fee, platform_fee, small_order_fee, rain_fee, 
+            high_traffic_surcharge, packaging_fee, peak_time_surcharge, subtotal, 
+            discounts, number_of_items, promo_code
+        FROM shopping_cart
+        WHERE id = $1`
 
-	err = s.db.QueryRow(cartQuery, cartId).Scan(&cartItem.ItemCost, &cartItem.DeliveryFee, &cartItem.PlatformFee,
-		&cartItem.SmallOrderFee, &cartItem.RainFee, &cartItem.HighTrafficSurcharge,
-		&cartItem.PackagingFee, &cartItem.PeakTimeSurcharge, &cartItem.Subtotal,
-		&cartItem.Discounts, &cartItem.Quantity, &cartItem.PromoCode)
-	if err != nil {
-		return nil, err
-	}
+    var promoCode sql.NullString
 
-	cartItem.CartId = cartId
+    err = s.db.QueryRow(cartQuery, cartId).Scan(&cartItem.ItemCost, &cartItem.DeliveryFee, &cartItem.PlatformFee,
+        &cartItem.SmallOrderFee, &cartItem.RainFee, &cartItem.HighTrafficSurcharge,
+        &cartItem.PackagingFee, &cartItem.PeakTimeSurcharge, &cartItem.Subtotal,
+        &cartItem.Discounts, &cartItem.Quantity, &promoCode)
+    if err != nil {
+        return nil, err
+    }
 
-	deliveryAmountQuery := `
-		SELECT dd.min_delivery_amount
-		FROM shopping_cart sc
-		JOIN address a ON sc.address_id = a.id
-		JOIN delivery_distance dd ON a.distance_to_store > dd.min_distance AND a.distance_to_store <= dd.max_distance
-		WHERE sc.id = $1
-		LIMIT 1`
+    // Check if promoCode is valid and assign it
+    if promoCode.Valid {
+        cartItem.PromoCode = promoCode.String
+    } else {
+        cartItem.PromoCode = ""
+    }
 
-	var minDeliveryAmount int
-	err = s.db.QueryRow(deliveryAmountQuery, cartId).Scan(&minDeliveryAmount)
-	if err != nil {
-		fmt.Print("Error fetching minimum delivery amount: ", err)
-		return nil, err
-	}
+    cartItem.CartId = cartId
 
-	cartItem.FreeDeliveryAmount = minDeliveryAmount
+    deliveryAmountQuery := `
+        SELECT dd.min_delivery_amount
+        FROM shopping_cart sc
+        JOIN address a ON sc.address_id = a.id
+        JOIN delivery_distance dd ON a.distance_to_store > dd.min_distance AND a.distance_to_store <= dd.max_distance
+        WHERE sc.id = $1
+        LIMIT 1`
 
-	// Return the cart item details
-	return &cartItem, nil
+    var minDeliveryAmount int
+    err = s.db.QueryRow(deliveryAmountQuery, cartId).Scan(&minDeliveryAmount)
+    if err != nil {
+        fmt.Print("Error fetching minimum delivery amount: ", err)
+        return nil, err
+    }
+
+    cartItem.FreeDeliveryAmount = minDeliveryAmount
+
+    // Return the cart item details
+    return &cartItem, nil
 }
+
+
 
 func (s *PostgresStore) Get_Cart_Items_By_Cart_Id(cart_id int) ([]*types.Cart_Item, error) {
 	rows, err := s.db.Query("select * from cart_item where cart_id = $1", cart_id)

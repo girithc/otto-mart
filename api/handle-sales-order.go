@@ -200,6 +200,21 @@ func (s *Server) PackerPackItem(res http.ResponseWriter, req *http.Request) erro
 	return WriteJSON(res, http.StatusOK, records)
 }
 
+func (s *Server) PackerPackItemQuick(res http.ResponseWriter, req *http.Request) error {
+	new_req := new(types.OrderQuick)
+	if err := json.NewDecoder(req.Body).Decode(new_req); err != nil {
+		fmt.Println("Error Decode in PackerPackItem()")
+		return err
+	}
+
+	records, err := s.store.PackerPackItemQuick(new_req.ItemId, new_req.ItemQuantity, new_req.PackerPhone, new_req.SalesOrderID, new_req.StoreId)
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(res, http.StatusOK, records)
+}
+
 func (s *Server) PackerGetAllPackedItems(res http.ResponseWriter, req *http.Request) error {
 	print("Enter PackerGetAllPackedItems")
 	new_req := new(types.PackedOrderItem)

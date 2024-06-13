@@ -666,6 +666,14 @@ func (s *Server) handlePackerPackItem(res http.ResponseWriter, req *http.Request
 	return nil
 }
 
+func (s *Server) handlePackerPackItemQuick(res http.ResponseWriter, req *http.Request) error {
+	if req.Method == "POST" {
+		print_path("POST", "packer-pack-item-quick")
+		return s.goRoutineWrapper(PackerPackItemQuick, s.PackerPackItemQuick, res, req)
+	}
+	return nil
+}
+
 func (s *Server) handlePackerCancelOrder(res http.ResponseWriter, req *http.Request) error {
 	if req.Method == "POST" {
 		print_path("POST", "packer-pack")

@@ -129,6 +129,14 @@ type AcceptOrderItem struct {
 	StoreId      int    `json:"store_id"`
 }
 
+type OrderQuick struct {
+	PackerPhone  string `json:"packer_phone"`
+	SalesOrderID int    `json:"sales_order_id"`
+	ItemId      int 	`json:"item_id"`
+	ItemQuantity int 	`json:"item_quantity"`
+	StoreId      int    `json:"store_id"`
+}
+
 type SpaceOrder struct {
 	PackerPhone  string `json:"packer_phone"`
 	SalesOrderID int    `json:"sales_order_id"`
