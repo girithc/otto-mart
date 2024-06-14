@@ -3,6 +3,7 @@ package store
 import (
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/girithc/pronto-go/types"
 
@@ -1154,7 +1155,7 @@ func (s *PostgresStore) CheckForPlacedOrders(phone string) ([]CheckForPlacedOrde
 }
 
 func (s *PostgresStore) GetOrderDetails(orderID int) ([]OrderDetail, error) {
-	query := `
+    query := `
     SELECT i.name, ci.quantity, i.quantity, i.unit_of_quantity, so.order_date
     FROM sales_order so
     JOIN cart_item ci ON so.cart_id = ci.cart_id
@@ -1162,27 +1163,30 @@ func (s *PostgresStore) GetOrderDetails(orderID int) ([]OrderDetail, error) {
     WHERE so.id = $1
     `
 
-	rows, err := s.db.Query(query, orderID)
-	if err != nil {
-		return nil, fmt.Errorf("error querying order details: %w", err)
-	}
-	defer rows.Close()
+    rows, err := s.db.Query(query, orderID)
+    if err != nil {
+        log.Printf("Error querying order details: %v", err)
+        return nil, fmt.Errorf("Error querying order details: %v", err)
+    }
+    defer rows.Close()
 
-	var details []OrderDetail
-	for rows.Next() {
-		var detail OrderDetail
-		err := rows.Scan(&detail.ItemName, &detail.ItemQuantity, &detail.ItemSize, &detail.UnitOfQuantity, &detail.OrderPlacedTime)
-		if err != nil {
-			return nil, fmt.Errorf("error scanning order detail: %w", err)
-		}
-		details = append(details, detail)
-	}
+    var details []OrderDetail
+    for rows.Next() {
+        var detail OrderDetail
+        err := rows.Scan(&detail.ItemName, &detail.ItemQuantity, &detail.ItemSize, &detail.UnitOfQuantity, &detail.OrderPlacedTime)
+        if err != nil {
+            log.Printf("Error scanning order detail: %v", err)
+            return nil, fmt.Errorf("Error scanning order detail: %v", err)
+        }
+        details = append(details, detail)
+    }
 
-	if err = rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating through order details results: %w", err)
-	}
+    if err = rows.Err(); err != nil {
+        log.Printf("Error iterating through order details results: %v", err)
+        return nil, fmt.Errorf("Error iterating through order details results: %v", err)
+    }
 
-	return details, nil
+    return details, nil
 }
 
 func (s *PostgresStore) GetOrderDetailsCustomer(orderId int, customerId int) (*OrderDetailCustomer, error) {

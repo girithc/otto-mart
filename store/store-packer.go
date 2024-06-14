@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/girithc/pronto-go/types"
 	"github.com/google/uuid"
@@ -416,30 +417,30 @@ func (s *PostgresStore) PackerFindOrder(req types.FindItemBasic) (FindItemRespon
 }
 
 func (s *PostgresStore) PackerGetOrder(storeId int, otp string) (*GetOrder, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return nil, fmt.Errorf("PackerGetOrder - Begin Transaction: %v", err)
-	}
+    tx, err := s.db.Begin()
+    if err != nil {
+        return nil, fmt.Errorf("PackerGetOrder - Begin Transaction: %v", err)
+    }
 
-	var cartId int
-	var orderStatus string
-	otpQuery := `
+    var cartId int
+    var orderStatus string
+    otpQuery := `
     SELECT so.cart_id, so.order_status
     FROM sales_order_otp otp
     JOIN sales_order so ON otp.cart_id = so.cart_id
     WHERE otp.otp_code = $1 AND otp.store_id = $2 AND otp.active = true
     LIMIT 1
     `
-	err = tx.QueryRow(otpQuery, otp, storeId).Scan(&cartId, &orderStatus)
-	if err != nil {
-		tx.Rollback()
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("PackerGetOrder - OTP Query: no active OTP found for OTP: %s and storeId: %d", otp, storeId)
-		}
-		return nil, fmt.Errorf("PackerGetOrder - OTP Query: %v", err)
-	}
+    err = tx.QueryRow(otpQuery, otp, storeId).Scan(&cartId, &orderStatus)
+    if err != nil {
+        tx.Rollback()
+        if err == sql.ErrNoRows {
+            return nil, fmt.Errorf("PackerGetOrder - OTP Query: no active OTP found for OTP: %s and storeId: %d", otp, storeId)
+        }
+        return nil, fmt.Errorf("PackerGetOrder - OTP Query: %v", err)
+    }
 
-	query := `
+    query := `
     SELECT COALESCE(ds.location, 0) AS location, COALESCE(ps.active, false) AS active, c.phone, so.order_date
     FROM sales_order so
     LEFT JOIN Packer_Shelf ps ON so.id = ps.sales_order_id
@@ -447,22 +448,29 @@ func (s *PostgresStore) PackerGetOrder(storeId int, otp string) (*GetOrder, erro
     INNER JOIN Customer c ON so.customer_id = c.id
     WHERE so.cart_id = $1 AND so.store_id = $2
     `
-	var getOrder GetOrder
-	err = tx.QueryRow(query, cartId, storeId).Scan(&getOrder.Location, &getOrder.Active, &getOrder.Phone, &getOrder.OrderTime)
-	if err != nil {
-		tx.Rollback()
-		return nil, fmt.Errorf("PackerGetOrder - Fetch Order Details: %v", err)
-	}
+    var getOrder GetOrder
+    var orderDateString string
+    err = tx.QueryRow(query, cartId, storeId).Scan(&getOrder.Location, &getOrder.Active, &getOrder.Phone, &orderDateString)
+    if err != nil {
+        tx.Rollback()
+        return nil, fmt.Errorf("PackerGetOrder - Fetch Order Details: %v", err)
+    }
 
-	getOrder.CartId = cartId // Set the CartId in the GetOrder struct
-	getOrder.OrderStatus = orderStatus
+    getOrder.CartId = cartId // Set the CartId in the GetOrder struct
+    getOrder.OrderStatus = orderStatus
+    orderDate, err := time.Parse("2006-01-02 15:04:05.00000 -0700 MST", orderDateString)
+    if err != nil {
+        tx.Rollback()
+        return nil, fmt.Errorf("PackerGetOrder - Parse Order Date: %v", err)
+    }
+    getOrder.OrderTime = orderDate.Format(time.RFC3339) // Format the order time as RFC3339
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, fmt.Errorf("PackerGetOrder - Commit Transaction: %v", err)
-	}
+    err = tx.Commit()
+    if err != nil {
+        return nil, fmt.Errorf("PackerGetOrder - Commit Transaction: %v", err)
+    }
 
-	return &getOrder, nil
+    return &getOrder, nil
 }
 
 func (s *PostgresStore) PackerFindItem(new_req types.FindItemBasic) (*FindItemResponse, error) {

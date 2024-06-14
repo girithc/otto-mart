@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -270,33 +271,42 @@ type DeliveryOrderDetails struct {
 }
 
 func (s *PostgresStore) DeliveryPartnerGoDeliverOrder(phone string, orderId int) (*DeliveryOrderDetails, error) {
-	tx, err := s.db.Begin()
-	if err != nil {
-		return nil, err
-	}
-	defer tx.Rollback()
+    tx, err := s.db.Begin()
+    if err != nil {
+        log.Printf("Error beginning transaction: %v", err)
+        return nil, fmt.Errorf("Error beginning transaction: %v", err)
+    }
+    defer tx.Rollback()
 
-	// Fetch delivery partner ID
-	var deliveryPartnerID int
-	err = tx.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
-	if err != nil {
-		return nil, err
-	}
+    // Fetch delivery partner ID
+    var deliveryPartnerID int
+    err = tx.QueryRow(`SELECT id FROM delivery_partner WHERE phone = $1;`, phone).Scan(&deliveryPartnerID)
+    if err != nil {
+        log.Printf("Error fetching delivery partner ID: %v", err)
+        return nil, fmt.Errorf("Error fetching delivery partner ID: %v", err)
+    }
 
-	// Update the order status to 'dispatched' if it's 'accepted' or 'packed'
-	_, err = tx.Exec(`
+    // Update the order status to 'dispatched' if it's 'accepted' or 'packed'
+    result, err := tx.Exec(`
         UPDATE sales_order
         SET order_status = 'dispatched'
         WHERE id = $1 AND delivery_partner_id = $2 AND order_status IN ('accepted', 'packed');
     `, orderId, deliveryPartnerID)
-	if err != nil {
-		return nil, err
-	}
+    if err != nil {
+        log.Printf("Error updating order status: %v", err)
+        return nil, fmt.Errorf("Error updating order status: %v", err)
+    }
+    rowsAffected, err := result.RowsAffected()
+    if err != nil {
+        log.Printf("Error getting rows affected: %v", err)
+        return nil, fmt.Errorf("Error getting rows affected: %v", err)
+    }
+    log.Printf("Rows affected by update: %d", rowsAffected)
 
-	var details DeliveryOrderDetails
+    var details DeliveryOrderDetails
 
-	// Fetch order and customer details
-	err = tx.QueryRow(`
+    // Fetch order and customer details
+    err = tx.QueryRow(`
         SELECT c.name, c.phone, a.latitude, a.longitude, a.line_one_address, a.line_two_address, a.street_address,
                so.order_date, so.order_status, so_otp.otp_code
         FROM sales_order so
@@ -305,30 +315,39 @@ func (s *PostgresStore) DeliveryPartnerGoDeliverOrder(phone string, orderId int)
         LEFT JOIN sales_order_otp so_otp ON so.cart_id = so_otp.cart_id AND so_otp.active = true
         WHERE so.id = $1;
     `, orderId).Scan(
-		&details.CustomerName, &details.CustomerPhone, &details.Latitude, &details.Longitude,
-		&details.LineOneAddress, &details.LineTwoAddress, &details.StreetAddress, &details.OrderDate,
-		&details.OrderStatus, &details.OrderOTP,
-	)
-	if err != nil {
-		return nil, err
-	}
+        &details.CustomerName, &details.CustomerPhone, &details.Latitude, &details.Longitude,
+        &details.LineOneAddress, &details.LineTwoAddress, &details.StreetAddress, &details.OrderDate,
+        &details.OrderStatus, &details.OrderOTP,
+    )
+    if err != nil {
+        log.Printf("Error fetching order and customer details: %v", err)
+        return nil, fmt.Errorf("Error fetching order and customer details: %v", err)
+    }
 
-	// Fetch items details for the order
-	items, err := s.GetOrderDetails(orderId)
-	if err != nil {
-		return nil, err
-	}
+    // Fetch items details for the order
+    items, err := s.GetOrderDetails(orderId)
+    if err != nil {
+        log.Printf("Error fetching order details: %v", err)
+        return nil, fmt.Errorf("Error fetching order details: %v", err)
+    }
+    if len(items) == 0 {
+        log.Printf("No items found for order ID: %d", orderId)
+        return nil, fmt.Errorf("No items found for order ID: %d", orderId)
+    }
 
-	details.Items = items
+    details.Items = items
 
-	// Commit the transaction
-	if err := tx.Commit(); err != nil {
-		return nil, err
-	}
+    // Commit the transaction
+    if err := tx.Commit(); err != nil {
+        log.Printf("Error committing transaction: %v", err)
+        return nil, fmt.Errorf("Error committing transaction: %v", err)
+    }
 
-	// Return the complete order details including items
-	return &details, nil
+    // Return the complete order details including items
+    return &details, nil
 }
+
+
 
 type ArriveOrderDetails struct {
 	CustomerName   string        `json:"customer_name"`
@@ -508,8 +527,17 @@ func (s *PostgresStore) GetAssignedOrder(storeId int, phone string) ([]OrderAssi
 	for rows.Next() {
 		var response OrderAssignResponse
 		var cartId int
-		if err := rows.Scan(&response.OrderId, &cartId, &response.OrderStatus, &response.OrderDate); err != nil {
+		var orderDateStr string
+
+		if err := rows.Scan(&response.OrderId, &cartId, &response.OrderStatus, &orderDateStr); err != nil {
 			return nil, fmt.Errorf("error scanning orders: %s", err)
+		}
+
+		// Convert the order_date string to time.Time using the correct layout
+		const layout = "2006-01-02 15:04:05.999999 -0700 MST"
+		response.OrderDate, err = time.Parse(layout, orderDateStr)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing order date: %s", err)
 		}
 
 		// Fetch or generate OTP for each order.
@@ -530,6 +558,7 @@ func (s *PostgresStore) GetAssignedOrder(storeId int, phone string) ([]OrderAssi
 
 	return responses, nil
 }
+
 
 // fetchOrGenerateOtp checks if an OTP exists for a given cartId, generates a new one if not.
 func (s *PostgresStore) fetchOrGenerateOtp(cartId, storeId int) (string, error) {
@@ -1093,8 +1122,7 @@ func (s *PostgresStore) SendOtpDeliveryPartnerMSG91(phone string) (*types.SendOT
 }
 
 func (s *PostgresStore) VerifyOtpDeliveryPartnerMSG91(phone string, otp int, fcm string) (*types.DeliveryPartnerLogin, error) {
-	// Construct the URL with query parameters
-
+	// Mock response for testing
 	if phone == "1234567890" {
 		var response types.DeliveryPartnerLogin
 		var otpresponse types.VerifyOTPResponse
@@ -1111,6 +1139,7 @@ func (s *PostgresStore) VerifyOtpDeliveryPartnerMSG91(phone string, otp int, fcm
 		return &response, nil
 	}
 
+	// Construct the URL with query parameters
 	url := fmt.Sprintf("https://control.msg91.com/api/v5/otp/verify?mobile=91%s&otp=%d", phone, otp)
 
 	// Create a new request
@@ -1152,7 +1181,7 @@ func (s *PostgresStore) VerifyOtpDeliveryPartnerMSG91(phone string, otp int, fcm
 		return &response, nil
 	} else {
 		// OTP verification failed
-		return nil, fmt.Errorf("OTP verification failed")
+		return nil, fmt.Errorf("OTP verification failed: %s", otpresponse.Message)
 	}
 }
 
@@ -1177,10 +1206,11 @@ func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*ty
         UPDATE delivery_partner 
         SET fcm = $1 
         WHERE phone = $2 
-        RETURNING id, name, phone, address,  created_at, token`
+        RETURNING id, name, phone, address, created_at, token`
 	row := tx.QueryRow(updateFCMSQL, fcm, phone)
 
 	var deliveryPartner types.DeliveryPartnerData
+	var createdAtStr string
 	var token sql.NullString
 
 	err = row.Scan(
@@ -1188,7 +1218,7 @@ func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*ty
 		&deliveryPartner.Name,
 		&deliveryPartner.Phone,
 		&deliveryPartner.Address,
-		&deliveryPartner.Created_At,
+		&createdAtStr,
 		&token,
 	)
 
@@ -1206,7 +1236,7 @@ func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*ty
 			&deliveryPartner.Name,
 			&deliveryPartner.Phone,
 			&deliveryPartner.Address,
-			&deliveryPartner.Created_At,
+			&createdAtStr,
 			&token,
 		)
 		if err != nil {
@@ -1214,6 +1244,13 @@ func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*ty
 		}
 		deliveryPartner.Token = newToken
 	} else if err != nil {
+		return nil, err
+	}
+
+	// Convert the created_at string to time.Time using the correct layout
+	const layout = "2006-01-02 15:04:05.999999 -0700 MST"
+	deliveryPartner.Created_At, err = time.Parse(layout, createdAtStr)
+	if err != nil {
 		return nil, err
 	}
 
@@ -1237,3 +1274,4 @@ func (s *PostgresStore) GetDeliveryPartnerByPhone(phone string, fcm string) (*ty
 	fmt.Println("Transaction Successful")
 	return &deliveryPartner, nil
 }
+
