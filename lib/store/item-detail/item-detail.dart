@@ -146,6 +146,35 @@ class ItemDetailApiClient {
     }
   }
 
+  Future<PackerItemResponse> packItemQuick(
+      int itemId, int itemQuantity, int orderId, String storeId) async {
+    const storage = FlutterSecureStorage();
+    final phone = await storage.read(key: 'phone');
+
+    final Map<String, dynamic> requestData = {
+      "store_id": int.parse(storeId),
+      "item_id": itemId,
+      "item_quantity": itemQuantity,
+      "packer_phone": phone,
+      "sales_order_id": orderId
+    };
+
+    final networkService = NetworkService();
+    final response = await networkService
+        .postWithAuth('/packer-pack-item-quick', additionalData: requestData);
+
+    if (response.statusCode == 200) {
+      print("Packer Item ${response.body}");
+      final jsonData = json.decode(response.body);
+      final PackerItemResponse packerItemResponse =
+          PackerItemResponse.fromJson(jsonData);
+
+      return packerItemResponse;
+    } else {
+      throw Exception('Failed to load items ${response.body}');
+    }
+  }
+
   Future<void> scanItemFromOrder(String barcode) async {}
 
   Future<Item> editItem(Item item) async {

@@ -46,11 +46,9 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
   List<PackerItemDetail?> prePackedItems = [];
   bool allPacked = false;
   bool pictureTaken = false;
-  //PackerItemResponse? packerItemResponse;
 
   int? orderId;
-  int totalQuantity = 0; // New variable to store total quantity
-
+  int totalQuantity = 0;
   int? selectedRow;
   String? selectedColumn;
 
@@ -258,14 +256,36 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
     }
   }
 
+  Future<void> packItemQuick(int itemId, int itemQuantity) async {
+    print("Scanned barcode: $itemId $itemQuantity ");
+
+    setState(() {
+      _isLoading = true; // Start loading
+    });
+
+    apiClient.packItemQuick(itemId, itemQuantity, widget.orderId, "1").then(
+        (item) {
+      setState(() {
+        widget.prePackedItems = item.itemList;
+        widget.totalQuantity =
+            item.itemList.fold(0, (sum, item) => sum + item.quantity);
+        widget.allPacked = item.allPacked;
+        _isLoading = false; // Stop loading after data is fetched
+      });
+    }, onError: (error) {
+      setState(() {
+        _isLoading = false; // Stop loading on error
+        print("Error fetching item: $error");
+        // Optionally show an error message or handle the error differently
+      });
+    });
+  }
+
   Future<void> scanBarcodeAssignSpace(int horizontal) async {
     print("Entered scanBarcodeAssignSpace");
     print(" Location ${horizontal.toString()}");
     String? phone = await _storage.read(key: "phone");
     String? packerId = await _storage.read(key: "packerId");
-
-    //String? storeId = await _storage.read(key: "storeId");
-    print("Checkpoint 1");
 
     setState(() {
       _isAssigningSpace = true; // Start loading
@@ -673,69 +693,29 @@ class _OrderChecklistPageState extends State<OrderChecklistPage> {
                                         style: TextStyle(fontSize: 20),
                                       ),
                                     ),
-                                    GestureDetector(
-                                      onTap: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return AlertDialog(
-                                              title: const Text("Help"),
-                                              content: const Text(
-                                                  "This is the help dialog content."),
-                                              actions: <Widget>[
-                                                ElevatedButton(
-                                                  style:
-                                                      ElevatedButton.styleFrom(
-                                                    foregroundColor:
-                                                        Colors.black,
-                                                    backgroundColor: Colors
-                                                        .white, // Text color
-                                                    shape:
-                                                        RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              20.0), // Roundish borders
-                                                    ),
-                                                    elevation:
-                                                        5, // The elevation of the button
-                                                  ),
-                                                  child: const Text('Close'),
-                                                  onPressed: () {
-                                                    Navigator.of(context)
-                                                        .pop(); // Close the dialog
-                                                  },
-                                                ),
-                                              ],
-                                            );
+                                    Row(
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () {
+                                            packItemQuick(
+                                                item.itemId, item.itemQuantity);
                                           },
-                                        );
-                                      },
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment
-                                            .end, // Align this row's child to the end, effectively aligning it to the right
-                                        children: [
-                                          Container(
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width *
-                                                0.50,
-                                            padding: const EdgeInsets.only(
-                                                top: 10, bottom: 10),
+                                          child: Container(
+                                            alignment: Alignment.centerRight,
+                                            decoration: BoxDecoration(
+                                                color: Colors.grey.shade100,
+                                                borderRadius: BorderRadius.all(
+                                                    Radius.circular(20))),
+                                            padding: const EdgeInsets.all(10),
                                             child: const Text(
-                                              'help',
+                                              'pack',
                                               textAlign: TextAlign
                                                   .right, // Align the text to the right within the container
                                               style: TextStyle(fontSize: 18),
                                             ),
                                           ),
-                                          const Icon(
-                                            Icons
-                                                .help_outline, // The help center icon
-                                            color: Colors
-                                                .black, // Specify the color of the icon if needed
-                                          ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
