@@ -439,7 +439,7 @@ class _MyVerifyState extends State<MyVerify> {
                       color: isPinCorrect
                           ? Colors.greenAccent
                           : fillColor, // Change color based on pin correctness
-                      borderRadius: BorderRadius.circular(19),
+                      borderRadius: BorderRadius.circular(15),
                       border: Border.all(color: focusedBorderColor),
                     ),
                   ),
@@ -459,7 +459,7 @@ class _MyVerifyState extends State<MyVerify> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color.fromARGB(255, 0, 11, 128),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(35),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
                     onPressed: () {

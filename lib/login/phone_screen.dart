@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -28,6 +29,25 @@ class _MyPhoneState extends State<MyPhone> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
+  final ScrollController _scrollController1 = ScrollController();
+  final ScrollController _scrollController2 = ScrollController();
+
+  final List<String> imageUrls = [
+    "https://images.thedermaco.com/TheDermaCoLogo2-min.png",
+    "https://pbs.twimg.com/profile_images/960482674786930689/Gh_H-EuI_400x400.jpg",
+    "https://logos-world.net/wp-content/uploads/2020/11/Gillette-Venus-Logo.png",
+    "https://angiegreaves.com/wp-content/uploads/2015/09/n-image.jpg",
+    "https://pbs.twimg.com/profile_images/1709116198502203392/mi6K51uL_400x400.jpg",
+    "https://i.pinimg.com/originals/31/38/a3/3138a3973a60be980ae2acc3bec77aa1.png",
+    "https://i.pinimg.com/736x/1c/06/9e/1c069efccc16644dc14f27720ec4c41f.jpg",
+    "https://images.squarespace-cdn.com/content/v1/62258e3935ba58479234169a/ac4062d5-43e0-4366-887f-09d24324b638/cinthol.png",
+    "https://upload.wikimedia.org/wikipedia/en/a/a9/Dettol_logo.png",
+    "https://www.headandshoulders.co.uk/images/page-logo.png",
+    "https://images.squarespace-cdn.com/content/v1/570b9bd42fe131a6e20717c2/1632479652642-TJEIEKVTP3YVTTEO4LH9/park-avenue_packagingstructure_elephantdesign_india_singapore-banner-06.jpg",
+    "https://1000logos.net/wp-content/uploads/2020/03/Durex-Logo-2020.png",
+    "https://i.pinimg.com/originals/b8/70/7b/b8707b6e4d8bcf82c3d0cd864eb8d2b6.jpg"
+  ];
+
   @override
   void initState() {
     countryController.text = "+91";
@@ -39,12 +59,40 @@ class _MyPhoneState extends State<MyPhone> {
         _submitForm();
       }
     });
+
+    _autoScroll(_scrollController1, AxisDirection.right);
+    _autoScroll(_scrollController2, AxisDirection.left);
+  }
+
+  void _autoScroll(ScrollController controller, AxisDirection direction) {
+    Timer.periodic(const Duration(milliseconds: 25), (timer) {
+      if (controller.hasClients) {
+        double maxScrollExtent = controller.position.maxScrollExtent;
+        double offset = controller.offset;
+
+        if (direction == AxisDirection.right) {
+          if (offset >= maxScrollExtent) {
+            controller.jumpTo(0); // Reset to start
+          } else {
+            controller.jumpTo(offset + 1);
+          }
+        } else {
+          if (offset <= 0) {
+            controller.jumpTo(maxScrollExtent); // Reset to end
+          } else {
+            controller.jumpTo(offset - 1);
+          }
+        }
+      }
+    });
   }
 
   @override
   void dispose() {
     // Don't forget to dispose the controller when the widget is removed
     phoneNumberController.dispose();
+    _scrollController1.dispose();
+    _scrollController2.dispose();
     super.dispose();
   }
 
@@ -151,21 +199,9 @@ class _MyPhoneState extends State<MyPhone> {
         body: SingleChildScrollView(
           child: Container(
             height: MediaQuery.of(context).size.height,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Colors.deepPurpleAccent, // Start color of the gradient
-                    Colors.lightBlueAccent, // End color of the gradient
-                  ],
-                  stops: [
-                    0.55,
-                    1.0,
-                  ]),
-            ),
+            decoration: const BoxDecoration(color: Colors.white),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Form(
                   key: formKey,
@@ -175,53 +211,106 @@ class _MyPhoneState extends State<MyPhone> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.05,
+                        ),
                         Container(
-                          margin: EdgeInsets.only(
-                              left: MediaQuery.of(context).size.width * 0.04),
-                          width: MediaQuery.of(context).size.width * 0.40,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(20.0),
-                            // Set the radius for rounded corners
-                            child: Transform.scale(
-                              scale:
-                                  1.0, // Adjust the scale to zoom in. 1.0 is the original size, so 1.1 zooms in slightly.
-                              child: Image.asset(
-                                'assets/icon/icon.jpeg',
-                                height:
-                                    140, //MediaQuery.of(context).size.height *
-                                //0.25, //140
-                                fit: BoxFit
-                                    .cover, // Ensure the image covers the scaled area
+                          // Increased height for a larger input area
+                          margin: const EdgeInsets.symmetric(horizontal: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+
+                          child: Column(
+                            children: [
+                              Text(
+                                "Personal Care\nDelivered\nPan India",
+                                style: TextStyle(
+                                    fontSize: 36,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
                               ),
-                            ),
+                            ],
                           ),
                         ),
                         SizedBox(
                           height: MediaQuery.of(context).size.height * 0.02,
                         ),
-                        Row(
-                          children: [
-                            Container(
-                              margin: EdgeInsets.only(
-                                  left:
-                                      MediaQuery.of(context).size.width * 0.04),
-                              width: MediaQuery.of(context).size.width * 0.75,
-                              child: Text(
-                                "Morning\nGrocery \nDelivery ",
-                                style: GoogleFonts.ubuntu(
-                                  // Tinos is a serif font similar to Times New Roman
-                                  textStyle: const TextStyle(
-                                      fontSize: 36,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                      height: 1.3),
+                        Container(
+                          height: MediaQuery.of(context).size.height * 0.15,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: imageUrls.length,
+                            controller: _scrollController1,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                margin: const EdgeInsets.all(8.0),
+                                width:
+                                    MediaQuery.of(context).size.height * 0.15,
+                                height:
+                                    MediaQuery.of(context).size.height * 0.08,
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.5),
+                                      spreadRadius: 1,
+                                      blurRadius: 1,
+                                      offset: const Offset(
+                                          0, 1), // changes position of shadow
+                                    ),
+                                  ],
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10)),
+                                  color: Colors.white,
+                                  image: DecorationImage(
+                                    image: NetworkImage(imageUrls[index]),
+                                    fit: BoxFit.contain,
+                                  ),
+                                  shape: BoxShape.rectangle,
                                 ),
-                              ),
-                            ),
-                          ],
+                              );
+                            },
+                          ),
                         ),
                         SizedBox(
-                          height: MediaQuery.of(context).size.height * 0.04,
+                          height: MediaQuery.of(context).size.height * 0.01,
+                        ),
+                        Container(
+                          height: MediaQuery.of(context).size.height * 0.15,
+                          margin: EdgeInsets.only(
+                              bottom:
+                                  MediaQuery.of(context).size.height * 0.05),
+                          child: ListView.builder(
+                            controller: _scrollController2,
+                            scrollDirection: Axis.horizontal,
+                            itemCount: imageUrls.length,
+                            itemBuilder: (context, index) {
+                              return Container(
+                                margin: const EdgeInsets.all(8.0),
+                                width:
+                                    MediaQuery.of(context).size.height * 0.15,
+                                height:
+                                    MediaQuery.of(context).size.height * 0.08,
+                                decoration: BoxDecoration(
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.5),
+                                      spreadRadius: 1,
+                                      blurRadius: 1,
+                                      offset: const Offset(
+                                          0, 1), // changes position of shadow
+                                    ),
+                                  ],
+                                  borderRadius:
+                                      BorderRadius.all(Radius.circular(10)),
+                                  color: Colors.white,
+                                  image: DecorationImage(
+                                    image: NetworkImage(imageUrls[index]),
+                                    fit: BoxFit.contain,
+                                  ),
+                                  shape: BoxShape.rectangle,
+                                ),
+                              );
+                            },
+                          ),
                         ),
                         Container(
                           height:
@@ -230,7 +319,7 @@ class _MyPhoneState extends State<MyPhone> {
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(35),
+                            borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withOpacity(0.5),
@@ -292,7 +381,7 @@ class _MyPhoneState extends State<MyPhone> {
                               backgroundColor:
                                   const Color.fromARGB(255, 0, 11, 128),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(35),
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
                             onPressed: () {
@@ -341,9 +430,6 @@ class _MyPhoneState extends State<MyPhone> {
                       ],
                     ),
                   ),
-                ),
-                SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.1,
                 ),
                 SizedBox(
                   height: MediaQuery.of(context).size.height * 0.1,
