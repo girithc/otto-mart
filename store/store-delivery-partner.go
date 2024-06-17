@@ -129,11 +129,12 @@ func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, err
         LIMIT 1
     `
 
-	// Variable to hold the order details
-	order := &OrderAssigned{}
+	// Variables to hold the order details
+	var orderID, storeID int
+	var orderDateString, orderStatus string
 
 	// Execute the query
-	err := s.db.QueryRow(query).Scan(&order.ID, &order.StoreID, &order.OrderDate, &order.OrderStatus)
+	err := s.db.QueryRow(query).Scan(&orderID, &storeID, &orderDateString, &orderStatus)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// No unassigned order found, return an OrderAssigned object with default values
@@ -145,6 +146,20 @@ func (s *PostgresStore) GetFirstAssignedOrder(phone string) (*OrderAssigned, err
 			}, nil
 		}
 		return nil, fmt.Errorf("error querying for unassigned order: %s", err)
+	}
+
+	// Parse the orderDate string into a time.Time object
+	orderDate, err := time.Parse("2006-01-02 15:04:05.000000 -0700 MST", orderDateString)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing order date: %s", err)
+	}
+
+	// Create and return the OrderAssigned object
+	order := &OrderAssigned{
+		ID:          orderID,
+		StoreID:     storeID,
+		OrderDate:   orderDate,
+		OrderStatus: orderStatus,
 	}
 	return order, nil
 }
