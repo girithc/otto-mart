@@ -36,7 +36,7 @@ class _MyPhoneState extends State<MyPhone> {
     "https://images.thedermaco.com/TheDermaCoLogo2-min.png",
     "https://pbs.twimg.com/profile_images/960482674786930689/Gh_H-EuI_400x400.jpg",
     "https://logos-world.net/wp-content/uploads/2020/11/Gillette-Venus-Logo.png",
-    "https://angiegreaves.com/wp-content/uploads/2015/09/n-image.jpg",
+    "https://1000marcas.net/wp-content/uploads/2021/05/Neutrogena-Logo-1-1280x720.png",
     "https://pbs.twimg.com/profile_images/1709116198502203392/mi6K51uL_400x400.jpg",
     "https://i.pinimg.com/originals/31/38/a3/3138a3973a60be980ae2acc3bec77aa1.png",
     "https://i.pinimg.com/736x/1c/06/9e/1c069efccc16644dc14f27720ec4c41f.jpg",

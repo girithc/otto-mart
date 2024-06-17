@@ -215,40 +215,43 @@ class _SettingScreenState extends State<SettingScreen> {
               decoration: BoxDecoration(
                   color: Colors.deepPurpleAccent,
                   borderRadius: BorderRadius.all(Radius.circular(10))),
-              height: MediaQuery.of(context).size.height * 0.26,
+              height: MediaQuery.of(context).size.height * 0.22,
               width: MediaQuery.of(context).size.width * 0.9,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(left: 20, top: 10),
-                        child: Text(
-                          "Wallet \nBalance",
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 36,
-                              color: Colors.white),
+                  Container(
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.all(Radius.circular(20))),
+                    margin: EdgeInsets.only(left: 10, right: 10, top: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(
+                              left: 20, right: 10, top: 10, bottom: 10),
+                          child: Text(
+                            "Wallet Balance",
+                            style: TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 20,
+                                color: Colors.black),
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: EdgeInsets.only(
-                          left: 30,
-                          top: 10,
-                          right: 20,
+                        Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Text(
+                            "0",
+                            style: TextStyle(
+                                fontWeight: FontWeight.normal,
+                                fontSize: 20,
+                                color: Colors.black),
+                          ),
                         ),
-                        child: Text(
-                          "\n0",
-                          style: TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 36,
-                              color: Colors.white),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -265,13 +268,14 @@ class _SettingScreenState extends State<SettingScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.all(Radius.circular(5)),
                           ),
-                          height: MediaQuery.of(context).size.height * 0.1,
+                          height: MediaQuery.of(context).size.height * 0.09,
                           width: MediaQuery.of(context).size.width * 0.25,
-                          padding: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(2),
                           child: Text(
                             "Redeem Balance",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.normal),
+                                fontSize: 16, fontWeight: FontWeight.normal),
                           ),
                         ),
                       ),
@@ -287,13 +291,14 @@ class _SettingScreenState extends State<SettingScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.all(Radius.circular(5)),
                           ),
-                          height: MediaQuery.of(context).size.height * 0.1,
+                          height: MediaQuery.of(context).size.height * 0.09,
                           width: MediaQuery.of(context).size.width * 0.25,
-                          padding: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(2),
                           child: Text(
                             "Earn Rewards",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.normal),
+                                fontSize: 16, fontWeight: FontWeight.normal),
                           ),
                         ),
                       ),
@@ -309,13 +314,14 @@ class _SettingScreenState extends State<SettingScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.all(Radius.circular(5)),
                           ),
-                          height: MediaQuery.of(context).size.height * 0.1,
+                          height: MediaQuery.of(context).size.height * 0.09,
                           width: MediaQuery.of(context).size.width * 0.25,
-                          padding: EdgeInsets.all(10),
+                          padding: EdgeInsets.all(2),
                           child: Text(
                             "Multiply Rewards",
+                            textAlign: TextAlign.center,
                             style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.normal),
+                                fontSize: 16, fontWeight: FontWeight.normal),
                           ),
                         ),
                       ),
