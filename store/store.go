@@ -48,20 +48,7 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			paymentStatus: make(map[int]bool),
 		}, nil
 	} else {
-		// Use Cloud SQL credentials
-
-		/*
-			cleanup, err := pgxv4.RegisterDriver("cloudsql-postgres", cloudsqlconn.WithIAMAuthN())
-			if err != nil {
-				log.Fatalf("Error on pgxv4.RegisterDriver: %v", err)
-			}
-
-			dsn := fmt.Sprintf("host=%s user=%s dbname=%s password=%s sslmode=disable", os.Getenv("INSTANCE_CONNECTION_NAME"), os.Getenv("DB_USER"), os.Getenv("DB_NAME"), os.Getenv("DB_PASSWORD"))
-			db, err := sql.Open("cloudsql-postgres", dsn)
-			if err != nil {
-				log.Fatalf("Error on sql.Open: %v", err)
-			}
-		*/
+		
 		const firebaseConfig = `{
 			
 		  }
@@ -72,7 +59,6 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			fmt.Println("Error:", err)
 		}
 		fmt.Println("Working Directory:", wd)
-		// opt := option.WithCredentialsFile("/seismic-ground-410711-firebase-adminsdk-jac9l-4da78ed26c.json")
 
 		opt := option.WithCredentialsJSON([]byte(firebaseConfig))
 
