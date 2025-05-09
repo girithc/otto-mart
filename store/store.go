@@ -48,11 +48,8 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 			paymentStatus: make(map[int]bool),
 		}, nil
 	} else {
-		
-		const firebaseConfig = `{
-			
-		  }
-		  `
+
+		const firebaseConfig = ``
 
 		wd, err := os.Getwd()
 		if err != nil {
@@ -100,8 +97,7 @@ func NewPostgresStore() (*PostgresStore, func() error) {
 		}
 
 		// Use Supabase connection string
-		connStr := fmt.Sprintf(
-		)
+		connStr := fmt.Sprintf()
 
 		db2, err := sql.Open("postgres", connStr)
 		if err != nil {
