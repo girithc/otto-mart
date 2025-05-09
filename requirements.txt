@@ -1,0 +1,47 @@
+Add Item Form
+
+Name
+Size
+Unit Of Size
+Brand Description
+
+
+
+Add Barcode Form
+
+Use Brand and Item
+Attach Barcode
+
+
+
+Add Finance Form
+
+Use Brand and Item
+GST Rate
+MRP Price
+Buy Price
+Margin
+
+
+Add Scheme Form
+
+Use Brand and Item
+Min Quantity
+Discount
+Start Date
+End Date
+
+
+Add Invoice Form
+
+Invoice number
+Vendor
+Store
+Total amount
+Invoice date
+Due date
+Is Paid
+Paid date
+Credit days
+
+Incoming Item
