@@ -1,6 +1,6 @@
 package types
 
-import "encoding/json"
+import "../../types/encoding/json"
 
 type PhonePeCartId struct {
 	CartId                int    `json:"cart_id"`

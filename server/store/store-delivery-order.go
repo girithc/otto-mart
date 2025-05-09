@@ -1,6 +1,6 @@
 package store
 
-import "database/sql"
+import "../../store/database/sql"
 
 func (s *PostgresStore) CreateDeliveryOrderTable(tx *sql.Tx) error {
 	// Create the table if it doesn't exist with the new 'amount_collected' field

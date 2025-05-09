@@ -1,6 +1,6 @@
 package store
 
-import "database/sql"
+import "../../store/database/sql"
 
 func (s *PostgresStore) CreateGSTTable(tx *sql.Tx) error {
 	createTableQuery := `CREATE TABLE IF NOT EXISTS gst(

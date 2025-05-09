@@ -1,6 +1,6 @@
 package store
 
-import "database/sql"
+import "../../store/database/sql"
 
 func (s *PostgresStore) CreatePackerShelfTable(tx *sql.Tx) error {
 	query := `

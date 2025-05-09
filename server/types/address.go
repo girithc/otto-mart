@@ -1,6 +1,6 @@
 package types
 
-import "database/sql"
+import "../../types/database/sql"
 
 type Address1 struct {
 	Id               int     `json:"id"`

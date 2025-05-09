@@ -1,6 +1,6 @@
 package store
 
-import "database/sql"
+import "../../store/database/sql"
 
 func (s *PostgresStore) AuthenticateRequest(phone, token string) (bool, string, error) {
 	query := `SELECT token, role FROM customer WHERE phone = $1`
